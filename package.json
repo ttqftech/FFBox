@@ -1,0 +1,27 @@
+{
+  "name": "ffbox",
+  "version": "1.0.0",
+  "description": "An user-friendly ffmpeg GUI",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified :)\" && exit 1",
+    "start": "electron .",
+    "package": "electron-packager . FFBox --platform=win32 --arch=x64 --icon=256.ico --out=./app --asar --app-version=1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ttqftech/FFBox.git"
+  },
+  "author": "ttqf",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ttqftech/FFBox/issues"
+  },
+  "homepage": "https://github.com/ttqftech/FFBox#readme",
+  "devDependencies": {
+    "electron": "^5.0.6"
+  },
+  "dependencies": {
+    "electron-store": "^4.0.0"
+  }
+}
