@@ -1,0 +1,968 @@
+/* 动画等共同项 */
+
+.taskitem-large, .taskitem-large-run, .taskitem-small, .taskitem-small-run {
+	position: absolute;
+	box-sizing: border-box;
+	width: 100%;
+	transition: top 0.5s;
+}
+	.taskitem-background-wrapper {
+		position: absolute;
+		/* top 由 js 计算 */
+		margin-top: 4px;
+		padding: 0px 16px 12px;
+		width: 100%;
+		box-sizing: border-box;
+		overflow: hidden;
+		transform: translate3d(0, 0, 0);
+	}
+		.taskitem-background {
+			transition: height 0.5s;
+			pointer-events: none;
+		}
+			.taskitem-background-white {
+				transition: height 0.5s, background-color 0.1s;
+				height: 100%;
+				border-radius: 2px;
+				box-sizing: border-box;
+				background: white;
+				box-shadow: 0px 0px 2px 2px rgba(255, 255, 255, 1),
+							0px 2px 4px 0px rgba(0, 0, 0, 0.3);
+				pointer-events: all;
+			}
+			.taskitem-background-white:hover {
+				/* background: rgba(204, 232, 255, 0.6); */
+				background: rgb(229, 243, 255);
+			}
+			.taskitem-background-progress {
+				transition: width 0.3s ease-out, height 0.5s;
+				position: absolute;
+				top: 0;
+				height: 100%;
+				border-radius: 2px;
+			}
+			.progress-green {
+				background: linear-gradient(180deg, rgba(204, 255, 204, 0.7), rgba(153, 255, 153, 0.7));
+				box-shadow: 0px 4px 12px 0px rgba(143, 255, 143, 1),
+							0px 2px 4px 0px rgba(0, 0, 0, 0.25);
+			}
+			.progress-yellow {
+				background: linear-gradient(180deg, rgba(255, 238, 187, 0.7), rgba(255, 238, 136, 0.7));
+				box-shadow: 0px 4px 12px 0px rgba(255, 229, 103, 1),
+							0px 2px 4px 0px rgba(0, 0, 0, 0.25);
+			}
+			.progress-red {
+				background: linear-gradient(180deg, rgba(255, 187, 187, 0.7), rgba(255, 136, 136, 0.7));
+				box-shadow: 0px 4px 12px 0px rgba(255, 103, 103, 0.8),
+							0px 2px 4px 0px rgba(0, 0, 0, 0.25);
+			}
+			.progress-gray {
+				background: linear-gradient(180deg, rgba(238, 238, 238, 0.7), rgba(221, 221, 221, 0.7));
+				box-shadow: 0px 4px 12px 0px rgba(204, 204, 204, 1),
+							0px 2px 4px 0px rgba(0, 0, 0, 0.25);
+			}
+			.taskitem-previewbox {
+				transition: top 0.5s, height 0.5s;
+			}
+			.taskitem-previewbox img {
+			}
+			.taskitem-timing {
+				transition: left 0.5s, top 0.5s, font-size 0.5s;
+			}
+			.taskitem-filename {
+				transition: left 0.5s, top 0.5s, width 0.5s, font-size 0.5s;
+				overflow: hidden;
+			}
+			.taskitem-info {
+				transition: width 0.5s;
+			}
+			.taskitem-infobefore {
+				transition: right 0.5s, width 0.5s;
+			}
+			.taskitem-infoafter {
+				transition: right 0.5s, width 0.5s, transform 0.5s;
+			}
+			.taskitem-rightarrow {
+				transition: right 0.5s, opacity 0.5s;
+			}
+				.taskitem-img-format {
+				}
+				.taskitem-img-vcodec {
+				}
+				.taskitem-img-acodec {
+				}
+				.taskitem-span-format {
+				}
+				.taskitem-span-vcodec {
+				}
+				.taskitem-span-acodec {
+				}
+				.taskitem-img-size {
+				}
+				.taskitem-img-vratecontrol {
+				}
+				.taskitem-img-aratecontrol {
+				}
+				.taskitem-span-size {
+				}
+				.taskitem-span-vratecontrol {
+				}
+				.taskitem-span-aratecontrol {
+				}
+				.taskitem-info div {
+					transition: left 0.5s, top 0.5s;
+				}
+				.taskitem-info span {
+					transition: font-size 0.5s, width 0.5s, left 0.5s, top 0.5s;
+				}
+				.taskitem-size-compact {
+				}
+				.taskitem-graphs {
+					transition: width 0.5s, right 0.5s, top 0.5s;
+				}
+					.taskitem-graph {
+						transition: width 0.5s, height 0.5s, right 0.5s;
+					}
+						.taskitem-graph-ring {
+							width: 100%;
+							height: 100%;
+							border-radius: 50%;
+							-webkit-mask: radial-gradient(transparent 60%, #000 61%);
+							background: conic-gradient(#36D 0%, #36D 0%, #DDD 0%, #DDD 75%, transparent 75%);
+							transform: rotate(225deg);
+						}
+						.taskitem-graph-data {
+							transition: font-size 0.5s;
+						}
+						.taskitem-graph-description {
+							transition: font-size 0.5s;
+						}
+			.taskitem-delete {
+				transition: top 0.5s;
+				position: absolute;
+				right: 16px;
+				top: 50%;
+				transform: translateY(-50%);
+				width: 16px;
+				height: 16px;
+				background-image: url(image/deleteNpause_button.svg);
+				background-size: 300%;	/* 三倍大小 */
+				pointer-events: all;
+				background-position-x: 0px;
+				/* background-position-x 使用 js 代码控制 */
+			}
+			.taskitem-delete:hover {
+				background-position-y: -16px;
+			}
+			.taskitem-delete:active {
+				background-position-y: -32px;
+			}
+
+
+/* 大号列表项 */
+
+.taskitem-large {
+}
+	.taskitem-large .taskitem-background-wrapper {
+	}
+		.taskitem-large .taskitem-background {
+			position: relative;
+			height: 80px;
+		}
+			.taskitem-large .taskitem-background-white {
+				background: #cce8ff;
+				border: #99d1ff 1px solid;
+			}
+			.taskitem-large .taskitem-background-progress {
+			}
+			.taskitem-large .taskitem-previewbox {
+				position: absolute;
+				left: 8px;
+				top: 20px;
+				width: 96px;
+				height: 54px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				border: #DDD 1px dashed;
+			}
+			.taskitem-large .taskitem-previewbox img {
+				max-width: 100%;
+				max-height: 100%;
+			}
+			.taskitem-large .taskitem-timing {
+				position: absolute;
+				left: 8px;
+				top: 4px;
+				width: 96px;
+				font-size: 12px;
+				text-align: center;
+			}
+			.taskitem-large .taskitem-filename {
+				position: absolute;
+				left: 112px;
+				top: 8px;
+				width: calc(100% - 912px);
+				height: 66px;
+				font-size: 23.5px;
+				font-weight: bold;
+			}
+			.taskitem-large .taskitem-info {
+				height: 68px;
+				width: 336px;		/* 由内容计算得 */
+				/*border: #DDD 1px dashed;*/
+			}
+			.taskitem-large .taskitem-infobefore {
+				position: absolute;
+				top: 8px;
+				right: 448px;
+				overflow: hidden;
+			}
+			.taskitem-large .taskitem-infoafter {
+				position: absolute;
+				top: 8px;
+				right: 48px;
+			}
+			.taskitem-large .taskitem-rightarrow {
+				position: absolute;
+				top: 24px;
+				right: 400px;
+				width: 32px;
+				height: 32px;
+				background-image: url(image/rightarrow.svg);
+				background-size: contain;
+				opacity: 1;
+			}
+				.taskitem-large .taskitem-img-format {
+					background-image: url(image/formats/format_format.png);
+					top: 0px;
+					left: 0px;
+				}
+				.taskitem-large .taskitem-img-vcodec {
+					background-image: url(image/formats/video_vcodec.png);
+					top: 0px;
+					left: 112px;					
+				}
+				.taskitem-large .taskitem-img-acodec {
+					background-image: url(image/formats/audio_acodec.png);
+					top: 0px;
+					left: 224px;
+				}
+				.taskitem-large .taskitem-span-format {
+					top: 5px;
+					left: 40px;
+				}
+				.taskitem-large .taskitem-span-vcodec {
+					top: 5px;
+					left: 152px;					
+				}
+				.taskitem-large .taskitem-span-acodec {
+					top: 5px;
+					left: 264px;
+				}
+				.taskitem-large .taskitem-img-size {
+					background-image: url(image/formats/video_resolution.png);
+					top: 36px;
+					left: 0px;
+				}
+				.taskitem-large .taskitem-img-vratecontrol {
+					background-image: url(image/formats/video_ratecontrol.png);
+					top: 36px;
+					left: 112px;
+				}
+				.taskitem-large .taskitem-img-aratecontrol {
+					background-image: url(image/formats/audio_ratecontrol.png);
+					top: 36px;
+					left: 224px;
+				}
+				.taskitem-large .taskitem-span-size {
+					top: 41px;
+					left: 40px;
+				}
+				.taskitem-large .taskitem-span-vratecontrol {
+					top: 41px;
+					left: 152px;					
+				}
+				.taskitem-large .taskitem-span-aratecontrol {
+					top: 41px;
+					left: 264px;
+				}
+				.taskitem-large .taskitem-info div {
+					position: absolute;
+					width: 32px;
+					height: 32px;
+					background-size: cover;
+					/*border: #DDD 1px dashed;*/
+				}
+				.taskitem-large .taskitem-info span {
+					position: absolute;
+					display: block;
+					width: 72px;
+					font-size: 14px;
+					text-align: left;
+					overflow: hidden;
+					/*border: #DDD 1px dashed;*/
+				}
+				.taskitem-large .taskitem-size-compact {
+					line-height: 12px;
+					font-size: 11px !important;
+				}
+
+			.taskitem-large .taskitem-graphs {
+				position: absolute;
+				right: 400px;
+				top: 8px;
+				width: 0px;
+				display: flex;
+				justify-content: space-around;
+				overflow: hidden;
+			}
+				.taskitem-large .taskitem-graph {
+					position: relative;
+					display: inline-block;
+					width: 64px;
+					height: 64px;
+				}
+					.taskitem-large .taskitem-graph-ring {
+					}
+					.taskitem-large .taskitem-graph-data {
+						position: absolute;
+						top: 50%;
+						width: 100%;
+						text-align: center;
+						font-weight: 600;
+						transform: translateY(-51%);
+						font-size: 15px;
+						font-family: Bahnschrift,Calibri,"SF Electrotome",苹方,"苹方 粗体",微软雅黑,"Segoe UI",Consolas,Roboto,黑体;
+					}
+					.taskitem-large .taskitem-graph-description {
+						position: absolute;
+						bottom: -2px;
+						width: 100%;
+						text-align: center;
+						font-size: 12px;
+					}
+
+			@media screen and (min-width: 0px) and (max-width: 1199px) {
+				.taskitem-large .taskitem-infobefore {
+					width: 0px;
+				}
+				.taskitem-large .taskitem-rightarrow {
+					opacity: 0;
+				}
+				.taskitem-large .taskitem-filename {
+					width: calc(100% - 516px);
+				}
+			}
+			.taskitem-large .taskitem-delete {
+			}
+			.taskitem-large .taskitem-delete:hover {
+			}
+			.taskitem-large .taskitem-delete:active {
+			}
+
+
+/* 大号运行中列表项 */
+
+.taskitem-large-run {
+}
+	.taskitem-large-run .taskitem-background-wrapper {
+	}
+		.taskitem-large-run .taskitem-background {
+			position: relative;
+			height: 80px;
+		}
+			.taskitem-large-run .taskitem-background-white {
+				background: #cce8ff;
+				border: #99d1ff 1px solid;
+			}
+			.taskitem-large-run .taskitem-background-progress {
+			}
+			.taskitem-large-run .taskitem-previewbox {
+				position: absolute;
+				left: 8px;
+				top: 20px;
+				width: 96px;
+				height: 54px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				border: #DDD 1px dashed;
+			}
+			.taskitem-large-run .taskitem-previewbox img {
+				max-width: 100%;
+				max-height: 100%;
+			}
+			.taskitem-large-run .taskitem-timing {
+				position: absolute;
+				left: 8px;
+				top: 4px;
+				width: 96px;
+				font-size: 12px;
+				text-align: center;
+			}
+			.taskitem-large-run .taskitem-filename {
+				position: absolute;
+				left: 112px;
+				top: 8px;
+				width: calc(100% - 872px);
+				height: 66px;
+				font-size: 23.5px;
+				font-weight: bold;
+			}
+			.taskitem-large-run .taskitem-info {
+				height: 68px;
+				width: 336px;		/* 由内容计算得 */
+				/*border: #DDD 1px dashed;*/
+			}
+			.taskitem-large-run .taskitem-infobefore {
+				position: absolute;
+				top: 8px;
+				right: 448px;
+				width: 0;
+				overflow: hidden;
+			}
+			.taskitem-large-run .taskitem-infoafter {
+				position: absolute;
+				top: 8px;
+				right: 48px;
+				overflow: hidden;
+			}
+			.taskitem-large-run .taskitem-rightarrow {
+				position: absolute;
+				top: 24px;
+				right: 400px;
+				width: 32px;
+				height: 32px;
+				background-image: url(image/rightarrow.svg);
+				background-size: contain;
+				opacity: 0;
+			}
+				.taskitem-large-run .taskitem-img-format {
+					background-image: url(image/formats/format_format.png);
+					top: 0px;
+					left: 0px;
+				}
+				.taskitem-large-run .taskitem-img-vcodec {
+					background-image: url(image/formats/video_vcodec.png);
+					top: 0px;
+					left: 112px;					
+				}
+				.taskitem-large-run .taskitem-img-acodec {
+					background-image: url(image/formats/audio_acodec.png);
+					top: 0px;
+					left: 224px;
+				}
+				.taskitem-large-run .taskitem-span-format {
+					top: 5px;
+					left: 40px;
+				}
+				.taskitem-large-run .taskitem-span-vcodec {
+					top: 5px;
+					left: 152px;					
+				}
+				.taskitem-large-run .taskitem-span-acodec {
+					top: 5px;
+					left: 264px;
+				}
+				.taskitem-large-run .taskitem-img-size {
+					background-image: url(image/formats/video_resolution.png);
+					top: 36px;
+					left: 0px;
+				}
+				.taskitem-large-run .taskitem-img-vratecontrol {
+					background-image: url(image/formats/video_ratecontrol.png);
+					top: 36px;
+					left: 112px;
+				}
+				.taskitem-large-run .taskitem-img-aratecontrol {
+					background-image: url(image/formats/audio_ratecontrol.png);
+					top: 36px;
+					left: 224px;
+				}
+				.taskitem-large-run .taskitem-span-size {
+					top: 41px;
+					left: 40px;
+				}
+				.taskitem-large-run .taskitem-span-vratecontrol {
+					top: 41px;
+					left: 152px;					
+				}
+				.taskitem-large-run .taskitem-span-aratecontrol {
+					top: 41px;
+					left: 264px;
+				}
+				.taskitem-large-run .taskitem-info div {
+					position: absolute;
+					width: 32px;
+					height: 32px;
+					background-size: cover;
+					/*border: #DDD 1px dashed;*/
+				}
+				.taskitem-large-run .taskitem-info span {
+					position: absolute;
+					display: block;
+					width: 72px;
+					font-size: 14px;
+					text-align: left;
+					overflow: hidden;
+					/*border: #DDD 1px dashed;*/
+				}
+				.taskitem-large-run .taskitem-size-compact {
+					line-height: 12px;
+					font-size: 11px !important;
+				}
+
+			.taskitem-large-run .taskitem-graphs {
+				position: absolute;
+				right: 400px;
+				top: 8px;
+				width: 336px;
+				display: flex;
+				justify-content: space-around;
+				overflow: hidden;
+			}
+				.taskitem-large-run .taskitem-graph {
+					position: relative;
+					display: inline-block;
+					width: 64px;
+					height: 64px;
+				}
+					.taskitem-large-run .taskitem-graph-ring {
+					}
+					.taskitem-large-run .taskitem-graph-data {
+						position: absolute;
+						top: 50%;
+						width: 100%;
+						text-align: center;
+						font-weight: 600;
+						transform: translateY(-51%);
+						font-size: 15px;
+						font-family: Bahnschrift,Calibri,"SF Electrotome",苹方,"苹方 粗体",微软雅黑,"Segoe UI",Consolas,Roboto,黑体;
+					}
+					.taskitem-large-run .taskitem-graph-description {
+						position: absolute;
+						bottom: -2px;
+						width: 100%;
+						text-align: center;
+						font-size: 12px;
+					}
+			
+			@media screen and (min-width: 0px) and (max-width: 1199px) {
+				.taskitem-large-run .taskitem-infobefore, .taskitem-large-run .taskitem-graphs {
+					width: 0px;
+				}
+				.taskitem-large-run .taskitem-rightarrow {
+					opacity: 0;
+				}
+				.taskitem-large-run .taskitem-filename {
+					width: calc(100% - 516px);
+				}
+			}
+			.taskitem-large-run .taskitem-delete {
+			}
+			.taskitem-large-run .taskitem-delete:hover {
+			}
+			.taskitem-large-run .taskitem-delete:active {
+			}
+
+
+/* 小号列表项 */
+
+.taskitem-small {
+}
+	.taskitem-small .taskitem-background-wrapper {
+	}
+		.taskitem-small .taskitem-background {
+			position: relative;
+			height: 60px;
+		}
+			.taskitem-small .taskitem-background-white {
+			}
+			.taskitem-small .taskitem-background-progress {
+			}
+			.taskitem-small .taskitem-previewbox {
+				position: absolute;
+				left: 8px;
+				top: 8px;
+				width: 96px;
+				height: 46px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				border: #DDD 1px dashed;
+			}
+			.taskitem-small .taskitem-previewbox img {
+				max-width: 100%;
+				max-height: 100%;
+			}
+			.taskitem-small .taskitem-timing {
+				position: absolute;
+				left: 112px;
+				top: 38px;
+				width: 96px;
+				font-size: 14px;
+				text-align: left;
+			}
+			.taskitem-small .taskitem-filename {
+				position: absolute;
+				left: 112px;
+				top: 8px;
+				width: calc(100% - 516px);
+				height: 28px;
+				font-size: 20px;
+				font-weight: bold;
+			}
+			.taskitem-small .taskitem-info {
+				height: 48px;
+				width: 336px;		/* 由内容计算得 */
+				/*border: #DDD 1px dashed;*/
+			}
+			.taskitem-small .taskitem-infobefore {
+				position: absolute;
+				top: 6px;
+				right: 448px;
+				width: 0;
+				overflow: hidden;
+			}
+			.taskitem-small .taskitem-infoafter {
+				position: absolute;
+				top: 6px;
+				right: 48px;
+			}
+			.taskitem-small .taskitem-rightarrow {
+				position: absolute;
+				top: 24px;
+				right: 400px;
+				width: 32px;
+				height: 32px;
+				background-image: url(image/rightarrow.svg);
+				background-size: contain;
+				opacity: 0;
+			}
+				.taskitem-small .taskitem-img-format {
+					background-image: url(image/formats/format_format.png);
+					top: 0px;
+					left: 11px;
+				}
+				.taskitem-small .taskitem-img-vcodec {
+					background-image: url(image/formats/video_vcodec.png);
+					top: 0px;
+					left: 123px;					
+				}
+				.taskitem-small .taskitem-img-acodec {
+					background-image: url(image/formats/audio_acodec.png);
+					top: 0px;
+					left: 235px;
+				}
+				.taskitem-small .taskitem-span-format {
+					top: 34px;
+					left: 0px;
+				}
+				.taskitem-small .taskitem-span-vcodec {
+					top: 34px;
+					left: 112px;					
+				}
+				.taskitem-small .taskitem-span-acodec {
+					top: 34px;
+					left: 224px;
+				}
+				.taskitem-small .taskitem-img-size {
+					background-image: url(image/formats/video_resolution.png);
+					top: 0px;
+					left: 67px;
+				}
+				.taskitem-small .taskitem-img-vratecontrol {
+					background-image: url(image/formats/video_ratecontrol.png);
+					top: 0px;
+					left: 179px;
+				}
+				.taskitem-small .taskitem-img-aratecontrol {
+					background-image: url(image/formats/audio_ratecontrol.png);
+					top: 0px;
+					left: 291px;
+				}
+				.taskitem-small .taskitem-span-size {
+					top: 34px;
+					left: 56px;
+				}
+				.taskitem-small .taskitem-span-vratecontrol {
+					top: 34px;
+					left: 168px;					
+				}
+				.taskitem-small .taskitem-span-aratecontrol {
+					top: 34px;
+					left: 280px;
+				}
+				.taskitem-small .taskitem-info div {
+					position: absolute;
+					width: 32px;
+					height: 32px;
+					background-size: cover;
+					/*border: #DDD 1px dashed;*/
+				}
+				.taskitem-small .taskitem-info span {
+					position: absolute;
+					display: block;
+					width: 54px;
+					line-height: 16.5px;
+					font-size: 10px;
+					text-align: center;
+					overflow: hidden;
+					/*border: #DDD 1px dashed;*/
+				}
+				
+				.taskitem-small .taskitem-size-compact {
+					line-height: 16.8px;
+					height: 16.8px;
+				}
+				
+			.taskitem-small .taskitem-graphs {
+				position: absolute;
+				right: 400px;
+				top: 8px;
+				width: 0px;
+				display: flex;
+				justify-content: space-around;
+				overflow: hidden;
+			}
+				.taskitem-small .taskitem-graph {
+					position: relative;
+					display: inline-block;
+					width: 48px;
+					height: 48px;
+				}
+					.taskitem-small .taskitem-graph-ring {
+					}
+					.taskitem-small .taskitem-graph-data {
+						position: absolute;
+						top: 50%;
+						width: 100%;
+						text-align: center;
+						font-weight: 600;
+						transform: translateY(-51%);
+						font-size: 12px;
+						font-family: Bahnschrift,Calibri,"SF Electrotome",苹方,"苹方 粗体",微软雅黑,"Segoe UI",Consolas,Roboto,黑体;
+					}
+					.taskitem-small .taskitem-graph-description {
+						position: absolute;
+						bottom: -2px;
+						width: 100%;
+						text-align: center;
+						font-size: 9px;
+					}
+
+			@media screen and (min-width: 0px) and (max-width: 1199px) {
+			}
+			.taskitem-small .taskitem-delete {
+			}
+			.taskitem-small .taskitem-delete:hover {
+			}
+			.taskitem-small .taskitem-delete:active {
+			}
+
+
+/* 小号运行中列表项 */
+
+.taskitem-small-run {
+}
+	.taskitem-small-run .taskitem-background-wrapper {
+	}
+		.taskitem-small-run .taskitem-background {
+			position: relative;
+			height: 60px;
+		}
+			.taskitem-small-run .taskitem-background-white {
+			}
+			.taskitem-small-run .taskitem-background-progress {
+			}
+			.taskitem-small-run .taskitem-previewbox {
+				position: absolute;
+				left: 8px;
+				top: 8px;
+				width: 96px;
+				height: 46px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				border: #DDD 1px dashed;
+			}
+			.taskitem-small-run .taskitem-previewbox img {
+				max-width: 100%;
+				max-height: 100%;
+			}
+			.taskitem-small-run .taskitem-timing {
+				position: absolute;
+				left: 112px;
+				top: 38px;
+				width: 96px;
+				font-size: 14px;
+				text-align: left;
+			}
+			.taskitem-small-run .taskitem-filename {
+				position: absolute;
+				left: 112px;
+				top: 8px;
+				width: calc(100% - 870px);
+				height: 28px;
+				font-size: 20px;
+				font-weight: bold;
+			}
+			.taskitem-small-run .taskitem-info {
+				height: 48px;
+				width: 336px;		/* 由内容计算得 */
+				/*border: #DDD 1px dashed;*/
+			}
+			.taskitem-small-run .taskitem-infobefore {
+				position: absolute;
+				top: 6px;
+				right: 448px;
+				width: 0;
+				overflow: hidden;
+			}
+			.taskitem-small-run .taskitem-infoafter {
+				position: absolute;
+				top: 6px;
+				right: 48px;
+			}
+			.taskitem-small-run .taskitem-rightarrow {
+				position: absolute;
+				top: 24px;
+				right: 400px;
+				width: 32px;
+				height: 32px;
+				background-image: url(image/rightarrow.svg);
+				background-size: contain;
+				opacity: 0;
+			}
+				.taskitem-small-run .taskitem-img-format {
+					background-image: url(image/formats/format_format.png);
+					top: 0px;
+					left: 11px;
+				}
+				.taskitem-small-run .taskitem-img-vcodec {
+					background-image: url(image/formats/video_vcodec.png);
+					top: 0px;
+					left: 123px;					
+				}
+				.taskitem-small-run .taskitem-img-acodec {
+					background-image: url(image/formats/audio_acodec.png);
+					top: 0px;
+					left: 235px;
+				}
+				.taskitem-small-run .taskitem-span-format {
+					top: 34px;
+					left: 0px;
+				}
+				.taskitem-small-run .taskitem-span-vcodec {
+					top: 34px;
+					left: 112px;					
+				}
+				.taskitem-small-run .taskitem-span-acodec {
+					top: 34px;
+					left: 224px;
+				}
+				.taskitem-small-run .taskitem-img-size {
+					background-image: url(image/formats/video_resolution.png);
+					top: 0px;
+					left: 67px;
+				}
+				.taskitem-small-run .taskitem-img-vratecontrol {
+					background-image: url(image/formats/video_ratecontrol.png);
+					top: 0px;
+					left: 179px;
+				}
+				.taskitem-small-run .taskitem-img-aratecontrol {
+					background-image: url(image/formats/audio_ratecontrol.png);
+					top: 0px;
+					left: 291px;
+				}
+				.taskitem-small-run .taskitem-span-size {
+					top: 34px;
+					left: 56px;
+				}
+				.taskitem-small-run .taskitem-span-vratecontrol {
+					top: 34px;
+					left: 168px;					
+				}
+				.taskitem-small-run .taskitem-span-aratecontrol {
+					top: 34px;
+					left: 280px;
+				}
+				.taskitem-small-run .taskitem-info div {
+					position: absolute;
+					width: 32px;
+					height: 32px;
+					background-size: cover;
+					/*border: #DDD 1px dashed;*/
+				}
+				.taskitem-small-run .taskitem-info span {
+					position: absolute;
+					display: block;
+					width: 54px;
+					line-height: 16.5px;
+					font-size: 10px;
+					text-align: center;
+					overflow: hidden;
+					/*border: #DDD 1px dashed;*/
+				}
+				
+				.taskitem-small-run .taskitem-size-compact {
+					line-height: 16.8px;
+					height: 16.8px;
+				}
+
+			.taskitem-small-run .taskitem-graphs {
+				position: absolute;
+				right: 400px;
+				top: 8px;
+				width: 336px;
+				display: flex;
+				justify-content: space-around;
+				overflow: hidden;
+			}
+				.taskitem-small-run .taskitem-graph {
+					position: relative;
+					display: inline-block;
+					width: 48px;
+					height: 48px;
+				}
+					.taskitem-small-run .taskitem-graph-ring {
+					}
+					.taskitem-small-run .taskitem-graph-data {
+						position: absolute;
+						top: 50%;
+						width: 100%;
+						text-align: center;
+						font-weight: 600;
+						transform: translateY(-51%);
+						font-size: 12px;
+						font-family: Bahnschrift,Calibri,"SF Electrotome",苹方,"苹方 粗体",微软雅黑,"Segoe UI",Consolas,Roboto,黑体;
+					}
+					.taskitem-small-run .taskitem-graph-description {
+						position: absolute;
+						bottom: -2px;
+						width: 100%;
+						text-align: center;
+						font-size: 9px;
+					}
+				
+			@media screen and (min-width: 0px) and (max-width: 1199px) {
+				.taskitem-small-run .taskitem-infoafter {
+					transform: scale(0.5);
+					right: -30px;
+				}
+				.taskitem-small-run .taskitem-filename {
+					width: calc(100% - 610px);
+				}
+				.taskitem-small-run .taskitem-graphs {
+					width: 256px;
+					right: 230px;
+				}
+			}
+			.taskitem-small-run .taskitem-delete {
+			}
+			.taskitem-small-run .taskitem-delete:hover {
+			}
+			.taskitem-small-run .taskitem-delete:active {
+			}

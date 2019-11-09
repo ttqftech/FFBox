@@ -1,0 +1,1197 @@
+body {
+    margin: 0px;
+    padding: 0px;
+    /*background-color: rgba(255, 255, 200, 0.4);*/
+    /* 设置文本为不可选 */ /* -webkit-user-select: none; */
+    border-radius: 14px;	/* border-radius 在 body 不能限制内容 overflow */
+    overflow: hidden;		/* 所以需要加一层 content-wrapper */
+	font-family: 苹方,"苹方 中等",微软雅黑,"Segoe UI",Consolas,Roboto,黑体;
+	font-weight: 400;
+	color: rgba(32, 32, 32, 0.8);
+	-webkit-user-select: none;
+}
+
+body::-webkit-scrollbar {
+    display: none;
+}
+
+#content-wrapper {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	background: white;
+    overflow: hidden;
+    border-radius: 14px;
+    /*-webkit-app-region: no-drag;*/
+}
+
+	/* 标题栏 */
+	#titlebar {
+		position: relative;
+		top: 0;
+		width: 100%;
+		height: 28px;
+		z-index: 5;
+		background: linear-gradient(180deg, white, #EEE);
+		box-shadow: 0px 10px 20px -5px rgba(0, 0, 0, 0.15),
+					0px  4px  8px -3px rgba(0, 0, 0, 0.1);
+		-webkit-app-region: drag;
+	}
+		#titlebar-background {
+			transition: width 0.5s ease-out;
+			position: absolute;
+			height: 100%;
+		}
+		.titlebar-background-green {
+			background: linear-gradient(180deg, #AFA, #9F9);
+			box-shadow: 0px 15px 30px -7.5px rgba(127, 255, 127, 0.8);
+		}
+		.titlebar-background-yellow {
+			background: linear-gradient(180deg, #FEB, #FE8);
+			box-shadow: 0px 15px 30px -7.5px rgba(238, 238, 119, 0.8);
+		}
+		#titlebar-title {
+			position: relative;
+			height: 100%;
+			margin-right: 120px;
+			/*border: red 1px solid;*/
+		}
+			#titlebar-icons {
+				transition: margin 0.3s;
+			}
+			#icon-long, #icon-square {
+				transition: opacity 0.25s;
+			}
+			.idle #titlebar-icons {
+				display: inline-block;
+				height: 28px;
+				width: 56px;
+				margin-left: calc(50% - 64px);
+				/*border: blue 1px solid;*/
+			}
+			.running #titlebar-icons {
+				display: inline-block;
+				height: 28px;
+				width: 56px;
+				margin-left: 24px;
+				/*border: blue 1px solid;*/
+			}
+				.idle #icon-long, .running #icon-square {
+					position: absolute;
+					height: 100%;
+					opacity: 1;
+				}
+				.idle #icon-square, .running #icon-long {
+					position: absolute;
+					height: 100%;
+					opacity: 0;
+				}
+			#titletext {
+				position: absolute;
+				display: inline-block;
+				top: 3px;
+				margin-left: 6px;
+				width: 80%;
+				font-size: 16px;
+				text-align: left;
+				/*border: blue 1px solid;*/
+			}
+		
+		#titlebar-control {
+			position: absolute;
+			top: 0;
+			right: 0;
+			width: 90px;
+			height: 100%;
+			margin: 0px 10px;
+			display: flex;
+		    justify-content: space-around;
+		    align-items: center;
+		}
+			.tri-button {
+				position: relative;
+				width: 14px;
+				height: 14px;
+				border-radius: 14px;
+				border: solid 1px;
+				font-size: 0;
+				-webkit-app-region: no-drag;
+			}
+			#minimum {
+				background: #29cc44;
+				border-color: #21a336;
+			}
+			#minimum:hover {
+				background: linear-gradient(180deg, #4df880, #29cc44);
+			}
+			#minimum:active {
+				background: #21a336;
+			}
+			#windowmode {
+				background: #ffcc33;				
+				border-color: #cca329;
+			}
+			#windowmode:hover {
+				background: linear-gradient(180deg, #fff860, #ffcc33);
+			}
+			#windowmode:active {
+				background: #cca329;
+			}
+			#close {
+				background: #ff5959;
+				border-color: #cc4747;
+			}
+			#close:hover {
+				background: linear-gradient(180deg, #ffa3a3, #ff5959);
+			}
+			#close:active {
+				background: #cc4747;
+			}
+			.tooltip-leftbottom {
+			    position: absolute;
+			    top: 110%;
+			    left: -80px;
+			    width: 80px;
+			    visibility: hidden;
+			    background-color: rgba(64, 64, 64, 0.7);
+			    color: #fff;
+			    text-align: center;
+			    font-size: 12px;
+			    border-radius: 6px;
+			    padding: 5px 0;
+			    z-index: 5;
+			}
+			.tri-button:hover .tooltip-leftbottom {
+				visibility: visible;
+			}
+	
+	/* 中间 */
+	#centerview {
+		position: absolute;
+		background: #EEE;
+		width: 100%;
+		top: 28px;	/* titlebar 的高度 */
+		height: calc(100% - 28px - 24px);
+	}
+		/* 中间左侧 */
+		#sidebar-wrapper {
+			position: absolute;
+			height: 100%;
+			width: 139px;
+			overflow-y: auto;
+			overflow-x: hidden;
+		}
+		#sidebar-wrapper::-webkit-scrollbar {
+			width: 12px;
+			background: transparent;
+		}
+		#sidebar-wrapper::-webkit-scrollbar-thumb {
+			border-radius: 12px;
+			background: rgba(192, 192, 192, 0.3);
+		}
+		#sidebar-wrapper::-webkit-scrollbar-track {
+			background: #305274;
+		}
+		#sidebar {
+			position: absolute;
+			width: 139px;
+			height: 100%;
+			min-height: 432px;
+			background: #357;
+			overflow-x: hidden;
+		}
+			#sidebar-background {
+				position: relative;
+				width: 100%;
+				height: 100%;
+				box-shadow: -16px 0px 16px -16px rgba(0, 0, 0, 0.3) inset;
+			}
+			#sidebar-top {
+				position: absolute;
+				top: 0;
+				width: 100%;
+			}
+			#sidebar-bottom {
+				position: absolute;
+				bottom: 0;
+				width: 100%;
+			}
+				.sidebar-selection {
+					padding: 10px 24px;
+					width: 91px;
+					height: 28px;
+				}
+				.sidebar-selection:hover {
+					background: rgba(255, 255, 255, 0.4);
+				}
+				.sidebar-selection-selected, .sidebar-selection-selected:hover {
+					border-left: #29DD44 3px solid;
+					background: #EEE;
+				}
+				.sidebar-selection-selected .sidebar-icon {
+					background-image: url('image/sidebar-icon-colored.png');
+					background-position-x: -3px;
+				}
+				.sidebar-icon {
+					width: 100%;
+					height: 100%;
+					background: url('image/sidebar-icon-white.png');
+					background-size: cover;
+				}
+		
+		/* 中间右侧 */
+		#maincontent {
+			position: absolute;
+			height: 100%;
+			left: 139px;
+			width: calc(100% - 139px);
+			overflow: hidden;
+		}
+			/* 右上 */
+			#listview {
+				position: absolute;
+				height: 60%;
+				min-height: 56px;
+				max-height: calc(100% - 28px);
+				width: 100%;
+				left: 0;
+			}
+				.listwindow {
+					transition: opacity 0.3s, transform 0.3s;
+				}
+				.listwindow-selected {
+					z-index: 1;
+					opacity: 1;
+					transform: translateY(0);
+				}
+				.listwindow-unselected {
+					z-index: 0;
+					opacity: 0;
+					transform: translateY(40px);
+				}
+				/* 任务列表 */
+				#listwindow_0 {
+					position: absolute;
+					width: 100%;
+					height: 100%;
+					background: #EEE;
+				}
+					#searchbox {
+						position: absolute;
+						top: 16px;
+						left: 16px;
+						height: 24px;
+						border-radius: 24px;
+						padding-left: 24px;
+						padding-right: 8px;
+						background: #F7F7F7;
+						border: #AAA 1px solid;
+						box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+						opacity: 0.6;
+					}
+						#searchbox img {
+							position: absolute;
+							left: 6px;
+							top: 4px;
+							width: 16px;
+							height: 16px;
+						}
+						#searchbox input {
+							background: transparent;
+							border: transparent;
+							margin: 0;
+							outline: none;
+						}
+						
+					.startbutton-green {
+						background: linear-gradient(180deg, #5e5, #3c3);
+						box-shadow: 0px -1px 1px 0px rgba(255, 255, 255, 0.3),
+									0px 1px 1px 0px rgba(16, 16, 16, 0.15),
+									0px 2px 6px 0px rgba(0, 0, 0, 0.15),
+									0px 4px 16px -4px #5e5;
+					}
+					.startbutton-green:active {
+						background: linear-gradient(180deg, #292, #3c3);
+					}
+					.startbutton-green:hover {
+						box-shadow: 0px -1px 1px 0px rgba(255, 255, 255, 0.3),
+									0px 1px 1px 0px rgba(16, 16, 16, 0.15),
+									0px 2px 6px 0px rgba(0, 0, 0, 0.15),
+									0px 4px 24px 0px #5e5;
+					}
+					.startbutton-yellow {
+						background: linear-gradient(180deg, #ed5, #cb3);
+						box-shadow: 0px -1px 1px 0px rgba(255, 255, 255, 0.3),
+									0px 1px 1px 0px rgba(16, 16, 16, 0.15),
+									0px 2px 6px 0px rgba(0, 0, 0, 0.15),
+									0px 4px 16px -4px #ed5;
+					}
+					.startbutton-yellow:active {
+						background: linear-gradient(180deg, #992, #cb3);
+					}
+					.startbutton-yellow:hover {
+						box-shadow: 0px -1px 1px 0px rgba(255, 255, 255, 0.3),
+									0px 1px 1px 0px rgba(16, 16, 16, 0.15),
+									0px 2px 6px 0px rgba(0, 0, 0, 0.15),
+									0px 4px 24px 0px #ed5;
+					}
+					.startbutton {
+						position: absolute;
+						top: 10px;
+						right: 16px;
+						width: 120px;
+						height: 36px;
+						display: table-cell;
+						text-align: center;
+						line-height: 36px;
+						font-size: 20px;
+						letter-spacing: 4px;
+						color: #FFF;
+						text-shadow: 0px 1px 1px rgba(0, 0, 0, 0.5);
+						border-radius: 10px;
+					}
+					.startbutton:hover:before {
+						position: absolute;
+						left: 0;
+						content: "";
+						width: 100%;
+						height: 100%;
+						border-radius: 10px;
+						background: -webkit-linear-gradient(-90deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+					}
+					#tasklist {
+						position: absolute;
+						left: 0;
+						right: 0;
+						bottom: 0;
+						top: 56px;
+						overflow-y: auto;
+					}
+						#tasklist-scroll {
+							width: 100%;
+							/* Height 由 js 计算 */
+						}
+						
+						/* 列表项 css 在 taskitem.css 中 */
+
+					#dropfilesdiv {
+						position: absolute;
+						width: 100%;
+						height: calc(40% + 40px);
+						min-height: 80px;
+						transition: top 0.5s;
+					}
+						#dropfilesimage {
+							position: absolute;
+							width: auto;
+							max-height: 400px;
+							height: 100%;
+							left: 50%;
+							top: 50%;
+							transform: translate(-50%, -50%);
+						}
+				
+				/* 指令窗口 */
+				#listwindow_1 {
+					position: absolute;
+					width: 100%;
+					height: 100%;
+					background: #EEE;
+				}
+					#commandwin {
+						display: flex;
+						flex-direction: column;	
+						width: 100%;
+						height: 100%;
+						box-sizing: border-box;
+						padding: 8px 0px;
+					}
+						#commandwin>div {
+							transition: flex-grow 0.3s;
+							overflow: hidden;
+						}
+						#outputCommand {
+							position: relative;
+							flex-grow: 3;
+						}
+						#currentCommand {
+							position: relative;
+							flex-grow: 1;
+						}
+						#globalCommand {
+							position: relative;
+							flex-grow: 1;
+						}
+						.commandwin-mini #currentCommand, .commandwin-mini #globalCommand {
+							flex-grow: 0;
+						}
+							.commandwin-title {								
+								position: absolute;
+								top: 6px;
+								left: 16px;
+								color: #25B;
+								transition: font-size 0.3s;
+							}
+							.commandwin-normal .commandwin-title {
+								font-size: 20px;
+							}
+							.commandwin-small .commandwin-title, .commandwin-mini .commandwin-title {
+								font-size: 12px;
+							}
+							.commandwin-box {
+								position: absolute;
+								left: 16px;
+								right: 16px;
+								bottom: 8px;
+								transition: top 0.3s;
+								box-sizing: border-box;
+								background: #F7F7F7;
+								box-shadow: 0px 0px 1px #F7F7F7;
+							}
+							.commandwin-normal .commandwin-box {
+								top: 36px;
+							}
+							.commandwin-small .commandwin-box, .commandwin-mini .commandwin-box {
+								top: 28px;
+							}
+							.commandwin-box textarea {
+								border: none;
+								background: transparent;
+								width: calc(100% - 4px);
+								height: calc(100% - 4px);
+								resize: none;
+								font-family: Consolas,黑体,苹方,"苹方 中等",微软雅黑,"Segoe UI",Roboto;
+								font-weight: 400;
+							}
+							.commandwin-box textarea::-webkit-scrollbar {
+								width: 10px;
+								background: transparent;
+							}
+							.commandwin-box textarea::-webkit-scrollbar-thumb {
+								border-radius: 10px;
+								background: rgba(127, 127, 127, 0.2);
+							}
+							.commandwin-box textarea::-webkit-scrollbar-track {
+								border-radius: 10px;
+								background: rgba(127, 127, 127, 0.1);
+							}
+					
+
+			/* 参数盒 */
+			#parabox {
+				position: absolute;
+				bottom: 0;
+				height: 40%;
+				max-height: calc(100% - 56px);
+				min-height: 28px;
+				width: 100%;
+				background: #EEE;
+				box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.3);
+				z-index: 2;
+			}
+				/* 拖动器 */
+				#parabox-dragger {
+					width: 100%;
+					height: 28px;
+					cursor: ns-resize;
+				}
+					#parabox-name {
+						position: absolute;
+						top: 4px;
+						left: 50%;
+						height: 20px;
+						width: 65px;
+						-webkit-transform: translateX(-50%);
+						background: url(image/sidebar-icon-colored.png);
+						background-size: cover;
+						background-position-y: -40px;
+					}
+					#parabox-dragger-left {
+						position: absolute;
+						top: 12px;
+						left: 16px;
+						right: calc(50% + 50px);
+						height: 4px;
+						background: linear-gradient(90deg, rgba(127, 127, 127, 0.1), rgba(127, 127, 127, 0.2));
+						border-radius: 4px;
+					}
+					#parabox-dragger-right {
+						position: absolute;
+						top: 12px;
+						right: 16px;
+						left: calc(50% + 50px);
+						height: 4px;
+						background: linear-gradient(270deg, rgba(127, 127, 127, 0.1), rgba(127, 127, 127, 0.2));
+						border-radius: 4px;
+					}
+				
+				/* 参数内容 */	
+				.parabox-content {
+					position: absolute;
+					top: 28px;
+					left: 12px;
+					width: calc(100% - 12px);
+					height: calc(100% - 28px);
+					overflow-y: auto;
+					transition: opacity 0.3s, transform 0.3s;
+					display: flex;
+					flex-wrap: wrap;
+					align-items: center;	/* 一行 */
+					/* align-content: space-between;	 多行 */
+					justify-content: space-around;
+				}
+				.parabox-content-selected {
+					z-index: 1;
+					opacity: 1;
+					transform: translateY(0);
+				}
+				.parabox-content-unselected {
+					z-index: 0;
+					opacity: 0;
+					transform: translateY(40px);
+				}
+					.combobox {
+						position: relative;
+						width: 210px;
+						height: 56px;
+						margin: 4px 24px;
+					}
+						.combobox-title {
+							position: absolute;
+							left: 0;
+							top: 50%;
+							width: 88px;
+							transform: translateY(-50%);
+							font-size: 14px;
+							text-align: center;
+						}
+						.combobox-selector {
+							position: absolute;
+							left: 88px;
+							height: 24px;
+							width: 122px;
+							margin: 15px 0;
+							border-radius: 24px;
+							background: #F7F7F7;
+							border: #AAA 1px solid;
+							box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+						}
+						.combobox-selector:hover {
+							background: white;
+						}
+						.combobox-selector:active {
+							background: #E7E7E7;
+						}
+							.combobox-selector span {
+								position: absolute;
+								left: 6px;
+								height: 24px;
+								line-height: 24px;
+								font-size: 14px;
+							}
+							.combobox-selector img {
+								position: absolute;
+								right: 6px;
+								top: 4px;
+								width: 16px;
+								height: 16px;
+							}
+
+					.slider {
+						position: relative;
+						width: calc(100% - 16px);
+						height: 56px;
+						margin: 4px 24px;
+						transition: all 0.5s;
+					}
+						.slider-title {
+							position: absolute;
+							left: 0;
+							top: 50%;
+							width: 88px;
+							transform: translateY(-50%);
+							font-size: 14px;
+							text-align: center;
+						}
+						.slider-module {
+							position: absolute;
+							left: 104px;
+							width: calc(100% - 88px - 88px - 32px);
+							height: 100%;
+							font-size: 14px;
+						}
+							.slider-module-track {
+								position: absolute;
+								top: 17px;
+								width: 100%;
+								height: 6px;
+								background: #FFF;
+								border-radius: 8px;
+								box-shadow: 0px 2px 2px 0px rgba(0, 0, 0, 0.15) inset;
+											
+							}
+							.slider-module-track-background {
+								position: absolute;
+								top: 17px;
+								height: 6px;
+								background: #49e;
+								border-radius: 8px;
+								box-shadow: 0px 2px 2px 0px rgba(0, 0, 0, 0.15) inset;
+							}
+							.slider-module-slipper {
+								position: absolute;
+								top: 4px;
+								transform: translateX(-50%);
+								width: 18px;
+								height: 30px;
+								background: linear-gradient(180deg, #fefefe, #f0f0f0);
+								border-radius: 4px;
+								box-shadow: 0px 2px 2px 0px rgba(0, 0, 0, 0.2);
+							}
+							.slider-module-slipper:hover {
+								background: linear-gradient(180deg, #ffffff, #fefefe);
+							}
+							.slider-module-slipper:active {
+								background: linear-gradient(180deg, #f0f0f0, #ededed);
+							}
+							/*
+							.slider-module-slipper:before {
+								position: absolute;
+								display: inline-block;
+								left: 0;
+								content: "";
+								width: 18px;
+								height: 15px;
+								background: linear-gradient(-90deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.3));
+								border-radius: 1px 1px 18px 18px / 1px 1px 3px 3px;
+							}
+							*/
+							.slider-module-mark {
+								position: absolute;
+								bottom: 0px;
+								transform: translateX(-50%);
+								width: 96px;
+								font-size: 10px;
+								text-align: center;
+								opacity: 0.7;
+							}
+							.slider-module-mark:before {
+								content: "";
+								position: absolute;
+								left: calc(50% - 2px);
+								top: -8px;
+								width: 4px;
+								height: 4px;
+								background: white;
+								border-radius: 4px;
+								box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.2) inset;
+								z-index: -10;
+							}
+						.slider-text {
+							position: absolute;
+							right: 0px;
+							top: 50%;
+							transform: translateY(-50%);
+							width: 88px;
+							font-size: 14px;
+							text-align: center;
+						}
+					
+					.checkbox {
+						position: relative;
+						width: 210px;
+						height: 56px;
+						margin: 4px 24px;
+						transition: all 0.5s;
+					}
+						.checkbox-title {
+							position: absolute;
+							left: 0;
+							top: 50%;
+							width: 88px;
+							transform: translateY(-50%);
+							font-size: 14px;
+							text-align: center;
+						}
+						.checkbox-track {
+							position: absolute;
+							right: 0;
+							height: 24px;
+							width: 88px;
+							margin: 15px 0;
+							border-radius: 24px;
+							background: #F7F7F7;
+							border: #CCC 1px solid;
+							box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.1) inset;
+						}
+							.checkbox-track-background {
+								position: absolute;
+								height: 24px;
+								border-radius: 24px;
+								background: #49e;
+								box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.1) inset;
+								transition: all 0.15s ease-out;
+							}
+							.checkbox-slipper {
+								position: absolute;
+								top: 0;
+								height: 24px;
+								width: 24px;
+								border-radius: 50%;
+								background: linear-gradient(180deg, #fefefe, #f0f0f0);
+								box-shadow: 0px 1px 3px 0px rgba(0, 0, 0, 0.3);
+								transform: scale(1.25);
+								transition: all 0.15s ease-out;
+							}
+							.checkbox-slipper:hover {
+								background: linear-gradient(180deg, #ffffff, #fefefe);
+							}
+							.checkbox-slipper:active {
+								background: linear-gradient(180deg, #f0f0f0, #ededed);								
+							}
+							
+					#para_preview {
+						position: relative;
+						width: calc(100% - 16px);
+						height: 128px;
+						border-bottom: #DDD 2px solid;
+						margin: 4px 24px;						
+					}
+						#para_preview-text {
+							position: absolute;
+							width: calc(100% - 180px);
+							height: 120px;
+							font-size: 14px;
+						}
+						#para_preview-text p {
+							margin: 4px 0;
+						}
+						#para_preview-save {
+							position: absolute;
+							right: -12px;
+							top: 40px;
+						}
+						.presetbutton {
+							position: relative;
+							height: 40px;
+							line-height: 40px;
+							/*width: 120px;*/
+							text-align: center;
+							padding-left: 40px;
+							padding-right: 10px;
+							border-radius: 10px;
+							background: linear-gradient(180deg, #fefefe, #f0f0f0);
+							box-shadow: 0px 1px 3px 0px rgba(0, 0, 0, 0.3);
+							margin: 8px 12px;
+						}
+						.presetbutton:active {
+							background: linear-gradient(180deg, #e7e7e7, #f0f0f0);
+						}
+						.presetbutton:hover:before {
+							position: absolute;
+							left: 0;
+							content: "";
+							width: 100%;
+							height: 100%;
+							border-radius: 10px;
+							background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+						}
+						.presetbutton img {
+							position: absolute;
+							left: 10px;
+							top: 10px;
+							width: 20px;
+							height: 20px;
+						}
+	
+	/* 状态栏 */
+	#statusbar {
+		position: absolute;
+		bottom: 0;
+		width: 100%;
+		height: 24px;
+		z-index: 5;
+		background: rgb(70, 110, 220);	
+	}
+		#ffmpeg-version {
+			float: left;
+			margin: 0px 8px 0px 16px;
+			text-align: left;
+			font-size: 13px;
+			line-height: 24px;
+			color: white;
+		}
+		#infoicon {
+			float: left;
+			padding: 0px 8px;
+			text-align: left;
+			font-size: 13px;
+			line-height: 24px;
+			color: white;
+			vertical-align: middle;
+			-webkit-user-select: none;
+		}
+		#infoicon:hover, .infoicon-selected {
+			background: rgba(0, 0, 0, 0.4);
+		}
+		#infoicon img {
+			position: relative;
+			top: 2px;
+			height: 13px;
+			margin: 0px 8px 0px 0px;
+		}
+		#output-folder {
+			float: right;
+			margin: 0px 16px 0px 8px;
+			font-size: 13px;
+			line-height: 24px;
+			text-align: right;
+			color: white;
+		}
+
+	/* 消息中心 */
+	#infocenter {
+		position: absolute;
+		top: 28px;
+		bottom: 24px;
+		left: 0px;
+		right: 0px;
+		z-index: 2;
+		pointer-events: none;					/* 后期由 js 来改变 */
+	}
+		#infocenter-background {
+			width: 100%;
+			height: 100%;
+			background: rgba(0, 0, 0, 0.1);
+			opacity: 0;							/* 后期由 js 来改变 */
+			transition: opacity 0.3s;
+		}
+		#infocenter-main {
+			position: absolute;
+			top: 54px;
+			left: 1px;
+			right: 1px;
+			bottom: 0px;
+			background: rgba(247, 247, 247, 1);
+			box-shadow: 0px 1px 2px #F7F7F7,
+						0px 2px 36px rgba(0, 0, 0, 0.5);
+			border-radius: 16px 16px 0px 0px;
+			transform: translateY(30%);			/* 后期由 js 来改变 */
+			opacity: 0;							/* 后期由 js 来改变 */
+			transition: opacity 0.3s, transform 0.3s;
+		}
+		#infocenter-title {
+			position: absolute;
+			top: 12px;
+			left: 50%;
+			-webkit-transform: translateX(-50%);
+			font-size: 22px;
+			color: #25E;
+		}
+		#infocenter-crossline {
+			position: absolute;
+			top: 48px;
+			height: 1px;
+			left: 5%;
+			right: 5%;
+			background: linear-gradient(90deg, rgba(127, 127, 127, 0.1), rgba(127, 127, 127, 0.4), rgba(127, 127, 127, 0.1));
+		}
+		#infocenter-box {
+			position: absolute;
+			top: 60px;
+			bottom: 20px;
+			left: calc(10% - 32px);
+			right: calc(10% - 32px);
+			overflow-y: auto;
+			/*border: lightgray 1px dashed;*/
+		}
+			.infocenter-info {
+				position: relative;
+				width: 100%;
+				padding: 4px 0px;
+				border-bottom: #DDD 1px solid;
+			}
+				.infocenter-info img {
+					position: absolute;
+					left: 8px;
+					top: 50%;
+					-webkit-transform: translateY(-50%);
+					height: 16px;
+				}
+				.infocenter-info p {
+					font-size: 14px;
+					line-height: 1.4em;
+					color: #555;
+					margin: 0px calc(5em + 20px) 0px 32px;
+				}
+				.infocenter-info span {
+					position: absolute;
+					right: 28px;
+					top: 50%;
+					-webkit-transform: translateY(-50%);
+					font-size: 12px;
+					line-height: 1.4em;
+					color: #777;
+				}
+				.infocenter-info div {
+					position: absolute;
+					right: 8px;
+					top: 50%;
+					-webkit-transform: translateY(-50%);
+					height: 16px;
+					width: 16px;
+					background-image: url(image/×.svg);
+					background-size: contain;
+					opacity: 0.5;
+				}
+				.infocenter-info div:hover {
+					opacity: 1;
+				}
+				.infocenter-info div:active {
+					opacity: 0.7;
+				}
+		#infocenter-box::-webkit-scrollbar {
+			width: 10px;
+			background: transparent;
+		}
+		#infocenter-box::-webkit-scrollbar-thumb {
+			border-radius: 10px;
+			background: rgba(127, 127, 127, 0.2);
+		}
+		#infocenter-box::-webkit-scrollbar-track {
+			border-radius: 10px;
+			background: rgba(127, 127, 127, 0.1);
+		}
+
+	/* combobox */
+	#popupmenu {
+		position: absolute;
+		top: 0;
+		width: 100%;
+		height: 100%;
+		z-index: 10;
+		/*visibility: hidden;*/
+	}
+		#popupmenu-background {
+			position: absolute;
+			width: 100%;
+			height: 100%;
+			background: transparent;
+		}
+		#popupmenu-list {
+			position: absolute;
+			width: 200px;
+			background: #fbfbfb;
+			box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.3);
+			border-radius: 8px;
+			overflow-y: auto;
+			font-size: 0;
+			transition: all 0.25s;
+		}
+		.popupmenu-list-fold {
+			transform: scaleY(0) translateY(100%);
+		}
+		.popupmenu-list-open {
+			transform: scaleY(1) translateY(0%);
+		}
+			.popupmenu-item {
+				display: inline-block;
+				position: relative;
+				width: 100%;
+				height: 40px;
+				/*border: #CCA329 1px solid;*/
+				border-bottom: #EEE 1px solid;
+				box-sizing: border-box;
+				padding-left: 40px;
+				font-size: 16px;
+				line-height: 40px;
+			}
+				.popupmenu-item:hover {
+					background: #bdf;
+				}
+				.popupmenu-item div {
+					position: absolute;
+					left: 10px;
+					top: 10px;
+					width: 20px;
+					height: 20px;
+					background-size: cover;
+				}
+				
+		#popupmenu-description {
+			display: inline-block;
+			position: absolute;
+			height: 200px;
+			background: #fbfbfb;
+			box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.3);
+			border-radius: 12px;
+			font-size: 14px;
+			pointer-events: none;
+			overflow: hidden;
+			transition: all 0.2s;
+		}
+		.popupmenu-description-open {
+			padding: 12px;
+			width: 300px;
+		}
+		.popupmenu-description-fold {
+			padding: 0px;
+			width: 0px;
+		}
+
+	/* 消息框 */
+	#messagebox {
+		position: absolute;
+		top: 0;
+		width: 100%;
+		height: 100%;
+		z-index: 10;
+		visibility: hidden;
+	}
+		#messagebox-background {
+			position: absolute;
+			width: 100%;
+			height: 100%;
+			background: rgba(255, 255, 255, 0.4);
+		}
+		#messagebox-box {
+			position: relative;
+			left: 50%;
+			top: 50%;
+			-webkit-transform: translate(-50%, -50%);
+			width: 400px;
+			height: 200px;
+			background: #EEE;
+			border-radius: 16px;
+			overflow: hidden;
+			box-shadow: 0px 8px 24px 0px rgba(0, 0, 0, 0.15);
+		}
+			#messagebox-titlebar {
+				height: 28px;
+				z-index: 1;
+				background: linear-gradient(180deg, white, #EEE);
+				box-shadow: 0px 10px 20px -5px rgba(0, 0, 0, 0.15),
+							0px  4px  8px -3px rgba(0, 0, 0, 0.1);
+			}
+			#messagebox-titletext {
+				position: absolute;
+				display: inline-block;
+				top: 3px;
+				width: 100%;
+				font-size: 16px;
+				text-align: center;			
+			}
+			#messagebox-contenttext {
+				position: relative;
+				display: block;
+				top: 48px;
+				left: 50%;
+				-webkit-transform: translateX(-50%);
+				width: 85%;
+				text-align: center;
+			}
+			.msgbutton {
+				width: 100px;
+				height: 32px;
+				line-height: 32px;
+				border-radius: 32px;
+				text-align: center;
+				-webkit-user-select: none;
+			}
+			.msgbutton:hover:before {
+				position: absolute;
+				display: inline-block;
+				left: 0;
+				content: "";
+				width: 100px;
+				height: 32px;
+				border-radius: 32px;
+				background: -webkit-linear-gradient(-90deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+			}
+			.msgbutton-skyblue {
+				background: linear-gradient(180deg, #7BF, #5AE);
+				box-shadow: 0px -1px 1px 0px rgba(255, 255, 255, 0.3),
+							0px 1px 1px 0px rgba(16, 16, 16, 0.15),
+							0px 2px 6px 0px rgba(0, 0, 0, 0.15),
+							0px 4px 16px -4px #7BF;
+			}
+			.msgbutton-skyblue:hover {
+				box-shadow: 0px -1px 1px 0px rgba(255, 255, 255, 0.3),
+							0px 1px 1px 0px rgba(16, 16, 16, 0.15),
+							0px 2px 6px 0px rgba(0, 0, 0, 0.15),
+							0px 4px 24px 0px #7BF;				
+			}
+			.msgbutton-skyblue:active {
+				background: linear-gradient(180deg, #48C, #5AE);
+			}
+			.msgbutton-white {
+				background: linear-gradient(180deg, #FFF, #DDD);
+				box-shadow: 0px -1px 1px 0px rgba(255, 255, 255, 0.3),
+							0px 1px 1px 0px rgba(16, 16, 16, 0.15),
+							0px 2px 6px 0px rgba(0, 0, 0, 0.15),
+							0px 4px 16px -4px #FFF;
+			}
+			.msgbutton-white:hover {
+				box-shadow: 0px -1px 1px 0px rgba(255, 255, 255, 0.3),
+							0px 1px 1px 0px rgba(16, 16, 16, 0.15),
+							0px 2px 6px 0px rgba(0, 0, 0, 0.15),
+							0px 4px 24px 0px #FFF;				
+			}
+			.msgbutton-white:active {
+				background: linear-gradient(180deg, #BBB, #DDD);
+			}
+			#messageconfirm {
+				position: absolute;
+				top: 130px;
+				left: calc(50% - 120px - 20px);
+			}
+			#messagecancel {
+				position: absolute;
+				top: 130px;
+				left: calc(50% + 20px);
+			}
+
+	.popup-box {
+		position: absolute;
+		bottom: 10%;
+		left: 50%;
+		transform: translateX(-50%);
+		padding: 12px;
+		background: #FBFBFB;
+		opacity: 0;
+		transition: opacity 0.3s linear;
+		border: #AAA 1px solid;
+		border-radius: 12px;
+		box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+		z-index: 5;
+	}
+	.popup-box-ok {
+		background: linear-gradient(180deg, #5e5, #3c3);
+		border-color: #27a727;
+		box-shadow: 0px 4px 8px rgba(85, 238, 85, 0.3);
+		color: white;
+	}
+	.popup-box-warning {
+		background: linear-gradient(180deg,#ffd966,#ffcc33);				
+		border-color: #ddbb44;
+		box-shadow: 0px 4px 8px rgba(160, 127, 0, 0.3);
+		color: #665214;
+	}
+	.popup-box-error {
+		background: #F76767;
+		border-color: #B33;
+		box-shadow: 0px 4px 8px rgba(127, 0, 0, 0.3);
+		color: white;
+	}
+		.popup-message {
+			font-size: 16px;
+			line-height: 1.3em;
+			text-align: center;
+		}
+
+
+.invisible {
+	display: none;
+}
