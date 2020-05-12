@@ -62,7 +62,17 @@ body::-webkit-scrollbar {
 				transition: margin 0.3s;
 			}
 			#icon-long, #icon-square {
+				display: inline-block;
+				position: absolute;
+				height: 28px;
+				width: 56px;
 				transition: opacity 0.25s;
+			}
+			#icon-long {
+				background: url(image/icon-long.png) center/contain no-repeat;
+			}
+			#icon-square {
+				background: url(image/icon-square.png) center/contain no-repeat;
 			}
 			.idle #titlebar-icons {
 				display: inline-block;
@@ -79,13 +89,9 @@ body::-webkit-scrollbar {
 				/*border: blue 1px solid;*/
 			}
 				.idle #icon-long, .running #icon-square {
-					position: absolute;
-					height: 100%;
 					opacity: 1;
 				}
 				.idle #icon-square, .running #icon-long {
-					position: absolute;
-					height: 100%;
 					opacity: 0;
 				}
 			#titletext {
@@ -378,19 +384,21 @@ body::-webkit-scrollbar {
 
 					#dropfilesdiv {
 						position: absolute;
+						display: flex;
 						width: 100%;
-						height: calc(40% + 40px);
+						height: calc(40% + 40px);	/* Height 由 js 计算 */
 						min-height: 80px;
-						transition: top 0.5s;
+						transition: top 0.5s, height 0.5s;
 					}
 						#dropfilesimage {
-							position: absolute;
-							width: auto;
+							background-image: url(image/drop_files.png);
+							background-size: contain;
+							background-position: center;
+							background-repeat: no-repeat;
+							margin: auto;
+							width: 100%;
 							max-height: 400px;
 							height: 100%;
-							left: 50%;
-							top: 50%;
-							transform: translate(-50%, -50%);
 						}
 				
 				/* 指令窗口 */
@@ -591,12 +599,13 @@ body::-webkit-scrollbar {
 								line-height: 24px;
 								font-size: 14px;
 							}
-							.combobox-selector img {
+							.combobox-selector-img {
 								position: absolute;
 								right: 6px;
 								top: 4px;
 								width: 16px;
 								height: 16px;
+								background: url(image/menu_button.svg) center/contain no-repeat;
 							}
 
 					.slider {
@@ -836,11 +845,14 @@ body::-webkit-scrollbar {
 		#infoicon:hover, .infoicon-selected {
 			background: rgba(0, 0, 0, 0.4);
 		}
-		#infoicon img {
+		#infoicon div {
+			display: inline-block;
 			position: relative;
 			top: 2px;
 			height: 13px;
+			width: 13px;
 			margin: 0px 8px 0px 0px;
+			background: url("image/info-transparent.svg") center/contain no-repeat;
 		}
 		#output-folder {
 			float: right;
@@ -913,12 +925,28 @@ body::-webkit-scrollbar {
 				padding: 4px 0px;
 				border-bottom: #DDD 1px solid;
 			}
-				.infocenter-info img {
+				.infocenter-info-img {
 					position: absolute;
 					left: 8px;
 					top: 50%;
 					-webkit-transform: translateY(-50%);
 					height: 16px;
+					width: 16px;
+					background-position: center;
+					background-size: contain;
+					background-repeat: no-repeat;
+				}
+				.img-info {
+					background-image: url(image/info.svg);
+				}
+				.img-tick {
+					background-image: url(image/tick.svg);
+				}
+				.img-warning {
+					background-image: url(image/warning.svg);
+				}
+				.img-error {
+					background-image: url(image/error.svg);
 				}
 				.infocenter-info p {
 					font-size: 14px;
@@ -935,7 +963,7 @@ body::-webkit-scrollbar {
 					line-height: 1.4em;
 					color: #777;
 				}
-				.infocenter-info div {
+				.infocenter-info-delete {
 					position: absolute;
 					right: 8px;
 					top: 50%;
@@ -1039,156 +1067,6 @@ body::-webkit-scrollbar {
 		.popupmenu-description-fold {
 			padding: 0px;
 			width: 0px;
-		}
-
-	/* 消息框 */
-	#messagebox {
-		position: absolute;
-		top: 0;
-		width: 100%;
-		height: 100%;
-		z-index: 10;
-		visibility: hidden;
-	}
-		#messagebox-background {
-			position: absolute;
-			width: 100%;
-			height: 100%;
-			background: rgba(255, 255, 255, 0.4);
-		}
-		#messagebox-box {
-			position: relative;
-			left: 50%;
-			top: 50%;
-			-webkit-transform: translate(-50%, -50%);
-			width: 400px;
-			height: 200px;
-			background: #EEE;
-			border-radius: 16px;
-			overflow: hidden;
-			box-shadow: 0px 8px 24px 0px rgba(0, 0, 0, 0.15);
-		}
-			#messagebox-titlebar {
-				height: 28px;
-				z-index: 1;
-				background: linear-gradient(180deg, white, #EEE);
-				box-shadow: 0px 10px 20px -5px rgba(0, 0, 0, 0.15),
-							0px  4px  8px -3px rgba(0, 0, 0, 0.1);
-			}
-			#messagebox-titletext {
-				position: absolute;
-				display: inline-block;
-				top: 3px;
-				width: 100%;
-				font-size: 16px;
-				text-align: center;			
-			}
-			#messagebox-contenttext {
-				position: relative;
-				display: block;
-				top: 48px;
-				left: 50%;
-				-webkit-transform: translateX(-50%);
-				width: 85%;
-				text-align: center;
-			}
-			.msgbutton {
-				width: 100px;
-				height: 32px;
-				line-height: 32px;
-				border-radius: 32px;
-				text-align: center;
-				-webkit-user-select: none;
-			}
-			.msgbutton:hover:before {
-				position: absolute;
-				display: inline-block;
-				left: 0;
-				content: "";
-				width: 100px;
-				height: 32px;
-				border-radius: 32px;
-				background: -webkit-linear-gradient(-90deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
-			}
-			.msgbutton-skyblue {
-				background: linear-gradient(180deg, #7BF, #5AE);
-				box-shadow: 0px -1px 1px 0px rgba(255, 255, 255, 0.3),
-							0px 1px 1px 0px rgba(16, 16, 16, 0.15),
-							0px 2px 6px 0px rgba(0, 0, 0, 0.15),
-							0px 4px 16px -4px #7BF;
-			}
-			.msgbutton-skyblue:hover {
-				box-shadow: 0px -1px 1px 0px rgba(255, 255, 255, 0.3),
-							0px 1px 1px 0px rgba(16, 16, 16, 0.15),
-							0px 2px 6px 0px rgba(0, 0, 0, 0.15),
-							0px 4px 24px 0px #7BF;				
-			}
-			.msgbutton-skyblue:active {
-				background: linear-gradient(180deg, #48C, #5AE);
-			}
-			.msgbutton-white {
-				background: linear-gradient(180deg, #FFF, #DDD);
-				box-shadow: 0px -1px 1px 0px rgba(255, 255, 255, 0.3),
-							0px 1px 1px 0px rgba(16, 16, 16, 0.15),
-							0px 2px 6px 0px rgba(0, 0, 0, 0.15),
-							0px 4px 16px -4px #FFF;
-			}
-			.msgbutton-white:hover {
-				box-shadow: 0px -1px 1px 0px rgba(255, 255, 255, 0.3),
-							0px 1px 1px 0px rgba(16, 16, 16, 0.15),
-							0px 2px 6px 0px rgba(0, 0, 0, 0.15),
-							0px 4px 24px 0px #FFF;				
-			}
-			.msgbutton-white:active {
-				background: linear-gradient(180deg, #BBB, #DDD);
-			}
-			#messageconfirm {
-				position: absolute;
-				top: 130px;
-				left: calc(50% - 120px - 20px);
-			}
-			#messagecancel {
-				position: absolute;
-				top: 130px;
-				left: calc(50% + 20px);
-			}
-
-	.popup-box {
-		position: absolute;
-		bottom: 10%;
-		left: 50%;
-		transform: translateX(-50%);
-		padding: 12px;
-		background: #FBFBFB;
-		opacity: 0;
-		transition: opacity 0.3s linear;
-		border: #AAA 1px solid;
-		border-radius: 12px;
-		box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
-		z-index: 5;
-	}
-	.popup-box-ok {
-		background: linear-gradient(180deg, #5e5, #3c3);
-		border-color: #27a727;
-		box-shadow: 0px 4px 8px rgba(85, 238, 85, 0.3);
-		color: white;
-	}
-	.popup-box-warning {
-		background: linear-gradient(180deg,#ffd966,#ffcc33);				
-		border-color: #ddbb44;
-		box-shadow: 0px 4px 8px rgba(160, 127, 0, 0.3);
-		color: #665214;
-	}
-	.popup-box-error {
-		background: #F76767;
-		border-color: #B33;
-		box-shadow: 0px 4px 8px rgba(127, 0, 0, 0.3);
-		color: white;
-	}
-		.popup-message {
-			font-size: 16px;
-			line-height: 1.3em;
-			text-align: center;
 		}
 
 

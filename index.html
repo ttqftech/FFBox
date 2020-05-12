@@ -2,9 +2,9 @@
 <html>
 	<head>
 		<meta charset="utf-8">
-		<title>FFBox - v1.0</title>
-		<link href="index.css" rel="stylesheet" type="text/css" />
-		<link href="taskitem.css" rel="stylesheet" type="text/css" />
+		<title>FFBox - v1.1</title>
+		<link href="skin/default (light)/index.css" rel="stylesheet" type="text/css" />
+		<link href="skin/default (light)/taskitem.css" rel="stylesheet" type="text/css" />
 		<script>window.$ = window.jQuery = require('./js/jquery.min@2.1.4.js')</script>	<!-- electron 与 jQuery 发生冲突，需使用这种方法导入 -->
 		<script src="https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.js"></script>
 		<!--
@@ -22,10 +22,10 @@
 				<div id="titlebar-background" class="titlebar-background-green"></div>
 				<div id="titlebar-title">
 					<div id="titlebar-icons">
-						<img id="icon-long" src="image/icon-long.png" />
-						<img id="icon-square" src="image/icon-square.png" />
+						<div id="icon-long"></div>
+						<div id="icon-square"></div>
 					</div>
-					<span id="titletext">丹参盒 v1.0</span>
+					<span id="titletext">丹参盒 v1.1</span>
 				</div>
 				<div id="titlebar-control">
 					<div class="tri-button" id="minimum">
@@ -105,7 +105,7 @@
 												<div class="taskitem-background-white"></div>
 												<div class="taskitem-background-progress"></div>
 												<div class="taskitem-previewbox">
-													<img src="image/preview.png" />
+													<img />
 												</div>
 												<span class="taskitem-timing">00:00</span>
 												<span class="taskitem-filename">文件名文件名文件名文件名文件名.filename</span>
@@ -166,7 +166,7 @@
 									</div>
 									-->
 									<div id="dropfilesdiv">
-										<img id="dropfilesimage" src="image/drop_files.png" onclick="debugLauncher();" draggable="false" />
+										<div id="dropfilesimage" onclick="debugLauncher();" draggable="false"></div>
 									</div>
 								</div>
 
@@ -260,7 +260,7 @@
 								<div class="combobox-title">容器/格式</div>
 								<div class="combobox-selector" id="format_format-div" onclick="popupMenu('format_format')">
 									<span class="combobox-selector-text" id="format_format-text">{{ data.format_format }}</span>
-									<img class="combobox-selector-img" src="image/menu_button.svg" />
+									<div class="combobox-selector-img"></div>
 								</div>
 							</div>
 							<div class="checkbox">
@@ -274,7 +274,7 @@
 								<div class="combobox-title">硬件解码</div>
 								<div class="combobox-selector" id="format_hwaccel-div" onclick="popupMenu('format_hwaccel')">
 									<span class="combobox-selector-text" id="format_hwaccel-text">{{ data.format_hwaccel }}</span>
-									<img class="combobox-selector-img" src="image/menu_button.svg" />
+									<div class="combobox-selector-img"></div>
 								</div>
 							</div>
 						</div>
@@ -285,28 +285,28 @@
 								<div class="combobox-title">视频编码</div>
 								<div class="combobox-selector" id="video_vcodec-div" onclick="popupMenu('video_vcodec')">
 									<span class="combobox-selector-text" id="video_vcodec-text">{{ data.video_vcodec }}</span>
-									<img class="combobox-selector-img" src="image/menu_button.svg" />
+									<div class="combobox-selector-img"></div>
 								</div>
 							</div>
 							<div class="combobox">
 								<div class="combobox-title">硬件编码</div>
 								<div class="combobox-selector" id="video_hwencode-div" onclick="popupMenu('video_hwencode')">
 									<span class="combobox-selector-text" id="video_hwencode-text">{{ data.video_hwencode }}</span>
-									<img class="combobox-selector-img" src="image/menu_button.svg" />
+									<div class="combobox-selector-img"></div>
 								</div>
 							</div>
 							<div class="combobox">
 								<div class="combobox-title">分辨率</div>
 								<div class="combobox-selector" id="video_resolution-div" onclick="popupMenu('video_resolution')">
 									<span class="combobox-selector-text" id="video_resolution-text">{{ data.video_resolution }}</span>
-									<img class="combobox-selector-img" src="image/menu_button.svg" />
+									<div class="combobox-selector-img"></div>
 								</div>
 							</div>
 							<div class="combobox">
 								<div class="combobox-title">输出帧速</div>
 								<div class="combobox-selector" id="video_fps-div" onclick="popupMenu('video_fps')">
 									<span class="combobox-selector-text" id="video_fps-text">{{ data.video_fps }}</span>
-									<img class="combobox-selector-img" src="image/menu_button.svg" />
+									<div class="combobox-selector-img"></div>
 								</div>
 							</div>
 							<!--
@@ -314,7 +314,7 @@
 								<div class="combobox-title">码率模式</div>
 								<div class="combobox-selector" id="video_ratecontrol-div" onclick="popupMenu('video_ratecontrol')">
 									<span class="combobox-selector-text" id="video_ratecontrol-text">{{ data.video_ratecontrol }}</span>
-									<img class="combobox-selector-img" src="image/menu_button.svg" />
+									<div class="combobox-selector-img"></div>
 								</div>
 							</div>
 							<div class="slider">
@@ -371,28 +371,28 @@
 								<div class="combobox-title">规格</div>
 								<div class="combobox-selector" id="video_profile-div" onclick="popupMenu('video_profile')">
 									<span class="combobox-selector-text" id="video_profile-text">{{ data.video_profile }}</span>
-									<img class="combobox-selector-img" src="image/menu_button.svg" />
+									<div class="combobox-selector-img"></div>
 								</div>
 							</div>
 							<div class="combobox">
 								<div class="combobox-title">级别</div>
 								<div class="combobox-selector" id="video_level-div" onclick="popupMenu('video_level')">
 									<span class="combobox-selector-text" id="video_level-text">{{ data.video_level }}</span>
-									<img class="combobox-selector-img" src="image/menu_button.svg" />
+									<div class="combobox-selector-img"></div>
 								</div>
 							</div>
 							<div class="combobox">
 								<div class="combobox-title">编码倾重</div>
 								<div class="combobox-selector" id="video_tune-div" onclick="popupMenu('video_tune')">
 									<span class="combobox-selector-text" id="video_tune-text">{{ data.video_tune }}</span>
-									<img class="combobox-selector-img" src="image/menu_button.svg" />
+									<div class="combobox-selector-img"></div>
 								</div>
 							</div>
 							<div class="combobox">
 								<div class="combobox-title">像素格式</div>
 								<div class="combobox-selector" id="video_pixelfmt-div" onclick="popupMenu('video_pixelfmt')">
 									<span class="combobox-selector-text" id="video_pixelfmt-text">{{ data.video_pixelfmt }}</span>
-									<img class="combobox-selector-img" src="image/menu_button.svg" />
+									<div class="combobox-selector-img"></div>
 								</div>
 							</div>
 							-->
@@ -411,7 +411,7 @@
 								<div class="combobox-title">音频编码</div>
 								<div class="combobox-selector" id="audio_acodec-div" onclick="popupMenu('audio_acodec')">
 									<span class="combobox-selector-text" id="audio_acodec-text">{{ data.audio_acodec }}</span>
-									<img class="combobox-selector-img" src="image/menu_button.svg" />
+									<div class="combobox-selector-img"></div>
 								</div>
 							</div>
 							<div class="slider">
@@ -480,7 +480,7 @@
 			<!-- 状态栏 -->
 			<div id="statusbar">
 				<div id="ffmpeg-version">当前 FFmpeg 版本：检测中</div>
-				<div id="infoicon" onclick="infocenter_select();"><img src="image/info-transparent.svg" /><span id="infocount">0</span></div>
+				<div id="infoicon" onclick="infocenter_select();"><div src="image/info-transparent.svg"></div><span id="infocount">0</span></div>
 				<div id="output-folder">输出文件夹：与输入相同</div>
 			</div>
 			
@@ -508,7 +508,7 @@
 				<div id="popupmenu-description" class="popupmenu-description-fold"></div>
 			</div>
 
-			<!-- 提示框 -->
+			<!-- 提示框
 			<div id="messagebox">
 				<div id="messagebox-background"></div>
 				<div id="messagebox-box">
@@ -522,14 +522,18 @@
 					</div>
 				</div>
 			</div>
+			-->
 
 			<!-- 气泡 
-			<div class="popup-box">
-				<div class="popup-message"></div>
+			<div class="popup">
+				<div class="popup-box">
+					<div class="popup-message"></div>
+				</div>	
 			</div>
 			-->
 		</div>
 		
+		<script src="msgbox.js"></script>
 		<script src="index.js"></script>
 	</body>
 </html>

@@ -64,10 +64,15 @@
 			.taskitem-previewbox {
 				transition: top 0.5s, height 0.5s;
 			}
-			.taskitem-previewbox img {
+			.taskitem-previewbox-img {
+				background: url(image/preview.png) center/contain no-repeat;
+				width: 100%;
+				height: 100%;
 			}
 			.taskitem-timing {
 				transition: left 0.5s, top 0.5s, font-size 0.5s;
+				text-align: center;
+				white-space: nowrap;
 			}
 			.taskitem-filename {
 				transition: left 0.5s, top 0.5s, width 0.5s, font-size 0.5s;
@@ -80,7 +85,7 @@
 				transition: right 0.5s, width 0.5s;
 			}
 			.taskitem-infoafter {
-				transition: right 0.5s, width 0.5s, transform 0.5s;
+				transition: right 0.5s, top 0.5s, width 0.5s, transform 0.5s;
 			}
 			.taskitem-rightarrow {
 				transition: right 0.5s, opacity 0.5s;
@@ -92,10 +97,16 @@
 				.taskitem-img-acodec {
 				}
 				.taskitem-span-format {
+					text-align: center;
+					white-space: nowrap;
 				}
 				.taskitem-span-vcodec {
+					text-align: center;
+					white-space: nowrap;
 				}
 				.taskitem-span-acodec {
+					text-align: center;
+					white-space: nowrap;
 				}
 				.taskitem-img-size {
 				}
@@ -104,10 +115,16 @@
 				.taskitem-img-aratecontrol {
 				}
 				.taskitem-span-size {
+					text-align: center;
+					white-space: nowrap;
 				}
 				.taskitem-span-vratecontrol {
+					text-align: center;
+					white-space: nowrap;
 				}
 				.taskitem-span-aratecontrol {
+					text-align: center;
+					white-space: nowrap;
 				}
 				.taskitem-info div {
 					transition: left 0.5s, top 0.5s;
@@ -187,8 +204,6 @@
 				border: #DDD 1px dashed;
 			}
 			.taskitem-large .taskitem-previewbox img {
-				max-width: 100%;
-				max-height: 100%;
 			}
 			.taskitem-large .taskitem-timing {
 				position: absolute;
@@ -196,7 +211,6 @@
 				top: 4px;
 				width: 96px;
 				font-size: 12px;
-				text-align: center;
 			}
 			.taskitem-large .taskitem-filename {
 				position: absolute;
@@ -209,8 +223,7 @@
 			}
 			.taskitem-large .taskitem-info {
 				height: 68px;
-				width: 336px;		/* 由内容计算得 */
-				/*border: #DDD 1px dashed;*/
+				width: 336px;
 			}
 			.taskitem-large .taskitem-infobefore {
 				position: absolute;
@@ -297,10 +310,8 @@
 				.taskitem-large .taskitem-info span {
 					position: absolute;
 					display: block;
-					width: 72px;
+					width: 0px;
 					font-size: 14px;
-					text-align: left;
-					overflow: hidden;
 					/*border: #DDD 1px dashed;*/
 				}
 				.taskitem-large .taskitem-size-compact {
@@ -390,8 +401,6 @@
 				border: #DDD 1px dashed;
 			}
 			.taskitem-large-run .taskitem-previewbox img {
-				max-width: 100%;
-				max-height: 100%;
 			}
 			.taskitem-large-run .taskitem-timing {
 				position: absolute;
@@ -399,7 +408,6 @@
 				top: 4px;
 				width: 96px;
 				font-size: 12px;
-				text-align: center;
 			}
 			.taskitem-large-run .taskitem-filename {
 				position: absolute;
@@ -412,8 +420,7 @@
 			}
 			.taskitem-large-run .taskitem-info {
 				height: 68px;
-				width: 336px;		/* 由内容计算得 */
-				/*border: #DDD 1px dashed;*/
+				width: 336px;
 			}
 			.taskitem-large-run .taskitem-infobefore {
 				position: absolute;
@@ -502,10 +509,8 @@
 				.taskitem-large-run .taskitem-info span {
 					position: absolute;
 					display: block;
-					width: 72px;
+					width: 0px;
 					font-size: 14px;
-					text-align: left;
-					overflow: hidden;
 					/*border: #DDD 1px dashed;*/
 				}
 				.taskitem-large-run .taskitem-size-compact {
@@ -593,16 +598,12 @@
 				border: #DDD 1px dashed;
 			}
 			.taskitem-small .taskitem-previewbox img {
-				max-width: 100%;
-				max-height: 100%;
 			}
 			.taskitem-small .taskitem-timing {
 				position: absolute;
 				left: 112px;
 				top: 38px;
-				width: 96px;
 				font-size: 14px;
-				text-align: left;
 			}
 			.taskitem-small .taskitem-filename {
 				position: absolute;
@@ -615,8 +616,7 @@
 			}
 			.taskitem-small .taskitem-info {
 				height: 48px;
-				width: 336px;		/* 由内容计算得 */
-				/*border: #DDD 1px dashed;*/
+				width: 336px;
 			}
 			.taskitem-small .taskitem-infobefore {
 				position: absolute;
@@ -707,8 +707,6 @@
 					width: 54px;
 					line-height: 16.5px;
 					font-size: 10px;
-					text-align: center;
-					overflow: hidden;
 					/*border: #DDD 1px dashed;*/
 				}
 				
@@ -788,16 +786,12 @@
 				border: #DDD 1px dashed;
 			}
 			.taskitem-small-run .taskitem-previewbox img {
-				max-width: 100%;
-				max-height: 100%;
 			}
 			.taskitem-small-run .taskitem-timing {
 				position: absolute;
 				left: 112px;
 				top: 38px;
-				width: 96px;
 				font-size: 14px;
-				text-align: left;
 			}
 			.taskitem-small-run .taskitem-filename {
 				position: absolute;
@@ -810,8 +804,7 @@
 			}
 			.taskitem-small-run .taskitem-info {
 				height: 48px;
-				width: 336px;		/* 由内容计算得 */
-				/*border: #DDD 1px dashed;*/
+				width: 336px;
 			}
 			.taskitem-small-run .taskitem-infobefore {
 				position: absolute;
@@ -902,8 +895,6 @@
 					width: 54px;
 					line-height: 16.5px;
 					font-size: 10px;
-					text-align: center;
-					overflow: hidden;
 					/*border: #DDD 1px dashed;*/
 				}
 				

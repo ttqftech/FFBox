@@ -16,6 +16,7 @@ exports.paralist_format_format = [
 ];
 exports.paralist_format_hwaccel = [
 	["不使用", "不使用", "", 0, "不使用硬件解码。"],
+	["自动", "自动", "", 0, "自动选择硬件解码器"],
 	["dxva2", "dxva2", "", 0, "​Direct-X Video Acceleration API 2 - Windows 和 Xbox360 上的通用硬件解码器，支持包括 H.264, MPEG-2, VC-1, WMV 3 在内的视频解码。（解码所用的设备与您的主显示器连接的 GPU 有关）"],
 	["d3d11va", "d3d11va", "", 0, "d3d11va"],
 	["cuda", "cuda", "", 0, "NVIDIA 显卡的 cuda 解码器。"],
