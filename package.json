@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified :)\" && exit 1",
     "start": "electron .",
-    "package": "electron-packager . FFBox --platform=win32 --arch=x64 --icon=256.ico --out=./app --asar --app-version=1.0"
+    "package": "electron-packager . FFBox --platform=win32 --arch=x64 --icon=256.ico --out=./app --asar --app-version=1.1"
   },
   "repository": {
     "type": "git",

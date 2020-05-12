@@ -5,11 +5,11 @@ const spawn = require('child_process').spawn;
 const Store = require('electron-store');
 const store = new Store();
 const currentWindow = remote.getCurrentWindow();
-const versionString = "1.0";
+const versionString = "1.1";
 const versionNumber = 1;
 
 
-/* #region 参数列表定义 */
+/* #region 参数列表定义和常用转换函数引入 */
 
 	/* 参数表参数顺序：参数短名、参数长名（列表中显示）、icon 名称、icon 偏移数、描述 */
 	const paralist = require('./paralist.js');
@@ -22,6 +22,19 @@ const versionNumber = 1;
 	paralist_audio_acodec = paralist.paralist_audio_acodec;
 
 	paralist_video_detail = paralist.paralist_video_detail;
+
+	/* 常用转换函数 */
+	const commonfunc = require('./commonfunc.js');
+	getKbpsValue = commonfunc.getKbpsValue;
+	getFormattedBitrate = commonfunc.getFormattedBitrate;
+	getTimeValue = commonfunc.getTimeValue;
+	getFormattedTime = commonfunc.getFormattedTime;
+
+	selectString  = commonfunc.selectString;
+	replaceString = commonfunc.replaceString;
+	scanf = commonfunc.scanf;
+
+	getFilePathWithoutPostfix = commonfunc.getFilePathWithoutPostfix;
 
 /* #endregion */
 
@@ -45,6 +58,7 @@ const versionNumber = 1;
 	window.onresize = ChangeSize;
 
 	// let ws;
+	/*
 	var ws;
 	function initws () {
 		ws = new WebSocket("ws://localhost:6690/");
@@ -66,6 +80,7 @@ const versionNumber = 1;
 			console.log("service is not available");
 		}
 	}
+	*/
 
 
 /* #endregion */
@@ -79,13 +94,14 @@ const versionNumber = 1;
 		if (queueTaskNumber) {
 			var taskLeftNumber = 0;
 			for (const taskID of taskOrder) {
-				var taskStatus = window["vue_taskitem_" + ("000" + taskID).slice(-4)].info.status;
+				var taskStatus = vue_taskitem[taskID].info.status;
 				if (taskStatus == 0 || taskStatus == 1 || taskStatus == 2) {			// 未开始、正在进行、暂停
 					taskLeftNumber++;
 				}
 			}
-			document.getElementById("messagebox").style.visibility = "visible"
-			document.getElementById("messagebox-contenttext").innerHTML = "您还有 " + taskLeftNumber + " 个任务未完成，要退出🐴？"
+			Messagebox(`要退出咩？`, `您还有 ${taskLeftNumber} 个任务未完成，要退出🐴？`, `确认退出`, `不！`, () => {
+				readyToClose();
+			}, null);
 		} else {
 			readyToClose();
 		}
@@ -111,10 +127,6 @@ const versionNumber = 1;
 		// ipc.send('minimum');
 		currentWindow.minimize();
 	});
-
-	function closeMsgbox () {
-		document.getElementById("messagebox").style.visibility = "hidden"
-	}
 
 /* #endregion */
 
@@ -152,6 +164,8 @@ const versionNumber = 1;
 
 
 /* #region Vue 定义和计算器 */
+
+	var vue_taskitem = [];
 
 	const vue_computed_global = {
 		// 根据值输出滑块百分比，用到这些计算器的地方是 calcParaDetail()
@@ -227,8 +241,8 @@ const versionNumber = 1;
 					return this.data.video_detail.q100;
 			}
 		},
-		getTimeString: function () {
-			return getTimeString(this.info.duration);
+		getFormattedTime: function () {
+			return getFormattedTime(this.info.duration);
 		},
 		// 仪表盘
 		// 计算方式：(log(数值) / log(底，即每增长多少倍数为一格) + 数值为 1 时偏移多少格) / 格数
@@ -296,34 +310,6 @@ const versionNumber = 1;
 		},
 		computed: vue_computed_global
 	});
-	function getKbpsValue (text) {			// 传入 "xxx kbps"，返回 xxx
-		return parseInt(text.slice(0, -5));
-	}
-	function getFormattedBitrate (Kbps) {	// 传入 xxx，返回 "xxx kbps" 或 "xxx Mbps"
-		return Kbps < 1000 ? Kbps + " kbps" : (Kbps / 1000).toFixed(1) + " Mbps";
-	}
-	function getTimeString (timeValue) {	// 传入秒数，返回 --:--:--.--
-		if (timeValue != -1) {
-			var Hour = parseInt(timeValue / 3600);
-			var Minute = parseInt((timeValue - Hour * 3600) / 60);
-			var Second = timeValue - Hour * 3600 - Minute * 60;
-			return ("0" + Hour).slice(-2) + ":" + ("0" + Minute).slice(-2) + ":" + ("0" + Second.toFixed(2)).slice(-5);	
-		} else {
-			return "时长未知"
-		}
-	}
-	function getTimeValue (timeString) {	// 传入 --:--:--.--，返回秒数
-		if (timeString != "N/A") {
-			var seconds = timeString.slice(0, 2) * 3600 + timeString.slice(3, 5) * 60 - (-timeString.slice(6));
-			if (seconds > 0) {
-				return seconds;
-			} else {
-				return -1;
-			}
-		} else {
-			return -1;
-		}
-	}
 
 /* #endregion */
 
@@ -338,55 +324,31 @@ const versionNumber = 1;
 	var dashboardTimers = [];				// 放定时器，用于暂停后恢复
 	var commandwin_output = document.getElementById("commandwin-output");
 
-	// 传入头尾字符串，抽取字符串中间的部分，并返回字符串和抽取后的位置
-	function selectString (text, pre, post, begin, includePostLength = false) {
-		var outText;
-		var outPos = -1;
-		var prePos = text.indexOf(pre, begin);
-		if (prePos != -1) {
-			var postPos = text.indexOf(post, prePos + pre.length);
-			if (postPos != -1) {
-				outText = text.slice(prePos + pre.length, postPos);
-				outPos = postPos;
-				if (includePostLength) {
-					outPos += post.length;
-				}
-			}
-		}
-		return {text: outText, pos: outPos};
-	}
-	// 带初始位置和结束位置的 replace
-	function replaceString (text, searchValue, replaceValue, start, end) {
-		var front = text.slice(0, start);
-		var mid = text.slice(start, end);
-		while (mid.indexOf(searchValue) != -1) {
-			mid = mid.replace(searchValue, replaceValue);
-		}
-		var rear = text.slice(end);
-		return front + mid + rear;
-	}
-
 	class FFmpeg {
 		constructor (func, params) {		// 构造器，传入 func: 0: 直接执行 ffmpeg　1: 检测 ffmpeg 版本　２：多媒体文件信息读取
 			this.cmd = spawn("ffmpeg", params, {
 				detached: false,
-				shell: func == 1 ? true : false,
+				shell: func == 1 ? true : false,	// 使用命令行以获得“'ffmpeg' 不是内部或外部命令，也不是可运行的程序”这样的提示
 				encoding: 'utf8'
 			});
 
-			if (func) {
-				this.getSingleMsg = true;
-			} else {
-				this.getSingleMsg = false;
-			}
+			this.getSingleMsg = func ? true : false;	// 非转码任务，数据显示完即退出
 			this.status = 1;				// -1：已结束；0：暂停；1：可能在运行
+			this.sm = 0;					// 状态机状态码，详见下方说明
 			this.requireStop = false;		// 如果请求提前停止，那就不触发 finished 事件
-			this.criticalCount = 0;			// 发生 critical 了就不触发 finished 事件
+			this.errors = new Set();		// 发生 critical 则不触发 finished 事件，因某些错误（如外存不足）会由多个部件同时报告，所以这里用 Set
+			this.input = {					// 状态机读取文件信息时存放输入文件的格式信息。只允许存放一个，因为多输入时界面不需要显示输入格式了
+				format: undefined,
+				duration: undefined,
+				bitrate: undefined,
+				vcodec: undefined,
+				vbitrate: undefined,
+				vsize: undefined,
+				vframerate: undefined,
+				acodec: undefined,
+				abitrate: undefined
+			};
 			this.stdoutBuffer = "";
-			// this.stderrBuffer = "";
-			this.stdoutTimer = 0;
-			// this.stderrTimer = 0;
-			this.timeoutTimer = 0;
 			// 之所以要用 setInterval，是因为进程管道会遇到消息中途截断的问题
 			this.cmd.stdout.on('data', (data) => {
 				this.stdoutProcessing(data);
@@ -395,208 +357,208 @@ const versionNumber = 1;
 				this.stdoutProcessing(data);
 			});
 
-			this.events = {}					// 可用事件：🔵timeout 🔵data 🔵finished 🔵status 🔵version 🔵metadata 🔵critical 🔵error
+			this.events = {}					// 可用事件：🔵data 🔵finished 🔵status 🔵version 🔵metadata 🔵critical 🔵warning
 		}
 		stdoutProcessing (data) {
 			this.stdoutBuffer += data.toString();
-			clearInterval(this.timeoutTimer);
-			this.timeoutTimer = setTimeout(() => {
-				if (this.status == 1) {
-					this.forceKill();
-					this.emit("timeout");													// 🔵 timeout	
-				}
-			}, 40000);
-			clearInterval(this.stdoutTimer);
-			this.stdoutTimer = setTimeout(() => {
-				this.dataProcessing(this.stdoutBuffer);
-				this.stdoutBuffer = "";
-			}, 5);
+			this.dataProcessing(this.stdoutBuffer);
 		}
-		dataProcessing (dataText) {				// FFmpeg 传回的数据处理总成
-			console.log(dataText);
-			this.emit("data", dataText);		// 触发 data 事件，并传回数据字符串
-			
-			if (dataText.indexOf("Conversion failed") != -1) {								// 🔵 critical：因错误而终止
-				this.criticalCount++;
-				this.emit("critical", "转码失败");
-				this.status = -1;
-			} else if (dataText.indexOf("[") != -1 && dataText.indexOf("@") != -1) {		// 编解码器或分离器发来信息
-				if (dataText.indexOf("out of memory") != -1) {											// 🔵 error：（例：[hevc_nvenc @ 0000022af783e7c0] OpenEncodeSessionEx failed: out of memory (10)）
-					this.emit("error", "内存不足。", dataText);
-				} else if (dataText.indexOf("No NVENC capable devices found") != -1) {					// 🔵 error：
-					this.emit("error", "没有可用的 NVIDIA 硬件编码设备。", dataText);
-				} else if (dataText.indexOf("hwaccel initialisation returned error") != -1) {			// 🔵 error：（例：Failed setup for format cuda: hwaccel initialisation returned error）
-					this.emit("warning", "硬件解码器发生错误，将使用软件解码。", dataText);
-				} else if (dataText.indexOf("DLL amfrt64.dll failed to open") != -1) {					// 🔵 error：
-					this.emit("error", "AMD 编码器初始化失败。", dataText);
-				} else if (dataText.indexOf("codec not currently supported in container") != -1) {		// 🔵 error：（例：[mp4 @ 000001d2146edf00] Could not find tag for codec ansi in stream #0, codec not currently supported in container），容器不支持
-					this.emit("error", "容器不支持当前编码，请尝试更换容器（格式）或编码。", dataText);
-				} else if (dataText.indexOf("unknown codec") != -1) {		// 🔵 error：（例：[mov,mp4,m4a,3gp,3g2,mj2 @ 000002613bc8c540] Could not find codec parameters for stream 0 (Video: none (HEVC / 0x43564548), none, 2560x1440, 24211 kb/s): unknown codec
-					this.emit("error", "文件中的某些编码无法识别。", dataText);
-				}
-			} else if (dataText.indexOf("Error") != -1) {									// 🔵 error：
-				if (dataText.indexOf("No space left on device") != -1) {
-					this.emit("error", "外存空间不足。", dataText);
-				}
-			} else if (dataText.indexOf("video:") != -1) {									// 🔵 finished（放 frame= 的前面，因为最后一次输出跟上一次输出可能同时收到（带有 frame=）
-				setTimeout(() => {				// 避免存储空间已满时也会产生 finished
-					if (!this.requireStop && this.criticalCount == 0) {
-						this.emit("finished");
-						console.log("FFmpeg finished.");
-						this.status = -1;
-					}						
-				}, 100);
-			} else if (dataText.indexOf("frame=") != -1) {									// 🔵 status
-				// dataText = " " + dataText;
-				var equalPos;		// 当前参数等号的位置或当前参数等号加空格 + 1 的位置
-				var prePos = 0;		// 当前参数前空格的位置 + 1
-				var postPos;
-				var frame, fps, q, size, time, bitrate, speed;
-				while ((equalPos = dataText.indexOf("=", equalPos + 1)) != -1) {
-					var paraName = dataText.slice(prePos, equalPos);
-					while (dataText[++equalPos] == " ") {}			// 跟随空格一路前进过去
-					postPos = dataText.indexOf(" ", equalPos);
-					var paraValue = dataText.slice(equalPos, postPos);
-					switch (paraName) {
-						case "frame": frame = paraValue; break;
-						case "fps": fps = paraValue; break;
-						case "q": q = paraValue; break;
-						case "size": size = paraValue; break;
-						case "time": time = paraValue; break;
-						case "bitrate": bitrate = paraValue; break;
-						case "speed": speed = paraValue; break;
-					}
-					prePos = postPos + 1;
-				}
-				this.emit("status", frame, fps, q, size, time, bitrate, speed);
-			} else if (dataText.indexOf("Input") != -1) {									// 🔵 metadata：获得媒体信息
-				var filename, format, currentPos, format_display, duration, overall_bitrate;
-				// 先把括号里的逗号去掉
-				var front = 0, rear = 0;
-				while ((front = dataText.indexOf("(", front)) != -1) {
-					rear = dataText.indexOf(")", front);
-					dataText = replaceString(dataText, ",", "`", front, rear);
-					front = rear;
-				};
-				currentPos = dataText.indexOf("Input");
-				({text: format, pos: currentPos} = selectString(dataText, ", ", ", from", currentPos));
-				switch (format) {
-					case "avi":
-						format_display = "AVI";
-						break;
-					case "flv":
-						format_display = "FLV";
-						break;
-						case "mov,mp4,m4a,3gp,3g2,mj2":
-						// ({text: format_display, pos: currentPos} = selectString(dataText, "major_brand     : ", "\n", currentPos));
-						format_display = "MP4";
-						break;
-					case "asf":
-						format_display = "WMV";
-						break;
-					case "matroska,webm":
-						// ffmpeg 读不出来，判断放在下面
-						break;
-					default:
-						format_display = format;
-						break;
-				}
-				({text: filename, pos: currentPos} = selectString(dataText, "from '", "'", currentPos));
-				({text: duration, pos: currentPos} = selectString(dataText, "Duration: ", ", ", currentPos));
-				({text: overall_bitrate, pos: currentPos} = selectString(dataText, "bitrate: ", " kb/s", currentPos));
-				// 循环读取流
-				var video_paraline, audio_paraline;
-				var video_vcodec, video_pixelfmt, video_resolution, video_bitrate, video_fps;
-				var audio_acodec, audio_samplerate, audio_bitrate;
-				var video_enabled = false, audio_enabled = false;
-				while ((currentPos = dataText.indexOf("Stream", currentPos)) != -1) {
-					if (dataText[currentPos + 7] == "m") {		// Stream mapping: 日后更新
-
-						currentPos += 15;
-					} else if (dataText[currentPos + 12] == "-") {		// Stream #0:0 -> #0:0 (hevc (native) -> h264 (libx264))
-
-						currentPos += 11;
-					} else {
-						var streamType;
-						({text: streamType, pos: currentPos} = selectString(dataText, ": ", ": ", currentPos));
-						if (streamType == "Video") {
-							video_enabled = true;
-							// 读取视频行
-							({text: video_paraline, pos: currentPos} = selectString(dataText, ": ", "\n", currentPos));
-							var video_paraItems = video_paraline.split(", ");
-							video_vcodec = video_paraItems[0];
-							if (video_vcodec.indexOf("(") != -1) {
-								video_vcodec = video_vcodec.slice(0, video_vcodec.indexOf("(") - 1);
-							}
-							video_pixelfmt = video_paraItems[1];
-							video_resolution = video_paraItems[2];
-							if (video_resolution.indexOf("[") != -1) {
-								video_resolution = video_resolution.slice(0, video_resolution.indexOf(" ["));
-							}
-							video_bitrate = video_paraItems.find((element) => {return element.indexOf("kb/s") != -1;});
-							video_bitrate = video_bitrate == undefined ? undefined : video_bitrate.slice(0, -5);
-							video_fps = video_paraItems.find((element) => {return element.indexOf("fps") != -1;});
-							video_fps = video_fps == undefined ? undefined : video_fps.slice(0, -4);
-							if (format == "matroska,webm") {
-								if (video_vcodec == "h264" || video_vcodec == "hevc") {
-									format_display = "MKV";
-								} else if (video_vcodec == "vp9" || video_vcodec == "vp8") {
-									format_display = "webm";
-								} else {
-									format_display = "(MKV)";
-									pushMsg(filename + "：FFmpeg 暂无法判断该文件格式为 MKV 或为 webm。")
-								}
-							}
-						} else if (streamType == "Audio") {
-							audio_enabled = true;
-							// 读取音频行
-							({text: audio_paraline, pos: currentPos} = selectString(dataText, ": ", "\n", currentPos));
-							var audio_paraItems = audio_paraline.split(", ");
-							audio_acodec = audio_paraItems[0];
-							if (audio_acodec.indexOf("(") != -1) {
-								audio_acodec = audio_acodec.slice(0, audio_acodec.indexOf("(") - 1);
-							}
-							audio_samplerate = audio_paraItems.find((element) => {return element.indexOf("Hz") != -1;});
-							audio_samplerate = audio_samplerate == undefined ? undefined : audio_samplerate.slice(0, -3);
-							audio_bitrate = audio_paraItems.find((element) => {return element.indexOf("kb/s") != -1;});
-							if (audio_bitrate != undefined) {
-								if (audio_bitrate.indexOf("(") != -1) {
-									audio_bitrate = audio_bitrate.slice(0, audio_bitrate.indexOf("(") - 1);
-								}
-								audio_bitrate = audio_bitrate.slice(0, -5)
-							}
-						} else if (streamType == "Subtitle") {
-							// 日后更新
-						} 	
-					}
-				};
-				if (video_enabled == false && audio_bitrate != undefined) {
-					audio_bitrate = overall_bitrate.slice(0, -5)
-				}
-				if (audio_enabled == false && video_bitrate != undefined) {
-					video_bitrate = overall_bitrate.slice(0, -5)
-				}
-				this.emit("metadata", format_display, duration, video_vcodec, video_resolution, video_bitrate, video_fps, audio_acodec, audio_bitrate);
-				if (this.getSingleMsg) {
-					this.status = -1;
-				}
-			} else if (dataText.indexOf("'ffmpeg'") != -1) {											// 🔵 version：'ffmpeg' 不是内部或外部命令，也不是可运行的程序
-				this.emit("version", null);
-				this.status = -1;
-			} else if (dataText.indexOf("Invalid data") != -1) {							// 🔵 critical：发生错误（Invalid data found when processing input）
-				this.criticalCount++;
-				this.emit("critical", "文件格式不支持");
-				this.status = -1;
-			} else if (dataText.indexOf("No such") != -1) {									// 🔵 critical：发生错误（No such file or directory）
-				this.criticalCount++;
-				this.emit("critical", "不是一个文件");
-				this.status = -1;
-			} else if (dataText.indexOf("version") != -1) {									// 🔵 version：找到 ffmpeg，并读出版本，需要放在读取文件信息后，也要放在“Conversion”后
-				if (this.getSingleMsg) {
-					this.emit("version", dataText.substring(dataText.indexOf("version") + 8, dataText.indexOf("Copyright") - 1));
-					this.status = -1;
-				}
+		dataProcessing () {						// FFmpeg 传回的数据处理总成
+			var newLinePos = this.stdoutBuffer.indexOf(`\n`) >= 0 ? this.stdoutBuffer.indexOf(`\n`) : this.stdoutBuffer.indexOf(`\r`);
+			if (newLinePos < 0) {	// 一行没接收完
+				return;
 			}
+			var thisLine = this.stdoutBuffer.slice(0, newLinePos);
+			this.stdoutBuffer = this.stdoutBuffer.slice(newLinePos + 1);
+
+			console.log(thisLine);
+			this.emit(`data`, thisLine);		// 触发 data 事件，并传回一行数据字符串
+
+			/**
+			 * sm 说明：
+			 * 0：复位状态		1：正在读取容器格式		2：正在读取视频流		3：正在读取音频流		4：正在读取流映射
+			 */
+			switch (this.sm) {
+				case 0:
+					if (thisLine.includes(`frame=`)) {										// 🔵 status
+						var l_status = scanf(thisLine, `frame=%d fps=%f q=%f size=%dkB time=%d:%d:%d bitrate=%dkbits/s speed=%dx`);
+						var time = l_status[4] * 3600 + l_status[5] * 60 + l_status[6];
+						this.emit(`status`, l_status[0], l_status[1], l_status[2], l_status[3], time, l_status[7], l_status[8]);
+					} else if (thisLine.includes(`Input #`)) {								// ⚪ metadata：获得媒体信息
+						var format = selectString(thisLine, `, `, `, from`, 0).text;
+						switch (format) {
+							case "avi":
+								this.input.format = "AVI";
+								break;
+							case "flv":
+								this.input.format = "FLV";
+								break;
+							case "mov,mp4,m4a,3gp,3g2,mj2":
+								this.input.format = "MP4";
+								break;
+							case "asf":
+								this.input.format = "WMV";
+								break;
+							case "matroska,webm":
+								// ffmpeg 读不出来，判断放在下面
+								break;
+							default:
+								this.input.format = format;
+								break;
+						}
+						this.sm = 1;	// 转入其他状态进行处理
+					} else if (thisLine.includes(`video:`)) {
+						setTimeout(() => {				// 避免存储空间已满时也会产生 finished	// 🔵 finish
+							if (!this.requireStop && this.errors.size == 0) {
+								this.emit(`finished`);
+								console.log(`FFmpeg finished.`);
+								this.status = -1;
+							}
+						}, 100);
+					} else if (thisLine.includes(`Conversion failed`)) {					// 🔵 critical：错误终止并结束
+						this.emit(`critical`, this.errors);
+						this.status = -1;
+					} else if (thisLine.includes(`'ffmpeg'`)) {								// 🔵 version：'ffmpeg' 不是内部或外部命令，也不是可运行的程序
+						this.emit(`version`, null);
+						this.status = -1;
+					} else if (thisLine.includes(`No such file or directory`)) {			// 🔵 critical：No such file or directory
+						this.errors.add(`不是一个文件。`);
+						this.emit(`critical`, this.errors);
+						this.status = -1;
+					} else if (thisLine.includes('[') && (thisLine.includes('@'))) {		// ⚪ demuxer/decoder/encoder/muxer 等发来的信息
+						var sender = scanf(thisLine, `[%s @ %s]`, ']')[1];
+						var msg = thisLine.slice(thisLine.indexOf(']') + 3);
+						// 已识别的消息判断为 critical 放入 critical 列表，其余的 emit error 信息
+						if (false) {
+						} else if (msg.includes(`OpenEncodeSessionEx failed: out of memory (10)`)) {
+							this.errors.add(`内存或显存不足。`);
+						} else if (msg.includes(`No NVENC capable devices found`)) {
+							this.errors.add(`没有可用的 NVIDIA 硬件编码设备。`);
+						} else if (msg.includes(`Failed setup for format cuda: hwaccel initialisation returned error`)) {
+							this.emit("warning", "硬件解码器发生错误，将使用软件解码。", thisLine);
+						} else if (msg.includes(`DLL amfrt64.dll failed to open`)) {
+							this.errors.add(`AMD 编码器初始化失败。`);
+						} else if (msg.includes(`CreateComponent(AMFVideoEncoderVCE_AVC) failed`)) {
+							this.errors.add(`AMD 编码器初始化失败。`);
+						} else if (msg.includes(`codec not currently supported in container`)) {	// 例：[mp4 @ 000001d2146edf00] Could not find tag for codec ansi in stream #0, codec not currently supported in container
+							this.errors.add(`容器不支持编码“${selectString(msg, "for codec ", " in stream", 0).text}”，请尝试更换容器（格式）或编码。`);
+						} else if (msg.includes(`unknown codec`)) {									// 例：[mov,mp4,m4a,3gp,3g2,mj2 @ 000002613bc8c540] Could not find codec parameters for stream 0 (Video: none (HEVC / 0x43564548), none, 2560x1440, 24211 kb/s): unknown codec
+							this.errors.add(`文件中的某些编码无法识别。`);
+						} else if (msg.includes(`Starting second pass: moving the moov atom to the beginning of the file`)) {
+							this.emit("pending", "正在移动文件信息到文件头");
+						}
+					} else if (thisLine.includes(`ffmpeg version`)) {									// 🔵 version：找到 ffmpeg，并读出版本，需要放在读取文件信息后，也要放在“Conversion”后
+						if (this.getSingleMsg) {
+							this.emit(`version`, selectString(thisLine, `version `, ` Copyright`, 0).text);
+							this.status = -1;
+						}
+					} else if (thisLine.includes(`Error while opening encoder for output stream`)) {	// ⚪ error：例：Error initializing output stream 0:0 -- Error while opening encoder for output stream #0:0 - maybe incorrect parameters such as bit_rate, rate, width or height
+						this.errors.add(`输出参数设置有误。`);
+					} else if (thisLine.includes(`Invalid data found when processing input`)) {			// 🔵 critical：Invalid data found when processing input
+						this.errors.add(`输入文件无法识别。`);
+						this.emit(`critical`, this.errors);
+						this.status = -1;
+					} else if (thisLine.includes(`Permission denied`)) {								// 🔵 critical：Permission denied
+						this.errors.add(`权限不足，无法操作。`);
+						this.emit(`critical`, this.errors);
+						this.status = -1;
+					} else if (thisLine.includes(`No space left on device`)) {							// 🔵 error：多种部件发来的 No space left on device
+						this.errors.add(`外存不足。`);
+					}
+					break;
+				case 1:
+					if (false) {
+					} else if (thisLine.includes("Stream mapping:")) {
+						this.sm = 4;
+					} else if (thisLine.includes("At least one output file must be specified")) {
+						this.stdoutBuffer += '\n';		// 为了进行下一次状态机，需要加一行
+						this.sm = 4;
+					} else if (thisLine.includes("Duration:")) {
+						var f = scanf(thisLine, "Duration: %d:%d:%d, start: %d, bitrate: %d kb/s");
+						this.input.duration = f[0] * 3600 + f[1] * 60 + f[2];
+						this.input.bitrate = f[4];
+					} else if (thisLine.includes("Stream ") && thisLine.includes("Video")) {
+						// 先把括号里的逗号去掉
+						var front = 0, rear = 0;
+						while ((front = thisLine.indexOf("(", front)) != -1) {
+							rear = thisLine.indexOf(")", front);
+							thisLine = replaceString(thisLine, ",", "/", front, rear);
+							front = rear;
+						};
+						// 读取视频行
+						var video_paraline = '', currentPos = 0;
+						({text: video_paraline, pos: currentPos} = selectString(thisLine, "Video: "));
+						var video_paraItems = video_paraline.split(", ");
+						this.input.vcodec = video_paraItems[0];
+						if (this.input.vcodec.indexOf("(") != -1) {
+							this.input.vcodec = this.input.vcodec.slice(0, this.input.vcodec.indexOf("(") - 1);
+						}
+						// video_pixelfmt = video_paraItems[1];
+						this.input.vsize = video_paraItems[2];
+						if (this.input.vsize.indexOf("[") != -1) {
+							this.input.vsize = this.input.vsize.slice(0, this.input.vsize.indexOf(" ["));
+						}
+						this.input.vbitrate = video_paraItems.find((element) => {return element.includes("kb/s");});
+						this.input.vbitrate = this.input.vbitrate == undefined ? undefined : this.input.vbitrate.slice(0, -5);
+						this.input.vframerate = video_paraItems.find((element) => {return element.includes("fps");});
+						this.input.vframerate = this.input.vframerate == undefined ? undefined : this.input.vframerate.slice(0, -4);
+						if (this.input.format == "matroska,webm") {
+							if (this.input.vcodec == "h264" || this.input.vcodec == "hevc") {
+								format_display = "MKV";
+							} else if (this.input.vcodec == "vp9" || this.input.vcodec == "vp8") {
+								format_display = "webm";
+							} else {
+								format_display = "(MKV)";
+								pushMsg(filename + "：FFmpeg 暂无法判断该文件格式为 MKV 或为 webm。")
+							}
+						}
+					} else if (thisLine.includes("Stream ") && thisLine.includes("Audio")) {
+						// 先把括号里的逗号去掉
+						var front = 0, rear = 0;
+						while ((front = thisLine.indexOf("(", front)) != -1) {
+							rear = thisLine.indexOf(")", front);
+							thisLine = replaceString(thisLine, ",", "/", front, rear);
+							front = rear;
+						};
+						// 读取音频行
+						var audio_paraline = '', currentPos = 0;
+						({text: audio_paraline, pos: currentPos} = selectString(thisLine, "Audio: "));
+						var audio_paraItems = audio_paraline.split(", ");
+						this.input.acodec = audio_paraItems[0];
+						if (this.input.acodec.indexOf("(") != -1) {
+							this.input.acodec = this.input.acodec.slice(0, this.input.acodec.indexOf("(") - 1);
+						}
+						// audio_samplerate = audio_paraItems.find((element) => {return element.indexOf("Hz") != -1;});
+						// audio_samplerate = audio_samplerate == undefined ? undefined : audio_samplerate.slice(0, -3);
+						this.input.abitrate = audio_paraItems.find((element) => {return element.includes("kb/s");});
+						if (this.input.abitrate != undefined) {
+							if (this.input.abitrate.includes("(")) {
+								this.input.abitrate = this.input.abitrate.slice(0, this.input.abitrate.indexOf("(") - 1);
+							}
+							this.input.abitrate = this.input.abitrate.slice(0, -5)
+						}
+					}
+					break;
+					
+				case 2: case 3:
+					// 暂时不需要
+					this.sm = 0;
+					break;
+				case 4:	// 是时候返回编码信息啦
+					if (this.input.vcodec == undefined && this.input.abitrate) {
+						this.input.abitrate = this.input.bitrate;
+					}
+					if (this.input.acodec == undefined && this.input.vbitrate) {
+						this.input.vbitrate = this.input.bitrate;
+					}
+					this.emit("metadata", this.input);
+					if (this.getSingleMsg) {
+						this.status = -1;
+					}
+					this.sm = 0;
+					break;
+			}
+			this.dataProcessing();	// 可以把整个函数都 while (true)，为了节省空间，就改用递归了
 		}
 		on (key, callback) {
 			this.events[key] = callback;	// 将 key 与对应的 callback 添加到 events 对象中
@@ -606,7 +568,7 @@ const versionNumber = 1;
 				this.events[key](args);				// 执行 events 中 key 对应的事件
 			}
 		}
-		kill () {
+		kill (callback) {
 			this.cmd.kill();
 			this.cmd.on("close", function () {
 				console.log("ffmpeg killed = " + this.cmd.killed);
@@ -614,12 +576,15 @@ const versionNumber = 1;
 				callback();
 			});
 		}
-		forceKill () {
+		forceKill (callback) {
+			this.requireStop = true;
 			spawn("taskkill", ["/F", "/PID", this.cmd.pid], {
 				detached: false,
 				shell: false
 			});
+			console.log("ffmpeg killed.");
 			this.status = -1;
+			callback();
 		}
 		exit (callback) {
 			if (this.status == 0) {
@@ -628,9 +593,11 @@ const versionNumber = 1;
 			this.requireStop = true;
 			// this.cmd.off("close", () => {});
 			this.cmd.on("close", () => {
-				console.log("ffmpeg exited.");
-				this.status = -1;
-				callback();
+				if (this.status != -1) {			// 强制退出也会触发 close 事件，所以先判断，避免触发动作
+					console.log("ffmpeg exited.");
+					this.status = -1;
+					callback();	
+				}
 			});
 			this.cmd.stdin.write("q");
 		}
@@ -648,12 +615,14 @@ const versionNumber = 1;
 			});
 			this.status = 1;
 			clearInterval(this.timeoutTimer);
+			/*
 			this.timeoutTimer = setTimeout(() => {
 				if (this.status == 1) {
 					this.forceKill();
 					this.emit("timeout");									// 🔵 timeout	
 				}
-			}, 40000);
+			}, 5000);
+			*/
 		}
 		sendKey (key) {
 			this.cmd.stdin.write(key);
@@ -675,7 +644,7 @@ const versionNumber = 1;
 				FFmpegInstalled = true;
 			} else {
 				document.getElementById("ffmpeg-version").innerHTML = "FFmpeg 未安装或未配置环境变量！";
-				document.getElementById("dropfilesimage").setAttribute("src", "image/drop_files_noffmpeg.png");
+				document.getElementById("dropfilesimage").style.backgroundImage = "image/drop_files_noffmpeg.png";
 			}
 		})
 	}
@@ -689,8 +658,16 @@ const versionNumber = 1;
 
 	var queueTaskNumber = 0;		// 当前队列的任务数，包括正在运行的和暂停的
 	var workingTaskNumber = 0;		// 当前正在运行的任务数
-	var maxThreads = 4;				// 最大同时运行数
+	var maxThreads = 2;				// 最大同时运行数
 	var workingStatus = 0;			// 0：空闲　1：运行
+
+	const TASK_PENDING = -1;
+	const TASK_STOPPED = 0;
+	const TASK_RUNNING = 1;
+	const TASK_PAUSED = 2;
+	const TASK_STOPPING = 3;
+	const TASK_FINISHING = 4;
+	const TASK_FINISHED = 5;
 
 	// 进度条按 taskArray 里的所有任务之和算（未运行、运行中、暂停、已完成）
 	// queueTaskNumber：运行中、暂停
@@ -713,18 +690,19 @@ const versionNumber = 1;
 		if (event != undefined) {
 			event.stopPropagation();
 		}
-		switch (window["vue_taskitem_" + ("000" + id).slice(-4)].info.status) {
-			case 0:					// 未运行，点击直接删除任务
+		switch (vue_taskitem[id].info.status) {
+			case TASK_STOPPED:					// 未运行，点击直接删除任务
 				taskDelete(id);
 				break;
-			case 2:					// 已经暂停，点击重置任务
-			case 3:					// 运行完成，点击重置任务
-				taskReset(id);
-				break;
-			case 1:					// 正在运行，暂停
+			case TASK_RUNNING:					// 正在运行，暂停
 				taskPause(id);
 				break;
-			case -1:				// 啥也不干
+			case TASK_PAUSED:					// 已经暂停，点击重置任务
+			case TASK_FINISHED:					// 运行完成，点击重置任务
+			case TASK_STOPPING:					// 正在停止，点击强制重置（taskReset 自动判断）
+				taskReset(id);
+				break;
+			case TASK_PENDING:				// 啥也不干
 				break;
 		}
 	}
@@ -737,11 +715,11 @@ const versionNumber = 1;
 			while (workingTaskNumber < maxThreads) {
 				var started = false;
 				for (var index = startFrom; index < taskOrder.length; index++) {
-					if (window["vue_taskitem_" + ("000" + taskOrder[index]).slice(-4)].info.status == 0) {			// 从还没开始干活的抽一个出来干
+					if (vue_taskitem[taskOrder[index]].info.status == TASK_STOPPED) {		// 从还没开始干活的抽一个出来干
 						taskStart(taskOrder[index]);
 						started = true;
 						break;
-					} else if (window["vue_taskitem_" + ("000" + taskOrder[index]).slice(-4)].info.status == 2) {	// 从暂停开始干活的抽一个出来干
+					} else if (vue_taskitem[taskOrder[index]].info.status == TASK_PAUSED) {	// 从暂停开始干活的抽一个出来干
 						taskResume(taskOrder[index]);
 						started = true;
 						break;
@@ -768,7 +746,7 @@ const versionNumber = 1;
 			}
 		} else {											// 任务暂停，1 变 2
 			for (const taskO of taskOrder) {
-				if (window["vue_taskitem_" + ("000" + taskO).slice(-4)].info.status == 1) {			// 把所有正在干活的都暂停
+				if (vue_taskitem[taskO].info.status == TASK_RUNNING) {		// 把所有正在干活的都暂停
 					taskPause(taskO);
 				}
 			}
@@ -818,7 +796,7 @@ const versionNumber = 1;
 
 		// 界面显示内容：码率、速度、时间、帧
 		// 计算方法：码率：Δ大小/Δ时间　速度：（带视频：Δ帧/视频帧速/Δ系统时间　纯音频：Δ时间/Δ系统时间（秒））　时间、帧：平滑
-		var thisVue = window["vue_taskitem_" + ("000" + id).slice(-4)];
+		var thisVue = vue_taskitem[id];
 		if (thisVue.info.duration != -1) {
 			thisVue.info.progress = currentTime / thisVue.info.duration * 100;
 		} else {
@@ -857,7 +835,7 @@ const versionNumber = 1;
             var totalTime = 0;
             var totalProcessedTime = 0;
             for (const taskID of taskOrder) {
-                var taskinfo = window["vue_taskitem_" + ("000" + taskID).slice(-4)].info;
+                var taskinfo = vue_taskitem[taskID].info;
                 totalTime += taskinfo.duration;
                 totalProcessedTime += taskinfo.progress_smooth / 100 * taskinfo.duration;
             }
@@ -894,7 +872,7 @@ const versionNumber = 1;
 	}
 
 	function taskStart (id) {
-		window["vue_taskitem_" + ("000" + id).slice(-4)].info.status = 1;
+		vue_taskitem[id].info.status = TASK_RUNNING;
 		var taskitem = document.getElementById("taskitem_" + ("000" + id).slice(-4));
 		if (taskitem.className == "taskitem-large") {
 			taskitem.className = "taskitem-large-run";
@@ -902,14 +880,15 @@ const versionNumber = 1;
 			taskitem.className = "taskitem-small-run";
 		}
 		$("#taskitem_" + ("000" + id).slice(-4) + " .taskitem-delete").css("background-position-x", "-16px");	// 更改为暂停按钮
+		$("#taskitem_" + ("000" + id).slice(-4) + " .taskitem-background-progress").attr("class", "taskitem-background-progress progress-green");
 		taskProgress[id] = [];
 		taskProgress_size[id] = [];
 		var newFFmpeg = new FFmpeg(0, getFFmpegParaArray(id, false));
 		newFFmpeg.on("finished", () => {
 			workingTaskNumber--;
 			queueTaskNumber--;
-			window["vue_taskitem_" + ("000" + id).slice(-4)].info.status = 3;
-			window["vue_taskitem_" + ("000" + id).slice(-4)].info.progress_smooth = 100;
+			vue_taskitem[id].info.status = TASK_FINISHED;
+			vue_taskitem[id].info.progress_smooth = 100;
 			if (taskitem.className == "taskitem-large-run") {
 				taskitem.className = "taskitem-large";
 			} else {
@@ -917,14 +896,14 @@ const versionNumber = 1;
 			}
 			$("#taskitem_" + ("000" + id).slice(-4) + " .taskitem-delete").css("background-position-x", "-32px");		// 更改为重置按钮
 			$("#taskitem_" + ("000" + id).slice(-4) + " .taskitem-background-progress").attr("class", "taskitem-background-progress progress-gray");
-			pushMsg("文件【" + window["vue_taskitem_" + ("000" + id).slice(-4)].info.filename + "】已转码完成", 1);
+			pushMsg("文件【" + vue_taskitem[id].info.filename + "】已转码完成", 1);
 			clearInterval(dashboardTimers[id]);
 			taskArrange();
 		})
-		newFFmpeg.on("status", ([frame, fps, q, size, time, bitrate, speed]) => {
+		newFFmpeg.on("status", (status) => {
+			[frame, fps, q, size, time, bitrate, speed] = status;
 			// 传入计算器内容：系统时间、帧 frame、时间 time、大小 size
-			size = size.slice(0, -2);
-			taskProgress[id].push([new Date().getTime() / 1000, frame, getTimeValue(time)]);
+			taskProgress[id].push([new Date().getTime() / 1000, frame, time]);
 			if (size != taskProgress_size[id][taskProgress_size[id].length - 1][1]) {	// 有变化才推进去
 				taskProgress_size[id].push([new Date().getTime() / 1000, size]);
 			}
@@ -934,17 +913,17 @@ const versionNumber = 1;
 			commandwin_output.scrollTop = commandwin_output.scrollHeight - commandwin_output.offsetHeight;
 		});
 		newFFmpeg.on("error", ([description, data]) => {
-			window["vue_taskitem_" + ("000" + id).slice(-4)].info.errorInfo.push(description);
+			vue_taskitem[id].info.errorInfo.push(description);
 		});
 		newFFmpeg.on("warning", ([description, data]) => {
 			pushMsg(description, 2);
 		});
-		newFFmpeg.on("critical", (data) => {		// 跟 finished 的操作差别不大
+		newFFmpeg.on("critical", ([errors]) => {		// 跟 finished 的操作差别不大
 			workingTaskNumber--;
 			queueTaskNumber--;
-			window["vue_taskitem_" + ("000" + id).slice(-4)].info.status = 3;
-			if (window["vue_taskitem_" + ("000" + id).slice(-4)].info.progress_smooth == 0) {	// 注：progress 变量在计算是否 < 99.5 时已经改为了 100，但是不会再刷新 progress_smooth
-				window["vue_taskitem_" + ("000" + id).slice(-4)].info.progress_smooth = 100;
+			vue_taskitem[id].info.status = TASK_FINISHED;
+			if (vue_taskitem[id].info.progress_smooth == 0) {	// 注：progress 变量在计算是否 < 99.5 时已经改为了 100，但是不会再刷新 progress_smooth
+				vue_taskitem[id].info.progress_smooth = 100;
 			}
 			if (taskitem.className == "taskitem-large-run") {
 				taskitem.className = "taskitem-large";
@@ -953,43 +932,14 @@ const versionNumber = 1;
 			}
 			$("#taskitem_" + ("000" + id).slice(-4) + " .taskitem-delete").css("background-position-x", "-32px");		// 更改为重置按钮
 			$("#taskitem_" + ("000" + id).slice(-4) + " .taskitem-background-progress").attr("class", "taskitem-background-progress progress-red");
-			var outputString = "文件【" + window["vue_taskitem_" + ("000" + id).slice(-4)].info.filename + "】";
-			if (data == "转码失败") {
-				outputString += "转码失败。"
-				if (window["vue_taskitem_" + ("000" + id).slice(-4)].info.errorInfo.length == 1) {
-					outputString += window["vue_taskitem_" + ("000" + id).slice(-4)].info.errorInfo[0];
-				} else if (window["vue_taskitem_" + ("000" + id).slice(-4)].info.errorInfo.length) {
-					// 上面提交 error 的时候要加句号，这里不加
-					window["vue_taskitem_" + ("000" + id).slice(-4)].info.errorInfo.forEach((item, index) => {
-						outputString += (index + 1) + ". " + item;
-					});
-				} else {
-					outputString += "请到左侧的指令面板查看详细原因。";
-				}
-			} else {
-				outputString += data;
-			}
+			var outputString = "文件【" + vue_taskitem[id].info.filename + "】转码失败。";
+			errors.forEach((value) => {
+				outputString += value;
+			})
+			outputString += "请到左侧的指令面板查看详细原因。";
 			pushMsg(outputString, 3);
 			clearInterval(dashboardTimers[id]);
 			taskArrange();
-		})
-		newFFmpeg.on("timeout", () => {		// 跟 finished 的操作差别不大
-			workingTaskNumber--;
-			queueTaskNumber--;
-			window["vue_taskitem_" + ("000" + id).slice(-4)].info.status = 3;
-			if (window["vue_taskitem_" + ("000" + id).slice(-4)].info.progress_smooth == 0) {	// 注：progress 变量在计算是否 < 99.5 时已经改为了 100，但是不会再刷新 progress_smooth
-				window["vue_taskitem_" + ("000" + id).slice(-4)].info.progress_smooth = 100;
-			}
-			if (taskitem.className == "taskitem-large-run") {
-				taskitem.className = "taskitem-large";
-			} else {
-				taskitem.className = "taskitem-small";
-			}
-			$("#taskitem_" + ("000" + id).slice(-4) + " .taskitem-delete").css("background-position-x", "-32px");		// 更改为重置按钮
-			$("#taskitem_" + ("000" + id).slice(-4) + " .taskitem-background-progress").attr("class", "taskitem-background-progress progress-red");
-			pushMsg("处理文件【" + window["vue_taskitem_" + ("000" + id).slice(-4)].info.filename + "】时 FFmpeg 超时未响应，已为您结束转码进程<br />请调节参数后重试或将此问题报告至作者", 3);
-			clearInterval(dashboardTimers[id]);
-			taskArrange();			
 		})
 		// 需要先推两个 0 状态，不然进度列表是空的
 		taskProgress_size[id].push([new Date().getTime() / 1000, 0]);
@@ -1006,7 +956,7 @@ const versionNumber = 1;
 	function taskPause (id) {
 		$("#taskitem_" + ("000" + id).slice(-4) + " .taskitem-delete").css("background-position-x", "-32px");	// 更改为重置按钮
 		$("#taskitem_" + ("000" + id).slice(-4) + " .taskitem-background-progress").attr("class", "taskitem-background-progress progress-yellow");
-		window["vue_taskitem_" + ("000" + id).slice(-4)].info.status = 2;
+		vue_taskitem[id].info.status = TASK_PAUSED;
 		FFmpegs[id].pause();
 		workingTaskNumber--;
 		lastSysTime = new Date().getTime() / 1000;
@@ -1017,7 +967,7 @@ const versionNumber = 1;
 	function taskResume (id) {
 		$("#taskitem_" + ("000" + id).slice(-4) + " .taskitem-delete").css("background-position-x", "-16px");	// 更改为暂停按钮
 		$("#taskitem_" + ("000" + id).slice(-4) + " .taskitem-background-progress").attr("class", "taskitem-background-progress progress-green");
-		window["vue_taskitem_" + ("000" + id).slice(-4)].info.status = 1;
+		vue_taskitem[id].info.status = TASK_RUNNING;
 		var nowSysTime = new Date().getTime() / 1000;
 		// 加上因暂停而漏掉的时间
 		for (const item of taskProgress[id]) {
@@ -1035,8 +985,8 @@ const versionNumber = 1;
 
 	function taskReset (id) {
 		// if 语句两个分支的代码重合度很高，区分的原因是因为暂停状态下重置是异步的
-		if (window["vue_taskitem_" + ("000" + id).slice(-4)].info.status == 2) {		// 暂停状态下重置
-			window["vue_taskitem_" + ("000" + id).slice(-4)].info.status = -1;
+		if (vue_taskitem[id].info.status == TASK_PAUSED) {			// 暂停状态下重置
+			vue_taskitem[id].info.status = TASK_STOPPING;
 			clearInterval(dashboardTimers[id]);
 			FFmpegs[id].exit(() => {
 				var taskitem = document.getElementById("taskitem_" + ("000" + id).slice(-4));
@@ -1048,34 +998,54 @@ const versionNumber = 1;
 				delete FFmpegs[id];
 				queueTaskNumber--;
 				$("#taskitem_" + ("000" + id).slice(-4) + " .taskitem-delete").css("background-position-x", "0px");		// 更改为删除按钮
-				$("#taskitem_" + ("000" + id).slice(-4) + " .taskitem-background-progress").attr("class", "taskitem-background-progress progress-green");
-				window["vue_taskitem_" + ("000" + id).slice(-4)].info.status = 0;
-				window["vue_taskitem_" + ("000" + id).slice(-4)].info.progress_smooth = 0;
+				// $("#taskitem_" + ("000" + id).slice(-4) + " .taskitem-background-progress").attr("class", "taskitem-background-progress progress-green");
+				vue_taskitem[id].info.status = TASK_STOPPED;
+				vue_taskitem[id].info.progress_smooth = 0;
 				taskProgress[id] = [];
 				taskProgress_size[id] = [];
 				overallProgressTimer();
 			});	
-		} else if (window["vue_taskitem_" + ("000" + id).slice(-4)].info.status == 3) {	// 完成状态下重置
-			$("#taskitem_" + ("000" + id).slice(-4) + " .taskitem-delete").css("background-position-x", "0px");		// 更改为删除按钮
-			$("#taskitem_" + ("000" + id).slice(-4) + " .taskitem-background-progress").attr("class", "taskitem-background-progress progress-green");
-			window["vue_taskitem_" + ("000" + id).slice(-4)].info.status = 0;
-			window["vue_taskitem_" + ("000" + id).slice(-4)].info.progress_smooth = 0;
+		} else if (vue_taskitem[id].info.status == TASK_FINISHED) {	// 完成状态下重置
+			$("#taskitem_" + ("000" + id).slice(-4) + " .taskitem-delete").css("background-position-x", "0px");			// 更改为删除按钮
+			// $("#taskitem_" + ("000" + id).slice(-4) + " .taskitem-background-progress").attr("class", "taskitem-background-progress progress-green");
+			vue_taskitem[id].info.status = TASK_STOPPED;
+			vue_taskitem[id].info.progress_smooth = 0;
 			taskProgress[id] = [];
 			taskProgress_size[id] = [];
 			overallProgressTimer();
+		} else if (vue_taskitem[id].info.status == TASK_STOPPING) {	// 正在停止状态下重置（强制）
+			vue_taskitem[id].info.status = TASK_STOPPED;
+			clearInterval(dashboardTimers[id]);
+			FFmpegs[id].forceKill(() => {
+				var taskitem = document.getElementById("taskitem_" + ("000" + id).slice(-4));
+				if (taskitem.className == "taskitem-large-run") {
+					taskitem.className = "taskitem-large";
+				} else {
+					taskitem.className = "taskitem-small";
+				}
+				delete FFmpegs[id];
+				queueTaskNumber--;
+				$("#taskitem_" + ("000" + id).slice(-4) + " .taskitem-delete").css("background-position-x", "0px");		// 更改为删除按钮
+				// $("#taskitem_" + ("000" + id).slice(-4) + " .taskitem-background-progress").attr("class", "taskitem-background-progress progress-green");
+				vue_taskitem[id].info.status = TASK_STOPPED;
+				vue_taskitem[id].info.progress_smooth = 0;
+				taskProgress[id] = [];
+				taskProgress_size[id] = [];
+				overallProgressTimer();
+			});	
 		}
 	}
 
 	function taskDelete (id) {
-		if (window["vue_taskitem_" + ("000" + id).slice(-4)].info.status == 1 || window["vue_taskitem_" + ("000" + id).slice(-4)].info.status == 2) {	// 运行中或暂停，则还需把 FFmpeg 清掉
-			window["vue_taskitem_" + ("000" + id).slice(-4)].info.status = -1;
+		if (vue_taskitem[id].info.status == TASK_RUNNING || vue_taskitem[id].info.status == TASK_PAUSED) {	// 运行中或暂停，则还需把 FFmpeg 清掉
+			vue_taskitem[id].info.status = TASK_STOPPING;
 			FFmpegs[id].exit(() => {
 				delete FFmpegs[id];
 				taskArray.delete(id);
 				taskOrder.splice(taskOrder.indexOf(id), 1);
 				queueTaskNumber--;
 				document.getElementById("taskitem_" + ("000" + id).slice(-4)).remove();
-				window["vue_taskitem_" + ("000" + id).slice(-4)] = undefined;
+				vue_taskitem[id] = undefined;
 				overallProgressTimer();
 				itemSelectionStyleCalc();
 			});	
@@ -1083,7 +1053,7 @@ const versionNumber = 1;
 			taskArray.delete(id);
 			taskOrder.splice(taskOrder.indexOf(id), 1);
 			document.getElementById("taskitem_" + ("000" + id).slice(-4)).remove();
-			window["vue_taskitem_" + ("000" + id).slice(-4)] = undefined;
+			vue_taskitem[id] = undefined;
 			overallProgressTimer();
 			itemSelectionStyleCalc();
 		}
@@ -1171,17 +1141,17 @@ const versionNumber = 1;
 		var newInnerHTML = "";
 		switch (level) {
 			case 0:
-				newInnerHTML += '<img src="image/info.svg" />'; break;
+				newInnerHTML += `<div class="infocenter-info-img img-info"></div>`; break;
 			case 1:
-				newInnerHTML += '<img src="image/tick.svg" />'; break;
+				newInnerHTML += `<div class="infocenter-info-img img-tick"></div>`; break;
 			case 2:
-				newInnerHTML += '<img src="image/warning.svg" />'; break;
+				newInnerHTML += `<div class="infocenter-info-img img-warning"></div>`; break;
 			case 3:
-				newInnerHTML += '<img src="image/error.svg" />'; break;
+				newInnerHTML += `<div class="infocenter-info-img img-error"></div>`; break;
 		}
 		newInnerHTML += '<p>' + text + '</p>';
 		newInnerHTML += '<span>' + ('0' + date.getHours()).slice(-2) + ':' + ('0' + date.getMinutes()).slice(-2) + ':' + ('0' + date.getSeconds()).slice(-2) + '</span>';
-		newInnerHTML += '<div onclick="deleteMsg(' + infoList_count + ')"></div>'
+		newInnerHTML += '<div class="infocenter-info-delete" onclick="deleteMsg(' + infoList_count + ')"></div>'
 		infocenter_info.innerHTML = newInnerHTML;
 		infocenter_box.appendChild(infocenter_info);
 		infoList_count++;
@@ -1202,37 +1172,7 @@ const versionNumber = 1;
 		}
 
 		// 气泡部分
-		var contentWrapper = document.getElementById("content-wrapper");
-		var popupBox = document.createElement("div");
-		switch (level) {
-			case 0:
-				popupBox.className = "popup-box"; break;
-			case 1:
-				popupBox.className = "popup-box popup-box-ok"; break;
-			case 2:
-				popupBox.className = "popup-box popup-box-warning"; break;
-			case 3:
-				popupBox.className = "popup-box popup-box-error"; break;
-		}
-		popupBox.id = "popup-box-" + ("0000" + infoID_count).slice(-5);
-		newInnerHTML = "";
-		newInnerHTML += '<div class="popup-message">';
-			newInnerHTML += text;
-		newInnerHTML += '</div>';
-		popupBox.innerHTML = newInnerHTML;
-		contentWrapper.appendChild(popupBox);
-		setTimeout(() => {
-			popupBox.style.opacity = "1";
-		}, 10);
-		setTimeout(() => {
-			popupBox.style.opacity = "0.5";
-		}, 2500 + text.length * 100);
-		setTimeout(() => {
-			popupBox.style.opacity = "0";
-		}, 2800 + text.length * 100);
-		setTimeout(() => {
-			contentWrapper.removeChild(popupBox);
-		}, 3100 + text.length * 100);
+		popup(text, level);
 	}
 	function deleteMsg (index) {
 		document.getElementById("info_" + ("0000" + index).slice(-5)).remove();
@@ -1415,14 +1355,14 @@ const versionNumber = 1;
 		if (FFmpegInstalled) {
 			// 重写 ondragover 和 ondragenter 使其可放置
 			event.preventDefault();
-			document.getElementById("dropfilesimage").setAttribute("src", "image/drop_files_ok.png");
+			document.getElementById("dropfilesimage").style.backgroundImage = "image/drop_files_ok.png";
 		}
 	};
 
 	tasklist.ondragleave = function (event) {
 		if (FFmpegInstalled) {
 			event.preventDefault();
-			document.getElementById("dropfilesimage").setAttribute("src", "image/drop_files.png");
+			document.getElementById("dropfilesimage").style.backgroundImage = "image/drop_files.png";
 		}
 	};
 
@@ -1444,8 +1384,8 @@ const versionNumber = 1;
 				newInnerHTML += '<div class="taskitem-background-wrapper"><div class="taskitem-background">';
 					newInnerHTML += '<div class="taskitem-background-white"></div>';
 					newInnerHTML += '<div class="taskitem-background-progress progress-green" v-bind:style="\'width: \' + info.progress_smooth + \'%\'"></div>';
-					newInnerHTML += '<div class="taskitem-previewbox"><img src="image/preview.png" /></div>';
-					newInnerHTML += '<span class="taskitem-timing">{{ getTimeString }}</span>';
+					newInnerHTML += '<div class="taskitem-previewbox"><div class="taskitem-previewbox-img"></div></div>';
+					newInnerHTML += '<span class="taskitem-timing">{{ getFormattedTime }}</span>';
 					newInnerHTML += '<span class="taskitem-filename">' + file.name + '</span>';
 					newInnerHTML += '<div class="taskitem-info taskitem-infobefore">';
 						newInnerHTML += '<div class="taskitem-img-format"></div><span class="taskitem-span-format">读取中</span>';
@@ -1484,12 +1424,11 @@ const versionNumber = 1;
 				tasklist_scroll.appendChild(newTask);
 				// tasklist.append(newTask);
 				
-				var newTask = document.getElementById("taskitem_" + ("000" + taskCount).slice(-4));
+				// var newTask = document.getElementById("taskitem_" + ("000" + taskCount).slice(-4));
 				// newTask.addEventListener("click", () => {itemSelect(taskCount);})	// 如果使用 addEventListener，则后面的 vue 会把它覆盖掉
 				newTask.setAttribute("onclick", "itemSelect(" + taskCount + ")");
 
 				// vue 对象创建
-				var newVue_name = "vue_taskitem_" + ("000" + taskCount).slice(-4);
 				var newVue_options = {
 					el: "#taskitem_" + ("000" + taskCount).slice(-4),
 					data: {
@@ -1498,7 +1437,7 @@ const versionNumber = 1;
 							path: file.path,
 							filename: file.name,	// 未来可供用户更改输出文件名
 							errorInfo: [],			// 错误列表
-							status: 0,				// -1：正在切换状态　0：停止　1：运行　2：暂停　3：完成（停止但计入总进度）
+							status: TASK_STOPPED,	// -1：正在切换状态　0：停止　1：运行　2：暂停　3：完成（停止但计入总进度）
 							difficulty: -1,			// 用于估计任务需花多少时间
 							duration: 0,
 							fps: "-",
@@ -1516,26 +1455,30 @@ const versionNumber = 1;
 					},
 					computed: vue_computed_global
 				}
-				eval(newVue_name + " = new Vue(newVue_options)"); // 这里是新建 vue 对象。不加 var 可以在全局域中声明，否则离开了函数变量就消失
-
+				vue_taskitem[taskCount] = new Vue(newVue_options);
+				
 				// FFmpeg 读取媒体信息
 				var ffmpeg = new FFmpeg(2, ["-hide_banner", "-i", file.path, "-f", "null"])
 				var currentTaskCount = taskCount;
-				ffmpeg.on("metadata", ([format_display, duration, video_vcodec, video_resolution, video_bitrate, video_fps, audio_acodec, audio_bitrate]) => {
-					$("#" + newTask.id + " .taskitem-infobefore .taskitem-span-format").html(format_display);
-					window[newVue_name].info.duration = getTimeValue(duration);
-					$("#" + newTask.id + " .taskitem-infobefore .taskitem-span-vcodec").html(video_vcodec == undefined ? "-" : video_vcodec);
-					$("#" + newTask.id + " .taskitem-infobefore .taskitem-span-size").html(video_vcodec == undefined ? "-" : video_resolution.replace("x", "<br />"));
-					$("#" + newTask.id + " .taskitem-infobefore .taskitem-span-vratecontrol").html(video_bitrate == undefined ? "-" : getFormattedBitrate(video_bitrate));
-					window[newVue_name].info.fps = video_fps == undefined ? "-" : video_fps;
-					$("#" + newTask.id + " .taskitem-infobefore .taskitem-span-acodec").html(audio_acodec == undefined ? "-" : audio_acodec);
-					$("#" + newTask.id + " .taskitem-infobefore .taskitem-span-aratecontrol").html(audio_bitrate == undefined ? "-" : audio_bitrate + " kbps");	
+				ffmpeg.on("metadata", ([input]) => {
+					$("#" + newTask.id + " .taskitem-infobefore .taskitem-span-format").html(input.format);
+					vue_taskitem[currentTaskCount].info.duration = input.duration;
+					$("#" + newTask.id + " .taskitem-infobefore .taskitem-span-vcodec").html(input.vcodec == undefined ? "-" : input.vcodec);
+					$("#" + newTask.id + " .taskitem-infobefore .taskitem-span-size").html(input.vcodec == undefined ? "-" : input.vsize.replace("x", "<br />"));
+					$("#" + newTask.id + " .taskitem-infobefore .taskitem-span-vratecontrol").html(input.vbitrate == undefined ? "-" : getFormattedBitrate(input.vbitrate));
+					vue_taskitem[currentTaskCount].info.fps = input.vframerate == undefined ? "-" : input.vframerate;
+					$("#" + newTask.id + " .taskitem-infobefore .taskitem-span-acodec").html(input.acodec == undefined ? "-" : input.acodec);
+					$("#" + newTask.id + " .taskitem-infobefore .taskitem-span-aratecontrol").html(input.abitrate == undefined ? "-" : input.abitrate + " kbps");	
 
 					// 更新总体进度条
 					overallProgressTimer();
 				})
-				ffmpeg.on("critical", (message) => {
-					pushMsg(file.path + "：" + message, 2);
+				ffmpeg.on("critical", ([errors]) => {
+					var reason = '';
+					errors.forEach((value) => {
+						reason += value;
+					})
+					pushMsg(file.path + "：" + reason, 2);
 					setTimeout(() => {
 						pauseNremove(currentTaskCount);
 					}, 100);
@@ -1557,9 +1500,9 @@ const versionNumber = 1;
 		setTimeout(() => {
 			dropfilesdiv.remove();
 			dropfilesdiv.style.display = "";
-			dropfilesdiv.innerHTML = "<img id=\"dropfilesimage\" src=\"image/drop_files.png\" onclick=\"debugLauncher();\" draggable=\"false\" />"
+			dropfilesdiv.style.backgroundImage = "image/drop_files.png";
+			dropfilesdiv.innerHTML = "<div id=\"dropfilesimage\" onclick=\"debugLauncher();\" draggable=\"false\"></div>"
 			tasklist_scroll.append(dropfilesdiv);
-			document.getElementById("dropfilesimage").setAttribute("src", "image/drop_files.png");
 			itemSelectionStyleCalc();
 		}, 1 + 100 * event.dataTransfer.files.length);
 	}
@@ -1616,7 +1559,7 @@ const versionNumber = 1;
 		// 更新命令行预览
 		var commandwin_current = document.getElementById("commandwin-current");
 		// document.getElementById("commandwin-current-title").innerHTML = "当前文件指令（" + $("#taskitem_" + ("000" + index).slice(-4) + " .taskitem-filename").html() + "）";
-		document.getElementById("commandwin-current-title").innerHTML = "当前文件指令（" + window["vue_taskitem_" + ("000" + taskOrder[index]).slice(-4)].info.path + "）";;
+		document.getElementById("commandwin-current-title").innerHTML = "当前文件指令（" + vue_taskitem[taskOrder[index]].info.path + "）";;
 
 		commandwin_current.innerHTML = "ffmpeg";
 		for (const arrayItem of getFFmpegParaArray(taskOrder[index])) {
@@ -1624,7 +1567,7 @@ const versionNumber = 1;
 		}
 
 		// 将单个项目参数同步到全局参数
-		vue_global.data = window["vue_taskitem_" + ("000" + taskOrder[index]).slice(-4)].data;
+		vue_global.data = vue_taskitem[taskOrder[index]].data;
 		calcParaDetail();
 		paraPreview();
 	}
@@ -1742,7 +1685,7 @@ const versionNumber = 1;
 			var id = taskOrder[itemSelected_last];
 			var commandwin_current = document.getElementById("commandwin-current");
 			// document.getElementById("commandwin-current-title").innerHTML = "当前文件指令（" + $("#taskitem_" + ("000" + id).slice(-4) + " .taskitem-filename").html() + "）";
-			document.getElementById("commandwin-current-title").innerHTML = "当前文件指令（" + window["vue_taskitem_" + ("000" + id).slice(-4)].info.path + "）";
+			document.getElementById("commandwin-current-title").innerHTML = "当前文件指令（" + vue_taskitem[id].info.path + "）";
 	
 			commandwin_current.innerHTML = "ffmpeg";
 			for (const arrayItem of getFFmpegParaArray(id)) {
@@ -1753,12 +1696,15 @@ const versionNumber = 1;
 	}
 	// 根据 vue 中的数据获取 FFmpeg 启动参数数组
 	function getFFmpegParaArray (index = -1, withQuotes = true) {
-		var vueData = index == -1 ? vue_global.data : window["vue_taskitem_" + ("000" + index).slice(-4)].data;
+		var vueData = index == -1 ? vue_global.data : vue_taskitem[index].data;
 		var paraArray = [];
 		// hide_banner
 		paraArray.push("-hide_banner");
 		// 硬件解码加速
-		if (vueData.format_hwaccel != "不使用") {
+		if (vueData.format_hwaccel == "自动") {
+			paraArray.push("-hwaccel");
+			paraArray.push("auto");
+		} else if (vueData.format_hwaccel != "不使用") {
 			paraArray.push("-hwaccel");
 			paraArray.push(vueData.format_hwaccel);
 		}
@@ -1768,9 +1714,9 @@ const versionNumber = 1;
 			paraArray.push("(input_filename)")
 		} else {
 			if (withQuotes) {
-				paraArray.push("\"" + window["vue_taskitem_" + ("000" + index).slice(-4)].info.path + "\"");
+				paraArray.push("\"" + vue_taskitem[index].info.path + "\"");
 			} else {
-				paraArray.push(window["vue_taskitem_" + ("000" + index).slice(-4)].info.path);
+				paraArray.push(vue_taskitem[index].info.path);
 			}
 		}
 		// moveflags
@@ -1963,12 +1909,11 @@ const versionNumber = 1;
 			paraArray.push("(output_filename)." + vueData.format_format.toLowerCase())
 		} else {
 			if (withQuotes) {
-				paraArray.push(getFilePathWithoutPostfix("\"" + window["vue_taskitem_" + ("000" + index).slice(-4)].info.path) + "_converted." + vueData.format_format.toLowerCase() + "\"");
+				paraArray.push(getFilePathWithoutPostfix("\"" + vue_taskitem[index].info.path) + "_converted." + vueData.format_format.toLowerCase() + "\"");
 			} else {
-				paraArray.push(getFilePathWithoutPostfix(window["vue_taskitem_" + ("000" + index).slice(-4)].info.path) + "_converted." + vueData.format_format.toLowerCase());
+				paraArray.push(getFilePathWithoutPostfix(vue_taskitem[index].info.path) + "_converted." + vueData.format_format.toLowerCase());
 			}
 			
-			// paraArray.push($("#vue_taskitem_" + ("000" + index).slice(-4) + " .taskitem-filename").html());
 		}
 		paraArray.push("-y");
 		return paraArray;
@@ -2018,18 +1963,6 @@ const versionNumber = 1;
 			case "RV10": return "rv10"; break;
 
 			default: return undefined;
-		}
-	}
-	function getFilePathWithoutPostfix (path) {
-		var lastSlash = path.lastIndexOf(".");
-		if (lastSlash != -1) {							// 路径名有点
-			if (lastSlash > path.lastIndexOf("\\")) {	// 文件名有点
-				return path.slice(0, lastSlash);
-			} else {
-				return path;							// 路径有点，但不在文件名里
-			}
-		} else {										// 路径名里一个点也没有，全数返回
-			return path;
 		}
 	}
 
@@ -2084,7 +2017,7 @@ const versionNumber = 1;
 			saveParaToDisk();
 		}, 700);
 		for (const itemSelected of itemsSelected) {
-			eval("vue_taskitem_" + ("000" + taskOrder[itemSelected]).slice(-4) + ".data = JSON.parse(JSON.stringify(vue_global.data));")
+			vue_taskitem[taskOrder[itemSelected]].data = JSON.parse(JSON.stringify(vue_global.data));
 		}
 		paraPreview();					// 这句要在上面 for 之后，因为上面的 for 用于同步全局与单个文件
 	}
@@ -2316,7 +2249,7 @@ const versionNumber = 1;
 							}
 						}
 						newInnerHTML += '<span class="combobox-selector-text" id="video_detail_' + paraObject.name + '-text">{{ data.video_detail.' + paraObject.name + ' }}</span>';
-						newInnerHTML += '<img class="combobox-selector-img" src="image/menu_button.svg" />';
+						newInnerHTML += '<div class="combobox-selector-img"></div>';
 					newInnerHTML += '</div>';
 				} else if (paraObject.mode == "slider") {
 					if ( (paraObject.name.indexOf("qp") != -1 && vue_global.data.video_detail.ratecontrol != "CQP")  ||		// 有 qp 的参数项但又没选 CQP 的模式
