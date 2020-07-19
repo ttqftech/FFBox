@@ -1,6 +1,20 @@
-FFBox Changelog
+# FFBox Changelog
 
-# V1.1  
+`2020-07-19` 移植 vcodec 参数列表（完成）、slider 控件制作、vcodec 详细参数功能及对应参数生成器制作完成  
+`2020-07-18` 移植 vcodec 参数列表（部分）、vcodec 详细参数功能界面逻辑制作  
+`2020-07-17` 移植 vcodec 与 acodec 参数列表（部分）、tooltip 浮层制作  
+`2020-07-16` 移植 format 参数列表，制作 combobox 控件、checkbox 控件与 combomenu 浮层  
+`2020-07-15` js array 与 map 性能测试、列表区与参数区整体框架制作、添加窗口全局鼠标事件捕获机制  
+`2020-07-08` 左侧边栏功能实现，添加了 Github 上的 readme.md  
+`2020-07-07` 通知、气泡、消息窗的制作  
+`2020-07-06` 浮层与内容区、标题栏与状态栏与客户区与消息中心，基本界面框架构造与可访问性优化  
+`2020-07-05` 寻找可用的 vue + electron 开发工具  
+`2020-07-04` 测试使用 electron-builder 生成 FFBox、在 UOS 上生成 FFBox、测试 electron-vue 框架  
+`2020-07-03` 测试在 Deepin 上生成 FFBox、Noje.js 的 import 研究  
+
+---
+
+## V1.1  
 
 - 对 FFmpeg 状态的识别更加准确了，消除了令人烦恼的设计缺陷  
 - 增加了弹窗和气泡的动效，改善了选中任务的动效  
@@ -12,7 +26,7 @@ FFBox Changelog
 
 ---
 
-# V1.0  
+## V1.0  
 
 `2019-11-11` 1.0 版本发布  
 `2019-10-27` paralist 的码率控制判断不完整修复、仪表盘量程修改、任务 warning 提示功能  
