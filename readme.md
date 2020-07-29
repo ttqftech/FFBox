@@ -1,8 +1,61 @@
 # FFBox
 
-多媒体转码百宝箱  
+## Project setup
+```
+yarn install
+```
 
-![软件截图](http://ffbox.ttqf.tech/img/%E8%BD%AF%E4%BB%B6%E6%88%AA%E5%9B%BE.png)
+### Compiles and hot-reloads for development
+```
+yarn serve
+```
+
+### Compiles and minifies for production
+```
+yarn build
+```
+如果不能正常执行，那么进 dist_electron/bundled 里执行 `yarn`，然后在 cmd 里执行 `electron-builder build`  
+
+### Customize configuration
+See [Configuration Reference](https://cli.vuejs.org/config/).
+
+
+# 这个项目是怎样被创建的？
+
+具体流程见 https://www.jianshu.com/p/dfcf2a6a497c
+
+1. vue create ffbox
+```
+? Please pick a preset: Manually select features
+? Check the features needed for your project: Babel, Vuex
+? Where do you prefer placing config for Babel, ESLint, etc.? In dedicated config files
+? Save this as a preset for future projects? No
+? Pick the package manager to use when installing dependencies: Yarn
+```
+
+2. 文件夹改名，进入，此时 yarn serve 可以直接运行 @vue/cli 项目
+
+3. vue add electron-builder，当然这步也可以通过 vue ui 进行
+
+4. yarn electron:serve
+
+5. electron-builder build --win portable **失败**，因此进入 dist_electron/bundled 执行 yarn，然后常规 build，得到可执行文件
+
+
+# 一些注意事项
+
+在 .vue 的 css 中引用资源文件，根目录是 /public  
+
+
+# 在 electron 中使用 vue-devtools
+
+https://www.jianshu.com/p/cfcfca4d8556  
+
+
+
+# FFBox
+
+多媒体转码百宝箱  
 
 *可能是地球上最漂亮的多媒体转码软件*  
 *本软件是 FFmpeg 的一个 GUI，使用 FFmpeg 进行多媒体转码并提供动感的进度显示*  

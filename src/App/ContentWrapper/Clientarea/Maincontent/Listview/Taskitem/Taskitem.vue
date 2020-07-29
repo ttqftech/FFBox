@@ -1,14 +1,240 @@
-/* 动画等共同项 */
+<template>
+	<div class="taskitem" :class="taskItemStyle" @click="$emit('itemClicked', $event)">
+		<div class="taskitem-background-wrapper">
+			<div class="taskitem-background">
+				<div class="taskitem-background-white"></div>
+				<div class="taskitem-background-progress" :style="{ width: progress_smooth.progress * 100 + '%' }" :class="backgroundStyle"></div>
+				<div class="taskitem-previewbox">
+					<div class="taskitem-previewbox-img"></div>
+				</div>
+				<span class="taskitem-timing">{{ before.duration | getFormattedTime }}</span>
+				<span class="taskitem-filename">{{ filename }}</span>
+				<div class="taskitem-info taskitem-infobefore">
+					<div class="taskitem-img-format"></div>
+					<span class="taskitem-span-format">{{ before.format }}</span>
+					<div class="taskitem-img-vcodec"></div>
+					<span class="taskitem-span-vcodec">{{ before.vcodec }}</span>
+					<div class="taskitem-img-acodec"></div>
+					<span class="taskitem-span-acodec">{{ before.acodec }}</span>
+					<div class="taskitem-img-size"></div>
+					<span class="taskitem-span-size taskitem-size-compact" v-html="before.vresolution"></span>
+					<div class="taskitem-img-vratecontrol"></div>
+					<span class="taskitem-span-vratecontrol">{{ before.vbitrate | beforeBitrateFilter }}</span>
+					<div class="taskitem-img-aratecontrol"></div>
+					<span class="taskitem-span-aratecontrol">{{ before.abitrate | beforeBitrateFilter }}</span>
+				</div>
+				<div class="taskitem-rightarrow"></div>
+				<div class="taskitem-info taskitem-infoafter">
+					<div class="taskitem-img-format"></div>
+					<span class="taskitem-span-format">{{ after.format.format }}</span>
+					<div class="taskitem-img-vcodec"></div>
+					<span class="taskitem-span-vcodec">{{ after.video.vcodec }}</span>
+					<div class="taskitem-img-acodec"></div>
+					<span class="taskitem-span-acodec">{{ after.audio.acodec }}</span>
+					<div class="taskitem-img-size"></div>
+					<span class="taskitem-span-size" :class="{ 'taskitem-size-compact': after.video.resolution != '不改变' }" v-html="$options.filters.resolutionXtoBR(after.video.resolution)"></span>
+					<div class="taskitem-img-vratecontrol"></div>
+					<span class="taskitem-span-vratecontrol">{{ computed_after.vrate.value }}</span>
+					<div class="taskitem-img-aratecontrol"></div>
+					<span class="taskitem-span-aratecontrol">{{ computed_after.arate.value }}</span>
+				</div>
+				<div class="taskitem-graphs">
+					<div class="taskitem-graph">
+						<div class="taskitem-graph-ring" :style="dashboard_bitrate"></div>
+						<span class="taskitem-graph-data">{{ progress_smooth.bitrate | bitrateFilter }}</span>
+						<span class="taskitem-graph-description">码率</span>
+					</div>
+					<div class="taskitem-graph">
+						<div class="taskitem-graph-ring" :style="dashboard_speed"></div>
+						<span class="taskitem-graph-data">{{ progress_smooth.speed | speedFilter }}</span>
+						<span class="taskitem-graph-description">速度</span>
+					</div>
+					<div class="taskitem-graph">
+						<div class="taskitem-graph-ring" :style="dashboard_time"></div>
+						<span class="taskitem-graph-data">{{ progress_smooth.time | timeFilter }}</span>
+						<span class="taskitem-graph-description">时间</span>
+					</div>
+					<div class="taskitem-graph">
+						<div class="taskitem-graph-ring" :style="dashboard_frame"></div>
+						<span class="taskitem-graph-data">{{ (progress_smooth.frame).toFixed(0) }}</span>
+						<span class="taskitem-graph-description">帧</span>
+					</div>
+				</div>
+				<button class="taskitem-button" @click="$event.stopPropagation(); $emit('pauseNremove')" :aria-label="deleteButtonAriaLabel">
+					<div class="taskitem-delete" :style="{ 'background-position-x': deleteButtonBackgroundPositionX }"></div>
+				</button>
+			</div>
+		</div>
+	</div>
+</template>
+
+<script>
+import { getFormattedTime } from '@/App/commonfunc.js'
+
+const TASK_DELETED = -2;
+const TASK_PENDING = -1;
+const TASK_STOPPED = 0;
+const TASK_RUNNING = 1;
+const TASK_PAUSED = 2;
+const TASK_STOPPING = 3;
+const TASK_FINISHING = 4;
+const TASK_FINISHED = 5;
+const TASK_ERROR = 6;
+
+export default {
+	name: 'TaskItem',
+	components: {},
+	props: {
+		id: Symbol,
+		duration: String,
+		filename: String,
+		before: Object,
+		after: Object,
+		progress_smooth: Object,
+		status: Number,
+		selected: Boolean,
+		computed_after: Object
+	},
+	data: () => { return {
+	}},
+	computed: {
+		taskItemStyle: function () {
+			var running = this.status == TASK_RUNNING || this.status == TASK_PAUSED || this.status == TASK_STOPPING || this.status == TASK_FINISHING
+			var selected = this.selected
+			if (!running && !selected) {
+				return 'taskitem-small'
+			} else if (!running && selected) {
+				return 'taskitem-large'
+			} else if (running && !selected) {
+				return 'taskitem-small-run'
+			} else if (running && selected) {
+				return 'taskitem-large-run'
+			}
+		},
+		backgroundStyle: function () {
+			switch (this.status) {
+				case TASK_RUNNING: case TASK_FINISHING:
+					return 'progress-green'
+					break;
+				case TASK_PAUSED: case TASK_STOPPING:
+					return 'progress-yellow'
+					break;
+				case TASK_FINISHED: case TASK_STOPPED:
+					return 'progress-gray'
+					break;
+				case TASK_ERROR:
+					return 'progress-red'
+					break;
+			}
+		},
+		deleteButtonBackgroundPositionX: function () {
+			switch (this.status) {
+				case TASK_STOPPED:
+					return '0px'	// 删除按钮
+				case TASK_RUNNING:
+					return '-16px'	// 暂停按钮
+				case TASK_PAUSED: case TASK_STOPPING: case TASK_FINISHING: case TASK_FINISHED: case TASK_ERROR:
+					return '-32px'	// 重置按钮
+			}
+		},
+		deleteButtonAriaLabel: function () {
+			switch (this.status) {
+				case TASK_STOPPED: case TASK_FINISHED:
+					return '删除任务' + this.filename
+				case TASK_RUNNING:
+					return '暂停任务' + this.filename
+				case TASK_PAUSED: case TASK_STOPPING: case TASK_FINISHING: case TASK_FINISHED:
+					return '重置任务' + this.filename
+			}
+		},
+		// 仪表盘
+		// 计算方式：(log(数值) / log(底，即每增长多少倍数为一格) + 数值为 1 时偏移多少格) / 格数
+		// 　　　或：(log(数值 / 想要以多少作为最低值) / log(底，即每增长多少倍数为一格)) / 格数
+		dashboard_bitrate: function () {
+			var value = Math.log(this.progress_smooth.bitrate / 62.5) / Math.log(8) / 4;		// 0.0625M, 0.5M, 4M, 32M, 256M
+			if (value == Infinity) { value = 1; }
+			return "background: conic-gradient(#36D 0%, #36D " + value * 75 + "%, #DDD " + value * 75 + "%, #DDD 75%, transparent 75%);";
+		},
+		dashboard_speed: function () {
+			var value = Math.log(this.progress_smooth.speed / 0.04) / Math.log(5) / 6;			// 0.04, 0.2, 1, 5, 25, 125, 625
+			return "background: conic-gradient(#36D 0%, #36D " + value * 75 + "%, #DDD " + value * 75 + "%, #DDD 75%, transparent 75%);";
+		},
+		dashboard_time: function () {
+			var valueOdd = this.progress_smooth.time % 2;
+			if (valueOdd > 1) { valueOdd = 1; }
+			var valueEven = this.progress_smooth.time % 2 - 1;
+			if (valueEven < 0) { valueEven = 0; }
+			return "background: conic-gradient(#DDD 0%, #DDD " + valueEven * 75 + "%, #36D " + valueEven * 75 + "%, #36D " + valueOdd * 75 + "%, #DDD " + valueOdd * 75 + "%, #DDD 75%, transparent 75%);";
+		},
+		dashboard_frame: function () {
+			var valueOdd = this.progress_smooth.frame % 2;
+			if (valueOdd > 1) { valueOdd = 1; }
+			var valueEven = this.progress_smooth.frame % 2 - 1;
+			if (valueEven < 0) { valueEven = 0; }
+			return "background: conic-gradient(#DDD 0%, #DDD " + valueEven * 75 + "%, #36D " + valueEven * 75 + "%, #36D " + valueOdd * 75 + "%, #DDD " + valueOdd * 75 + "%, #DDD 75%, transparent 75%);";	
+		}
+	},
+	filters: {
+		getFormattedTime: function (duration) {
+			if (isNaN(duration)) {	// 静态图片
+				return '--:--:--.--'
+			} else if (typeof duration == 'number') {
+				return getFormattedTime(duration)
+			} else {
+				return duration
+			}
+		},
+		resolutionXtoBR: function (str) {
+			return str.replace('x', '<br />')
+		},
+		bitrateFilter: function (kbps) {
+			if (kbps >= 10000) {
+				return (kbps / 1000).toFixed(1) + ' M'
+			} else {
+				return (kbps / 1000).toFixed(2) + ' M'
+			}
+		},
+		speedFilter: function (value) {
+			if (value < 10) {
+				return value.toFixed(2) + ' ×'
+			} else {
+				return value.toFixed(1) + ' ×'
+			}
+		},
+		timeFilter: function (value) {
+			if (value < 100) {
+				return value.toFixed(2)
+			} else {
+				return value.toFixed(1)
+			}
+		},
+		beforeBitrateFilter: function (kbps) {
+			if (kbps >= 10000) {
+				return (kbps / 1000).toFixed(1) + ' Mbps'
+			} else {
+				return kbps + ' kbps'
+			}
+		},
+	},
+	methods: {
+	}
+}
+
+</script>
+
+<style scoped>
+
+/* ================================ 动画等共同项 ================================ */
 
 .taskitem-large, .taskitem-large-run, .taskitem-small, .taskitem-small-run {
-	position: absolute;
+	/* position: absolute; */
 	box-sizing: border-box;
 	width: 100%;
-	transition: top 0.5s;
+	margin-bottom: -16px;
+	/* transition: top 0.5s; */
 }
 	.taskitem-background-wrapper {
-		position: absolute;
-		/* top 由 js 计算 */
+		/* position: absolute; */
 		margin-top: 4px;
 		padding: 0px 16px 12px;
 		width: 100%;
@@ -32,7 +258,7 @@
 			}
 			.taskitem-background-white:hover {
 				/* background: rgba(204, 232, 255, 0.6); */
-				background: rgb(229, 243, 255);
+				background: hsl(210, 100%, 95%);
 			}
 			.taskitem-background-progress {
 				transition: width 0.3s ease-out, height 0.5s;
@@ -65,36 +291,48 @@
 				transition: top 0.5s, height 0.5s;
 			}
 			.taskitem-previewbox-img {
-				background: url(image/preview.png) center/contain no-repeat;
+				background: url(/preview.png) center/contain no-repeat;
 				width: 100%;
 				height: 100%;
 			}
 			.taskitem-timing {
-				transition: left 0.5s, top 0.5s, font-size 0.5s;
+				transition: left 0.5s, top 0.5s, font-size 0.5s, width 0.5s;
 				text-align: center;
 				white-space: nowrap;
 			}
 			.taskitem-filename {
 				transition: left 0.5s, top 0.5s, width 0.5s, font-size 0.5s;
 				overflow: hidden;
+				text-align: left;
 			}
 			.taskitem-info {
-				transition: width 0.5s;
+				transition: right 0.5s, width 0.5s, height 0.5s, transform 0.5s;
+				overflow: hidden;
 			}
 			.taskitem-infobefore {
-				transition: right 0.5s, width 0.5s;
 			}
 			.taskitem-infoafter {
-				transition: right 0.5s, top 0.5s, width 0.5s, transform 0.5s;
 			}
 			.taskitem-rightarrow {
+				position: absolute;
+				top: 0;
+				bottom: 0;
+				margin: auto;
+				right: 400px;
+				width: 32px;
+				height: 32px;
+				background-image: url(/rightarrow.svg);
+				background-size: contain;
 				transition: right 0.5s, opacity 0.5s;
 			}
 				.taskitem-img-format {
+					background-image: url(/formats/format_format.png);
 				}
 				.taskitem-img-vcodec {
+					background-image: url(/formats/video_vcodec.png);
 				}
 				.taskitem-img-acodec {
+					background-image: url(/formats/audio_acodec.png);
 				}
 				.taskitem-span-format {
 					text-align: center;
@@ -109,10 +347,13 @@
 					white-space: nowrap;
 				}
 				.taskitem-img-size {
+					background-image: url(/formats/video_resolution.png);
 				}
 				.taskitem-img-vratecontrol {
+					background-image: url(/formats/video_ratecontrol.png);
 				}
 				.taskitem-img-aratecontrol {
+					background-image: url(/formats/audio_ratecontrol.png);
 				}
 				.taskitem-span-size {
 					text-align: center;
@@ -136,9 +377,11 @@
 				}
 				.taskitem-graphs {
 					transition: width 0.5s, right 0.5s, top 0.5s;
+					overflow: hidden;
 				}
 					.taskitem-graph {
 						transition: width 0.5s, height 0.5s, right 0.5s;
+						text-align: left;
 					}
 						.taskitem-graph-ring {
 							width: 100%;
@@ -154,29 +397,47 @@
 						.taskitem-graph-description {
 							transition: font-size 0.5s;
 						}
-			.taskitem-delete {
-				transition: top 0.5s;
+			.taskitem-button {
 				position: absolute;
-				right: 16px;
-				top: 50%;
-				transform: translateY(-50%);
-				width: 16px;
-				height: 16px;
-				background-image: url(image/deleteNpause_button.svg);
-				background-size: 300%;	/* 三倍大小 */
+				right: 1px;
+				top: 1px;
+				bottom: 1px;
+				width: 48px;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				transition: background 0.1s linear;
+				background: none;
+				border: none;
+				outline: none;
 				pointer-events: all;
-				background-position-x: 0px;
-				/* background-position-x 使用 js 代码控制 */
 			}
-			.taskitem-delete:hover {
-				background-position-y: -16px;
+			.taskitem-button:hover {
+				/* background: rgba(204, 232, 255, 0.6); */
+				background: hsl(210, 100%, 95%);
 			}
-			.taskitem-delete:active {
-				background-position-y: -32px;
+			.taskitem-button:active {
+				transition: background 0s;
+				background: hsl(0, 100%, 90%);
 			}
+				.taskitem-delete {
+					width: 16px;
+					height: 16px;
+					background-image: url(/deleteNpause_button.svg);
+					background-size: 300%;	/* 三倍大小 */
+					pointer-events: none;
+					background-position-x: 0px;
+					/* background-position-x 使用 js 代码控制 */
+				}
+				.taskitem-delete:hover {
+					background-position-y: -16px;
+				}
+				.taskitem-delete:active {
+					background-position-y: -32px;
+				}
 
 
-/* 大号列表项 */
+/* ================================ 大号列表项 ================================ */
 
 .taskitem-large {
 }
@@ -187,8 +448,8 @@
 			height: 80px;
 		}
 			.taskitem-large .taskitem-background-white {
-				background: #cce8ff;
-				border: #99d1ff 1px solid;
+				background: hsl(210, 100%, 90%);
+				border: hsl(210, 100%, 80%) 1px solid;
 			}
 			.taskitem-large .taskitem-background-progress {
 			}
@@ -229,7 +490,6 @@
 				position: absolute;
 				top: 8px;
 				right: 448px;
-				overflow: hidden;
 			}
 			.taskitem-large .taskitem-infoafter {
 				position: absolute;
@@ -237,27 +497,17 @@
 				right: 48px;
 			}
 			.taskitem-large .taskitem-rightarrow {
-				position: absolute;
-				top: 24px;
-				right: 400px;
-				width: 32px;
-				height: 32px;
-				background-image: url(image/rightarrow.svg);
-				background-size: contain;
 				opacity: 1;
 			}
 				.taskitem-large .taskitem-img-format {
-					background-image: url(image/formats/format_format.png);
 					top: 0px;
 					left: 0px;
 				}
 				.taskitem-large .taskitem-img-vcodec {
-					background-image: url(image/formats/video_vcodec.png);
 					top: 0px;
 					left: 112px;					
 				}
 				.taskitem-large .taskitem-img-acodec {
-					background-image: url(image/formats/audio_acodec.png);
 					top: 0px;
 					left: 224px;
 				}
@@ -274,17 +524,14 @@
 					left: 264px;
 				}
 				.taskitem-large .taskitem-img-size {
-					background-image: url(image/formats/video_resolution.png);
 					top: 36px;
 					left: 0px;
 				}
 				.taskitem-large .taskitem-img-vratecontrol {
-					background-image: url(image/formats/video_ratecontrol.png);
 					top: 36px;
 					left: 112px;
 				}
 				.taskitem-large .taskitem-img-aratecontrol {
-					background-image: url(image/formats/audio_ratecontrol.png);
 					top: 36px;
 					left: 224px;
 				}
@@ -326,7 +573,6 @@
 				width: 0px;
 				display: flex;
 				justify-content: space-around;
-				overflow: hidden;
 			}
 				.taskitem-large .taskitem-graph {
 					position: relative;
@@ -373,7 +619,7 @@
 			}
 
 
-/* 大号运行中列表项 */
+/* ================================ 大号运行中列表项 ================================ */
 
 .taskitem-large-run {
 }
@@ -384,8 +630,8 @@
 			height: 80px;
 		}
 			.taskitem-large-run .taskitem-background-white {
-				background: #cce8ff;
-				border: #99d1ff 1px solid;
+				background: hsl(210, 100%, 90%);
+				border: hsl(210, 100%, 80%) 1px solid;
 			}
 			.taskitem-large-run .taskitem-background-progress {
 			}
@@ -427,36 +673,24 @@
 				top: 8px;
 				right: 448px;
 				width: 0;
-				overflow: hidden;
 			}
 			.taskitem-large-run .taskitem-infoafter {
 				position: absolute;
 				top: 8px;
 				right: 48px;
-				overflow: hidden;
 			}
 			.taskitem-large-run .taskitem-rightarrow {
-				position: absolute;
-				top: 24px;
-				right: 400px;
-				width: 32px;
-				height: 32px;
-				background-image: url(image/rightarrow.svg);
-				background-size: contain;
 				opacity: 0;
 			}
 				.taskitem-large-run .taskitem-img-format {
-					background-image: url(image/formats/format_format.png);
 					top: 0px;
 					left: 0px;
 				}
 				.taskitem-large-run .taskitem-img-vcodec {
-					background-image: url(image/formats/video_vcodec.png);
 					top: 0px;
 					left: 112px;					
 				}
 				.taskitem-large-run .taskitem-img-acodec {
-					background-image: url(image/formats/audio_acodec.png);
 					top: 0px;
 					left: 224px;
 				}
@@ -473,17 +707,14 @@
 					left: 264px;
 				}
 				.taskitem-large-run .taskitem-img-size {
-					background-image: url(image/formats/video_resolution.png);
 					top: 36px;
 					left: 0px;
 				}
 				.taskitem-large-run .taskitem-img-vratecontrol {
-					background-image: url(image/formats/video_ratecontrol.png);
 					top: 36px;
 					left: 112px;
 				}
 				.taskitem-large-run .taskitem-img-aratecontrol {
-					background-image: url(image/formats/audio_ratecontrol.png);
 					top: 36px;
 					left: 224px;
 				}
@@ -525,7 +756,6 @@
 				width: 336px;
 				display: flex;
 				justify-content: space-around;
-				overflow: hidden;
 			}
 				.taskitem-large-run .taskitem-graph {
 					position: relative;
@@ -572,7 +802,7 @@
 			}
 
 
-/* 小号列表项 */
+/* ================================ 小号列表项 ================================ */
 
 .taskitem-small {
 }
@@ -603,6 +833,7 @@
 				position: absolute;
 				left: 112px;
 				top: 38px;
+				width: 0;
 				font-size: 14px;
 			}
 			.taskitem-small .taskitem-filename {
@@ -623,7 +854,6 @@
 				top: 6px;
 				right: 448px;
 				width: 0;
-				overflow: hidden;
 			}
 			.taskitem-small .taskitem-infoafter {
 				position: absolute;
@@ -631,27 +861,17 @@
 				right: 48px;
 			}
 			.taskitem-small .taskitem-rightarrow {
-				position: absolute;
-				top: 24px;
-				right: 400px;
-				width: 32px;
-				height: 32px;
-				background-image: url(image/rightarrow.svg);
-				background-size: contain;
 				opacity: 0;
 			}
 				.taskitem-small .taskitem-img-format {
-					background-image: url(image/formats/format_format.png);
 					top: 0px;
 					left: 11px;
 				}
 				.taskitem-small .taskitem-img-vcodec {
-					background-image: url(image/formats/video_vcodec.png);
 					top: 0px;
 					left: 123px;					
 				}
 				.taskitem-small .taskitem-img-acodec {
-					background-image: url(image/formats/audio_acodec.png);
 					top: 0px;
 					left: 235px;
 				}
@@ -668,17 +888,14 @@
 					left: 224px;
 				}
 				.taskitem-small .taskitem-img-size {
-					background-image: url(image/formats/video_resolution.png);
 					top: 0px;
 					left: 67px;
 				}
 				.taskitem-small .taskitem-img-vratecontrol {
-					background-image: url(image/formats/video_ratecontrol.png);
 					top: 0px;
 					left: 179px;
 				}
 				.taskitem-small .taskitem-img-aratecontrol {
-					background-image: url(image/formats/audio_ratecontrol.png);
 					top: 0px;
 					left: 291px;
 				}
@@ -722,7 +939,6 @@
 				width: 0px;
 				display: flex;
 				justify-content: space-around;
-				overflow: hidden;
 			}
 				.taskitem-small .taskitem-graph {
 					position: relative;
@@ -760,7 +976,7 @@
 			}
 
 
-/* 小号运行中列表项 */
+/* ================================ 小号运行中列表项 ================================ */
 
 .taskitem-small-run {
 }
@@ -791,6 +1007,7 @@
 				position: absolute;
 				left: 112px;
 				top: 38px;
+				width: 0;
 				font-size: 14px;
 			}
 			.taskitem-small-run .taskitem-filename {
@@ -811,7 +1028,6 @@
 				top: 6px;
 				right: 448px;
 				width: 0;
-				overflow: hidden;
 			}
 			.taskitem-small-run .taskitem-infoafter {
 				position: absolute;
@@ -819,27 +1035,17 @@
 				right: 48px;
 			}
 			.taskitem-small-run .taskitem-rightarrow {
-				position: absolute;
-				top: 24px;
-				right: 400px;
-				width: 32px;
-				height: 32px;
-				background-image: url(image/rightarrow.svg);
-				background-size: contain;
 				opacity: 0;
 			}
 				.taskitem-small-run .taskitem-img-format {
-					background-image: url(image/formats/format_format.png);
 					top: 0px;
 					left: 11px;
 				}
 				.taskitem-small-run .taskitem-img-vcodec {
-					background-image: url(image/formats/video_vcodec.png);
 					top: 0px;
 					left: 123px;					
 				}
 				.taskitem-small-run .taskitem-img-acodec {
-					background-image: url(image/formats/audio_acodec.png);
 					top: 0px;
 					left: 235px;
 				}
@@ -856,17 +1062,14 @@
 					left: 224px;
 				}
 				.taskitem-small-run .taskitem-img-size {
-					background-image: url(image/formats/video_resolution.png);
 					top: 0px;
 					left: 67px;
 				}
 				.taskitem-small-run .taskitem-img-vratecontrol {
-					background-image: url(image/formats/video_ratecontrol.png);
 					top: 0px;
 					left: 179px;
 				}
 				.taskitem-small-run .taskitem-img-aratecontrol {
-					background-image: url(image/formats/audio_ratecontrol.png);
 					top: 0px;
 					left: 291px;
 				}
@@ -910,7 +1113,6 @@
 				width: 336px;
 				display: flex;
 				justify-content: space-around;
-				overflow: hidden;
 			}
 				.taskitem-small-run .taskitem-graph {
 					position: relative;
@@ -957,3 +1159,5 @@
 			}
 			.taskitem-small-run .taskitem-delete:active {
 			}
+
+</style>
