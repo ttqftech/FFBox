@@ -1259,7 +1259,7 @@ var acodecs = [
 		imageName: '',
 		imageOffset: 13,
 		description: 'DTS - DTS 即 Digital Theater Systems，数字影院系统，由 DTS 公司（DTS Inc.，NASDAQ：DTSI）开发，为多声道音频格式中的一种，广泛应用于 DVD 音效上。其最普遍的格式为 5.1 声道。',
-		codecName: 'mjpeg',
+		codecName: 'dts',
 		encoders: [
 			{
 				...默认编码器,
@@ -1316,7 +1316,8 @@ var acodecs = [
 					},
 				]
 			},
-		]
+		],
+		...strict2
 	},
 	{
 		sName: 'AMR WB',
@@ -1493,7 +1494,7 @@ var generator = {
 				ret.push('-2')
 			}
 		} // 如果编码为自动，则不设置 acodec 参数，返回空 Array
-		if (audioParams.acodec != '禁用音频' || audioParams.acodec != '不重新编码') {
+		if (audioParams.acodec != '禁用音频' && audioParams.acodec != '不重新编码') {
 			if (audioParams.vol != 0.5) {
 				ret.push('-vol')
 				ret.push(volSlider.valueToParam(audioParams.vol))

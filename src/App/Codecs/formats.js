@@ -48,6 +48,14 @@ const formats = [
 		extension: '3gp'
 	},
 	{
+		sName: 'RM',
+		lName: 'RM (RMVB)',
+		imageName: 'format_format',
+		imageOffset: 3,
+		description: 'RM - RM 即 RealMedia。RealVideo 是由 RealNetworks 开发的一种专用视频压缩格式。',
+		extension: 'rm'
+	},
+	{
 		sName: 'WMV',
 		lName: 'WMV',
 		imageName: 'format_format',

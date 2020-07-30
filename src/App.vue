@@ -765,7 +765,7 @@ const store = new Vuex.Store({
 				this.commit('msgbox', {
 					title: '要退出咩？',
 					content: `您还有 ${this.getters.queueTaskCount} 个任务未完成，要退出🐴？`,
-					onOK: readyToClose(),
+					onOK: readyToClose,
 				})
 			} else {
 				readyToClose();
@@ -799,6 +799,8 @@ export default {
 		document.querySelector('body').className = "body"
 	},
 	mounted: function () {
+		document.title = 'FFBox - v' + version
+
 		// 全局鼠标拖动响应注册
 		window.addEventListener('mousedown', (event) => {
 			for (const iterator of this.$store.state.onPointerEvents.onMouseDown) {
