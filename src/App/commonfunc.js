@@ -232,6 +232,13 @@ function getFilePathWithoutPostfix (path) {
 	}
 }
 
+// 获取随机字符串
+function randomString (length = 6, chars = 'abcdefghijklmnopqrstuvwxyz') {
+	var result = '';
+	for (var i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
+	return result;
+}
+
 if (typeof window !== 'undefined') {
 	// Browser Env
 }
@@ -245,6 +252,7 @@ if (typeof global !== 'undefined') {
 	exports.replaceString = replaceString
 	exports.scanf = scanf
 	exports.getFilePathWithoutPostfix = getFilePathWithoutPostfix
+	exports.randomString = randomString
 	// 下面这句作用相同
 	// module.exports = { getKbpsValue, getFormattedBitrate, getFormattedTime, getTimeValue, selectString, replaceString, scanf, getFilePathWithoutPostfix }
 }

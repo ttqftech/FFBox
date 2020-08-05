@@ -86,7 +86,7 @@ app.on('ready', async () => {
 	win.on('close', (e) => {
 		if (!exitConfirm) {
 			e.preventDefault();
-			mainWindow.webContents.send('exitConfirm');  
+			win.webContents.send('exitConfirm');  
 		}
     })
 	// 窗口主动发送的确认关闭通知
