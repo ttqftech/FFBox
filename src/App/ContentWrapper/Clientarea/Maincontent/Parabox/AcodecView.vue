@@ -2,6 +2,8 @@
 	<div id="acodec-view">
 		<combobox title="音频编码" :text="$store.state.globalParams.audio.acodec" :list="acodecsList" @change="onChange('combo', 'acodec', $event, acodecsList)"></combobox>
 		<combobox title="编码器" :text="$store.state.globalParams.audio.aencoder" :list="aencodersList" @change="onChange('combo', 'aencoder', $event, aencodersList)" v-show="hasParameters > 1"></combobox>
+		<combobox title="码率控制" :text="$store.state.globalParams.audio.ratecontrol" :list="ratecontrolsList" @change="onChange('combo', 'ratecontrol', $event, ratecontrolsList)" v-if="ratecontrolsList != 0"></combobox>
+		<slider v-if="ratecontrolSlier != null" :title="ratecontrolSlier.display" :value="$store.state.globalParams.audio.ratevalue" :tags="ratecontrolSlier.tags" :valueToText="ratecontrolSlier.valueToText" :valueProcess="ratecontrolSlier.valueProcess" @change="onChange('slider', 'ratevalue', $event)"></slider>
 		<div v-for="(parameter, index) in parametersList" :key="index" :class="{ comboParent: parameter.mode == 'combo', sliderParent: parameter.mode == 'slider' }">
 			<combobox class="fullSpace" v-if="parameter.mode == 'combo'" :title="parameter.display" :text="$store.state.globalParams.audio.detail[parameter.parameter]" :list="parameter.items" @change="onDetailChange('combo', parameter.parameter, $event, parameter.items)"></combobox>
 			<slider class="fullSpace" v-if="parameter.mode == 'slider'" :title="parameter.display" :value="$store.state.globalParams.audio.detail[parameter.parameter]" :tags="parameter.tags" :valueToText="parameter.valueToText" :valueProcess="parameter.valueProcess" @change="onDetailChange('slider', parameter.parameter, $event)"></slider>
@@ -47,26 +49,61 @@ export default {
 			})
 			if (typeof aencoder != 'undefined') {
 				var parameters = aencoder.parameters
-				var parameters_new = []
-				// 消去一些不需要的项，这里主要指 ratecontrol，算是特定处理方法
-				var ratecontrolString = this.$store.state.globalParams.audio.detail.ratecontrol
-				for (const parameter of parameters) {
-					if (ratecontrolString == 'CBR/ABR') {
-						if (parameter.parameter == 'q') {
-							continue
-						}
-					} else if (ratecontrolString == 'Q') {
-						if (parameter.parameter == 'abitrate') {
-							continue
-						}
-					}
-					parameters_new.push(parameter)
-				}
-				return parameters_new
+				return parameters
 			} else {
 				return []
 			}
 		},
+		ratecontrolsList: function () {
+			var sName_aencoder = this.$store.state.globalParams.audio.aencoder
+			var aencoder = this.aencodersList.find(value => {
+				return value.sName == sName_aencoder
+			})
+			if (typeof aencoder != 'undefined') {
+				var ratecontrol = aencoder.ratecontrol
+				return ratecontrol
+			} else {
+				return []
+			}
+		},
+		ratecontrolSlier: function () {
+			var ratecontrolsList_ = this.ratecontrolsList
+			if (ratecontrolsList_ == 0) {
+				return null
+			}
+			var sName_ratecontrol = this.$store.state.globalParams.audio.ratecontrol
+			var index = ratecontrolsList_.findIndex(value => {
+				return value.sName == sName_ratecontrol
+			})
+			// 切换编码器后没有原来的码率控制模式了
+			if (index == -1) {
+				index = 0
+				this.$store.commit('changePara', {
+					type: 'audio',
+					key: 'ratecontrol',
+					value: ratecontrolsList_[0].sName
+				})
+			}
+			var slider = ratecontrolsList_[index]
+			var display
+			switch (slider.sName) {
+				case 'CBR/ABR':
+					display = '码率'
+					break;
+				case 'Q':
+					display = '质量参数'
+					break;
+			}
+			return {
+				display, 
+				parameter: 'ratevalue',
+				step: slider.step,
+				tags: slider.tags,
+				valueToText: slider.valueToText,
+				valueProcess: slider.valueProcess,
+				valueToParam: slider.valueToParam
+			}
+		},		
 		volSlider: function () {
 			return volSlider
 		},

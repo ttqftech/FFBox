@@ -4,6 +4,8 @@
 		<combobox title="编码器" :text="$store.state.globalParams.video.vencoder" :list="vencodersList" @change="onChange('combo', 'vencoder', $event, vencodersList)" v-show="hasParameters > 1"></combobox>
 		<combobox title="分辨率" :text="$store.state.globalParams.video.resolution" :list="resolutionsList" @change="onChange('combo', 'resolution', $event, resolutionsList)" v-show="hasParameters > 0"></combobox>
 		<combobox title="输出帧速" :text="$store.state.globalParams.video.framerate" :list="frameratesList" @change="onChange('combo', 'framerate', $event, frameratesList)" v-show="hasParameters > 0"></combobox>
+		<combobox title="码率控制" :text="$store.state.globalParams.video.ratecontrol" :list="ratecontrolsList" @change="onChange('combo', 'ratecontrol', $event, ratecontrolsList)" v-if="ratecontrolsList != 0"></combobox>
+		<slider v-if="ratecontrolSlier != null" :title="ratecontrolSlier.display" :value="$store.state.globalParams.video.ratevalue" :tags="ratecontrolSlier.tags" :valueToText="ratecontrolSlier.valueToText" :valueProcess="ratecontrolSlier.valueProcess" @change="onChange('slider', 'ratevalue', $event)"></slider>
 		<div v-for="(parameter, index) in parametersList" :key="index" :class="{ comboParent: parameter.mode == 'combo', sliderParent: parameter.mode == 'slider' }">
 			<combobox class="fullSpace" v-if="parameter.mode == 'combo'" :title="parameter.display" :text="$store.state.globalParams.video.detail[parameter.parameter]" :list="parameter.items" @change="onDetailChange('combo', parameter.parameter, $event, parameter.items)"></combobox>
 			<slider class="fullSpace" v-if="parameter.mode == 'slider'" :title="parameter.display" :value="$store.state.globalParams.video.detail[parameter.parameter]" :tags="parameter.tags" :valueToText="parameter.valueToText" :valueProcess="parameter.valueProcess" @change="onDetailChange('slider', parameter.parameter, $event)"></slider>
@@ -54,32 +56,65 @@ export default {
 			})
 			if (typeof vencoder != 'undefined') {
 				var parameters = vencoder.parameters
-				var parameters_new = []
-				// 消去一些不需要的项，这里主要指 ratecontrol，算是特定处理方法
-				var ratecontrolString = this.$store.state.globalParams.video.detail.ratecontrol
-				for (const parameter of parameters) {
-					if (ratecontrolString == 'CRF') {
-						if (parameter.parameter == 'qp' || parameter.parameter == 'vbitrate' || parameter.parameter == 'q') {
-							continue
-						}
-					} else if (ratecontrolString == 'CQP') {
-						if (parameter.parameter == 'crf' || parameter.parameter == 'vbitrate' || parameter.parameter == 'q') {
-							continue
-						}
-					} else if (ratecontrolString == 'CBR' || ratecontrolString == 'ABR') {
-						if (parameter.parameter == 'crf' || parameter.parameter == 'qp' || parameter.parameter == 'q') {
-							continue
-						}
-					} else if (ratecontrolString == 'Q') {
-						if (parameter.parameter == 'crf' || parameter.parameter == 'qp' || parameter.parameter == 'vbitrate') {
-							continue
-						}
-					}
-					parameters_new.push(parameter)
-				}
-				return parameters_new
+				return parameters
 			} else {
 				return []
+			}
+		},
+		ratecontrolsList: function () {
+			var sName_vencoder = this.$store.state.globalParams.video.vencoder
+			var vencoder = this.vencodersList.find(value => {
+				return value.sName == sName_vencoder
+			})
+			if (typeof vencoder != 'undefined') {
+				var ratecontrol = vencoder.ratecontrol
+				return ratecontrol
+			} else {
+				return []
+			}
+		},
+		ratecontrolSlier: function () {
+			var ratecontrolsList_ = this.ratecontrolsList
+			if (ratecontrolsList_ == 0) {
+				return null
+			}
+			var sName_ratecontrol = this.$store.state.globalParams.video.ratecontrol
+			var index = ratecontrolsList_.findIndex(value => {
+				return value.sName == sName_ratecontrol
+			})
+			// 切换编码器后没有原来的码率控制模式了
+			if (index == -1) {
+				index = 0
+				this.$store.commit('changePara', {
+					type: 'video',
+					key: 'ratecontrol',
+					value: ratecontrolsList_[0].sName
+				})
+			}
+			var slider = ratecontrolsList_[index]
+			var display
+			switch (slider.sName) {
+				case 'CRF':
+					display = 'CRF'
+					break;
+				case 'CQP':
+					display = 'QP 参数'
+					break;
+				case 'CBR': case 'ABR':
+					display = '码率'
+					break;
+				case 'Q':
+					display = '质量参数'
+					break;
+			}
+			return {
+				display, 
+				parameter: 'ratevalue',
+				step: slider.step,
+				tags: slider.tags,
+				valueToText: slider.valueToText,
+				valueProcess: slider.valueProcess,
+				valueToParam: slider.valueToParam
 			}
 		},
 		// 主要用于控制是否显示多余参数

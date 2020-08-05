@@ -1074,20 +1074,18 @@ const vcodecs = [
 				...默认编码器,
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ CRF, ABR ]
-					},
-					{
-						mode: "slider", parameter: "crf", display: "CRF",
-						...crf63slider,
-					},
-					{
-						mode: "slider", parameter: "vbitrate", display: "码率",
-						...vbitrateSlider,
-					},
-					{
 						mode: "combo", parameter: "pix_fmt", display: "像素格式",
 						items: [ 自动, yuv420p, yuv422p, yuv444p, yuv420p10le, yuv422p10le, yuv444p10le, yuv420p12le, yuv422p12le, yuv444p12le ]
+					},
+				],
+				ratecontrol: [
+					{
+						...CRF,
+						...crf63slider
+					},
+					{
+						...ABR,
+						...vbitrateSlider
 					},
 				]
 			},
@@ -1100,20 +1098,18 @@ const vcodecs = [
 				codecName: 'libaom-av1',
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ CRF, ABR ]
-					},
-					{
-						mode: "slider", parameter: "crf", display: "CRF",
-						...crf63slider,
-					},
-					{
-						mode: "slider", parameter: "vbitrate", display: "码率",
-						...vbitrateSlider,
-					},
-					{
 						mode: "combo", parameter: "pix_fmt", display: "像素格式",
 						items: [ 自动, yuv420p, yuv422p, yuv444p, yuv420p10le, yuv422p10le, yuv444p10le, yuv420p12le, yuv422p12le, yuv444p12le ]
+					},
+				],
+				ratecontrol: [
+					{
+						...CRF,
+						...crf63slider
+					},
+					{
+						...ABR,
+						...vbitrateSlider
 					},
 				]
 			},
@@ -1132,22 +1128,6 @@ const vcodecs = [
 				...默认编码器,
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ CRF, CQP, ABR ]
-					},
-					{
-						mode: "slider", parameter: "crf", display: "CRF",
-						...H264265crfSlider,
-					},
-					{
-						mode: "slider", parameter: "qp", display: "QP",
-						...qp70slider,
-					},
-					{
-						mode: "slider", parameter: "vbitrate", display: "码率",
-						...vbitrateSlider,
-					},
-					{
 						mode: "slider", parameter: "preset", display: "编码质量",
 						...H264265presetSlider,
 					},
@@ -1162,6 +1142,20 @@ const vcodecs = [
 					{
 						mode: "combo", parameter: "pix_fmt", display: "像素格式",
 						items: [ 自动, yuv420p, yuv422p, yuv444p, gbrp, yuv420p10le, yuv422p10le, yuv444p10le, gbrp10le, gray, gray10le ]
+					},
+				],
+				ratecontrol: [
+					{
+						...CRF,
+						...H264265crfSlider
+					},
+					{
+						...CQP,
+						...qp70slider
+					},
+					{
+						...ABR,
+						...vbitrateSlider
 					},
 				]
 			},
@@ -1174,22 +1168,6 @@ const vcodecs = [
 				codecName: 'libx265',
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ CRF, CQP, ABR ]
-					},
-					{
-						mode: "slider", parameter: "crf", display: "CRF",
-						...H264265crfSlider,
-					},
-					{
-						mode: "slider", parameter: "qp", display: "QP",
-						...qp70slider,
-					},
-					{
-						mode: "slider", parameter: "vbitrate", display: "码率",
-						...vbitrateSlider,
-					},
-					{
 						mode: "slider", parameter: "preset", display: "编码质量",
 						...H264265presetSlider,
 					},
@@ -1205,6 +1183,20 @@ const vcodecs = [
 						mode: "combo", parameter: "pix_fmt", display: "像素格式",
 						items: [ 自动, yuv420p, yuv422p, yuv444p, gbrp, yuv420p10le, yuv422p10le, yuv444p10le, gbrp10le, gray, gray10le ]
 					},
+				],
+				ratecontrol: [
+					{
+						...CRF,
+						...H264265crfSlider
+					},
+					{
+						...CQP,
+						...qp70slider
+					},
+					{
+						...ABR,
+						...vbitrateSlider
+					},
 				]
 			},
 			{
@@ -1215,18 +1207,6 @@ const vcodecs = [
 				description: 'Intel 硬件加速编码器',
 				codecName: 'hevc_qsv',
 				parameters: [
-					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ CQP, ABR ]
-					},
-					{
-						mode: "slider", parameter: "qp", display: "CQP",
-						...qp51slider, cmd: ['-q', VALUE]
-					},
-					{
-						mode: "slider", parameter: "vbitrate", display: "码率",
-						...vbitrateSlider,
-					},
 					{
 						mode: "slider", parameter: "preset", display: "编码质量",
 						...qsvPresetSlider,
@@ -1239,6 +1219,16 @@ const vcodecs = [
 						mode: "combo", parameter: "pix_fmt", display: "像素格式",
 						items: [ 自动, nv12, p010le, qsv ]
 					},
+				],
+				ratecontrol: [
+					{
+						...CQP, cmd: ['-q', VALUE],
+						...qp51slider
+					},
+					{
+						...ABR,
+						...vbitrateSlider
+					},
 				]
 			},
 			{
@@ -1249,22 +1239,6 @@ const vcodecs = [
 				description: 'NVIDIA 硬件加速编码器',
 				codecName: 'hevc_nvenc',
 				parameters: [
-					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ {...CRF, cmd: ['-cq', VALUE]}, CQP, {...CBR, cmd: ['-cbr', 'true', '-b:v', VALUE]}, ABR ]
-					},
-					{
-						mode: "slider", parameter: "crf", display: "CRF",
-						...crf51slider
-					},
-					{
-						mode: "slider", parameter: "qp", display: "QP",
-						...qp51slider
-					},
-					{
-						mode: "slider", parameter: "vbitrate", display: "码率",
-						...vbitrateSlider,
-					},
 					{
 						mode: "combo", parameter: "preset", display: "编码质量",
 						items: [ ...nvencPreset ],
@@ -1285,6 +1259,24 @@ const vcodecs = [
 						mode: "combo", parameter: "pix_fmt", display: "像素格式",
 						items: [ 自动, yuv420p, nv12, p016le, yuv444p, p010le, yuv444p16le, bgr0, rgb0, cuda, d3d11 ]
 					},
+				],
+				ratecontrol: [
+					{
+						...CRF, cmd: ['-cq', VALUE],
+						...crf51slider
+					},
+					{
+						...CQP,
+						...qp51slider
+					},
+					{
+						...CBR, cmd: ['-cbr', 'true', '-b:v', VALUE],
+						...vbitrateSlider
+					},
+					{
+						...ABR,
+						...vbitrateSlider
+					},
 				]
 			},
 			{
@@ -1295,18 +1287,6 @@ const vcodecs = [
 				description: 'AMD 硬件加速编码器',
 				codecName: 'hevc_amf',
 				parameters: [
-					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ {...CQP, cmd: ['-qp_i', VALUE, '-qp_p', VALUE]}, {...CBR, cmd: ['-rc', 'cbr', '-b:v', VALUE]}, ABR ]
-					},
-					{
-						mode: "slider", parameter: "qp", display: "QP",
-						...qp51slider
-					},
-					{
-						mode: "slider", parameter: "vbitrate", display: "码率",
-						...vbitrateSlider,
-					},
 					{
 						mode: "slider", parameter: "preset", display: "编码质量",
 						step: true,
@@ -1366,6 +1346,20 @@ const vcodecs = [
 						mode: "combo", parameter: "pix_fmt", display: "像素格式",
 						items: [ 自动, yuv420p, nv12, d3d11, dxva2_vld ]
 					},
+				],
+				ratecontrol: [
+					{
+						...CQP, cmd: ['-qp_i', VALUE, '-qp_p', VALUE],
+						...qp51slider
+					},
+					{
+						...CBR, cmd: ['-rc', 'cbr', '-b:v', VALUE],
+						...vbitrateSlider
+					},
+					{
+						...ABR,
+						...vbitrateSlider
+					},
 				]
 			},
 		]
@@ -1382,22 +1376,6 @@ const vcodecs = [
 				...默认编码器,
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ CRF, CQP, {...CBR, cmd: ['-b:v', VALUE, '-minrate', VALUE, '-maxrate', VALUE]}, ABR ]
-					},
-					{
-						mode: "slider", parameter: "crf", display: "CRF",
-						...H264265crfSlider,
-					},
-					{
-						mode: "slider", parameter: "qp", display: "QP",
-						...qp70slider,
-					},
-					{
-						mode: "slider", parameter: "vbitrate", display: "码率",
-						...vbitrateSlider,
-					},
-					{
 						mode: "slider", parameter: "preset", display: "编码质量",
 						...H264265presetSlider,
 					},
@@ -1416,6 +1394,24 @@ const vcodecs = [
 					{
 						mode: "combo", parameter: "pix_fmt", display: "像素格式",
 						items: [ 自动, yuv420p, yuvj420p, yuv422p, yuvj422p, yuv444p, yuvj444p, nv12, nv16, nv21, yuv420p10le, yuv422p10le, yuv444p10le, nv20le, gray, gray10le ]
+					},
+				],
+				ratecontrol: [
+					{
+						...CRF,
+						...H264265crfSlider
+					},
+					{
+						...CQP,
+						...qp70slider
+					},
+					{
+						...CBR, cmd: ['-b:v', VALUE, '-minrate', VALUE, '-maxrate', VALUE],
+						...vbitrateSlider
+					},
+					{
+						...ABR,
+						...vbitrateSlider
 					},
 				]
 			},
@@ -1428,22 +1424,6 @@ const vcodecs = [
 				codecName: 'libx264',
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ CRF, CQP, {...CBR, cmd: ['-b:v', VALUE, '-minrate', VALUE, '-maxrate', VALUE]}, ABR ]
-					},
-					{
-						mode: "slider", parameter: "crf", display: "CRF",
-						...H264265crfSlider,
-					},
-					{
-						mode: "slider", parameter: "qp", display: "QP",
-						...qp70slider,
-					},
-					{
-						mode: "slider", parameter: "vbitrate", display: "码率",
-						...vbitrateSlider,
-					},
-					{
 						mode: "slider", parameter: "preset", display: "编码质量",
 						...H264265presetSlider,
 					},
@@ -1463,6 +1443,24 @@ const vcodecs = [
 						mode: "combo", parameter: "pix_fmt", display: "像素格式",
 						items: [ 自动, yuv420p, yuvj420p, yuv422p, yuvj422p, yuv444p, yuvj444p, nv12, nv16, nv21, yuv420p10le, yuv422p10le, yuv444p10le, nv20le, gray, gray10le ]
 					},
+				],
+				ratecontrol: [
+					{
+						...CRF,
+						...H264265crfSlider
+					},
+					{
+						...CQP,
+						...qp70slider
+					},
+					{
+						...CBR, cmd: ['-b:v', VALUE, '-minrate', VALUE, '-maxrate', VALUE],
+						...vbitrateSlider
+					},
+					{
+						...ABR,
+						...vbitrateSlider
+					},
 				]
 			},
 			{
@@ -1473,22 +1471,6 @@ const vcodecs = [
 				description: '',
 				codecName: 'libx264rgb',
 				parameters: [
-					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ CRF, CQP, {...CBR, cmd: ['-b:v', VALUE, '-minrate', VALUE, '-maxrate', VALUE]}, ABR ]
-					},
-					{
-						mode: "slider", parameter: "crf", display: "CRF",
-						...H264265crfSlider,
-					},
-					{
-						mode: "slider", parameter: "qp", display: "QP",
-						...qp70slider,
-					},
-					{
-						mode: "slider", parameter: "vbitrate", display: "码率",
-						...vbitrateSlider,
-					},
 					{
 						mode: "slider", parameter: "preset", display: "编码质量",
 						...H264265presetSlider,
@@ -1505,6 +1487,24 @@ const vcodecs = [
 						mode: "combo", parameter: "pix_fmt", display: "像素格式",
 						items: [ 自动, bgr0, bgr24, rgb24 ]
 					},
+				],
+				ratecontrol: [
+					{
+						...CRF,
+						...H264265crfSlider
+					},
+					{
+						...CQP,
+						...qp70slider
+					},
+					{
+						...CBR, cmd: ['-b:v', VALUE, '-minrate', VALUE, '-maxrate', VALUE],
+						...vbitrateSlider
+					},
+					{
+						...ABR,
+						...vbitrateSlider
+					},
 				]
 			},
 			{
@@ -1515,18 +1515,6 @@ const vcodecs = [
 				description: 'Intel 硬件加速编码器',
 				codecName: 'h264_qsv',
 				parameters: [
-					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ CQP, ABR ]
-					},
-					{
-						mode: "slider", parameter: "qp", display: "CQP",
-						...qp51slider, cmd: ['-q', VALUE]
-					},
-					{
-						mode: "slider", parameter: "vbitrate", display: "码率",
-						...vbitrateSlider,
-					},
 					{
 						mode: "slider", parameter: "preset", display: "编码质量",
 						...qsvPresetSlider,
@@ -1539,6 +1527,16 @@ const vcodecs = [
 						mode: "combo", parameter: "pix_fmt", display: "像素格式",
 						items: [ 自动, nv12, p010le, qsv ]
 					},
+				],
+				ratecontrol: [
+					{
+						...CQP, cmd: ['-q', VALUE],
+						...qp51slider
+					},
+					{
+						...ABR,
+						...vbitrateSlider
+					},
 				]
 			},
 			{
@@ -1549,22 +1547,6 @@ const vcodecs = [
 				description: 'NVIDIA 硬件加速编码器',
 				codecName: 'h264_nvenc',
 				parameters: [
-					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ {...CRF, cmd: ['-cq', VALUE]}, CQP, {...CBR, cmd: ['-cbr', 'true', '-b:v', VALUE]}, ABR ]
-					},
-					{
-						mode: "slider", parameter: "crf", display: "CRF",
-						...crf51slider
-					},
-					{
-						mode: "slider", parameter: "qp", display: "QP",
-						...qp51slider
-					},
-					{
-						mode: "slider", parameter: "vbitrate", display: "码率",
-						...vbitrateSlider,
-					},
 					{
 						mode: "combo", parameter: "preset", display: "编码质量",
 						items: [ ...nvencPreset ],
@@ -1585,6 +1567,24 @@ const vcodecs = [
 						mode: "combo", parameter: "pix_fmt", display: "像素格式",
 						items: [ 自动, yuv420p, nv12, p016le, yuv444p, p010le, yuv444p16le, bgr0, rgb0, cuda, d3d11 ]
 					},
+				],
+				ratecontrol: [
+					{
+						...CRF, cmd: ['-cq', VALUE],
+						...crf51slider
+					},
+					{
+						...CQP,
+						...qp51slider
+					},
+					{
+						...CBR, cmd: ['-cbr', 'true', '-b:v', VALUE],
+						...vbitrateSlider
+					},
+					{
+						...ABR,
+						...vbitrateSlider
+					},
 				]
 			},
 			{
@@ -1595,18 +1595,6 @@ const vcodecs = [
 				description: 'AMD 硬件加速编码器',
 				codecName: 'h264_amf',
 				parameters: [
-					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ {...CQP, cmd: ['-qp_i', VALUE, '-qp_p', VALUE]}, {...CBR, cmd: ['-rc', 'cbr', '-b:v', VALUE]}, ABR ]
-					},
-					{
-						mode: "slider", parameter: "qp", display: "QP",
-						...qp51slider
-					},
-					{
-						mode: "slider", parameter: "vbitrate", display: "码率",
-						...vbitrateSlider,
-					},
 					{
 						mode: "slider", parameter: "preset", display: "编码质量",
 						step: true,
@@ -1665,6 +1653,20 @@ const vcodecs = [
 						mode: "combo", parameter: "pix_fmt", display: "像素格式",
 						items: [ 自动, yuv420p, nv12, d3d11, dxva2_vld ]
 					},
+				],
+				ratecontrol: [
+					{
+						...CQP, cmd: ['-qp_i', VALUE, '-qp_p', VALUE],
+						...qp51slider
+					},
+					{
+						...CBR, cmd: ['-rc', 'cbr', '-b:v', VALUE],
+						...vbitrateSlider
+					},
+					{
+						...ABR,
+						...vbitrateSlider
+					},
 				]
 			},
 		]
@@ -1681,20 +1683,18 @@ const vcodecs = [
 				...默认编码器,
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ ABR, Q ]
-					},
-					{
-						mode: "slider", parameter: "vbitrate", display: "码率",
-						...vbitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
-					},
-					{
 						mode: "combo", parameter: "pix_fmt", display: "像素格式",
 						items: [ 自动, yuv420p ]
+					},
+				],
+				ratecontrol: [
+					{
+						...ABR,
+						...vbitrateSlider
+					},
+					{
+						...Q,
+						...q100slider
 					},
 				]
 			}
@@ -1712,20 +1712,18 @@ const vcodecs = [
 				...默认编码器,
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ ABR, Q ]
-					},
-					{
-						mode: "slider", parameter: "vbitrate", display: "码率",
-						...vbitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
-					},
-					{
 						mode: "combo", parameter: "pix_fmt", display: "像素格式",
 						items: [ 自动, yuv420p ]
+					},
+				],
+				ratecontrol: [
+					{
+						...ABR,
+						...vbitrateSlider
+					},
+					{
+						...Q,
+						...q100slider
 					},
 				]
 			}
@@ -1743,18 +1741,6 @@ const vcodecs = [
 				...默认编码器,
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ CRF, ABR ]
-					},
-					{
-						mode: "slider", parameter: "crf", display: "CRF",
-						...crf63slider,
-					},
-					{
-						mode: "slider", parameter: "vbitrate", display: "码率",
-						...vbitrateSlider,
-					},
-					{
 						mode: "slider", parameter: "quality", display: "编码质量",
 						step: true,
 						tags: new Map([
@@ -1777,6 +1763,16 @@ const vcodecs = [
 					{
 						mode: "combo", parameter: "pix_fmt", display: "像素格式",
 						items: [ 自动, yuv420p, yuv422p, yuv440p, yuv444p, yuv420p10le, yuv422p10le, yuv440p10le, yuv444p10le, yuv420p12le, yuv422p12le, yuv440p12le, yuv444p12le, gbrp, gbrp10le, gbrp12le ]
+					},
+				],
+				ratecontrol: [
+					{
+						...CRF,
+						...crf63slider
+					},
+					{
+						...ABR,
+						...vbitrateSlider
 					},
 				]
 			},
@@ -1789,18 +1785,6 @@ const vcodecs = [
 				codecName: 'libvpx-vp9',		
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ CRF, ABR ]
-					},
-					{
-						mode: "slider", parameter: "crf", display: "CRF",
-						...crf63slider,
-					},
-					{
-						mode: "slider", parameter: "vbitrate", display: "码率",
-						...vbitrateSlider,
-					},
-					{
 						mode: "slider", parameter: "quality", display: "编码质量",
 						step: true,
 						tags: new Map([
@@ -1823,6 +1807,16 @@ const vcodecs = [
 					{
 						mode: "combo", parameter: "pix_fmt", display: "像素格式",
 						items: [ 自动, yuv420p, yuv422p, yuv440p, yuv444p, yuv420p10le, yuv422p10le, yuv440p10le, yuv444p10le, yuv420p12le, yuv422p12le, yuv440p12le, yuv444p12le, gbrp, gbrp10le, gbrp12le ]
+					},
+				],
+				ratecontrol: [
+					{
+						...CRF,
+						...crf63slider
+					},
+					{
+						...ABR,
+						...vbitrateSlider
 					},
 				]
 			},
@@ -1839,18 +1833,6 @@ const vcodecs = [
 			{
 				...默认编码器,
 				parameters: [
-					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ CRF, ABR ]
-					},
-					{
-						mode: "slider", parameter: "crf", display: "CRF",
-						...crf63slider,
-					},
-					{
-						mode: "slider", parameter: "vbitrate", display: "码率",
-						...vbitrateSlider,
-					},
 					{
 						mode: "slider", parameter: "quality", display: "编码质量",
 						step: true,
@@ -1875,6 +1857,16 @@ const vcodecs = [
 						mode: "combo", parameter: "pix_fmt", display: "像素格式",
 						items: [ 自动, yuv420p, yuva420p ]
 					},
+				],
+				ratecontrol: [
+					{
+						...CRF,
+						...crf63slider
+					},
+					{
+						...ABR,
+						...vbitrateSlider
+					},
 				]
 			},
 			{
@@ -1884,6 +1876,42 @@ const vcodecs = [
 				imageOffset: 0,
 				description: '',
 				codecName: 'libvpx',		
+				parameters: [
+					{
+						mode: "slider", parameter: "quality", display: "编码质量",
+						step: true,
+						tags: new Map([
+							[0 / 2, 'realtime'],
+							[1 / 2, 'good'],
+							[2 / 2, 'best'],
+						]),
+						valueToText: function (value) {
+							value = Math.round(value * 2)
+							return ['realtime', 'good', 'best'][value]
+						},
+						valueProcess: function (value) {
+							return Math.round(value * 2) / 2
+						},
+						valueToParam: function (value) {
+							value = Math.round(value * 2) / 2
+							return ['realtime', 'good', 'best'][value]
+						}
+					},
+					{
+						mode: "combo", parameter: "pix_fmt", display: "像素格式",
+						items: [ 自动, yuv420p, yuva420p ]
+					},
+				],
+				ratecontrol: [
+					{
+						...CRF,
+						...crf63slider
+					},
+					{
+						...ABR,
+						...vbitrateSlider
+					},
+				]
 			},
 		]
 	},
@@ -1899,20 +1927,18 @@ const vcodecs = [
 				...默认编码器,
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ ABR, Q ]
-					},
-					{
-						mode: "slider", parameter: "vbitrate", display: "码率",
-						...vbitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
-					},
-					{
 						mode: "combo", parameter: "pix_fmt", display: "像素格式",
 						items: [ 自动, yuv420p ]
+					},
+				],
+				ratecontrol: [
+					{
+						...ABR,
+						...vbitrateSlider
+					},
+					{
+						...Q,
+						...q100slider
 					},
 				]
 			},
@@ -1925,20 +1951,18 @@ const vcodecs = [
 				codecName: 'mpeg4',
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ ABR, Q ]
-					},
-					{
-						mode: "slider", parameter: "vbitrate", display: "码率",
-						...vbitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
-					},
-					{
 						mode: "combo", parameter: "pix_fmt", display: "像素格式",
 						items: [ 自动, yuv420p ]
+					},
+				],
+				ratecontrol: [
+					{
+						...ABR,
+						...vbitrateSlider
+					},
+					{
+						...Q,
+						...q100slider
 					},
 				]
 			},
@@ -1951,20 +1975,18 @@ const vcodecs = [
 				codecName: 'libxvid',
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ ABR, Q ]
-					},
-					{
-						mode: "slider", parameter: "vbitrate", display: "码率",
-						...vbitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
-					},
-					{
 						mode: "combo", parameter: "pix_fmt", display: "像素格式",
 						items: [ 自动, yuv420p ]
+					},
+				],
+				ratecontrol: [
+					{
+						...ABR,
+						...vbitrateSlider
+					},
+					{
+						...Q,
+						...q100slider
 					},
 				]
 			},
@@ -1982,20 +2004,18 @@ const vcodecs = [
 				...默认编码器,
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ ABR, Q ]
-					},
-					{
-						mode: "slider", parameter: "vbitrate", display: "码率",
-						...vbitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
-					},
-					{
 						mode: "combo", parameter: "pix_fmt", display: "像素格式",
 						items: [ 自动, yuv420p, yuv422p ]
+					},
+				],
+				ratecontrol: [
+					{
+						...ABR,
+						...vbitrateSlider
+					},
+					{
+						...Q,
+						...q100slider
 					},
 				]
 			},
@@ -2008,20 +2028,18 @@ const vcodecs = [
 				codecName: 'mpeg2video',
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ ABR, Q ]
-					},
-					{
-						mode: "slider", parameter: "vbitrate", display: "码率",
-						...vbitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
-					},
-					{
 						mode: "combo", parameter: "pix_fmt", display: "像素格式",
 						items: [ 自动, yuv420p, yuv422p ]
+					},
+				],
+				ratecontrol: [
+					{
+						...ABR,
+						...vbitrateSlider
+					},
+					{
+						...Q,
+						...q100slider
 					},
 				]
 			},
@@ -2034,19 +2052,7 @@ const vcodecs = [
 				codecName: 'mpeg2_qsv',
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ ABR, Q ]
-					},
-					{
-						mode: "slider", parameter: "vbitrate", display: "码率",
-						...vbitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
-					},
-					{
-						mode: "slider", parameter: "preset", display: "码率",
+						mode: "slider", parameter: "preset", display: "编码质量",
 						...qsvPresetSlider,
 					},
 					{
@@ -2056,6 +2062,16 @@ const vcodecs = [
 					{
 						mode: "combo", parameter: "pix_fmt", display: "像素格式",
 						items: [ 自动, nv12, qsv ]
+					},
+				],
+				ratecontrol: [
+					{
+						...ABR,
+						...vbitrateSlider
+					},
+					{
+						...Q,
+						...q100slider
 					},
 				]
 			},
@@ -2073,20 +2089,18 @@ const vcodecs = [
 				...默认编码器,
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ ABR, Q ]
-					},
-					{
-						mode: "slider", parameter: "vbitrate", display: "码率",
-						...vbitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
-					},
-					{
 						mode: "combo", parameter: "pix_fmt", display: "像素格式",
 						items: [ 自动, yuv420p, yuv422p ]
+					},
+				],
+				ratecontrol: [
+					{
+						...ABR,
+						...vbitrateSlider
+					},
+					{
+						...Q,
+						...q100slider
 					},
 				]
 			},
@@ -2104,20 +2118,18 @@ const vcodecs = [
 				...默认编码器,
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ ABR, Q ]
-					},
-					{
-						mode: "slider", parameter: "vbitrate", display: "码率",
-						...vbitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
-					},
-					{
 						mode: "combo", parameter: "pix_fmt", display: "像素格式",
 						items: [ 自动, yuvj420p, yuvj422p, yuvj444p ]
+					},
+				],
+				ratecontrol: [
+					{
+						...ABR,
+						...vbitrateSlider
+					},
+					{
+						...Q,
+						...q100slider
 					},
 				]
 			},
@@ -2130,20 +2142,18 @@ const vcodecs = [
 				codecName: 'mjpeg',	
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ ABR, Q ]
-					},
-					{
-						mode: "slider", parameter: "vbitrate", display: "码率",
-						...vbitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
-					},
-					{
 						mode: "combo", parameter: "pix_fmt", display: "像素格式",
 						items: [ 自动, yuvj420p, yuvj422p, yuvj444p ]
+					},
+				],
+				ratecontrol: [
+					{
+						...ABR,
+						...vbitrateSlider
+					},
+					{
+						...Q,
+						...q100slider
 					},
 				]
 			},
@@ -2156,16 +2166,14 @@ const vcodecs = [
 				codecName: 'mjpeg_qsv',
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ ABR ]
-					},
-					{
-						mode: "slider", parameter: "vbitrate", display: "码率",
-						...vbitrateSlider,
-					},
-					{
 						mode: "combo", parameter: "pix_fmt", display: "像素格式",
 						items: [ 自动, nv12, qsv ]
+					},
+				],
+				ratecontrol: [
+					{
+						...ABR,
+						...vbitrateSlider
 					},
 				]
 			},
@@ -2183,20 +2191,18 @@ const vcodecs = [
 				...默认编码器,
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ ABR, Q ]
-					},
-					{
-						mode: "slider", parameter: "vbitrate", display: "码率",
-						...vbitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
-					},
-					{
 						mode: "combo", parameter: "pix_fmt", display: "像素格式",
 						items: [ 自动, yuv420p ]
+					},
+				],
+				ratecontrol: [
+					{
+						...ABR,
+						...vbitrateSlider
+					},
+					{
+						...Q,
+						...q100slider
 					},
 				]
 			}
@@ -2214,20 +2220,18 @@ const vcodecs = [
 				...默认编码器,
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ ABR, Q ]
-					},
-					{
-						mode: "slider", parameter: "vbitrate", display: "码率",
-						...vbitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
-					},
-					{
 						mode: "combo", parameter: "pix_fmt", display: "像素格式",
 						items: [ 自动, yuv420p ]
+					},
+				],
+				ratecontrol: [
+					{
+						...ABR,
+						...vbitrateSlider
+					},
+					{
+						...Q,
+						...q100slider
 					},
 				]
 			}
@@ -2245,20 +2249,18 @@ const vcodecs = [
 				...默认编码器,
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ ABR, Q ]
-					},
-					{
-						mode: "slider", parameter: "vbitrate", display: "码率",
-						...vbitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
-					},
-					{
 						mode: "combo", parameter: "pix_fmt", display: "像素格式",
 						items: [ 自动, yuv420p ]
+					},
+				],
+				ratecontrol: [
+					{
+						...ABR,
+						...vbitrateSlider
+					},
+					{
+						...Q,
+						...q100slider
 					},
 				]
 			}
@@ -2276,20 +2278,18 @@ const vcodecs = [
 				...默认编码器,
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ ABR, Q ]
-					},
-					{
-						mode: "slider", parameter: "vbitrate", display: "码率",
-						...vbitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
-					},
-					{
 						mode: "combo", parameter: "pix_fmt", display: "像素格式",
 						items: [ 自动, yuv420p ]
+					},
+				],
+				ratecontrol: [
+					{
+						...ABR,
+						...vbitrateSlider
+					},
+					{
+						...Q,
+						...q100slider
 					},
 				]
 			}
@@ -2310,7 +2310,8 @@ const vcodecs = [
 						mode: "combo", parameter: "pix_fmt", display: "像素格式",
 						items: [ 自动, rgb555le ]
 					},
-				]
+				],
+				ratecontrol: []
 			}
 		]
 	},
@@ -2599,76 +2600,45 @@ const generator = {
 			}
 			for (const parameter of vencoder.parameters) {
 				// 逐个遍历详细参数
-				if (parameter.parameter == 'ratecontrol') {
-					// 找到 ratecontrol 参数
-					var ratecontrol = parameter.items.find((value) => {
-						return value.sName == videoParams.detail.ratecontrol
-					})
-					// if (ratecontrol == null) {	// 没有与当前参数对应的码率控制模式，直接选第一个
-					// 	ratecontrol = parameter.items.find((value) => {
-					// 		return true
-					// 	})
-					// }
-					if (ratecontrol != null) {
-						var parameterName
-						switch (ratecontrol.sName) {
-							case 'CRF':
-								parameterName = 'crf'
-								break;
-							case 'CQP':
-								parameterName = 'qp'
-								break;
-							case 'ABR': case 'CBR':
-								parameterName = 'vbitrate'
-								break;
-							case 'Q':
-								parameterName = 'q'
-								break;
-						}
-						// 再次遍历，寻找对应的 ratecontrol slider
-						var slider = vencoder.parameters.find((value) => {
-							return value.parameter == parameterName
-						})
-						// 计算值
-						var floatValue = videoParams.detail[parameterName]
-						var value = slider.valueToParam(floatValue)
-						// 将值插入参数列表中
-						for (const item of ratecontrol.cmd) {
-							if (item == VALUE) {
-								ret.push(value)
-							} else {
-								ret.push(item)
-							}
-						}
-					}
-				} else if (parameter.parameter == 'crf' || parameter.parameter == 'qp' || parameter.parameter == 'vbitrate' || parameter.parameter == 'q') {
-					continue
-				} else {
-					// 普通的详细参数
-					if (parameter.mode == 'combo') {
-						if (videoParams.detail[parameter.parameter] != '默认' && videoParams.detail[parameter.parameter] != '自动') {
-							ret.push('-' + parameter.parameter)
-							ret.push(videoParams.detail[parameter.parameter])
-						}
-						// 检查参数项是否有 strict2 标记
-						var item = parameter.items.find((value) => {
-							return value.sName == videoParams.detail[parameter.parameter]
-						})
-						if (item && item.strict2) {
-							strict2 = true
-						}
-					} else if (parameter.mode == 'slider') {
+				if (parameter.mode == 'combo') {
+					if (videoParams.detail[parameter.parameter] != '默认' && videoParams.detail[parameter.parameter] != '自动') {
 						ret.push('-' + parameter.parameter)
-						var floatValue = videoParams.detail[parameter.parameter]
-						var value = parameter.valueToParam(floatValue)
-						ret.push(value)
+						ret.push(videoParams.detail[parameter.parameter])
 					}
+					// 检查参数项是否有 strict2 标记
+					var item = parameter.items.find((value) => {
+						return value.sName == videoParams.detail[parameter.parameter]
+					})
+					if (item && item.strict2) {
+						strict2 = true
+					}
+				} else if (parameter.mode == 'slider') {
+					ret.push('-' + parameter.parameter)
+					var floatValue = videoParams.detail[parameter.parameter]
+					var value = parameter.valueToParam(floatValue)
+					ret.push(value)
 				}
 			}
 							// 调试用↓
 							// ret.push('-threads')
 							// ret.push('1')
 							// 调试用↑
+			var ratecontrol = vencoder.ratecontrol.find(value => {
+				return value.sName == videoParams.ratecontrol
+			})
+			if (ratecontrol != null) {
+				// 计算值
+				var floatValue = videoParams.ratevalue
+				var value = ratecontrol.valueToParam(floatValue)
+				// 将值插入参数列表中
+				for (const item of ratecontrol.cmd) {
+					if (item == VALUE) {
+						ret.push(value)
+					} else {
+						ret.push(item)
+					}
+				}
+			}
 			if (strict2) {
 				ret.push('-strict')
 				ret.push('-2')
@@ -2700,41 +2670,21 @@ const generator = {
 			var vencoder = vcodec.encoders.find((value) => {
 				return value.sName == videoParams.vencoder
 			})
-			var parameter = vencoder.parameters.find((value => {
-				return value.parameter == 'ratecontrol'
-			}))
-			if (parameter == null) {
+			if (vencoder.ratecontrol == null) {
 				return ret
 			}
 			// 找到 ratecontrol 参数
-			var ratecontrol = parameter.items.find((value) => {
-				return value.sName == videoParams.detail.ratecontrol
+			var ratecontrol = vencoder.ratecontrol.find(value => {
+				return value.sName == videoParams.ratecontrol
 			})
-			var parameterName
-			switch (ratecontrol.sName) {
-				case 'CRF':
-					parameterName = 'crf'
-					break;
-				case 'CQP':
-					parameterName = 'qp'
-					break;
-				case 'ABR': case 'CBR':
-					parameterName = 'vbitrate'
-					break;
-				case 'Q':
-					parameterName = 'q'
-					break;
-			}
-			// 再次遍历，寻找对应的 ratecontrol slider
-			var slider = vencoder.parameters.find((value) => {
-				return value.parameter == parameterName
-			})
-			// 计算值
-			var floatValue = videoParams.detail[parameterName]
-			var value = slider.valueToText(floatValue)
-			ret = {
-				mode: ratecontrol.sName,
-				value
+			if (ratecontrol != null) {
+				// 计算值
+				var floatValue = videoParams.ratevalue
+				var value = ratecontrol.valueToText(floatValue)
+				ret = {
+					mode: ratecontrol.sName,
+					value
+				}
 			}
 			return ret
 		}

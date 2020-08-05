@@ -44,7 +44,7 @@ export default {
 			}
 			// 添加鼠标事件捕获，将其独立为一个函数，以便于 mouseDown 直接触发 mouseMove
 			var handleMouseMove = (event) => {
-				var value = (parseInt(event.pageX || event.touches[0].pageX) - sliderLeft - slipperOffsetX) / sliderWidth
+				var value = (parseInt(event.pageX || event.touches[0].pageX) - sliderLeft - slipperOffsetX) / sliderWidth	// event.pageX == 0 时短路逻辑失效，会报错，不影响使用
 				if (value > 1) {
 					value = 1
 				} else if (value < 0) {

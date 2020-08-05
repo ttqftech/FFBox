@@ -509,24 +509,22 @@ var acodecs = [
 				...默认编码器,
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ Q, CBR_ABR ]
-					},
-					{
-						mode: "slider", parameter: "abitrate", display: "码率",
-						...abitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
-					},
-					{
 						mode: "combo", parameter: "sample_fmt", display: "采样频率",
 						items: [ 自动, sr_48000 ]
 					},
 					{
 						mode: "combo", parameter: "channel_layout", display: "声道布局",
 						items: [ 自动, lo_mono, lo_stereo ]
+					},
+				],
+				ratecontrol: [
+					{
+						...CBR_ABR,
+						...abitrateSlider
+					},
+					{
+						...Q,
+						...q100slider
 					},
 				]
 			},
@@ -539,24 +537,22 @@ var acodecs = [
 				codecName: 'opus',
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ Q, CBR_ABR ]
-					},
-					{
-						mode: "slider", parameter: "abitrate", display: "码率",
-						...abitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
-					},
-					{
 						mode: "combo", parameter: "sample_fmt", display: "采样频率",
 						items: [ 自动, sr_48000 ]
 					},
 					{
 						mode: "combo", parameter: "channel_layout", display: "声道布局",
 						items: [ 自动, lo_mono, lo_stereo ]
+					},
+				],
+				ratecontrol: [
+					{
+						...CBR_ABR,
+						...abitrateSlider
+					},
+					{
+						...Q,
+						...q100slider
 					},
 				]
 			},
@@ -569,20 +565,18 @@ var acodecs = [
 				codecName: 'libopus',
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ Q, CBR_ABR ]
-					},
-					{
-						mode: "slider", parameter: "abitrate", display: "码率",
-						...abitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
-					},
-					{
 						mode: "combo", parameter: "sample_fmt", display: "采样频率",
 						items: [ 自动, sr_48000, sr_24000, sr_16000, sr_12000, sr_8000 ]
+					},
+				],
+				ratecontrol: [
+					{
+						...CBR_ABR,
+						...abitrateSlider
+					},
+					{
+						...Q,
+						...q100slider
 					},
 				]
 			},
@@ -600,18 +594,6 @@ var acodecs = [
 			{
 				...默认编码器,
 				parameters: [
-					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ Q, CBR_ABR ]
-					},
-					{
-						mode: "slider", parameter: "abitrate", display: "码率",
-						...abitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
-					},
 					{
 						mode: "combo", parameter: "sample_fmt", display: "采样频率",
 						items: [ 自动, sr_96000, sr_88200, sr_64000, sr_48000, sr_44100, sr_32000, sr_24000, sr_22050, sr_16000, sr_12000, sr_11025, sr_8000, sr_7350 ]
@@ -644,6 +626,16 @@ var acodecs = [
 							},
 						]
 					},
+				],
+				ratecontrol: [
+					{
+						...CBR_ABR,
+						...abitrateSlider
+					},
+					{
+						...Q,
+						...q100slider
+					},
 				]
 			},
 		]
@@ -658,18 +650,15 @@ var acodecs = [
 		encoders: [
 			{
 				...默认编码器,
-				parameters: [
+				parameters: [],
+				ratecontrol: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ Q, CBR_ABR ]
+						...CBR_ABR,
+						...abitrateSlider
 					},
 					{
-						mode: "slider", parameter: "abitrate", display: "码率",
-						...abitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
+						...Q,
+						...q100slider
 					},
 				]
 			},
@@ -680,18 +669,15 @@ var acodecs = [
 				imageOffset: 0,
 				description: '',
 				codecName: 'vorbis',
-				parameters: [
+				parameters: [],
+				ratecontrol: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ Q, CBR_ABR ]
+						...CBR_ABR,
+						...abitrateSlider
 					},
 					{
-						mode: "slider", parameter: "abitrate", display: "码率",
-						...abitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
+						...Q,
+						...q100slider
 					},
 				]
 			},
@@ -702,18 +688,15 @@ var acodecs = [
 				imageOffset: 0,
 				description: '',
 				codecName: 'libvorbis',
-				parameters: [
+				parameters: [],
+				ratecontrol: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ Q, CBR_ABR ]
+						...CBR_ABR,
+						...abitrateSlider
 					},
 					{
-						mode: "slider", parameter: "abitrate", display: "码率",
-						...abitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
+						...Q,
+						...q100slider
 					},
 				]
 			},
@@ -730,18 +713,15 @@ var acodecs = [
 		encoders: [
 			{
 				...默认编码器,
-				parameters: [
+				parameters: [],
+				ratecontrol: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ Q, CBR_ABR ]
+						...CBR_ABR,
+						...abitrateSlider
 					},
 					{
-						mode: "slider", parameter: "abitrate", display: "码率",
-						...abitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
+						...Q,
+						...q100slider
 					},
 				]
 			},
@@ -754,24 +734,22 @@ var acodecs = [
 				codecName: 'libmp3lame',
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ Q, CBR_ABR ]
-					},
-					{
-						mode: "slider", parameter: "abitrate", display: "码率",
-						...abitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
-					},
-					{
 						mode: "combo", parameter: "sample_fmt", display: "采样频率",
 						items: [ 自动, sr_48000, sr_44100, sr_32000, sr_24000, sr_22050, sr_16000, sr_12000, sr_11025, sr_8000 ]
 					},
 					{
 						mode: "combo", parameter: "channel_layout", display: "声道布局",
 						items: [ 自动, lo_mono, lo_stereo ]
+					},
+				],
+				ratecontrol: [
+					{
+						...CBR_ABR,
+						...abitrateSlider
+					},
+					{
+						...Q,
+						...q100slider
 					},
 				]
 			},
@@ -784,24 +762,22 @@ var acodecs = [
 				codecName: 'libshine',
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ Q, CBR_ABR ]
-					},
-					{
-						mode: "slider", parameter: "abitrate", display: "码率",
-						...abitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
-					},
-					{
 						mode: "combo", parameter: "sample_fmt", display: "采样频率",
 						items: [ 自动, sr_48000, sr_44100, sr_32000 ]
 					},
 					{
 						mode: "combo", parameter: "channel_layout", display: "声道布局",
 						items: [ 自动, lo_mono, lo_stereo ]
+					},
+				],
+				ratecontrol: [
+					{
+						...CBR_ABR,
+						...abitrateSlider
+					},
+					{
+						...Q,
+						...q100slider
 					},
 				]
 			},
@@ -819,24 +795,22 @@ var acodecs = [
 				...默认编码器,
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ Q, CBR_ABR ]
-					},
-					{
-						mode: "slider", parameter: "abitrate", display: "码率",
-						...abitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
-					},
-					{
 						mode: "combo", parameter: "sample_fmt", display: "采样频率",
 						items: [ 自动, sr_48000, sr_44100, sr_32000, sr_24000, sr_22050, sr_16000 ]
 					},
 					{
 						mode: "combo", parameter: "channel_layout", display: "声道布局",
 						items: [ 自动, lo_mono, lo_stereo ]
+					},
+				],
+				ratecontrol: [
+					{
+						...CBR_ABR,
+						...abitrateSlider
+					},
+					{
+						...Q,
+						...q100slider
 					},
 				]
 			},
@@ -849,24 +823,22 @@ var acodecs = [
 				codecName: 'mp2',
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ Q, CBR_ABR ]
-					},
-					{
-						mode: "slider", parameter: "abitrate", display: "码率",
-						...abitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
-					},
-					{
 						mode: "combo", parameter: "sample_fmt", display: "采样频率",
 						items: [ 自动, sr_48000, sr_44100, sr_32000, sr_24000, sr_22050, sr_16000 ]
 					},
 					{
 						mode: "combo", parameter: "channel_layout", display: "声道布局",
 						items: [ 自动, lo_mono, lo_stereo ]
+					},
+				],
+				ratecontrol: [
+					{
+						...CBR_ABR,
+						...abitrateSlider
+					},
+					{
+						...Q,
+						...q100slider
 					},
 				]
 			},
@@ -879,24 +851,22 @@ var acodecs = [
 				codecName: 'mp2fixed',
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ Q, CBR_ABR ]
-					},
-					{
-						mode: "slider", parameter: "abitrate", display: "码率",
-						...abitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
-					},
-					{
 						mode: "combo", parameter: "sample_fmt", display: "采样频率",
 						items: [ 自动, sr_48000, sr_44100, sr_32000, sr_24000, sr_22050, sr_16000 ]
 					},
 					{
 						mode: "combo", parameter: "channel_layout", display: "声道布局",
 						items: [ 自动, lo_mono, lo_stereo ]
+					},
+				],
+				ratecontrol: [
+					{
+						...CBR_ABR,
+						...abitrateSlider
+					},
+					{
+						...Q,
+						...q100slider
 					},
 				]
 			},
@@ -908,18 +878,6 @@ var acodecs = [
 				description: '',
 				codecName: 'libtwolame',
 				parameters: [
-					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ Q, CBR_ABR ]
-					},
-					{
-						mode: "slider", parameter: "abitrate", display: "码率",
-						...abitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
-					},
 					{
 						mode: "combo", parameter: "sample_fmt", display: "采样频率",
 						items: [ 自动, sr_48000, sr_44100, sr_32000, sr_24000, sr_22050, sr_16000 ]
@@ -958,6 +916,16 @@ var acodecs = [
 							},
 						]
 					},
+				],
+				ratecontrol: [
+					{
+						...CBR_ABR,
+						...abitrateSlider
+					},
+					{
+						...Q,
+						...q100slider
+					},
 				]
 			},
 		]
@@ -974,18 +942,6 @@ var acodecs = [
 				...默认编码器,
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ Q, CBR_ABR ]
-					},
-					{
-						mode: "slider", parameter: "abitrate", display: "码率",
-						...abitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
-					},
-					{
 						mode: "combo", parameter: "channel_layout", display: "声道布局",
 						items: [
 							自动, lo_mono, lo_stereo, lo_3_0_back, lo_3_0, lo_quad_side, lo_quad, lo_4_0, lo_5_0_side, lo_5_0, lo_2_1, lo_3_1, lo_4_1, lo_5_1_side, lo_5_1,
@@ -1018,6 +974,16 @@ var acodecs = [
 								description: '',
 							},
 						]
+					},
+				],
+				ratecontrol: [
+					{
+						...CBR_ABR,
+						...abitrateSlider
+					},
+					{
+						...Q,
+						...q100slider
 					},
 				]
 			},
@@ -1030,18 +996,6 @@ var acodecs = [
 				codecName: 'ac3',
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ Q, CBR_ABR ]
-					},
-					{
-						mode: "slider", parameter: "abitrate", display: "码率",
-						...abitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
-					},
-					{
 						mode: "combo", parameter: "channel_layout", display: "声道布局",
 						items: [
 							自动, lo_mono, lo_stereo, lo_3_0_back, lo_3_0, lo_quad_side, lo_quad, lo_4_0, lo_5_0_side, lo_5_0, lo_2_1, lo_3_1, lo_4_1, lo_5_1_side, lo_5_1,
@@ -1074,6 +1028,16 @@ var acodecs = [
 								description: '',
 							},
 						]
+					},
+				],
+				ratecontrol: [
+					{
+						...CBR_ABR,
+						...abitrateSlider
+					},
+					{
+						...Q,
+						...q100slider
 					},
 				]
 			},
@@ -1086,18 +1050,6 @@ var acodecs = [
 				codecName: 'ac3_fixed',
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ Q, CBR_ABR ]
-					},
-					{
-						mode: "slider", parameter: "abitrate", display: "码率",
-						...abitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
-					},
-					{
 						mode: "combo", parameter: "channel_layout", display: "声道布局",
 						items: [
 							自动, lo_mono, lo_stereo, lo_3_0_back, lo_3_0, lo_quad_side, lo_quad, lo_4_0, lo_5_0_side, lo_5_0, lo_2_1, lo_3_1, lo_4_1, lo_5_1_side, lo_5_1,
@@ -1130,6 +1082,16 @@ var acodecs = [
 								description: '',
 							},
 						]
+					},
+				],
+				ratecontrol: [
+					{
+						...CBR_ABR,
+						...abitrateSlider
+					},
+					{
+						...Q,
+						...q100slider
 					},
 				]
 			},
@@ -1145,18 +1107,15 @@ var acodecs = [
 		encoders: [
 			{
 				...默认编码器,
-				parameters: [
+				parameters: [],
+				ratecontrol: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ Q, CBR_ABR ]
+						...CBR_ABR,
+						...abitrateSlider
 					},
 					{
-						mode: "slider", parameter: "abitrate", display: "码率",
-						...abitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
+						...Q,
+						...q100slider
 					},
 				]
 			},
@@ -1175,20 +1134,18 @@ var acodecs = [
 				...默认编码器,
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ Q, CBR_ABR ]
-					},
-					{
-						mode: "slider", parameter: "abitrate", display: "码率",
-						...abitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
-					},
-					{
 						mode: "combo", parameter: "channel_layout", display: "声道布局",
 						items: [ 自动, lo_mono, lo_stereo, lo_3_0, lo_4_0, lo_5_0, lo_5_1, lo_6_1_back, lo_7_1_wide ]
+					},
+				],
+				ratecontrol: [
+					{
+						...CBR_ABR,
+						...abitrateSlider
+					},
+					{
+						...Q,
+						...q100slider
 					},
 				]
 			}
@@ -1205,18 +1162,15 @@ var acodecs = [
 		encoders: [
 			{
 				...默认编码器,
-				parameters: [
+				parameters: [],
+				ratecontrol: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ Q, CBR_ABR ]
+						...CBR_ABR,
+						...abitrateSlider
 					},
 					{
-						mode: "slider", parameter: "abitrate", display: "码率",
-						...abitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
+						...Q,
+						...q100slider
 					},
 				]
 			}
@@ -1234,20 +1188,18 @@ var acodecs = [
 				...默认编码器,
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ Q, CBR_ABR ]
-					},
-					{
-						mode: "slider", parameter: "abitrate", display: "码率",
-						...abitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
-					},
-					{
 						mode: "combo", parameter: "channel_layout", display: "声道布局",
 						items: [ 自动, lo_mono, lo_stereo, lo_3_0, lo_4_0, lo_5_0, lo_5_1, lo_6_1_back, lo_7_1_wide ]
+					},
+				],
+				ratecontrol: [
+					{
+						...CBR_ABR,
+						...abitrateSlider
+					},
+					{
+						...Q,
+						...q100slider
 					},
 				]
 			}
@@ -1265,24 +1217,22 @@ var acodecs = [
 				...默认编码器,
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ Q, CBR_ABR ]
-					},
-					{
-						mode: "slider", parameter: "abitrate", display: "码率",
-						...abitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
-					},
-					{
 						mode: "combo", parameter: "sample_fmt", display: "采样频率",
 						items: [ 自动, sr_48000, sr_44100, sr_32000, sr_24000, sr_22050, sr_16000, sr_12000, sr_11025, sr_8000 ]
 					},
 							{
 						mode: "combo", parameter: "channel_layout", display: "声道布局",
 						items: [ 自动, lo_mono, lo_stereo, lo_quad_side, lo_5_0_side, lo_5_1_side ]
+					},
+				],
+				ratecontrol: [
+					{
+						...CBR_ABR,
+						...abitrateSlider
+					},
+					{
+						...Q,
+						...q100slider
 					},
 				]
 			},
@@ -1295,24 +1245,22 @@ var acodecs = [
 				codecName: 'dca',
 				parameters: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ Q, CBR_ABR ]
-					},
-					{
-						mode: "slider", parameter: "abitrate", display: "码率",
-						...abitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
-					},
-					{
 						mode: "combo", parameter: "sample_fmt", display: "采样频率",
 						items: [ 自动, sr_48000, sr_44100, sr_32000, sr_24000, sr_22050, sr_16000, sr_12000, sr_11025, sr_8000 ]
 					},
 							{
 						mode: "combo", parameter: "channel_layout", display: "声道布局",
 						items: [ 自动, lo_mono, lo_stereo, lo_quad_side, lo_5_0_side, lo_5_1_side ]
+					},
+				],
+				ratecontrol: [
+					{
+						...CBR_ABR,
+						...abitrateSlider
+					},
+					{
+						...Q,
+						...q100slider
 					},
 				]
 			},
@@ -1329,18 +1277,15 @@ var acodecs = [
 		encoders: [
 			{
 				...默认编码器,
-				parameters: [
+				parameters: [],
+				ratecontrol: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ Q, CBR_ABR ]
+						...CBR_ABR,
+						...abitrateSlider
 					},
 					{
-						mode: "slider", parameter: "abitrate", display: "码率",
-						...abitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
+						...Q,
+						...q100slider
 					},
 				]
 			},
@@ -1351,18 +1296,15 @@ var acodecs = [
 				imageOffset: 0,
 				description: '',
 				codecName: 'libvo_armwbenc',		
-				parameters: [
+				parameters: [],
+				ratecontrol: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ Q, CBR_ABR ]
+						...CBR_ABR,
+						...abitrateSlider
 					},
 					{
-						mode: "slider", parameter: "abitrate", display: "码率",
-						...abitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
+						...Q,
+						...q100slider
 					},
 				]
 			},
@@ -1386,18 +1328,15 @@ var acodecs = [
 				imageOffset: 0,
 				description: '',
 				codecName: 'libopencore_armnb',		
-				parameters: [
+				parameters: [],
+				ratecontrol: [
 					{
-						mode: "combo", parameter: "ratecontrol", display: "码率控制",
-						items: [ Q, CBR_ABR ]
+						...CBR_ABR,
+						...abitrateSlider
 					},
 					{
-						mode: "slider", parameter: "abitrate", display: "码率",
-						...abitrateSlider,
-					},
-					{
-						mode: "slider", parameter: "q", display: "质量",
-						...q100slider,
+						...Q,
+						...q100slider
 					},
 				]
 			},
@@ -1435,57 +1374,39 @@ var generator = {
 				strict2 = true
 			}
 			for (const parameter of aencoder.parameters) {
-				// 逐个遍历详细参数
-				if (parameter.parameter == 'ratecontrol') {
-					// 找到 ratecontrol 参数
-					var ratecontrol = parameter.items.find((value) => {
-						return value.sName == audioParams.detail.ratecontrol
-					})
-					var parameterName
-					switch (ratecontrol.sName) {
-						case 'CBR/ABR':
-							parameterName = 'abitrate'
-							break;
-						case 'Q':
-							parameterName = 'q'
-							break;
-					}
-					// 再次遍历，寻找对应的 ratecontrol slider
-					var slider = aencoder.parameters.find((value) => {
-						return value.parameter == parameterName
-					})
-					// 计算值
-					var floatValue = audioParams.detail[parameterName]
-					var value = slider.valueToParam(floatValue)
-					// 将值插入参数列表中
-					for (const item of ratecontrol.cmd) {
-						if (item == VALUE) {
-							ret.push(value)
-						} else {
-							ret.push(item)
-						}
-					}
-				} else if (parameter.parameter == 'q' || parameter.parameter == 'abitrate') {
-					continue
-				} else {
-					// 普通的详细参数
-					if (parameter.mode == 'combo') {
-						if (audioParams.detail[parameter.parameter] != '默认' && audioParams.detail[parameter.parameter] != '自动') {
-							ret.push('-' + parameter.parameter)
-							ret.push(audioParams.detail[parameter.parameter])
-						}
-						// 检查参数项是否有 strict2 标记
-						var item = parameter.items.find((value) => {
-							return value.sName == audioParams.detail[parameter.parameter]
-						})
-						if (item && item.strict2) {
-							strict2 = true
-						}
-					} else if (parameter.mode == 'slider') {
+				// 普通的详细参数
+				if (parameter.mode == 'combo') {
+					if (audioParams.detail[parameter.parameter] != '默认' && audioParams.detail[parameter.parameter] != '自动') {
 						ret.push('-' + parameter.parameter)
-						var floatValue = audioParams.detail[parameter.parameter]
-						var value = parameter.valueToParam(floatValue)
+						ret.push(audioParams.detail[parameter.parameter])
+					}
+					// 检查参数项是否有 strict2 标记
+					var item = parameter.items.find((value) => {
+						return value.sName == audioParams.detail[parameter.parameter]
+					})
+					if (item && item.strict2) {
+						strict2 = true
+					}
+				} else if (parameter.mode == 'slider') {
+					ret.push('-' + parameter.parameter)
+					var floatValue = audioParams.detail[parameter.parameter]
+					var value = parameter.valueToParam(floatValue)
+					ret.push(value)
+				}
+			}
+			var ratecontrol = aencoder.ratecontrol.find(value => {
+				return value.sName == audioParams.ratecontrol
+			})
+			if (ratecontrol != null) {
+				// 计算值
+				var floatValue = audioParams.ratevalue
+				var value = ratecontrol.valueToParam(floatValue)
+				// 将值插入参数列表中
+				for (const item of ratecontrol.cmd) {
+					if (item == VALUE) {
 						ret.push(value)
+					} else {
+						ret.push(item)
 					}
 				}
 			}
@@ -1517,35 +1438,21 @@ var generator = {
 			var aencoder = acodec.encoders.find((value) => {
 				return value.sName == audioParams.aencoder
 			})
-			var parameter = aencoder.parameters.find((value => {
-				return value.parameter == 'ratecontrol'
-			}))
-			// 找到 ratecontrol 参数
-			var ratecontrol = parameter.items.find((value) => {
-				return value.sName == audioParams.detail.ratecontrol
-			})
-			if (ratecontrol == null) {
+			if (aencoder.ratecontrol == null) {
 				return ret
 			}
-			var parameterName
-			switch (ratecontrol.sName) {
-				case 'CBR/ABR':
-					parameterName = 'abitrate'
-					break;
-				case 'Q':
-					parameterName = 'q'
-					break;
-			}
-			// 再次遍历，寻找对应的 ratecontrol slider
-			var slider = aencoder.parameters.find((value) => {
-				return value.parameter == parameterName
+			// 找到 ratecontrol 参数
+			var ratecontrol = aencoder.ratecontrol.find(value => {
+				return value.sName == audioParams.ratecontrol
 			})
-			// 计算值
-			var floatValue = audioParams.detail[parameterName]
-			var value = slider.valueToText(floatValue)
-			ret = {
-				mode: ratecontrol.sName,
-				value
+			if (ratecontrol != null) {
+				// 计算值
+				var floatValue = audioParams.ratevalue
+				var value = ratecontrol.valueToText(floatValue)
+				ret = {
+					mode: ratecontrol.sName,
+					value
+				}
 			}
 			return ret
 		}
