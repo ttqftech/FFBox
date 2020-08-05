@@ -6,8 +6,8 @@
 </template>
 
 <script>
-const version = '2.0'
-const buildNumber = 3
+const version = '2.1'
+const buildNumber = 4
 
 import ContentWrapper from './App/ContentWrapper'
 import FloatingContent from './App/FloatingContent'
@@ -96,17 +96,14 @@ const store = new Vuex.Store({
 				vencoder: '默认',
 				resolution: '不改变',
 				framerate: '不改变',
+				ratecontrol: 'CRF',
+				ratevalue: 0.5,
 				detail: {
 					preset: 0.5,
 					tune: '默认',
 					profile: '自动',
 					level: '自动',
 					quality: 'balanced',
-					ratecontrol: 'CRF',
-					crf: 0.5,
-					qp: 0.5,
-					q: 0.5,
-					vbitrate: 0.5,
 					pix_fmt: '自动'	
 				}
 			},
@@ -114,11 +111,10 @@ const store = new Vuex.Store({
 				enable: 1,
 				acodec: '不重新编码',
 				aencoder: '默认',
+				ratecontrol: 'CBR/ABR',
+				ratevalue: 0.5,
 				vol: 0.5,
 				detail: {
-					ratecontrol: 'Q',
-					abitrate: 0.5,
-					q: 0.5,
 					sample_fmt: '自动',
 					channel_layout: '自动'
 				}
