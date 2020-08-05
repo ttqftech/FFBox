@@ -56,7 +56,7 @@ export default {
 			return this.$store.state.workingStatus ? '320px' : 'calc(50% + 88px)'
 		},
 		titlebarText: function () {		// 暂停、运行状态下输出进度，否则没有
-			return (this.$store.state.workingStatus ? '进度：' + (this.$store.state.progress * 100).toFixed(3) + ' % - ' : '') + '丹参盒 ' + this.$store.state.version
+			return (this.$store.state.workingStatus ? '进度：' + (this.$store.state.progress * 100).toFixed(3) + ' % - ' : '') + '丹参盒 v' + this.$store.state.version
 		},
 		newVersionText: function () {
 			if (this.newVersion != null) {

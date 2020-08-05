@@ -189,14 +189,15 @@ const store = new Vuex.Store({
 			}
 		},
 		// workingStatus == 0 状态下调用：把所有任务暂停；workingStatus == 1/-1 状态下调用，按最大运行数运行队列任务
-		taskArrange (state) {
+		taskArrange (state, startFrom = 0) {
 			if (state.workingStatus == 1) {		// 开始安排任务
 				// if (getters.queueTaskNumber == 0) {					// 队列为空，开始进行第一个任务。该功能反函数对应于 overallProgressTimer();
 				// }
 				var started_atLeast = false
 				while (this.getters.workingTaskCount < maxThreads) {
 					var started_thisTime = false;
-					for (const id of state.taskOrder) {
+					for (let index = startFrom; index < state.taskOrder.length; index++) {
+						let id = state.taskOrder[index]
 						let task = state.tasks.get(id)
 						if (task.status == TASK_STOPPED) {			// 从还没开始干活的抽一个出来干
 							this.commit('taskStart', id)
@@ -251,6 +252,10 @@ const store = new Vuex.Store({
 				})
 				clearInterval(task.dashboardTimer)
 				state.tasks = new Map(state.tasks)		// 刷新所有单个任务
+				var pos = state.taskOrder.findIndex(value => {	// 开始下一个任务，但是不要开始上一个任务
+					return value == id
+				})
+				this.commit('taskArrange', pos)
 			})
 			newFFmpeg.on('status', (status) => {
 				task.taskProgress.push([new Date().getTime() / 1000, status.frame, status.time])
@@ -445,10 +450,10 @@ const store = new Vuex.Store({
 				var progress = totalProcessedTime / totalTime;
 				state.progress = progress
 				if (this.getters.workingTaskCount > 0) {
-					currentWindow.setProgressBar(progress * 0.99 + 0.01, {mode: "normal"});
+					currentWindow.setProgressBar(parseFloat(progress * 0.99 + 0.01), {mode: "normal"});
 				} else {
 					state.workingStatus = -1
-					currentWindow.setProgressBar(progress * 0.99 + 0.01, {mode: "paused"});
+					currentWindow.setProgressBar(parseFloat(progress * 0.99 + 0.01), {mode: "paused"});
 					clearInterval(state.overallProgressTimerID);
 				}
 			} else {			// 任务全部结束
@@ -460,6 +465,7 @@ const store = new Vuex.Store({
 				}
 				state.workingStatus = 0
 				currentWindow.setProgressBar(0, {mode: "none"});
+				clearInterval(state.overallProgressTimerID);
 			}
 		},
 		// 切换显示/不显示通知中心
@@ -482,7 +488,7 @@ const store = new Vuex.Store({
 				msg: args.msg, level: args.level, id: Symbol()
 			})
 		},
-		// 删除消息
+		// 删除第 index 条消息
 		deleteMsg (state, index) {
 			state.infos.splice(index, 1)
 		},
@@ -517,7 +523,7 @@ const store = new Vuex.Store({
 		},
 		// 删除弹窗
 		msgboxDisappear (state, id) {
-			let index = state.msgboxs.find((value) => {
+			let index = state.msgboxs.findIndex((value) => {
 				if (id == value.id) {
 					return true
 				}
@@ -799,7 +805,7 @@ export default {
 		document.querySelector('body').className = "body"
 	},
 	mounted: function () {
-		document.title = 'FFBox - v' + version
+		document.title = 'FFBox v' + version
 
 		// 全局鼠标拖动响应注册
 		window.addEventListener('mousedown', (event) => {
@@ -827,7 +833,7 @@ export default {
 			this.initFFmpeg()
 			if (!electronStore.has('ffbox.buildNumber') || electronStore.get('ffbox.buildNumber') != buildNumber) {
 				this.$store.commit('pushMsg', {
-					msg: '欢迎使用 FFBox ' + version + '！',
+					msg: '欢迎使用 FFBox v' + version + '！',
 					level: 0
 				})
 				electronStore.set('ffbox.buildNumber', buildNumber)
