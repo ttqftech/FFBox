@@ -1,9 +1,9 @@
 <template>
 	<div id="combomenu">
-		<div id="combomenu-background" @click="close()" :class="{ combomenuBackgroundShow: $store.state.showCombomenu, combomenuBackgroundHide: !$store.state.showCombomenu }"></div>
+		<div id="combomenu-background" @click="close()" :class="{ combomenuBackgroundShow: showCombomenu, combomenuBackgroundHide: !showCombomenu }"></div>
 		<transition name="comboanimate">
-			<menu id="combomenu-list" v-if="$store.state.showCombomenu" :style="$store.state.comboPosition">
-				<div v-for="(listitem, index) in $store.state.comboList" :key="listitem.sName" class="combomenu-item" :class="{ combomenuItemSelected: listitem.sName == $store.state.comboDefault }" @click="selected(index)" @mouseenter="handleMouseEnter($event, index)" @mouseleave="handleMouseLeave()">
+			<menu id="combomenu-list" v-if="showCombomenu" :style="comboPosition">
+				<div v-for="(listitem, index) in comboList" :key="listitem.sName" class="combomenu-item" :class="{ combomenuItemSelected: listitem.sName == comboDefault }" :tabindex="index" @click="selected(index)" @keypress="onKeypress($event, index)" @keydown="onKeydown($event, index)" @keyup="onKeyup($event, index)" @mouseenter="handleMouseEnter($event, index)" @mouseleave="handleMouseLeave()">
 					<!-- <div style="background-image: url(image/star.png);"></div> -->
 					{{ listitem.lName }}
 				</div>
@@ -16,15 +16,43 @@
 <script>
 export default {
 	name: 'Combomenu',
-	props: [
-	],
+	props: {
+		showCombomenu: Boolean,
+		comboPosition: Object,
+		comboDefault: String,
+		comboList: Array
+	},
 	data: () => { return {
+		currentSelection: -1
 	}},
 	methods: {
 		selected: function (index) {
 			this.handleMouseLeave()
-			this.$store.state.comboSelectionHandler(index)
+			this.$store.state.comboSelectionHandler(this.comboList[index].sName)	// 选中时传回对应 sName
 			this.close()
+		},
+		onKeypress: function (event, index) {
+		},
+		onKeyup: function (event, index) {
+			if (event.key == ' ' || event.key == 'Enter') {
+				this.selected(index)
+			} else if (event.key == 'Escape') {
+				this.close()
+			}
+		},
+		onKeydown: function (event, index) {
+			if (event.key == 'ArrowDown' || event.key == 'ArrowUp') {
+				if (event.key == 'ArrowDown') {
+					if (this.currentSelection < this.comboList.length - 1) {
+						this.currentSelection++
+					}
+				} else {
+					if (this.currentSelection > 0) {
+						this.currentSelection--
+					}
+				}
+				this.$el.childNodes[1].childNodes[this.currentSelection].focus()
+			}
 		},
 		close: function () {
 			this.$store.commit('combomenuDisappear')
@@ -33,7 +61,7 @@ export default {
 		handleMouseEnter: function (event, index) {
 			var horizontal
 			var vertical
-			if (parseInt(this.$store.state.comboPosition.left) + event.target.offsetWidth / 2 < document.documentElement.clientWidth / 2) {
+			if (parseInt(this.comboPosition.left) + event.target.offsetWidth / 2 < document.documentElement.clientWidth / 2) {
 				horizontal = {
 					left: getWindowOffsetLeft(event.target) + event.target.offsetWidth + 16 + 'px',
 				}
@@ -56,7 +84,7 @@ export default {
 				...vertical
 			}
 			this.$store.commit('showTooltip', {
-				text: this.$store.state.comboList[index].description,
+				text: this.comboList[index].description,
 				position
 			})
 		},
@@ -64,6 +92,39 @@ export default {
 			this.$store.commit('clearTooltip')
 		}
 	},
+	computed: {
+		comboDefaultIndex: function () {
+			for (const index in this.comboList) {
+				if (this.comboList[index].sName == this.comboDefault) {
+					return index
+				}
+			}
+			return -1
+		}
+	},
+	watch: {
+		showCombomenu: function (newValue, oldValue) {
+			this.$nextTick(() => {
+				if (newValue) {
+					// console.log(this.$el.childNodes[1].childNodes)
+					this.currentSelection = this.comboDefaultIndex
+					if (this.comboDefaultIndex > 0) {
+						this.$el.childNodes[1].childNodes[this.currentSelection].focus()
+					}
+					/*
+					for (const item of this.$el.childNodes[1].childNodes) {
+						if (item.innerText == this.comboDefault) {
+							item.focus()
+							return
+						}
+					}
+					*/
+				}
+			})
+		}
+	},
+	mounted: function () {
+	}
 }
 
 // 计算元素相对于窗口的 left 和 top
@@ -146,11 +207,12 @@ function getWindowOffsetTop(obj) {
 				padding-left: 40px;
 				font-size: 16px;
 				line-height: 40px;
+				outline: none;
 			}
-				.combomenu-item:hover {
+				.combomenu-item:hover, .combomenu-item:focus {
 					background: hsl(210, 95%, 90%);
 				}
-				.combomenuItemSelected {
+				.combomenuItemSelected, .combomenuItemSelected:focus {
 					background: hsl(210, 95%, 80%);
 				}
 				.combomenu-item div {

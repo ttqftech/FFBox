@@ -1358,61 +1358,74 @@ var generator = {
 			var acodec = acodecs.find((value) => {
 				return value.sName == audioParams.acodec
 			})
-			var aencoder = acodec.encoders.find((value) => {
-				return value.sName == audioParams.aencoder
-			})
-			if (audioParams.aencoder == "默认") {
-				// 使用默认编码器，返回 acodec.codecName
-				ret.push('-acodec')
-				ret.push(acodec.codecName)
-			} else {
-				// 使用特定编码器，返回 acodev.ancoder[].codecName
-				ret.push('-acodec')
-				ret.push(aencoder.codecName)
+			if (acodec) {
+				var aencoder = acodec.encoders.find((value) => {
+					return value.sName == audioParams.aencoder
+				})
 			}
-			if (acodec.strict2 || aencoder.strict2) {
-				strict2 = true
-			}
-			for (const parameter of aencoder.parameters) {
-				// 普通的详细参数
-				if (parameter.mode == 'combo') {
-					if (audioParams.detail[parameter.parameter] != '默认' && audioParams.detail[parameter.parameter] != '自动') {
+			if (acodec && aencoder) {
+				// 不是用户手动填的 acodec 和 aencoder
+				if (audioParams.aencoder == "默认") {
+					// 使用默认编码器，返回 acodec.codecName
+					ret.push('-acodec')
+					ret.push(acodec.codecName)
+				} else {
+					// 使用特定编码器，返回 acodev.ancoder[].codecName
+					ret.push('-acodec')
+					ret.push(aencoder.codecName)
+				}
+				if (acodec.strict2 || aencoder.strict2) {
+					strict2 = true
+				}
+				for (const parameter of aencoder.parameters) {
+					// 普通的详细参数
+					if (parameter.mode == 'combo') {
+						if (audioParams.detail[parameter.parameter] != '默认' && audioParams.detail[parameter.parameter] != '自动') {
+							ret.push('-' + parameter.parameter)
+							ret.push(audioParams.detail[parameter.parameter])
+						}
+						// 检查参数项是否有 strict2 标记
+						var item = parameter.items.find((value) => {
+							return value.sName == audioParams.detail[parameter.parameter]
+						})
+						if (item && item.strict2) {
+							strict2 = true
+						}
+					} else if (parameter.mode == 'slider') {
 						ret.push('-' + parameter.parameter)
-						ret.push(audioParams.detail[parameter.parameter])
-					}
-					// 检查参数项是否有 strict2 标记
-					var item = parameter.items.find((value) => {
-						return value.sName == audioParams.detail[parameter.parameter]
-					})
-					if (item && item.strict2) {
-						strict2 = true
-					}
-				} else if (parameter.mode == 'slider') {
-					ret.push('-' + parameter.parameter)
-					var floatValue = audioParams.detail[parameter.parameter]
-					var value = parameter.valueToParam(floatValue)
-					ret.push(value)
-				}
-			}
-			var ratecontrol = aencoder.ratecontrol.find(value => {
-				return value.sName == audioParams.ratecontrol
-			})
-			if (ratecontrol != null) {
-				// 计算值
-				var floatValue = audioParams.ratevalue
-				var value = ratecontrol.valueToParam(floatValue)
-				// 将值插入参数列表中
-				for (const item of ratecontrol.cmd) {
-					if (item == VALUE) {
+						var floatValue = audioParams.detail[parameter.parameter]
+						var value = parameter.valueToParam(floatValue)
 						ret.push(value)
-					} else {
-						ret.push(item)
 					}
 				}
-			}
-			if (strict2) {
-				ret.push('-strict')
-				ret.push('-2')
+				var ratecontrol = aencoder.ratecontrol.find(value => {
+					return value.sName == audioParams.ratecontrol
+				})
+				if (ratecontrol != null) {
+					// 计算值
+					var floatValue = audioParams.ratevalue
+					var value = ratecontrol.valueToParam(floatValue)
+					// 将值插入参数列表中
+					for (const item of ratecontrol.cmd) {
+						if (item == VALUE) {
+							ret.push(value)
+						} else {
+							ret.push(item)
+						}
+					}
+				}
+				if (strict2) {
+					ret.push('-strict')
+					ret.push('-2')
+				}
+			} else if (acodec) {
+				// 用户手动填入的 aencoder
+				ret.push('-acodec')
+				ret.push(audioParams.aencoder)
+			} else {
+				// 用户手动填入的 acodec
+				ret.push('-acodec')
+				ret.push(audioParams.acodec)
 			}
 		} // 如果编码为自动，则不设置 acodec 参数，返回空 Array
 		if (audioParams.acodec != '禁用音频' && audioParams.acodec != '不重新编码') {
@@ -1435,10 +1448,13 @@ var generator = {
 			var acodec = acodecs.find((value) => {
 				return value.sName == audioParams.acodec
 			})
+			if (!acodec) {
+				return ret
+			}
 			var aencoder = acodec.encoders.find((value) => {
 				return value.sName == audioParams.aencoder
 			})
-			if (aencoder.ratecontrol == null) {
+			if (!aencoder || aencoder.ratecontrol == null) {
 				return ret
 			}
 			// 找到 ratecontrol 参数

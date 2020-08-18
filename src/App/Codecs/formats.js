@@ -144,9 +144,14 @@ const generator = {
 	getOutputParam: function (formatParams, filename, withQuotes = false) {
 		var ret = []
 		if (formatParams.format != '无') {
-			var extension = formats.find((value) => {
+			var format = formats.find((value) => {
 				return value.sName == formatParams.format
-			}).extension
+			})
+			if (format) {
+				var extension = format.extension
+			} else {	// 用户手动输入的格式
+				var extension = formatParams.format
+			}
 			ret.push((withQuotes ? '"' : '') + filename + '.' + extension + (withQuotes ? '"' : ''))
 		} else {
 			ret.push('-f')
@@ -160,7 +165,7 @@ const generator = {
 		var ret = []
 		if (formatParams.moveflags) {
 			ret.push('-movflags')
-			ret.push('faststart')
+			ret.push('+faststart')
 		}
 		return ret
 	},

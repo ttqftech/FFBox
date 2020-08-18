@@ -6,8 +6,8 @@
 </template>
 
 <script>
-const version = '2.1'
-const buildNumber = 4
+const version = '2.2'
+const buildNumber = 5
 
 import ContentWrapper from './App/ContentWrapper'
 import FloatingContent from './App/FloatingContent'
@@ -801,7 +801,7 @@ export default {
 		document.querySelector('body').className = "body"
 	},
 	mounted: function () {
-		document.title = 'FFBox v' + version
+		document.title = 'FFBox v' + version + (process.env.NODE_ENV != 'production' ? 'd' : '')
 
 		// 全局鼠标拖动响应注册
 		window.addEventListener('mousedown', (event) => {
