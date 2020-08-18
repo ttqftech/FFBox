@@ -1,8 +1,8 @@
 <template>
 	<div id="format-view">
-		<combobox title="容器/格式" :text="$store.state.globalParams.format.format" :list="formatsList" @change="onChange('combo', 'format', $event, formatsList)"></combobox>
+		<combobox title="容器/格式" :text="$store.state.globalParams.format.format" :list="formatsList" @change="onChange('combo', 'format', $event)"></combobox>
 		<checkbox title="元数据迁移" :checked="$store.state.globalParams.format.moveflags" @change="onChange('checkbox', 'moveflags', $event)"></checkbox>
-		<combobox title="硬件解码" :text="$store.state.globalParams.format.hwaccel" :list="hwaccelsList" @change="onChange('combo', 'hwaccel', $event, hwaccelsList)"></combobox>
+		<combobox title="硬件解码" :text="$store.state.globalParams.format.hwaccel" :list="hwaccelsList" @change="onChange('combo', 'hwaccel', $event)"></combobox>
 	</div>
 </template>
 
@@ -28,8 +28,8 @@ export default {
 		},
 	},
 	methods: {
-		// 由子组件发生变化所触发的事件（mode 为组件类型，sName 为参数名，value 为参数值，list 为对于 combo 需要传入的列表）
-		onChange: function (mode, sName, value, list) {
+		// 由子组件发生变化所触发的事件（mode 为组件类型，sName 为参数名，value 为参数值，list 为对于 combo 需要传入的列表（废弃））
+		onChange: function (mode, sName, value) {
 			switch (mode) {
 				case 'combo':
 					// 注：这里 commit 的 value 不能直接读取 import 来的变量，直接用开发者工具读取也不行，但是 console.log 可以，疑似 vue 的 bug
@@ -37,7 +37,7 @@ export default {
 					this.$store.commit('changePara', {
 						type: 'format',
 						key: sName,
-						value: list[value].sName
+						value
 					})
 					break;
 				case 'checkbox':

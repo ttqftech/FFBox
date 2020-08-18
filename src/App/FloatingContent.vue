@@ -2,7 +2,7 @@
 	<div id="floating-content">
         <msgbox v-for="(value) in $store.state.msgboxs" :value="value" :key="value.id"></msgbox>
         <popup v-for="(value) in $store.state.popups" :value="value" :key="value.id"></popup>
-        <combomenu></combomenu>
+        <combomenu :showCombomenu="$store.state.showCombomenu" :comboPosition="$store.state.comboPosition" :comboDefault="$store.state.comboDefault" :comboList="$store.state.comboList"></combomenu>
         <tooltip></tooltip>
 	</div>
 </template>
@@ -18,12 +18,7 @@ export default {
     components: {
         Popup, Msgbox, Combomenu, Tooltip
     },
-	props: {
-		
-	},
-	computed: {
-
-    },
+	props: {},
 }
 </script>
 

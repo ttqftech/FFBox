@@ -124,7 +124,7 @@ class FFmpeg {
 				} else if (thisLine.includes(`'ffmpeg'`)) {								// 🔵 version（Windows）：'ffmpeg' 不是内部或外部命令，也不是可运行的程序
 					this.emit(`version`, null);
 					this.status = -1;
-				} else if (thisLine.includes(`not found`)) {								// 🔵 version（Linux）：/bin/sh: 1: ffmpeg: not found
+				} else if (thisLine.includes(`not found`)) {							// 🔵 version（Linux）：/bin/sh: 1: ffmpeg: not found
 					this.emit(`version`, null);
 					this.status = -1;
 				} else if (thisLine.includes(`No such file or directory`)) {			// 🔵 critical：No such file or directory
@@ -133,7 +133,7 @@ class FFmpeg {
 					this.status = -1;
 				} else if (thisLine.includes('[') && (thisLine.includes('@'))) {		// ⚪ demuxer/decoder/encoder/muxer 等发来的信息
 					var sender = scanf(thisLine, `[%s @ %s]`, ']')[1];
-					var msg = thisLine.slice(thisLine.indexOf(']') + 3);
+					var msg = thisLine.slice(thisLine.indexOf(']') + 2);
 					// 已识别的消息判断为 critical 放入 critical 列表，其余的 emit error 信息
 					if (false) {
 					} else if (msg.includes(`OpenEncodeSessionEx failed: out of memory (10)`)) {
@@ -243,6 +243,22 @@ class FFmpeg {
 						}
 						this.input.abitrate = this.input.abitrate.slice(0, -5)
 					}
+				} else if (thisLine.includes('[') && (thisLine.includes('@'))) {		// ⚪ demuxer/decoder/encoder/muxer 等发来的信息
+					var sender = scanf(thisLine, `[%s @ %s]`, ']')[1];
+					var msg = thisLine.slice(thisLine.indexOf(']') + 2);
+					// 已识别的消息判断为 critical 放入 critical 列表，其余的 emit error 信息
+					if (false) {
+					} else if (msg.includes(`Unable to find a suitable output format`)) {		// 例：[NULL @ 00000250d7ab1040] Unable to find a suitable output format for '童可可 - 小光芒_converted.MP0'
+						this.errors.add(`容器设置有误。`);
+					}
+				} else if (thisLine.includes(`Unknown encoder`)) {						// 🔵 critical：Unknown encoder
+					this.errors.add(`无法识别的输出编码“${selectString(thisLine, "'", "'", 0).text}”。`);
+					this.emit(`critical`, this.errors);
+					this.status = -1;
+				} else if (thisLine.includes(`Invalid argument`)) {									// 🔵 critical：Invalid argument
+					this.errors.add(`参数有误。`);
+					this.emit(`critical`, this.errors);
+					this.status = -1;
 				}
 				break;
 				

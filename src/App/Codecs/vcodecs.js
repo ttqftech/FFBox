@@ -1756,7 +1756,7 @@ const vcodecs = [
 							return Math.round(value * 2) / 2
 						},
 						valueToParam: function (value) {
-							value = Math.round(value * 2) / 2
+							value = Math.round(value * 2)
 							return ['realtime', 'good', 'best'][value]
 						}
 					},
@@ -2586,71 +2586,84 @@ const generator = {
 			var vcodec = vcodecs.find((value) => {
 				return value.sName == videoParams.vcodec
 			})
-			var vencoder = vcodec.encoders.find((value) => {
-				return value.sName == videoParams.vencoder
-			})
-			if (videoParams.vencoder == "默认") {
-				// 使用默认编码器，返回 vcodec.codecName
-				ret.push('-vcodec')
-				ret.push(vcodec.codecName)
-			} else {
-				// 使用特定编码器，返回 vcodev.encoder[].codecName
-				ret.push('-vcodec')
-				ret.push(vencoder.codecName)
+			if (vcodec) {
+				var vencoder = vcodec.encoders.find((value) => {
+					return value.sName == videoParams.vencoder
+				})
 			}
-			for (const parameter of vencoder.parameters) {
-				// 逐个遍历详细参数
-				if (parameter.mode == 'combo') {
-					if (videoParams.detail[parameter.parameter] != '默认' && videoParams.detail[parameter.parameter] != '自动') {
+			if (vcodec && vencoder) {
+				// 不是用户手动填的 vcodec 和 vencoder
+				if (videoParams.vencoder == "默认") {
+					// 使用默认编码器，返回 vcodec.codecName
+					ret.push('-vcodec')
+					ret.push(vcodec.codecName)
+				} else {
+					// 使用特定编码器，返回 vcodev.encoder[].codecName
+					ret.push('-vcodec')
+					ret.push(vencoder.codecName)
+				}
+				for (const parameter of vencoder.parameters) {
+					// 逐个遍历详细参数
+					if (parameter.mode == 'combo') {
+						if (videoParams.detail[parameter.parameter] != '默认' && videoParams.detail[parameter.parameter] != '自动') {
+							ret.push('-' + parameter.parameter)
+							ret.push(videoParams.detail[parameter.parameter])
+						}
+						// 检查参数项是否有 strict2 标记
+						var item = parameter.items.find((value) => {
+							return value.sName == videoParams.detail[parameter.parameter]
+						})
+						if (item && item.strict2) {
+							strict2 = true
+						}
+					} else if (parameter.mode == 'slider') {
 						ret.push('-' + parameter.parameter)
-						ret.push(videoParams.detail[parameter.parameter])
-					}
-					// 检查参数项是否有 strict2 标记
-					var item = parameter.items.find((value) => {
-						return value.sName == videoParams.detail[parameter.parameter]
-					})
-					if (item && item.strict2) {
-						strict2 = true
-					}
-				} else if (parameter.mode == 'slider') {
-					ret.push('-' + parameter.parameter)
-					var floatValue = videoParams.detail[parameter.parameter]
-					var value = parameter.valueToParam(floatValue)
-					ret.push(value)
-				}
-			}
-							// 调试用↓
-							// ret.push('-threads')
-							// ret.push('1')
-							// 调试用↑
-			var ratecontrol = vencoder.ratecontrol.find(value => {
-				return value.sName == videoParams.ratecontrol
-			})
-			if (ratecontrol != null) {
-				// 计算值
-				var floatValue = videoParams.ratevalue
-				var value = ratecontrol.valueToParam(floatValue)
-				// 将值插入参数列表中
-				for (const item of ratecontrol.cmd) {
-					if (item == VALUE) {
+						var floatValue = videoParams.detail[parameter.parameter]
+						var value = parameter.valueToParam(floatValue)
 						ret.push(value)
-					} else {
-						ret.push(item)
 					}
 				}
-			}
-			if (strict2) {
-				ret.push('-strict')
-				ret.push('-2')
-			}
-			// 设置通用参数
-			if (videoParams.resolution != '不改变') {
-				ret.push('-s')
-				ret.push(videoParams.resolution)
-			}
-			if (videoParams.framerate != '不改变') {
-				ret.push('-r')
-				ret.push(videoParams.framerate)
+								// 调试用↓
+								// ret.push('-threads')
+								// ret.push('1')
+								// 调试用↑
+				var ratecontrol = vencoder.ratecontrol.find(value => {
+					return value.sName == videoParams.ratecontrol
+				})
+				if (ratecontrol != null) {
+					// 计算值
+					var floatValue = videoParams.ratevalue
+					var value = ratecontrol.valueToParam(floatValue)
+					// 将值插入参数列表中
+					for (const item of ratecontrol.cmd) {
+						if (item == VALUE) {
+							ret.push(value)
+						} else {
+							ret.push(item)
+						}
+					}
+				}
+				if (strict2) {
+					ret.push('-strict')
+					ret.push('-2')
+				}
+				// 设置通用参数
+				if (videoParams.resolution != '不改变') {
+					ret.push('-s')
+					ret.push(videoParams.resolution)
+				}
+				if (videoParams.framerate != '不改变') {
+					ret.push('-r')
+					ret.push(videoParams.framerate)
+				}
+			} else if (vcodec) {
+				// 用户手动填入的 vencoder
+				ret.push('-vcodec')
+				ret.push(videoParams.vencoder)
+			} else {
+				// 用户手动填入的 vcodec
+				ret.push('-vcodec')
+				ret.push(videoParams.vcodec)
 			}
 		} // 如果编码为自动，则不设置 vcodec 参数，返回空 Array
 		return ret
@@ -2667,10 +2680,13 @@ const generator = {
 			var vcodec = vcodecs.find((value) => {
 				return value.sName == videoParams.vcodec
 			})
+			if (!vcodec) {
+				return ret
+			}
 			var vencoder = vcodec.encoders.find((value) => {
 				return value.sName == videoParams.vencoder
 			})
-			if (vencoder.ratecontrol == null) {
+			if (!vencoder || vencoder.ratecontrol == null) {
 				return ret
 			}
 			// 找到 ratecontrol 参数

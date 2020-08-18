@@ -1,8 +1,9 @@
 <template>
 	<div class="combobox">
 		<div class="combobox-title">{{ title }}</div>
-		<div class="combobox-selector" id="format_format-div" @click="onClick">
-			<span class="combobox-selector-text" id="format_format-text">{{ text }}</span>
+		<div class="combobox-selector" :style="{ background: focused || comboOpened ? 'white' : '' }" @click="onClick">
+			<!-- <span class="combobox-selector-text">{{ text }}</span> -->
+			<input type="text" v-model="inputText" @mousedown="onMousedown" @mouseup="onMouseup" @blur="onBlur" @focus="onFocus" @input="onInput">
 			<div class="combobox-selector-img"></div>
 		</div>
 	</div>
@@ -14,6 +15,12 @@ export default {
 	name: 'Combobox',
 	components: {		
 	},
+	data: () => { return {
+		focused: false,
+		comboOpened: false,
+		doNotShowCombo: false,
+		inputText: '-'
+	}},
 	props: {
 		// paramName: String,
 		title: String,
@@ -24,12 +31,20 @@ export default {
 	},
 	methods: {
 		onClick: function (event) {
+			if (this.doNotShowCombo) {
+				this.doNotShowCombo = false
+				return
+			}
 			var ScreenWidth = document.documentElement.clientWidth			// 使用 window.innerWidth 也行
 			var ScreenHeight = document.documentElement.clientHeight
 			var popLeft, popTop
 			var finalLeft, finalTop, finalHeight
 
-			popLeft = getWindowOffsetLeft(event.target) - 39
+			if (event.target.className == 'combobox-selector-img') {
+				popLeft = getWindowOffsetLeft(event.target) - 39 - 100
+			} else {
+				popLeft = getWindowOffsetLeft(event.target) - 39 - 6
+			}
 			finalLeft = popLeft + "px"
 			var currentHeight = 40 * this.list.length			// 暂时写死 40px 一格
 			if (currentHeight > ScreenHeight - 28) {						// 列表总高度比窗口高度还大（标题栏高度 28px）
@@ -53,14 +68,42 @@ export default {
 				popLeft = popLeft + 200 + 12 + "px";
 			}
 
+			// this.comboOpened = true
 			this.$store.commit('showCombomenu', {
 				list: this.list,
 				default: this.text,
 				position: { top: finalTop, height: finalHeight, left: finalLeft },
-				handler: (index) => {
-					this.$emit('change', index)
+				handler: (sName) => {
+					this.$emit('change', sName)
+					this.comboOpened = false
 				}
 			})
+		},
+		onMousedown: function (event) {
+		},
+		onMouseup: function (event) {
+			if (event.target.selectionEnd == event.target.selectionStart) {
+				// 没有选中字符，打开列表
+				event.target.blur()
+			} else {
+				// 选中字符，不打开列表
+				this.doNotShowCombo = true
+			}
+		},
+		onBlur: function (event) {
+			this.focused = false
+		},
+		onFocus: function (event) {
+			event.target.selectionEnd = event.target.selectionStart
+			this.focused = true
+		},
+		onInput: function (event) {
+			this.$emit('change', event.target.value)
+		}
+	},
+	watch: {
+		text: function (newValue, oldValue) {
+			this.inputText = newValue
 		}
 	},
 	mounted: function () {
@@ -74,6 +117,7 @@ export default {
 			
 		}
 		*/
+		this.inputText = this.text
 	}
 }
 
@@ -140,6 +184,20 @@ function getWindowOffsetTop(obj) {
 				height: 24px;
 				line-height: 24px;
 				font-size: 14px;
+			}
+			.combobox-selector input {
+				position: absolute;
+				left: 6px;
+				width: calc(100% - 28px);
+				height: 24px;
+				line-height: 24px;
+				background: none;
+				border: none;
+				margin: 0;
+				padding: 0;
+				outline: none;
+				font-family: inherit;
+				color: inherit;
 			}
 			.combobox-selector-img {
 				position: absolute;
