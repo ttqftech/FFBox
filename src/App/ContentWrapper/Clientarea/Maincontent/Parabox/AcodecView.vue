@@ -3,12 +3,12 @@
 		<combobox title="音频编码" :text="$store.state.globalParams.audio.acodec" :list="acodecsList" @change="onChange('combo', 'acodec', $event)"></combobox>
 		<combobox title="编码器" :text="$store.state.globalParams.audio.aencoder" :list="aencodersList" @change="onChange('combo', 'aencoder', $event)" v-show="hasParameters > 1"></combobox>
 		<combobox title="码率控制" :text="$store.state.globalParams.audio.ratecontrol" :list="ratecontrolsList" @change="onChange('combo', 'ratecontrol', $event)" v-if="ratecontrolsList != 0"></combobox>
-		<slider v-if="ratecontrolSlier != null" :title="ratecontrolSlier.display" :value="$store.state.globalParams.audio.ratevalue" :tags="ratecontrolSlier.tags" :valueToText="ratecontrolSlier.valueToText" :valueProcess="ratecontrolSlier.valueProcess" @change="onChange('slider', 'ratevalue', $event)"></slider>
+		<slider v-if="ratecontrolSlider != null" :title="ratecontrolSlider.display" :value="$store.state.globalParams.audio.ratevalue" :tags="ratecontrolSlider.tags" :step="ratecontrolSlider.step" :valueToText="ratecontrolSlider.valueToText" :valueProcess="ratecontrolSlider.valueProcess" @change="onChange('slider', 'ratevalue', $event)"></slider>
 		<div v-for="(parameter, index) in parametersList" :key="index" :class="{ comboParent: parameter.mode == 'combo', sliderParent: parameter.mode == 'slider' }">
 			<combobox class="fullSpace" v-if="parameter.mode == 'combo'" :title="parameter.display" :text="$store.state.globalParams.audio.detail[parameter.parameter]" :list="parameter.items" @change="onDetailChange('combo', parameter.parameter, $event)"></combobox>
-			<slider class="fullSpace" v-if="parameter.mode == 'slider'" :title="parameter.display" :value="$store.state.globalParams.audio.detail[parameter.parameter]" :tags="parameter.tags" :valueToText="parameter.valueToText" :valueProcess="parameter.valueProcess" @change="onDetailChange('slider', parameter.parameter, $event)"></slider>
+			<slider class="fullSpace" v-if="parameter.mode == 'slider'" :title="parameter.display" :value="$store.state.globalParams.audio.detail[parameter.parameter]" :tags="parameter.tags" :step="parameter.step" :valueToText="parameter.valueToText" :valueProcess="parameter.valueProcess" @change="onDetailChange('slider', parameter.parameter, $event)"></slider>
 		</div>
-		<slider title="音量" :value="$store.state.globalParams.audio.vol" :tags="volSlider.tags" :valueToText="volSlider.valueToText" :valueProcess="volSlider.valueProcess" @change="onChange('slider', 'vol', $event)" v-show="hasParameters > 0"></slider>
+		<slider title="音量" :value="$store.state.globalParams.audio.vol" :tags="volSlider.tags" :step="volSlider.step" :valueToText="volSlider.valueToText" :valueProcess="volSlider.valueProcess" @change="onChange('slider', 'vol', $event)" v-show="hasParameters > 0"></slider>
 		<!-- <button @click="getAudioParams()">输出参数</button> -->
 	</div>
 </template>
@@ -71,7 +71,7 @@ export default {
 				return []
 			}
 		},
-		ratecontrolSlier: function () {
+		ratecontrolSlider: function () {
 			var ratecontrolsList_ = this.ratecontrolsList
 			if (ratecontrolsList_ == 0) {
 				return null

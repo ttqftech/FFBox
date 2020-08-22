@@ -41,17 +41,18 @@ export default {
 			}
 		},
 		onKeydown: function (event, index) {
-			if (event.key == 'ArrowDown' || event.key == 'ArrowUp') {
-				if (event.key == 'ArrowDown') {
+			if (event.key == 'ArrowDown' || event.key == 'ArrowUp' || event.key == 'Tab') {
+				if (event.key == 'ArrowDown' || event.key == 'Tab' && !event.shiftKey) {
 					if (this.currentSelection < this.comboList.length - 1) {
 						this.currentSelection++
 					}
-				} else {
+				} else if (event.key == 'ArrowUp' || event.key == 'Tab' && event.shiftKey) {
 					if (this.currentSelection > 0) {
 						this.currentSelection--
 					}
 				}
 				this.$el.childNodes[1].childNodes[this.currentSelection].focus()
+				event.preventDefault()
 			}
 		},
 		close: function () {

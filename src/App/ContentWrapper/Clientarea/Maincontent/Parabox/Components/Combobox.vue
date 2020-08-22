@@ -205,7 +205,7 @@ function getWindowOffsetTop(obj) {
 				top: 4px;
 				width: 16px;
 				height: 16px;
-				background: url(/menu_button.svg) center/contain no-repeat;
+				background: url(/images/menu_button.svg) center/contain no-repeat;
 			}
 
 </style>

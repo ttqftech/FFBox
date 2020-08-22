@@ -1,7 +1,7 @@
 <template>
 	<footer id="statusbar">
 		<div id="ffmpeg-version">{{ ffmpegVersion }}</div>
-		<button id="infoicon" @click="switchInfoCenter();" aria-label="通知中心开关">
+		<button id="infoicon" @click="switchInfoCenter();" :class="$store.state.showInfoCenter ? 'infoicon-selected' : 'infoicon-unselected'" aria-label="通知中心开关">
 			<div src="/info-transparent.svg"></div><span id="infocount">{{ this.$store.state.infos.length }}</span>
 		</button>
 		<div id="output-folder">{{ outputFolder }}</div>
@@ -63,7 +63,6 @@ export default {
 			font-size: 13px;
 			line-height: 24px;
 			color: white;
-			background: none;
 			outline: none;
 			border: none;
 			vertical-align: middle;
@@ -72,6 +71,9 @@ export default {
 		#infoicon:hover, .infoicon-selected {
 			background: rgba(0, 0, 0, 0.4);
 		}
+		.infoicon-unselected {
+			background: unset;
+		}
 		#infoicon div {
 			display: inline-block;
 			position: relative;
@@ -79,7 +81,7 @@ export default {
 			height: 13px;
 			width: 13px;
 			margin: 0px 8px 0px 0px;
-			background: url(/info-transparent.svg) center/contain no-repeat;
+			background: url(/images/info-transparent.svg) center/contain no-repeat;
 		}
 		#output-folder {
 			float: right;

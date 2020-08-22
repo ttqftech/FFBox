@@ -48,6 +48,11 @@
 8. Linux 用户执行 `electron-builder build --linux [target]`，其中 `[target]` 为输出类型，经测试可用的项有 AppImage（单文件便携式）、deb（Debian 系操作系统安装包）、dir（程序文件夹）。  
 9. 请将 `pauseAndResumeProcess` 整个文件夹拷贝到目标文件夹中。目前任务暂停功能是使用 VB 调用的，因此打包时不会自动将文件导入。  
 
+#### 注意事项
+
+1. Linux 用户，下载工程后需要将 `yarn.lock` 删除，再执行 `yarn`，因此处的 `yarn.lock` 是仅适用于 Windows 的依赖库。
+2. 如果在进行 `yarn electron:serve` 过程中出现 `Failed to fetch extension`，考虑翻墙。
+
 #### 解决 electron-builder 在国内下载速度慢的问题
 
 手动下载方式
@@ -158,7 +163,8 @@ See [Configuration Reference](https://cli.vuejs.org/config/).
 
 ## 一些注意事项
 
-在 .vue 的 css 中引用资源文件，根目录是 /public  
+在 .vue 的中引用资源图片，使用绝对路径，根目录是 /public  
+在 js 里调用 spawn 时，使用相对路径，按照 electron 执行的位置读取，在开发环境中是 /，在生产环境中则跟随 /public 中的资源图片一起被放到 / 中。
 
 ## 在 electron 中使用 vue-devtools
 

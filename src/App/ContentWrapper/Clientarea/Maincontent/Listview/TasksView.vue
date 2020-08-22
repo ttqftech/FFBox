@@ -1,6 +1,6 @@
 <template>
 	<div id="tasks-view" @dragenter="onDragenter($event)" @dragover="onDragenter($event)" @dragleave="onDragleave($event)" @drop="onDrop($event)">
-		<div id="startbutton" class="startbutton " :class="startbuttonClass" @click="$store.commit('startNpause')">{{ this.$store.state.workingStatus > 0 ? '⏸暂停' : '▶开始' }}</div>
+		<button id="startbutton" class="startbutton " :class="startbuttonClass" @click="$store.commit('startNpause')">{{ this.$store.state.workingStatus > 0 ? '⏸暂停' : '▶开始' }}</button>
 		<div id="tasklist-wrapper">
 			<div id="tasklist">
 				<taskitem v-for="(task, index) in taskList" :key="task.id" :id='task.id' :duration="task.duration" :filename="task.filename" :before="task.before" :after="task.after" :progress_smooth="task.progress_smooth" :status="task.status" :selected="taskSelected(task.id)" :computed_after="task.computedAfter" @itemClicked="onItemClicked($event, task.id, index)" @pauseNremove="onItemPauseNdelete(task.id)"></taskitem>
@@ -15,8 +15,11 @@
 <script>
 import Taskitem from './Taskitem/Taskitem'
 
-const remote = window.require('electron').remote
-const currentWindow = remote.getCurrentWindow()
+let remote, currentWindow
+if (process.env.IS_ELECTRON) {
+	remote = window.require('electron').remote
+	currentWindow = remote.getCurrentWindow()
+}
 
 const TASK_DELETED = -2;
 const TASK_PENDING = -1;
@@ -77,12 +80,12 @@ export default {
 		dropfilesimage: function () {
 			if (this.$store.state.FFmpegVersion != '-') {
 				if (this.draggingFiles) {
-					return '/drop_files_ok.png'
+					return '/images/drop_files_ok.png'
 				} else {
-					return '/drop_files.png'
+					return '/images/drop_files.png'
 				}
 			} else {
-				return '/drop_files_noffmpeg.png'
+				return '/images/drop_files_noffmpeg.png'
 			}
 		},
 		startbuttonClass: function () {
@@ -230,6 +233,8 @@ export default {
 			color: #FFF;
 			text-shadow: 0px 1px 1px rgba(0, 0, 0, 0.5);
 			border-radius: 10px;
+			border: none;
+			outline: none;
 		}
 		.startbutton:hover:before {
 			position: absolute;
@@ -261,7 +266,7 @@ export default {
 				flex-grow : 1;
 			}
 				#dropfilesimage {
-					/* background-image: url(/drop_files.png); */
+					/* background-image: url(/images/drop_files.png); */
 					background-size: contain;
 					background-position: center;
 					background-repeat: no-repeat;

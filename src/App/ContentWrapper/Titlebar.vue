@@ -24,9 +24,15 @@
 </template>
 
 <script>
-const remote = window.require('electron').remote
-const currentWindow = remote.getCurrentWindow()
-const exec = window.require('child_process').exec
+let remote, currentWindow, exec
+if (process.env.IS_ELECTRON) {
+	remote = window.require('electron').remote
+	currentWindow = remote.getCurrentWindow()
+	exec = window.require('child_process').exec
+} else {
+	// 不能引入 electron，会报错：fs.existsSync is not a function
+	// 不能引入 child_process，因为不是 node 环境
+}
 
 export default {
 	name: 'Titlebar',
@@ -187,10 +193,10 @@ function getWindowOffsetTop(obj) {
 				width: 56px;
 			}
 			#icon-long {
-				background: url(/icon-long.png) center/contain no-repeat;
+				background: url(/images/icon-long.png) center/contain no-repeat;
 			}
 			#icon-square {
-				background: url(/icon-square.png) center/contain no-repeat;
+				background: url(/images/icon-square.png) center/contain no-repeat;
 			}
 
 		#title {
@@ -221,7 +227,7 @@ function getWindowOffsetTop(obj) {
 			cursor: pointer;
 			transition: left 0.3s, box-shadow 0.1s;
 		}
-		#updatecheck-button:hover {
+		#updatecheck-button:hover, #updatecheck-button:focus {
 			box-shadow: 0px 0px 5px hsla(45deg, 100%, 50%, 0.4);
 		}
 		#updatecheck-button:active {
@@ -273,19 +279,19 @@ function getWindowOffsetTop(obj) {
 				background: #ff5959;
 				border-color: #cc4747;
 			}
-			button:hover>#minimum {
+			button:hover>#minimum, button:focus>#minimum {
 				background: linear-gradient(180deg, #4df880, #29cc44);
 			}
 			button:active>#minimum {
 				background: #21a336;
 			}
-			button:hover>#windowmode {
+			button:hover>#windowmode, button:focus>#windowmode {
 				background: linear-gradient(180deg, #fff860, #ffcc33);
 			}
 			button:active>#windowmode {
 				background: #cca329;
 			}
-			button:hover>#close {
+			button:hover>#close, button:focus>#close {
 				background: linear-gradient(180deg, #ffa3a3, #ff5959);
 			}
 			button:active>#close {

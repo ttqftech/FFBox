@@ -5,7 +5,7 @@
 			<div class="slider-module-track"></div>
 			<div class="slider-module-track-background" :style="{ width: value * 100 + '%' }"></div>
 			<span v-for="(tag, index) in tags" :key="index" class="slider-module-mark" :style="{ left: tag[0] * 100 + '%' }">{{ tag[1] }}</span>
-			<div class="slider-module-slipper" v-bind:style="{ left: value * 100 + '%' }"></div>
+			<button class="slider-module-slipper" v-bind:style="{ left: value * 100 + '%' }" @keydown="onKeypress" :aria-label="title + '滑块'"></button>
 		</div>
 		<div class="slider-text">{{ valueToText(value) }}</div>
 	</div>
@@ -22,6 +22,7 @@ export default {
 		title: String,
 		value: Number,
 		tags: Map,
+		step: Number,
 		valueToText: Function,
 		valueProcess: Function
 	},
@@ -78,14 +79,32 @@ export default {
 				}
 			})
 			// lastValue 用于减少频繁提交参数更改的次数
-			var lastValue = (parseInt(event.pageX || event.touches[0].pageX) - sliderLeft - slipperOffsetX) / sliderWidth
-			if (lastValue > 1) {
-				lastValue = 1
-			} else if (lastValue < 0) {
-				lastValue = 0
-			}
-			lastValue = this.valueProcess(lastValue)
+			var lastValue = NaN
 			handleMouseMove({ pageX: event.pageX })	// mouseDown 直接触发 mouseMove
+		},
+		onKeypress: function (event) {
+			if (event.key == 'ArrowLeft' || event.key == 'ArrowRight') {
+				var direction, delta, sum
+				if (event.key == 'ArrowLeft') {
+					direction = -1
+				} else {
+					direction = 1
+				}
+				if (this.step) {
+					delta = 1 / this.step
+				} else {
+					delta = 0.01
+				}
+				sum = this.value + direction * delta
+				if (sum < 0) {
+					sum = 0
+				} else if (sum > 1) {
+					sum = 1
+				}
+				this.$emit('change', sum)
+			} else {
+
+			}
 		}
 	},
 }
@@ -165,6 +184,7 @@ function getWindowOffsetTop(obj) {
 				background: linear-gradient(180deg, #fefefe, #f0f0f0);
 				border-radius: 4px;
 				box-shadow: 0px 2px 2px 0px rgba(0, 0, 0, 0.2);
+				border: none;
 			}
 			.slider-module-slipper:hover {
 				background: linear-gradient(180deg, #ffffff, #fefefe);

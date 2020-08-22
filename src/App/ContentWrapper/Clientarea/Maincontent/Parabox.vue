@@ -143,7 +143,7 @@ export default {
 				height: 20px;
 				width: 65px;
 				transform: translateX(-50%);
-				background: url(/sidebar-icon-colored.png);
+				background: url(/images/sidebar-icon-colored.png);
 				background-size: cover;
 				/* background-position-y: -40px; */
 			}

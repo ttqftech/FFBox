@@ -12,7 +12,11 @@ const scanf = commonfunc.scanf;
 
 const getFilePathWithoutPostfix = commonfunc.getFilePathWithoutPostfix;
 
-const spawn = window.require('child_process').spawn;
+let spawn, remote
+if (process.env.IS_ELECTRON) {
+	spawn = window.require('child_process').spawn;
+	remote = window.require('electron').remote
+}
 
 var taskProgress = [];					// 用于动态显示进度
 var taskProgress_size = [];				// 因为 size 的更新速度很慢，所以单独拎出来
@@ -324,17 +328,37 @@ class FFmpeg {
 		this.cmd.stdin.write("q");
 	}
 	pause () {
-		spawn("pauseAndResumeProcess/PauseAndResumeProcess.exe", ["0", this.cmd.pid], {
-			detached: false,
-			shell: false
-		});
+		switch (remote.process.platform) {
+			case "win32":
+				spawn("PauseAndResumeProcess.exe", ["0", this.cmd.pid], {
+					detached: false,
+					shell: false
+				});
+				break;
+			case "linux":
+				spawn("kill", ["-STOP", this.cmd.pid], {
+					detached: false,
+					shell: false
+				});
+			default:
+		}
 		this.status = 0;
 	}
 	resume () {
-		spawn("pauseAndResumeProcess/PauseAndResumeProcess.exe", ["1", this.cmd.pid], {
-			detached: false,
-			shell: false
-		});
+		switch (remote.process.platform) {
+			case "win32":
+				spawn("PauseAndResumeProcess.exe", ["1", this.cmd.pid], {
+					detached: false,
+					shell: false
+				});
+				break;
+			case "linux":
+				spawn("kill", ["-CONT", this.cmd.pid], {
+					detached: false,
+					shell: false
+				});
+			default:
+		}
 		this.status = 1;
 		clearInterval(this.timeoutTimer);
 		/*

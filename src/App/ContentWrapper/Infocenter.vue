@@ -13,7 +13,7 @@
 					<p>{{ value.msg }}</p>
 					<span>{{ value.time | hhmmss }}</span>
 					<button class="infocenter-info-delete" aria-label="删除此消息" @click="deleteMsg(index)">
-						<img src="/×.svg" alt="">
+						<img src="/images/×.svg" alt="">
 					</button>
 				</li>
 			</ul>
@@ -132,16 +132,16 @@ export default {
 					background-repeat: no-repeat;
 				}
 				.img-info {
-					background-image: url(/info.svg);
+					background-image: url(/images/info.svg);
 				}
 				.img-tick {
-					background-image: url(/tick.svg);
+					background-image: url(/images/tick.svg);
 				}
 				.img-warning {
-					background-image: url(/warning.svg);
+					background-image: url(/images/warning.svg);
 				}
 				.img-error {
-					background-image: url(/error.svg);
+					background-image: url(/images/error.svg);
 				}
 				.infocenter-info p {
 					font-size: 14px;
