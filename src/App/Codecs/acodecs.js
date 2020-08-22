@@ -44,7 +44,7 @@ function approximation (number, numList, threshould = 0.01) {
 }
 
 const abitrateSlider = {
-	step: false,
+	step: 60,
 	tags: new Map([
 		[0.000, '8 Kbps'],
 		[0.167, '16 Kbps'],
@@ -67,7 +67,7 @@ const abitrateSlider = {
 	}
 }
 const q100slider = {
-	step: false,
+	step: 0,
 	tags: new Map([
 		[0.000, '0'],
 		[1.000, '100']
@@ -422,7 +422,7 @@ const lo_downmix = {
 // #endregion
 
 const volSlider = {
-	step: false,
+	step: 96,
 	tags: new Map([
 		[0.000, '-48 dB'],
 		[0.125, '-36 dB'],

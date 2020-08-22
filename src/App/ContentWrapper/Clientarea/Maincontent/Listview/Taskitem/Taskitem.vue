@@ -291,7 +291,7 @@ export default {
 				transition: top 0.5s, height 0.5s;
 			}
 			.taskitem-previewbox-img {
-				background: url(/preview.png) center/contain no-repeat;
+				background: url(/images/preview.png) center/contain no-repeat;
 				width: 100%;
 				height: 100%;
 			}
@@ -326,13 +326,13 @@ export default {
 				transition: right 0.5s, opacity 0.5s;
 			}
 				.taskitem-img-format {
-					background-image: url(/formats/format_format.png);
+					background-image: url(/images/formats/format_format.png);
 				}
 				.taskitem-img-vcodec {
-					background-image: url(/formats/video_vcodec.png);
+					background-image: url(/images/formats/video_vcodec.png);
 				}
 				.taskitem-img-acodec {
-					background-image: url(/formats/audio_acodec.png);
+					background-image: url(/images/formats/audio_acodec.png);
 				}
 				.taskitem-span-format {
 					text-align: center;
@@ -347,13 +347,13 @@ export default {
 					white-space: nowrap;
 				}
 				.taskitem-img-size {
-					background-image: url(/formats/video_resolution.png);
+					background-image: url(/images/formats/video_resolution.png);
 				}
 				.taskitem-img-vratecontrol {
-					background-image: url(/formats/video_ratecontrol.png);
+					background-image: url(/images/formats/video_ratecontrol.png);
 				}
 				.taskitem-img-aratecontrol {
-					background-image: url(/formats/audio_ratecontrol.png);
+					background-image: url(/images/formats/audio_ratecontrol.png);
 				}
 				.taskitem-span-size {
 					text-align: center;
@@ -423,7 +423,7 @@ export default {
 				.taskitem-delete {
 					width: 16px;
 					height: 16px;
-					background-image: url(/deleteNpause_button.svg);
+					background-image: url(/images/deleteNpause_button.svg);
 					background-size: 300%;	/* 三倍大小 */
 					pointer-events: none;
 					background-position-x: 0px;

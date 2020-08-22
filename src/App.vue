@@ -13,11 +13,16 @@ import ContentWrapper from './App/ContentWrapper'
 import FloatingContent from './App/FloatingContent'
 import Vue from 'vue'
 import Vuex from 'vuex'
-const ElectronStore = window.require('electron-store')
-const electronStore = new ElectronStore()
-const ipc = window.require('electron').ipcRenderer
-const remote = window.require('electron').remote
-const currentWindow = remote.getCurrentWindow();
+
+let ElectronStore, electronStore, ipc, remote, currentWindow
+if (process.env.IS_ELECTRON) {
+	ElectronStore = window.require('electron-store')
+	electronStore = new ElectronStore()
+	ipc = window.require('electron').ipcRenderer
+	remote = window.require('electron').remote
+	currentWindow = remote.getCurrentWindow();
+}
+
 const maxThreads = 2
 
 import { FFmpeg } from '@/App/FFmpegInvoke'
@@ -823,7 +828,12 @@ export default {
 		this.$store.state.globalParams.paraArray = getFFmpegParaArray('[输入文件名]', this.$store.state.globalParams.format, this.$store.state.globalParams.video, this.$store.state.globalParams.audio)
 		this.$store.state.globalParams = JSON.parse(JSON.stringify(this.$store.state.globalParams))
 
-		console.log(remote.app.getPath('exe'))
+		console.log('exe 路径：' + remote.app.getPath('exe'))
+		console.log('electron 执行路径：' + remote.app.getAppPath())
+		console.log('node 路径：' + process.execPath)
+		console.log('命令执行根路径：' + process.cwd())
+		// console.log('命令执行根路径（resolve）：' + resolve('./'))
+		console.log('页面 js 文件路径：' + __dirname)
 		// 初始化 FFmpeg
 		setTimeout(() => {
 			this.initFFmpeg()

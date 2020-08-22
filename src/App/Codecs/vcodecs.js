@@ -80,7 +80,7 @@ function approximation (number, numList, threshould = 0.01) {
 // valueToText：显示在滑杆旁边的文字　　valueProcess：进行吸附、整数化处理　　valueToParam：输出到 ffmpeg 参数的文字
 
 const H264265crfSlider = {
-	step: false,
+	step: 51,
 	tags: new Map([
 		[0.000, '51（最低画质）'],
 		[0.411, '30（低画质）'],
@@ -100,7 +100,7 @@ const H264265crfSlider = {
 	}
 }
 const crf63slider = {
-	step: false,
+	step: 63,
 	tags: new Map([
 		[0.000, '63（最低画质）'],
 		[1.000, '0（无损）']
@@ -116,7 +116,7 @@ const crf63slider = {
 	}
 }
 const crf51slider = {
-	step: false,
+	step: 51,
 	tags: new Map([
 		[0.000, '51（最低画质）'],
 		[1.000, '0（无损）']
@@ -132,7 +132,7 @@ const crf51slider = {
 	}
 }
 const qp70slider = {
-	step: false,
+	step: 70,
 	tags: new Map([
 		[0.000, '70（最低画质）'],
 		[1.000, '0（无损）']
@@ -148,7 +148,7 @@ const qp70slider = {
 	}
 }
 const qp51slider = {
-	step: false,
+	step: 51,
 	tags: new Map([
 		[0.000, '51（最低画质）'],
 		[1.000, '0（无损）']
@@ -164,7 +164,7 @@ const qp51slider = {
 	}
 }
 const vbitrateSlider = {
-	step: false,
+	step: 0,
 	tags: new Map([
 		[0.000, '62.5 Kbps'],
 		[0.250, '500 Kbps'],
@@ -190,7 +190,7 @@ const vbitrateSlider = {
 	}
 }
 const q100slider = {
-	step: false,
+	step: 0,
 	tags: new Map([
 		[0.000, '0'],
 		[1.000, '100']
@@ -206,7 +206,7 @@ const q100slider = {
 	}
 }
 const H264265presetSlider = {
-	step: true,
+	step: 9,
 	tags: new Map([
 		[0 / 9, 'ultrafast'],
 		[1 / 9, 'superfast'],
@@ -232,7 +232,7 @@ const H264265presetSlider = {
 	}
 }
 const qsvPresetSlider = {
-	step: true,
+	step: 6,
 	tags: new Map([
 		[0 / 6, 'veryfast'],
 		[1 / 6, 'faster'],
@@ -1289,7 +1289,7 @@ const vcodecs = [
 				parameters: [
 					{
 						mode: "slider", parameter: "preset", display: "编码质量",
-						step: true,
+						step: 2,
 						tags: new Map([
 							[0 / 2, 'speed'],
 							[1 / 2, 'balanced'],
@@ -1597,7 +1597,7 @@ const vcodecs = [
 				parameters: [
 					{
 						mode: "slider", parameter: "preset", display: "编码质量",
-						step: true,
+						step: 2,
 						tags: new Map([
 							[0 / 2, 'speed'],
 							[1 / 2, 'balanced'],
@@ -1742,7 +1742,7 @@ const vcodecs = [
 				parameters: [
 					{
 						mode: "slider", parameter: "quality", display: "编码质量",
-						step: true,
+						step: 2,
 						tags: new Map([
 							[0 / 2, 'realtime'],
 							[1 / 2, 'good'],
@@ -1786,7 +1786,7 @@ const vcodecs = [
 				parameters: [
 					{
 						mode: "slider", parameter: "quality", display: "编码质量",
-						step: true,
+						step: 2,
 						tags: new Map([
 							[0 / 2, 'realtime'],
 							[1 / 2, 'good'],
@@ -1800,7 +1800,7 @@ const vcodecs = [
 							return Math.round(value * 2) / 2
 						},
 						valueToParam: function (value) {
-							value = Math.round(value * 2) / 2
+							value = Math.round(value * 2)
 							return ['realtime', 'good', 'best'][value]
 						}
 					},
@@ -1835,7 +1835,7 @@ const vcodecs = [
 				parameters: [
 					{
 						mode: "slider", parameter: "quality", display: "编码质量",
-						step: true,
+						step: 2,
 						tags: new Map([
 							[0 / 2, 'realtime'],
 							[1 / 2, 'good'],
@@ -1879,7 +1879,7 @@ const vcodecs = [
 				parameters: [
 					{
 						mode: "slider", parameter: "quality", display: "编码质量",
-						step: true,
+						step: 2,
 						tags: new Map([
 							[0 / 2, 'realtime'],
 							[1 / 2, 'good'],
@@ -2601,6 +2601,9 @@ const generator = {
 					// 使用特定编码器，返回 vcodev.encoder[].codecName
 					ret.push('-vcodec')
 					ret.push(vencoder.codecName)
+				}
+				if (vcodec.strict2 || vencoder.strict2) {
+					strict2 = true
 				}
 				for (const parameter of vencoder.parameters) {
 					// 逐个遍历详细参数

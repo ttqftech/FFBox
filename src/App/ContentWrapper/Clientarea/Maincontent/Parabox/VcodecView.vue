@@ -5,10 +5,10 @@
 		<combobox title="分辨率" :text="$store.state.globalParams.video.resolution" :list="resolutionsList" @change="onChange('combo', 'resolution', $event)" v-show="hasParameters > 0"></combobox>
 		<combobox title="输出帧速" :text="$store.state.globalParams.video.framerate" :list="frameratesList" @change="onChange('combo', 'framerate', $event)" v-show="hasParameters > 0"></combobox>
 		<combobox title="码率控制" :text="$store.state.globalParams.video.ratecontrol" :list="ratecontrolsList" @change="onChange('combo', 'ratecontrol', $event)" v-if="ratecontrolsList != 0"></combobox>
-		<slider v-if="ratecontrolSlier != null" :title="ratecontrolSlier.display" :value="$store.state.globalParams.video.ratevalue" :tags="ratecontrolSlier.tags" :valueToText="ratecontrolSlier.valueToText" :valueProcess="ratecontrolSlier.valueProcess" @change="onChange('slider', 'ratevalue', $event)"></slider>
+		<slider v-if="ratecontrolSlider != null" :title="ratecontrolSlider.display" :value="$store.state.globalParams.video.ratevalue" :tags="ratecontrolSlider.tags" :step="ratecontrolSlider.step" :valueToText="ratecontrolSlider.valueToText" :valueProcess="ratecontrolSlider.valueProcess" @change="onChange('slider', 'ratevalue', $event)"></slider>
 		<div v-for="(parameter, index) in parametersList" :key="index" :class="{ comboParent: parameter.mode == 'combo', sliderParent: parameter.mode == 'slider' }">
 			<combobox class="fullSpace" v-if="parameter.mode == 'combo'" :title="parameter.display" :text="$store.state.globalParams.video.detail[parameter.parameter]" :list="parameter.items" @change="onDetailChange('combo', parameter.parameter, $event)"></combobox>
-			<slider class="fullSpace" v-if="parameter.mode == 'slider'" :title="parameter.display" :value="$store.state.globalParams.video.detail[parameter.parameter]" :tags="parameter.tags" :valueToText="parameter.valueToText" :valueProcess="parameter.valueProcess" @change="onDetailChange('slider', parameter.parameter, $event)"></slider>
+			<slider class="fullSpace" v-if="parameter.mode == 'slider'" :title="parameter.display" :value="$store.state.globalParams.video.detail[parameter.parameter]" :tags="parameter.tags" :step="parameter.step" :valueToText="parameter.valueToText" :valueProcess="parameter.valueProcess" @change="onDetailChange('slider', parameter.parameter, $event)"></slider>
 		</div>
 		<!-- <button @click="getVideoParams()">输出参数</button> -->
 	</div>
@@ -78,7 +78,7 @@ export default {
 				return []
 			}
 		},
-		ratecontrolSlier: function () {
+		ratecontrolSlider: function () {
 			var ratecontrolsList_ = this.ratecontrolsList
 			if (ratecontrolsList_ == 0) {
 				return null

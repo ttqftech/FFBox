@@ -94,22 +94,22 @@ export default {
 				box-sizing: border-box;
 				border-left: transparent 3px solid;
 			}
-			.sidebar-selection:hover {
+			.sidebar-selection:hover, .sidebar-selection:focus {
 				background: rgba(255, 255, 255, 0.4);
 			}
-			.sidebar-selection-selected, .sidebar-selection-selected:hover {
+			.sidebar-selection-selected, .sidebar-selection-selected:hover, .sidebar-selection-selected:focus {
 				border-left: hsl(130, 75%, 50%) 3px solid;
 				background: hsl(0, 0%, 92.5%);
 				box-shadow: 0px 6px 12px 0px rgba(0, 0, 0, 0.2);
 			}
 			.sidebar-selection-selected .sidebar-icon {
-				background-image: url('/sidebar-icon-colored.png');
+				background-image: url('/images/sidebar-icon-colored.png');
 				/* background-position-x: -3px; */
 			}
 			.sidebar-icon {
 				width: 100%;
 				height: 100%;
-				background: url('/sidebar-icon-white.png');
+				background: url('/images/sidebar-icon-white.png');
 				background-size: cover;
 			}
 

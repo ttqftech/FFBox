@@ -3,7 +3,7 @@
 		<div class="checkbox-title">{{ title }}</div>
 		<div class="checkbox-track" @mousedown="dragStart">
 			<div class="checkbox-track-background" :style="checked == 0 ? 'width: 0%;' : 'width: 100%'"></div>
-			<div class="checkbox-slipper" :style="checked == 0 ? 'left: 0px;' : 'left: 64px'"></div>
+			<button class="checkbox-slipper" :style="checked == 0 ? 'left: 0px;' : 'left: 64px'" @keydown="onKeydown" @keyup="onKeyup"></button>
 		</div>
 	</div>
 </template>
@@ -81,6 +81,18 @@ export default {
 			})
 			var lastValue = NaN
 			handleMouseMove({ pageX: event.pageX })	// mouseDown 直接触发 mouseMove
+		},
+		onKeydown: function (event) {
+			if (event.key == 'ArrowLeft') {
+				this.$emit('change', false)
+			} else if (event.key == 'ArrowRight') {
+				this.$emit('change', true)
+			}
+		},
+		onKeyup: function (event) {
+			if (event.key == ' ' || event.key == 'Enter') {
+				this.$emit('change', !this.checked)
+			}
 		}
 	},
 	mounted: function () {
@@ -157,6 +169,7 @@ function getWindowOffsetTop(obj) {
 				box-shadow: 0px 1px 3px 0px rgba(0, 0, 0, 0.3);
 				transform: scale(1.25);
 				transition: all 0.15s ease-out;
+				border: none;
 			}
 			.checkbox-slipper:hover {
 				background: linear-gradient(180deg, #ffffff, #fefefe);
