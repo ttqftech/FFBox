@@ -1,8 +1,11 @@
 <template>
 	<footer id="statusbar">
 		<div id="ffmpeg-version">{{ ffmpegVersion }}</div>
-		<button id="infoicon" @click="switchInfoCenter();" :class="$store.state.showInfoCenter ? 'infoicon-selected' : 'infoicon-unselected'" aria-label="通知中心开关">
-			<div src="/info-transparent.svg"></div><span id="infocount">{{ this.$store.state.infos.length }}</span>
+		<button class="infoicon" @click="switchInfoCenter();" :class="$store.state.showInfoCenter ? 'infoicon-selected' : 'infoicon-unselected'" aria-label="通知中心开关">
+			<img src="/images/info-transparent.svg" /><span class="infocount">{{ this.$store.state.infos.length }}</span>
+		</button>
+		<button class="infoicon" @click="switchSponsorCenter();" :class="$store.state.showSponsorCenter ? 'infoicon-selected' : 'infoicon-unselected'" aria-label="打赏中心开关">
+			<img src="/images/sponsor.svg" /><div style="width: 12px"></div>
 		</button>
 		<div id="output-folder">{{ outputFolder }}</div>
 	</footer>
@@ -28,11 +31,10 @@ export default {
 	},
 	methods: {
 		switchInfoCenter: function () {
-			if (this.$store.state.showInfoCenter) {
-				this.$store.commit('showInfoCenter_update', false)
-			} else {
-				this.$store.commit('showInfoCenter_update', true)
-			}
+			this.$store.commit('showInfoCenter_update', !this.$store.state.showInfoCenter)
+		},
+		switchSponsorCenter: function () {
+			this.$store.commit('showSponsorCenter_update', !this.$store.state.showSponsorCenter)
 		}
 	}
 	
@@ -56,32 +58,37 @@ export default {
 			line-height: 24px;
 			color: white;
 		}
-		#infoicon {
+		.infoicon {
 			float: left;
+			position: relative;
 			padding: 0px 8px;
 			text-align: left;
-			font-size: 13px;
-			line-height: 24px;
+			height: 24px;
 			color: white;
 			outline: none;
 			border: none;
-			vertical-align: middle;
 			font-family: inherit;
 		}
-		#infoicon:hover, .infoicon-selected {
+		.infoicon:hover, .infoicon-selected {
 			background: rgba(0, 0, 0, 0.4);
 		}
 		.infoicon-unselected {
 			background: unset;
 		}
-		#infoicon div {
-			display: inline-block;
-			position: relative;
-			top: 2px;
+		.infoicon img {
+			display: block;
+			position: absolute;
+			top: 0;
+			bottom: 0;
+			left: 8px;
 			height: 13px;
 			width: 13px;
-			margin: 0px 8px 0px 0px;
-			background: url(/images/info-transparent.svg) center/contain no-repeat;
+			margin: auto;
+		}
+		.infoicon .infocount {
+			margin-left: 20px;
+			line-height: 24px;
+			font-size: 13px;
 		}
 		#output-folder {
 			float: right;
