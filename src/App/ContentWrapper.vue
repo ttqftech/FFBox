@@ -4,6 +4,7 @@
 		<clientarea></clientarea>
 		<statusbar></statusbar>
 		<infocenter></infocenter>
+		<sponsorcenter></sponsorcenter>
 	</div>
 </template>
 
@@ -12,11 +13,12 @@ import Titlebar from './ContentWrapper/Titlebar'
 import Clientarea from './ContentWrapper/Clientarea'
 import Statusbar from './ContentWrapper/Statusbar'
 import Infocenter from './ContentWrapper/Infocenter'
+import Sponsorcenter from './ContentWrapper/Sponsorcenter'
 
 export default {
 	name: 'ContentWrapper',
 	components: {
-		Titlebar, Clientarea, Statusbar, Infocenter
+		Titlebar, Clientarea, Statusbar, Infocenter, Sponsorcenter
 	},
 	props: {
 	},
