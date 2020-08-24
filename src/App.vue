@@ -6,8 +6,8 @@
 </template>
 
 <script>
-const version = '2.2'
-const buildNumber = 5
+const version = '2.3'
+const buildNumber = 6
 
 import ContentWrapper from './App/ContentWrapper'
 import FloatingContent from './App/FloatingContent'
@@ -48,6 +48,7 @@ var saveAllParaTimer
 const store = new Vuex.Store({
 	state: {
 		version, buildNumber,
+		showSponsorCenter: false,
 		// 是否显示通知中心
 		showInfoCenter: false,
 		// 所有未删除通知
@@ -469,9 +470,19 @@ const store = new Vuex.Store({
 				clearInterval(state.overallProgressTimerID);
 			}
 		},
+		// 切换显示/不显示打赏中心
+		showSponsorCenter_update (state, value) {
+			state.showSponsorCenter = value
+			if (state.showSponsorCenter && state.showInfoCenter) {
+				state.showInfoCenter = false
+			}
+		},
 		// 切换显示/不显示通知中心
 		showInfoCenter_update (state, value) {
 			state.showInfoCenter = value
+			if (state.showSponsorCenter && state.showInfoCenter) {
+				state.showSponsorCenter = false
+			}
 		},
 		// 发布消息（args：msg, level）
 		pushMsg (state, args) {
@@ -834,6 +845,7 @@ export default {
 		console.log('命令执行根路径：' + process.cwd())
 		// console.log('命令执行根路径（resolve）：' + resolve('./'))
 		console.log('页面 js 文件路径：' + __dirname)
+		
 		// 初始化 FFmpeg
 		setTimeout(() => {
 			this.initFFmpeg()
@@ -854,6 +866,14 @@ export default {
 
 		// 挂载退出确认
 		ipc.on("exitConfirm", () => this.$store.commit('closeConfirm'));
+
+		// 捐助提示
+		setTimeout(() => {
+			this.$store.commit('pushMsg', {
+				msg: '您的打赏是我更新软件的动力！如果感觉软件不错，欢迎点击下方状态栏的打赏中心慷慨解囊！',
+				level: 0
+			})
+		}, 60000)
 	},
 	store
 }

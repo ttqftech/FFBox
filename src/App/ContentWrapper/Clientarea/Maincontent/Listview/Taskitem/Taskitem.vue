@@ -321,7 +321,7 @@ export default {
 				right: 400px;
 				width: 32px;
 				height: 32px;
-				background-image: url(/rightarrow.svg);
+				background-image: url(/images/rightarrow.svg);
 				background-size: contain;
 				transition: right 0.5s, opacity 0.5s;
 			}
