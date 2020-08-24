@@ -46,7 +46,6 @@
 7. 执行 `yarn`  
 8. Windows 用户执行 `electron-builder build --win [target]`，其中 `[target]` 为输出类型，经测试可用的项有 nsis（msi 安装包）、nsis-web（msi 安装外壳 + 程序压缩文件）、portable（单文件便携式）、msi（msi 安装包）、dir（程序文件夹）。  
 8. Linux 用户执行 `electron-builder build --linux [target]`，其中 `[target]` 为输出类型，经测试可用的项有 AppImage（单文件便携式）、deb（Debian 系操作系统安装包）、dir（程序文件夹）。  
-9. 请将 `pauseAndResumeProcess` 整个文件夹拷贝到目标文件夹中。目前任务暂停功能是使用 VB 调用的，因此打包时不会自动将文件导入。  
 
 #### 注意事项
 
