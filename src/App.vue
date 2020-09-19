@@ -6,8 +6,9 @@
 </template>
 
 <script>
-const version = '2.3'
-const buildNumber = 6
+const version = '2.4'
+const buildNumber = 7
+//	1.0	1.1	2.0	2.1	2.2	2.3	2.4
 
 import ContentWrapper from './App/ContentWrapper'
 import FloatingContent from './App/FloatingContent'
@@ -92,9 +93,7 @@ const store = new Vuex.Store({
 		},
 		// 全局参数
 		globalParams: {
-			format: {
-				format: 'MP4',
-				moveflags: false,
+			input: {
 				hwaccel: '不使用'
 			},
 			video: {
@@ -124,6 +123,10 @@ const store = new Vuex.Store({
 					sample_fmt: '自动',
 					channel_layout: '自动'
 				}
+			},
+			output: {
+				format: 'MP4',
+				moveflags: false,
 			}
 		},
 		// 全局命令行接收到的信息
@@ -244,7 +247,7 @@ const store = new Vuex.Store({
 			task.status = TASK_RUNNING
 			task.taskProgress = []
 			task.taskProgress_size = []
-			var newFFmpeg = new FFmpeg(0, getFFmpegParaArray(task.filepath, task.after.format, task.after.video, task.after.audio))
+			var newFFmpeg = new FFmpeg(0, getFFmpegParaArray(task.filepath, task.after.input, task.after.video, task.after.audio, task.after.output))
 			newFFmpeg.on('finished', () => {
 				task.status = TASK_FINISHED
 				task.progress_smooth.progress = 1
@@ -605,11 +608,11 @@ const store = new Vuex.Store({
 		dragParabox (state, value) {
 			state.draggerPos = value
 		},
-		// 修改参数，保存到本地磁盘（args：type (format | video | videoDetail | audio), key, value）
+		// 修改参数，保存到本地磁盘（args：type (input | video | videoDetail | audio | audioDetail | output), key, value）
 		changePara (state, args) {
 			switch (args.type) {
-				case 'format':
-					state.globalParams.format[args.key] = args.value
+				case 'input':
+					state.globalParams.input[args.key] = args.value
 					break;
 				case 'video':
 					state.globalParams.video[args.key] = args.value
@@ -623,16 +626,19 @@ const store = new Vuex.Store({
 				case 'audioDetail':
 					state.globalParams.audio.detail[args.key] = args.value
 					break;
+				case 'output':
+					state.globalParams.output[args.key] = args.value
+					break;
 			}
 			// 更改到一些不匹配的值后会导致 getFFmpegParaArray 出错，但是修正代码就在后面，因此仅需忽略它，让它继续运行下去，不要急着更新
 			Vue.nextTick(() => {
-				state.globalParams.paraArray = getFFmpegParaArray('[输入文件名]', state.globalParams.format, state.globalParams.video, state.globalParams.audio)
+				state.globalParams.paraArray = getFFmpegParaArray('[输入文件名]', state.globalParams.input, state.globalParams.video, state.globalParams.audio, state.globalParams.output)
 				state.globalParams = JSON.parse(JSON.stringify(state.globalParams))
 
 				for (const id of state.taskSelection) {
 					var task = state.tasks.get(id)
 					task.after = JSON.parse(JSON.stringify(state.globalParams))
-					task.paraArray = getFFmpegParaArray(task.filepath, task.after.format, task.after.video, task.after.audio, true)
+					task.paraArray = getFFmpegParaArray(task.filepath, task.after.input, task.after.video, task.after.audio, task.after.output, true)
 					task.computedAfter = {
 						vrate: vGenerator.getRateControlParam(task.after.video),
 						arate: aGenerator.getRateControlParam(task.after.audio)
@@ -648,9 +654,10 @@ const store = new Vuex.Store({
 			// 存盘
 			clearTimeout(saveAllParaTimer)
 			saveAllParaTimer = setTimeout(() => {
-				electronStore.set('format', state.globalParams.format)
+				electronStore.set('input', state.globalParams.input)
 				electronStore.set('video', state.globalParams.video)
 				electronStore.set('audio', state.globalParams.audio)
+				electronStore.set('output', state.globalParams.output)
 				console.log("参数已保存")
 			}, 700);
 		},
@@ -733,7 +740,7 @@ const store = new Vuex.Store({
 			})
 
 			// 更新命令行参数
-			task.paraArray = getFFmpegParaArray(task.filepath, task.after.format, task.after.video, task.after.audio, true)
+			task.paraArray = getFFmpegParaArray(task.filepath, task.after.input, task.after.video, task.after.audio, task.after.output, true)
 			task.computedAfter = {
 				vrate: vGenerator.getRateControlParam(task.after.video),
 				arate: aGenerator.getRateControlParam(task.after.audio)
@@ -836,7 +843,7 @@ export default {
 			}
 		})
 		// 更新全局参数输出
-		this.$store.state.globalParams.paraArray = getFFmpegParaArray('[输入文件名]', this.$store.state.globalParams.format, this.$store.state.globalParams.video, this.$store.state.globalParams.audio)
+		this.$store.state.globalParams.paraArray = getFFmpegParaArray('[输入文件名]', this.$store.state.globalParams.input, this.$store.state.globalParams.video, this.$store.state.globalParams.audio, this.$store.state.globalParams.output)
 		this.$store.state.globalParams = JSON.parse(JSON.stringify(this.$store.state.globalParams))
 
 		console.log('exe 路径：' + remote.app.getPath('exe'))
@@ -857,9 +864,10 @@ export default {
 				electronStore.set('ffbox.buildNumber', buildNumber)
 			} else {
 				this.$store.commit('replacePara', {
-					format: electronStore.get('format'),
+					input: electronStore.get('input'),
 					video: electronStore.get('video'),
 					audio: electronStore.get('audio'),
+					output: electronStore.get('output'),
 				})
 			}
 		}, 1);
@@ -878,16 +886,15 @@ export default {
 	store
 }
 
-function getFFmpegParaArray (filepath, fParams, vParams, aParams, withQuotes = false) {
+function getFFmpegParaArray (filepath, iParams, vParams, aParams, oParams, withQuotes = false) {
 	var ret = []
 	ret.push('-hide_banner')
-	ret.push(...fGenerator.getHwaccelParam(fParams))
+	ret.push(...fGenerator.getInputParam(iParams))
 	ret.push('-i')
 	ret.push((withQuotes ? '"' : '') + filepath + (withQuotes ? '"' : ''))
-	ret.push(...fGenerator.getPreProcessParam(fParams))
 	ret.push(...vGenerator.getVideoParam(vParams))
 	ret.push(...aGenerator.getAudioParam(aParams))
-	ret.push(...fGenerator.getOutputParam(fParams, commonfunc.getFilePathWithoutPostfix(filepath) + '_converted', withQuotes))
+	ret.push(...fGenerator.getOutputParam(oParams, commonfunc.getFilePathWithoutPostfix(filepath) + '_converted', withQuotes))
 	ret.push('-y')
 	return ret
 }

@@ -136,24 +136,11 @@ export default {
 	methods: {
 		// 由子组件发生变化所触发的事件（mode 为组件类型，sName 为参数名，value 为参数值，list 为对于 combo 需要传入的列表（废弃））
 		onChange: function (mode, sName, value) {
-			switch (mode) {
-				case 'combo':
-					// 注：这里 commit 的 value 不能直接读取 import 来的变量，直接用开发者工具读取也不行，但是 console.log 可以，疑似 vue 的 bug
-					// console.log(this.formatsList[args.paramName + 's'][args.value].sName)
-					this.$store.commit('changePara', {
-						type: 'video',
-						key: sName,
-						value
-					})
-					break;
-				case 'slider':
-					this.$store.commit('changePara', {
-						type: 'video',
-						key: sName,
-						value
-					})
-					break;
-			}
+			this.$store.commit('changePara', {
+				type: 'video',
+				key: sName,
+				value
+			})
 			if (sName == 'vcodec') {
 			// 更改 vcodec 后将 vencoder 恢复为默认
 				this.$store.commit('changePara', {
@@ -192,22 +179,11 @@ export default {
 			}
 		},
 		onDetailChange: function (mode, sName, value, list) {
-			switch (mode) {
-				case 'combo':
-					this.$store.commit('changePara', {
-						type: 'videoDetail',
-						key: sName,
-						value
-					})
-					break;
-				case 'slider':					
-					this.$store.commit('changePara', {
-						type: 'videoDetail',
-						key: sName,
-						value
-					})
-					break;
-			}
+			this.$store.commit('changePara', {
+				type: 'videoDetail',
+				key: sName,
+				value
+			})
 		},
 		// getVideoParams: function () {
 		// 	console.log(generator.getVideoParam(this.$store.state.globalParams.video))
