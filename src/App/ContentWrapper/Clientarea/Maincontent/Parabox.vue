@@ -3,14 +3,14 @@
 		<div id="parabox-dragger" @mousedown="dragStart" @touchstart="dragStart">
 			<div id="parabox-dragger-left"></div>
 			<div id="parabox-dragger-right"></div>
-			<div id="parabox-name" :style="{ backgroundPositionY: 12.5 * $store.state.paraselected + 25 + '%' }"></div>
+			<div id="parabox-name" :style="{ backgroundPositionY: (100 / 7) * $store.state.paraselected + (100 / 7 * 2) + '%' }"></div>
 		</div>
 		<div id="paraboxes">
 			<transition name="paraboxes-ani">
-				<shorcuts-view v-show="$store.state.paraselected == 0"></shorcuts-view>
+				<shortcuts-view v-show="$store.state.paraselected == 0"></shortcuts-view>
 			</transition>
 			<transition name="paraboxes-ani">
-				<format-view v-show="$store.state.paraselected == 1"></format-view>
+				<input-view v-show="$store.state.paraselected == 1"></input-view>
 			</transition>
 			<transition name="paraboxes-ani">
 				<vcodec-view v-show="$store.state.paraselected == 2"></vcodec-view>
@@ -19,31 +19,27 @@
 				<acodec-view v-show="$store.state.paraselected == 3"></acodec-view>
 			</transition>
 			<transition name="paraboxes-ani">
-				<veffect-view v-show="$store.state.paraselected == 4"></veffect-view>
+				<effect-view v-show="$store.state.paraselected == 4"></effect-view>
 			</transition>
 			<transition name="paraboxes-ani">
-				<aeffect-view v-show="$store.state.paraselected == 5"></aeffect-view>
-			</transition>
-			<transition name="paraboxes-ani">
-				<timing-view v-show="$store.state.paraselected == 6"></timing-view>
+				<output-view v-show="$store.state.paraselected == 5"></output-view>
 			</transition>
 		</div>
 	</div>
 </template>
 
 <script>
-import ShorcutsView from './Parabox/ShorcutsView'
-import FormatView from './Parabox/FormatView'
+import ShortcutsView from './Parabox/ShortcutsView'
+import InputView from './Parabox/InputView'
 import VcodecView from './Parabox/VcodecView'
 import AcodecView from './Parabox/AcodecView'
-import VeffectView from './Parabox/VeffectView'
-import AeffectView from './Parabox/AeffectView'
-import TimingView from './Parabox/TimingView'
+import EffectView from './Parabox/EffectView'
+import OutputView from './Parabox/OutputView'
 
 export default {
 	name: 'Parabox',
 	components: {
-		ShorcutsView, FormatView, VcodecView, AcodecView, VeffectView, AeffectView, TimingView
+		ShortcutsView, InputView, VcodecView, AcodecView, EffectView, OutputView
 	},
 	props: {
 	},
@@ -175,6 +171,5 @@ export default {
 			right: 0;
 			height: calc(100% - 28px);
 		}
-
 
 </style>

@@ -141,16 +141,20 @@ const hwaccels = [
 ]
 
 const generator = {
-	getOutputParam: function (formatParams, filename, withQuotes = false) {
+	getOutputParam: function (outputParams, filename, withQuotes = false) {
 		var ret = []
-		if (formatParams.format != '无') {
+		if (outputParams.format != '无') {
 			var format = formats.find((value) => {
-				return value.sName == formatParams.format
+				return value.sName == outputParams.format
 			})
 			if (format) {
 				var extension = format.extension
 			} else {	// 用户手动输入的格式
-				var extension = formatParams.format
+				var extension = outputParams.format
+			}
+			if (outputParams.moveflags) {
+				ret.push('-movflags')
+				ret.push('+faststart')
 			}
 			ret.push((withQuotes ? '"' : '') + filename + '.' + extension + (withQuotes ? '"' : ''))
 		} else {
@@ -161,20 +165,12 @@ const generator = {
 		}
 		return ret
 	},
-	getPreProcessParam: function (formatParams) {
+	getInputParam: function (inputParams) {
 		var ret = []
-		if (formatParams.moveflags) {
-			ret.push('-movflags')
-			ret.push('+faststart')
-		}
-		return ret
-	},
-	getHwaccelParam: function (formatParams) {
-		var ret = []
-		if (formatParams.hwaccel != '不使用') {
+		if (inputParams.hwaccel != '不使用') {
 			ret.push('-hwaccel')
 			var hwaccel = hwaccels.find((value) => {
-				return value.sName == formatParams.hwaccel
+				return value.sName == inputParams.hwaccel
 			}).hwaccel
 			ret.push(hwaccel)
 		}

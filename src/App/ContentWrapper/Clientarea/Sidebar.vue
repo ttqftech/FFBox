@@ -4,12 +4,12 @@
 			<div id="sidebar-background"></div>
 			<div id="sidebar-top">
 				<button v-for="value in [0, 1]" :key="value" class="sidebar-selection" :class="{'sidebar-selection-selected': $store.state.listselected == value}" @click="$store.commit('listNparaSelect', value)" :aria-label="['任务视图', '指令视图'][value]">
-					<div class="sidebar-icon" :style="{backgroundPositionY: value * 100 / 8 + '%'}"></div>
+					<div class="sidebar-icon" :style="{backgroundPositionY: value * 100 / 7 + '%'}"></div>
 				</button>
 			</div>
 			<div id="sidebar-bottom">
-				<button v-for="value in [0, 1, 2, 3, 4, 5, 6]" :key="value" class="sidebar-selection" :class="{'sidebar-selection-selected': $store.state.paraselected == value}" @click="$store.commit('listNparaSelect', value + 2)" :aria-label="['快捷参数', '格式参数', '视频参数', '音频参数', '视效参数', '音效参数', '时间参数'][value]">
-					<div class="sidebar-icon" :style="{backgroundPositionY: (value + 2) / 8 * 100 + '%'}"></div>
+				<button v-for="value in [0, 1, 2, 3, 4, 5]" :key="value" class="sidebar-selection" :class="{'sidebar-selection-selected': $store.state.paraselected == value}" @click="$store.commit('listNparaSelect', value + 2)" :aria-label="['快捷参数', '输入参数', '视频参数', '音频参数', '效果参数', '输出参数'][value]">
+					<div class="sidebar-icon" :style="{backgroundPositionY: (value + 2) / 7 * 100 + '%'}"></div>
 				</button>
 			</div>
 		</div>
