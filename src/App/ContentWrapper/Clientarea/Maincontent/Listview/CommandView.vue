@@ -38,7 +38,7 @@ export default {
 			} else if (this.$store.state.taskSelection.size > 0) {
 				var task
 				for (const id of this.$store.state.taskSelection) {
-					task = this.$store.state.tasks.get(id)
+					task = this.$store.state.tasks[id]
 					break
 				}
 				return task

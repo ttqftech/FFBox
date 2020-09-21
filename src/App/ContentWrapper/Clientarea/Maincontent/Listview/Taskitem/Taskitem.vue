@@ -26,7 +26,7 @@
 				<div class="taskitem-rightarrow"></div>
 				<div class="taskitem-info taskitem-infoafter">
 					<div class="taskitem-img-format"></div>
-					<span class="taskitem-span-format">{{ after.format.format }}</span>
+					<span class="taskitem-span-format">{{ after.output.format }}</span>
 					<div class="taskitem-img-vcodec"></div>
 					<span class="taskitem-span-vcodec">{{ after.video.vcodec }}</span>
 					<div class="taskitem-img-acodec"></div>
@@ -85,7 +85,7 @@ export default {
 	name: 'TaskItem',
 	components: {},
 	props: {
-		id: Symbol,
+		id: String,
 		duration: String,
 		filename: String,
 		before: Object,

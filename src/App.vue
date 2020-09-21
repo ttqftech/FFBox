@@ -80,11 +80,11 @@ const store = new Vuex.Store({
 		// 拖动器位置，数值越高越往下
 		draggerPos: 60,
 		// 所有任务
-		tasks: new Map(),
-		// 任务的显示顺序
-		taskOrder: [],
+		tasks: {},
 		// 选中的任务
 		taskSelection: new Set(),
+		// 任务序号记录
+		taskIndex: 0,
 		// 所有控件需要截获的鼠标操作都可以加到这些列表里捕获
 		onPointerEvents: {
 			onMouseDown: [],
@@ -144,7 +144,7 @@ const store = new Vuex.Store({
 		// workingTaskCount：运行中
 		workingTaskCount (state) {
 			var count = 0
-			for (const task of state.tasks.values()) {
+			for (const task of Object.values(state.tasks)) {
 				if (task.status == TASK_RUNNING) {
 					count++
 				}
@@ -154,7 +154,7 @@ const store = new Vuex.Store({
 		},
 		queueTaskCount (state) {
 			var count = 0
-			for (const task of state.tasks.values()) {
+			for (const task of Object.values(state.tasks)) {
 				if (task.status == TASK_RUNNING || task.status == TASK_PAUSED || task.status == TASK_STOPPING || task.status == TASK_FINISHING) {
 					count++
 				}
@@ -166,7 +166,7 @@ const store = new Vuex.Store({
 	mutations: {
 		// 点击开始/暂停按钮
 		startNpause (state) {
-			if ((state.workingStatus == 0 && state.taskOrder.length > 0) || state.workingStatus == -1) {		// 开始任务
+			if ((state.workingStatus == 0 && Object.keys(state.tasks).length > 0) || state.workingStatus == -1) {		// 开始任务
 				state.workingStatus = 1
 				this.commit('taskArrange')
 			} else if (state.workingStatus == 1) {
@@ -175,7 +175,7 @@ const store = new Vuex.Store({
 			}
 		},
 		pauseNremove (state, id) {
-			var task = state.tasks.get(id)
+			var task = state.tasks[id]
 			switch (task.status) {
 				case TASK_STOPPED:		// 未运行，点击直接删除任务
 					this.commit('taskDelete', id)
@@ -198,21 +198,23 @@ const store = new Vuex.Store({
 			if (state.workingStatus == 1) {		// 开始安排任务
 				// if (getters.queueTaskNumber == 0) {					// 队列为空，开始进行第一个任务。该功能反函数对应于 overallProgressTimer();
 				// }
-				var started_atLeast = false
+				// var started_atLeast = false
 				while (this.getters.workingTaskCount < maxThreads) {
 					var started_thisTime = false;
-					for (let index = startFrom; index < state.taskOrder.length; index++) {
-						let id = state.taskOrder[index]
-						let task = state.tasks.get(id)
+					var count = 0
+					for (const [id, task] of Object.entries(state.tasks)) {
+						if (count++ < startFrom) {
+							continue
+						}
 						if (task.status == TASK_STOPPED) {			// 从还没开始干活的抽一个出来干
 							this.commit('taskStart', id)
 							started_thisTime = true
-							started_atLeast = true
+							// started_atLeast = true
 							break
 						} else if (task.status == TASK_PAUSED) {	// 从暂停开始干活的抽一个出来干
 							this.commit('taskResume', id)
 							started_thisTime = true
-							started_atLeast = true
+							// started_atLeast = true
 							break
 						}
 					}
@@ -220,8 +222,8 @@ const store = new Vuex.Store({
 						break;
 					}
 				}
-				state.tasks = new Map(state.tasks)		// 刷新所有单个任务
-				if (this.getters.queueTaskCount == 0) {			// 遍历完了也没有开始新任务
+				// state.tasks = new Map(state.tasks)		// 刷新所有单个任务
+				if (this.getters.queueTaskCount == 0) {			// 遍历完了也没有开始新任务，此处 queueTaskCount 用于代替 started_atLeast
 					state.workingStatus = 0
 				} else {						// 队列中有新增任务了
 					clearInterval(state.overallProgressTimerID)
@@ -230,8 +232,7 @@ const store = new Vuex.Store({
 					}, 80);
 				}
 			} else {							// 暂停所有任务
-				for (const id of state.taskOrder) {
-					let task = state.tasks.get(id)
+				for (const [id, task] of Object.entries(state.tasks)) {
 					if (task.status == TASK_RUNNING) {
 						this.commit('taskPause', id)
 					}
@@ -239,11 +240,11 @@ const store = new Vuex.Store({
 				this.commit('overallProgressTimer')
 			}
 			this.commit('overallProgressTimer')
-			state.tasks = new Map(state.tasks)	// 刷新所有单个任务
+			// state.tasks = new Map(state.tasks)	// 刷新所有单个任务
 		},
 		// 【TASK_STOPPED / TASK_ERROR】 => 【TASK_RUNNING】 => 【TASK_FINISHED / TASK_ERROR】
 		taskStart (state, id) {
-			var task = state.tasks.get(id)
+			var task = state.tasks[id]
 			task.status = TASK_RUNNING
 			task.taskProgress = []
 			task.taskProgress_size = []
@@ -256,10 +257,15 @@ const store = new Vuex.Store({
 					level: 1
 				})
 				clearInterval(task.dashboardTimer)
-				state.tasks = new Map(state.tasks)		// 刷新所有单个任务
-				var pos = state.taskOrder.findIndex(value => {	// 开始下一个任务，但是不要开始上一个任务
-					return value == id
-				})
+				// state.tasks = new Map(state.tasks)		// 刷新所有单个任务
+				var pos = 0
+				for (const id_ of Object.keys(state.tasks)) {	// 开始下一个任务，但是不要开始上一个任务
+					if (id_ == id) {
+						break
+					} else {
+						pos++
+					}
+				}
 				this.commit('taskArrange', pos)
 			})
 			newFFmpeg.on('status', (status) => {
@@ -290,7 +296,7 @@ const store = new Vuex.Store({
 				if (task.progress_smooth.progress == 0) {
 					task.progress_smooth.progress = 1
 				}
-				state.tasks = new Map(state.tasks)		// 刷新所有单个任务
+				// state.tasks = new Map(state.tasks)		// 刷新所有单个任务
 				this.commit('taskArrange')
 			})
 			task.taskProgress_size.push([new Date().getTime() / 1000, 0])
@@ -299,20 +305,20 @@ const store = new Vuex.Store({
 			task.dashboardTimer = setInterval(() => {
 				this.commit('dashboardTimer', id)
 			}, 40);
-			state.tasks = new Map(state.tasks)		// 刷新所有单个任务
+			// state.tasks = new Map(state.tasks)		// 刷新所有单个任务
 		},
 		// 【TASK_RUNNING】 => 【TASK_PAUSED】
 		taskPause (state, id) {
-			var task = state.tasks.get(id)
+			var task = state.tasks[id]
 			task.status = TASK_PAUSED
 			task.FFmpeg.pause()
 			clearInterval(task.dashboardTimer)
 			task.lastPaused = new Date().getTime() / 1000
-			state.tasks = new Map(state.tasks)		// 刷新所有单个任务
+			// state.tasks = new Map(state.tasks)		// 刷新所有单个任务
 		},
 		// 【TASK_PAUSED】 => 【TASK_RUNNING】
 		taskResume (state, id) {
-			var task = state.tasks.get(id)
+			var task = state.tasks[id]
 			task.status = TASK_RUNNING
 			var nowSysTime = new Date().getTime() / 1000
 			for (const item of task.taskProgress) {
@@ -325,11 +331,11 @@ const store = new Vuex.Store({
 				this.commit('dashboardTimer', id)
 			}, 40);
 			task.FFmpeg.resume()
-			state.tasks = new Map(state.tasks)		// 刷新所有单个任务
+			// state.tasks = new Map(state.tasks)		// 刷新所有单个任务
 		},
 		// 【TASK_PAUSED / TASK_STOPPING / TASK_FINISHED】 => 【TASK_STOPPED】
 		taskReset (state, id) {
-			var task = state.tasks.get(id)
+			var task = state.tasks[id]
 			// if 语句两个分支的代码重合度很高，区分的原因是因为暂停状态下重置是异步的
 			if (task.status == TASK_PAUSED) {				// 暂停状态下重置
 				task.status = TASK_STOPPING
@@ -338,7 +344,7 @@ const store = new Vuex.Store({
 					task.status = TASK_STOPPED
 					task.progress_smooth.progress = 0
 					task.FFmpeg = null
-					state.tasks = new Map(state.tasks)		// 刷新所有单个任务
+					// state.tasks = new Map(state.tasks)		// 刷新所有单个任务
 					this.commit('overallProgressTimer')
 				})
 			} else if (task.status == TASK_STOPPING) {		// 正在停止状态下强制重置
@@ -347,26 +353,26 @@ const store = new Vuex.Store({
 				task.FFmpeg.forceKill(() => {
 					task.progress_smooth.progress = 0
 					task.FFmpeg = null
-					state.tasks = new Map(state.tasks)		// 刷新所有单个任务
+					// state.tasks = new Map(state.tasks)		// 刷新所有单个任务
 					this.commit('overallProgressTimer')
 				})
 			} else if (task.status == TASK_FINISHED || task.status == TASK_ERROR) {		// 完成状态下重置
 				task.status = TASK_STOPPED
 				task.progress_smooth.progress = 0
-				state.tasks = new Map(state.tasks)		// 刷新所有单个任务
+				// state.tasks = new Map(state.tasks)		// 刷新所有单个任务
 				this.commit('overallProgressTimer')
 			}
 		},
 		// 【TASK_STOPPED / TASK_FINISHED / TASK_ERROR】 => 【TASK_DELETED】
 		taskDelete (state, id) {
-			var task = state.tasks.get(id)
+			var task = state.tasks[id]
 			task.status = TASK_DELETED
-			state.taskOrder.splice(state.taskOrder.indexOf(id), 1)
-			state.tasks = new Map(state.tasks)		// 刷新所有单个任务
+			delete state.tasks[id]
+			// state.tasks = new Map(state.tasks)		// 刷新所有单个任务
 			this.commit('overallProgressTimer')
 		},
 		dashboardTimer (state, id) {
-			var task = state.tasks.get(id)
+			var task = state.tasks[id]
 			var index = task.taskProgress.length - 1;			// 上标 = 长度 - 1
 			var avgTotal = 6, avgCount = 0;						// avgTotal 为权重值，每循环一次 - 1；avgCount 每循环一次加一次权重
 			var deltaSysTime = 0, deltaFrame = 0, deltaTime = 0
@@ -441,14 +447,13 @@ const store = new Vuex.Store({
 				task.progress.progress = 1;
 			}
 			task.progress_smooth = JSON.parse(JSON.stringify(task.progress_smooth))
-			state.taskOrder = [...state.taskOrder]			// 刷新 TasksView 的 taskList
+			// state.taskOrder = [...state.taskOrder]			// 刷新 TasksView 的 taskList
 		},
 		overallProgressTimer (state) {
 			if (this.getters.queueTaskCount > 0) {
 				var totalTime = 0.000001;
 				var totalProcessedTime = 0;
-				for (const id of state.taskOrder) {
-					var task = state.tasks.get(id)
+				for (const task of Object.values(state.tasks)) {
 					totalTime += task.before.duration;
 					totalProcessedTime += task.progress_smooth.progress * task.before.duration;
 				}
@@ -636,7 +641,7 @@ const store = new Vuex.Store({
 				state.globalParams = JSON.parse(JSON.stringify(state.globalParams))
 
 				for (const id of state.taskSelection) {
-					var task = state.tasks.get(id)
+					var task = state.tasks[id]
 					task.after = JSON.parse(JSON.stringify(state.globalParams))
 					task.paraArray = getFFmpegParaArray(task.filepath, task.after.input, task.after.video, task.after.audio, task.after.output, true)
 					task.computedAfter = {
@@ -646,7 +651,7 @@ const store = new Vuex.Store({
 				}
 
 				// 刷新所有单个任务
-				state.tasks = new Map(state.tasks)	// 更新整个 tasks，因为 TasksView -> computed -> taskList -> this.$store.state.tasks.get(id) 仅监听到 tasks 这层，无法获知取出的单个 task 的变化
+				// state.tasks = new Map(state.tasks)	// 更新整个 tasks，因为 TasksView -> computed -> taskList -> this.$store.state.tasks.get(id) 仅监听到 tasks 这层，无法获知取出的单个 task 的变化
 				// this.commit('taskSelection_update', new Set([...state.taskSelection]))
 				// paraPreview();					// 这句要在上面 for 之后，因为上面的 for 用于同步全局与单个文件
 			})
@@ -665,12 +670,13 @@ const store = new Vuex.Store({
 		replacePara (state, after) {
 			state.globalParams = after
 		},
-		// 添加任务
-		addTask (state, file) {
-			var id = Symbol()
-			state.tasks.set(id, {
-				filename: file.name,
-				filepath: file.path,
+		// 添加任务（args：name, path, callback（传回添加后的 id））
+		addTask (state, args) {
+			var id = state.taskIndex++
+			// var id = Symbol()
+			var task = {
+				filename: args.name,
+				filepath: args.path,
 				before: {
 					format: '读取中',
 					duration: '--:--:--.--',
@@ -706,12 +712,19 @@ const store = new Vuex.Store({
 				lastPaused: new Date().getTime() / 1000,	// 用于暂停后恢复时计算速度
 				cmdData: '',
 				errorInfo: []
-			})
-			state.taskOrder.push(id)
-			var task = state.tasks.get(id)
+			}
+			// state.tasks[id] = task		// 监听不到
+			Vue.set(state.tasks, id, task)	// store 中没有 $set，因此使用静态方法更新
+
+			// 更新命令行参数
+			task.paraArray = getFFmpegParaArray(task.filepath, task.after.input, task.after.video, task.after.audio, task.after.output, true)
+			task.computedAfter = {
+				vrate: vGenerator.getRateControlParam(task.after.video),
+				arate: aGenerator.getRateControlParam(task.after.audio)
+			}
 
 			// FFmpeg 读取媒体信息
-			var ffmpeg = new FFmpeg(2, ["-hide_banner", "-i", file.path, "-f", "null"])
+			var ffmpeg = new FFmpeg(2, ["-hide_banner", "-i", args.path, "-f", "null"])
 			ffmpeg.on("data", (data) => {
 				this.commit('cmdDataArrived', { id, msg: data })
 			});
@@ -731,19 +744,13 @@ const store = new Vuex.Store({
 				errors.forEach((value) => {
 					reason += value;
 				})
-				this.commit('pushMsg', { msg: file.path + "：" + reason, level: 2 });
+				this.commit('pushMsg', { msg: args.path + "：" + reason, level: 2 });
 				setTimeout(() => {
-					// pauseNremove(currentTaskCount);
-					state.tasks.delete(id)
-					state.taskOrder.pop(id)
+					delete state.tasks[id]
 				}, 100);
 			})
-
-			// 更新命令行参数
-			task.paraArray = getFFmpegParaArray(task.filepath, task.after.input, task.after.video, task.after.audio, task.after.output, true)
-			task.computedAfter = {
-				vrate: vGenerator.getRateControlParam(task.after.video),
-				arate: aGenerator.getRateControlParam(task.after.audio)
+			if (typeof args.callback == 'function') {
+				args.callback(id)
 			}
 		},
 		taskSelection_update (state, set) {
@@ -751,7 +758,7 @@ const store = new Vuex.Store({
 			state.taskSelection = set
 			if (set.size > 0) {
 				for (const id of set) {
-					this.commit('replacePara', state.tasks.get(id).after)
+					this.commit('replacePara', state.tasks[id].after)
 					break
 				}
 			}
@@ -768,7 +775,7 @@ const store = new Vuex.Store({
 					state.cmdData = state.cmdData.slice(4000)
 				}
 			} else {
-				var task = state.tasks.get(args.id)
+				var task = state.tasks[args.id]
 				task.cmdData += args.msg
 				if (task.cmdData.length > 40000) {
 					task.cmdData = task.cmdData.slice(4000)
