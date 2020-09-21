@@ -3,7 +3,7 @@
 		<button id="startbutton" class="startbutton " :class="startbuttonClass" @click="$store.commit('startNpause')">{{ this.$store.state.workingStatus > 0 ? '⏸暂停' : '▶开始' }}</button>
 		<div id="tasklist-wrapper">
 			<div id="tasklist">
-				<taskitem v-for="(task, index) in taskList" :key="task.id" :id='task.id' :duration="task.duration" :filename="task.filename" :before="task.before" :after="task.after" :progress_smooth="task.progress_smooth" :status="task.status" :selected="taskSelected(task.id)" :computed_after="task.computedAfter" @itemClicked="onItemClicked($event, task.id, index)" @pauseNremove="onItemPauseNdelete(task.id)"></taskitem>
+				<taskitem v-for="(task, index) in taskList" :key="parseInt(task.id)" :id='task.id' :duration="task.duration" :filename="task.filename" :before="task.before" :after="task.after" :progress_smooth="task.progress_smooth" :status="task.status" :selected="taskSelected(task.id)" :computed_after="task.computedAfter" @itemClicked="onItemClicked($event, task.id, index)" @pauseNremove="onItemPauseNdelete(task.id)"></taskitem>
 			</div>
 			<div id="dropfilesdiv" @click="itemUnselect">
 				<div id="dropfilesimage" @click="debugLauncher" :style="{ 'backgroundImage': `url(${dropfilesimage})` }"></div>
@@ -37,35 +37,25 @@ export default {
 		Taskitem
 	},
 	props: {
-		
 	},
 	data: () => { return {
-		clickSpeedCounter: 0,
-		clickSpeedTimer: 0,
-		clickSpeedTimerStatus: false,
 		taskSelection_last: -1,
 		draggingFiles: false,
 		lastTaskListLength: 0		// 记录上一次计算 taskList 的长度，如变大了说明拖进来文件，就要滚动到底
 	}},
 	computed: {
 		taskList: function () {
-			// console.log('taskList updated at ' + new Date().getTime())
-			var ret = []
-			for (const taskIndex of this.$store.state.taskOrder) {
-				let task = this.$store.state.tasks.get(taskIndex)
-				if (typeof task != 'undefined') {
-					ret.push({ ...task, id: taskIndex })
-				}
+			console.log('taskList updated at ' + new Date().getTime())
+			var ret = [];
+			for (const [id, task] of Object.entries(this.$store.state.tasks)) {
+				ret.push({ ...task, id })
 			}
-			// 新任务加入，更新选择
+			// 新任务加入，滚动到底
 			if (ret.length > this.lastTaskListLength) {
-				this.$nextTick(() => {
-					})
-				setTimeout(() => {
-					this.$store.commit('taskSelection_update', new Set([(ret.slice(ret.length - 1)[0]).id]))
-					var tasklistWrapper = document.getElementById('tasklist-wrapper')
-					tasklistWrapper.scrollTop = tasklistWrapper.scrollHeight - tasklistWrapper.offsetHeight
-				}, 100);			// 咱也不清楚为啥要给个延时，不然读出来的数据不更新到 DOM 上
+				// v2.4 开始这里不需要加延时了
+				// this.$store.commit('taskSelection_update', new Set([(ret.slice(ret.length - 1)[0]).id]))
+				var tasklistWrapper = document.getElementById('tasklist-wrapper')
+				tasklistWrapper.scrollTop = tasklistWrapper.scrollHeight - tasklistWrapper.offsetHeight
 			}
 			this.lastTaskListLength = ret.length
 			return ret
@@ -93,29 +83,34 @@ export default {
 		}
 	},
 	methods: {
-		debugLauncher: function () {
-			this.clickSpeedCounter += 20;
-			if (this.clickSpeedCounter > 100) {
-				this.$store.commit('popup', {
-					msg: '打开开发者工具',
-					level: 0
-				})
-				currentWindow.openDevTools();
-				this.clickSpeedCounter = 0;
-				clearInterval(this.clickSpeedTimer);
-				this.clickSpeedTimerStatus = false;
-			} else if (this.clickSpeedTimerStatus == false) {
-				this.clickSpeedTimerStatus = true;
-				this.clickSpeedTimer = setInterval(() => {
-					// console.log(this.clickSpeedCounter)
-					if (this.clickSpeedCounter == 0) {
-						clearInterval(this.clickSpeedTimer);
-						this.clickSpeedTimerStatus = false;
-					}
-					this.clickSpeedCounter -= 1;
-				}, 70)
+		debugLauncher: (function () {
+			var clickSpeedCounter = 0
+			var clickSpeedTimer = 0
+			var clickSpeedTimerStatus = false
+			return function () {
+				clickSpeedCounter += 20;
+				if (clickSpeedCounter > 100) {
+					this.$store.commit('popup', {
+						msg: '打开开发者工具',
+						level: 0
+					})
+					currentWindow.openDevTools();
+					clickSpeedCounter = 0;
+					clearInterval(clickSpeedTimer);
+					clickSpeedTimerStatus = false;
+				} else if (clickSpeedTimerStatus == false) {
+					clickSpeedTimerStatus = true;
+					clickSpeedTimer = setInterval(() => {
+						// console.log(clickSpeedCounter)
+						if (clickSpeedCounter == 0) {
+							clearInterval(clickSpeedTimer);
+							clickSpeedTimerStatus = false;
+						}
+						clickSpeedCounter -= 1;
+					}, 70)
+				}
 			}
-		},
+		})(),
 		onItemClicked: function (event, id, index) {
 			var currentSelection = new Set(this.$store.state.taskSelection)
 			if (event.shiftKey) {
@@ -163,18 +158,35 @@ export default {
 			event.preventDefault()
 			this.draggingFiles = false
 		},
-		onDrop: function (event) {
+		onDrop: function (event) {	// 此函数触发四次 taskList update，分别为加入任务、ffmpeg data、ffmpeg metadata、taskSelection update
 			event.stopPropagation()
 			this.draggingFiles = false
 			var dropDelayCount = 0
+			var fileCount = event.dataTransfer.files.length
+			let newIDs = []
 			for (const file of event.dataTransfer.files) {
-				setTimeout(() => {
+				setTimeout(() => {	// v2.4 版本开始完全可以不要延时，但是太生硬，所以加个动画
 					console.log(file.path)
-					this.$store.commit('addTask', file)
+					this.$store.commit('addTask', { name: file.name, path: file.path, callback: id => {
+						newIDs.push(id + '')
+						if (--fileCount == 0) {
+							this.$store.commit('taskSelection_update', new Set(newIDs))
+						}
+					}})
 				}, dropDelayCount);
-				dropDelayCount += 100
+				// console.log(dropDelayCount)
+				dropDelayCount += 33.33
 			}
 		}
+	},
+	watch: {
+		/*	仅供数据刷新测试，经试验在使用 Vue.set 时不需 deep 也能监听
+		'$store.state.tasks': {
+			handler: function(newValue, oldValue) {
+				console.log('task: ', newValue, oldValue)
+			},
+		}
+		*/
 	}
 }
 

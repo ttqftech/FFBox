@@ -4,6 +4,11 @@
 		<combobox title="编码器" :text="$store.state.globalParams.audio.aencoder" :list="aencodersList" @change="onChange('combo', 'aencoder', $event)" v-show="hasParameters > 1"></combobox>
 		<combobox title="码率控制" :text="$store.state.globalParams.audio.ratecontrol" :list="ratecontrolsList" @change="onChange('combo', 'ratecontrol', $event)" v-if="ratecontrolsList != 0"></combobox>
 		<slider v-if="ratecontrolSlider != null" :title="ratecontrolSlider.display" :value="$store.state.globalParams.audio.ratevalue" :tags="ratecontrolSlider.tags" :step="ratecontrolSlider.step" :valueToText="ratecontrolSlider.valueToText" :valueProcess="ratecontrolSlider.valueProcess" @change="onChange('slider', 'ratevalue', $event)"></slider>
+		<!-- <div v-for="(parameter, index) in controlsList" :key="index">
+			<combobox v-if="parameter.mode == 'combo'" :title="parameter.title" :text="parameter.text" :list="parameter.list" @change="onChange('combo', parameter, $event)"></combobox>
+			<slider v-if="parameter.mode == 'slider'" :title="parameter.title" :value="parameter.value" :tags="parameter.tags" :step="parameter.step" :valueToText="parameter.valueToText" :valueProcess="parameter.valueProcess" @change="onChange('slider', parameter, $event)"></slider>
+		</div>
+		这段代码废弃了，因为发现并没有解决问题，主要是 v-for 的 div 在 DOM 中占有实际位置，因此 combobox、slider 等之外必定会包着一个多余的 div，依然需要把子组件的一些 CSS 属性拷贝到此处才行 -->
 		<div v-for="(parameter, index) in parametersList" :key="index" :class="{ comboParent: parameter.mode == 'combo', sliderParent: parameter.mode == 'slider' }">
 			<combobox class="fullSpace" v-if="parameter.mode == 'combo'" :title="parameter.display" :text="$store.state.globalParams.audio.detail[parameter.parameter]" :list="parameter.items" @change="onDetailChange('combo', parameter.parameter, $event)"></combobox>
 			<slider class="fullSpace" v-if="parameter.mode == 'slider'" :title="parameter.display" :value="$store.state.globalParams.audio.detail[parameter.parameter]" :tags="parameter.tags" :step="parameter.step" :valueToText="parameter.valueToText" :valueProcess="parameter.valueProcess" @change="onDetailChange('slider', parameter.parameter, $event)"></slider>
@@ -27,6 +32,23 @@ export default {
 	props: {
 	},
 	computed: {
+		// 所有参数控制器列表，这段代码废弃了，因为发现并没有解决问题，主要是 v-for 的 div 在 DOM 中占有实际位置，因此 combobox、slider 等之外必定会包着一个多余的 div，依然需要把子组件的一些 CSS 属性拷贝到此处才行
+		/*
+		controlsList: function () {
+			let ret = []
+			ret.push({ mode: 'combo', parameter: 'acodec', title: '音频编码', text: this.$store.state.globalParams.audio.acodec, list: acodecs })
+			if (this.hasParameters > 1) {
+				ret.push({ mode: 'combo', parameter: 'aencoder', title: '编码器', text: this.$store.state.globalParams.audio.aencoder, list: this.aencodersList })
+			}
+			if (this.hasParameters != 0) {
+				ret.push({ mode: 'combo', parameter: 'ratecontrol', title: '码率控制', text: this.$store.state.globalParams.audio.ratecontrol, list: this.ratecontrolsList })
+			}
+			if (this.ratecontrolSlider != null) {
+				ret.push({ mode: 'slider', parameter: 'ratevalue', title: this.ratecontrolSlider.display, value: this.$store.state.globalParams.audio.ratevalue, tags: this.ratecontrolSlider.tags, step: this.ratecontrolSlider.step, valueToText: this.ratecontrolSlider.valueToText, valueProcess: this.ratecontrolSlider.valueProcess })
+			}
+			return ret
+		},
+		*/
 		// 用途是给 template 读取，因为它不能直接读取 import 的变量
 		acodecsList: function () {
 			return acodecs
