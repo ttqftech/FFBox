@@ -2,7 +2,6 @@
 	<div class="combobox">
 		<div class="combobox-title">{{ title }}</div>
 		<div class="combobox-selector" :style="{ background: focused || comboOpened ? 'white' : '' }" @click="onClick">
-			<!-- <span class="combobox-selector-text">{{ text }}</span> -->
 			<input type="text" v-model="inputText" @mousedown="onMousedown" @mouseup="onMouseup" @blur="onBlur" @focus="onFocus" @input="onInput">
 			<div class="combobox-selector-img"></div>
 		</div>
@@ -102,7 +101,7 @@ export default {
 		}
 	},
 	watch: {
-		text: function (newValue, oldValue) {
+		text: function (newValue, oldValue) {		// props 的 text 只有单向数据流，因此新增 data 的 inputText 做双向绑定和事件监听
 			this.inputText = newValue
 		}
 	},
@@ -178,13 +177,6 @@ function getWindowOffsetTop(obj) {
 		.combobox-selector:active {
 			background: #E7E7E7;
 		}
-			.combobox-selector span {
-				position: absolute;
-				left: 6px;
-				height: 24px;
-				line-height: 24px;
-				font-size: 14px;
-			}
 			.combobox-selector input {
 				position: absolute;
 				left: 6px;

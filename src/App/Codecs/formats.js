@@ -156,7 +156,21 @@ const generator = {
 				ret.push('-movflags')
 				ret.push('+faststart')
 			}
-			ret.push((withQuotes ? '"' : '') + filename + '.' + extension + (withQuotes ? '"' : ''))
+			if (outputParams.begin) {
+				ret.push('-ss')
+				ret.push(outputParams.begin)
+			}
+			if (outputParams.end) {
+				ret.push('-to')
+				ret.push(outputParams.end)
+			}
+			var outputFileName = outputParams.filename
+			outputFileName = outputFileName.replace(/\[input\]/g, filename)
+			outputFileName = outputFileName.replace(/\[extension\]/g, extension)
+			if (withQuotes) {
+				outputFileName = '"' + outputFileName + '"'
+			}
+			ret.push(outputFileName)
 		} else {
 			ret.push('-f')
 			ret.push('null')
@@ -174,7 +188,15 @@ const generator = {
 			}).hwaccel
 			ret.push(hwaccel)
 		}
-		return ret
+		if (inputParams.begin) {
+			ret.push('-ss')
+			ret.push(inputParams.begin)
+		}
+		if (inputParams.end) {
+			ret.push('-to')
+			ret.push(inputParams.end)
+		}
+	return ret
 	}
 }
 export { formats, hwaccels, generator }
