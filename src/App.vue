@@ -6,9 +6,9 @@
 </template>
 
 <script>
-const version = '2.4'
-const buildNumber = 7
-//	1.0	1.1	2.0	2.1	2.2	2.3	2.4
+const version = '2.5'
+const buildNumber = 8
+//	1.0	1.1	2.0	2.1	2.2	2.3	2.4 2.5
 
 import ContentWrapper from './App/ContentWrapper'
 import FloatingContent from './App/FloatingContent'
@@ -127,6 +127,7 @@ const store = new Vuex.Store({
 			output: {
 				format: 'MP4',
 				moveflags: false,
+				filename: '[input]_converted.[extension]'
 			}
 		},
 		// 全局命令行接收到的信息
@@ -637,8 +638,9 @@ const store = new Vuex.Store({
 			}
 			// 更改到一些不匹配的值后会导致 getFFmpegParaArray 出错，但是修正代码就在后面，因此仅需忽略它，让它继续运行下去，不要急着更新
 			Vue.nextTick(() => {
-				state.globalParams.paraArray = getFFmpegParaArray('[输入文件名]', state.globalParams.input, state.globalParams.video, state.globalParams.audio, state.globalParams.output)
-				state.globalParams = JSON.parse(JSON.stringify(state.globalParams))
+				Vue.set(state.globalParams, 'paraArray', getFFmpegParaArray('[输入文件名]', state.globalParams.input, state.globalParams.video, state.globalParams.audio, state.globalParams.output))
+				// state.globalParams.paraArray = getFFmpegParaArray('[输入文件名]', state.globalParams.input, state.globalParams.video, state.globalParams.audio, state.globalParams.output)
+				// state.globalParams = JSON.parse(JSON.stringify(state.globalParams))
 
 				for (const id of state.taskSelection) {
 					var task = state.tasks[id]
@@ -669,6 +671,9 @@ const store = new Vuex.Store({
 		// 使用任务的参数替换参数盒
 		replacePara (state, after) {
 			state.globalParams = after
+			Vue.nextTick(() => {
+				Vue.set(state.globalParams, 'paraArray', getFFmpegParaArray('[输入文件名]', state.globalParams.input, state.globalParams.video, state.globalParams.audio, state.globalParams.output))
+			})
 		},
 		// 添加任务（args：name, path, callback（传回添加后的 id））
 		addTask (state, args) {
@@ -850,8 +855,7 @@ export default {
 			}
 		})
 		// 更新全局参数输出
-		this.$store.state.globalParams.paraArray = getFFmpegParaArray('[输入文件名]', this.$store.state.globalParams.input, this.$store.state.globalParams.video, this.$store.state.globalParams.audio, this.$store.state.globalParams.output)
-		this.$store.state.globalParams = JSON.parse(JSON.stringify(this.$store.state.globalParams))
+		this.$set(this.$store.state.globalParams, 'paraArray', getFFmpegParaArray('[输入文件名]', this.$store.state.globalParams.input, this.$store.state.globalParams.video, this.$store.state.globalParams.audio, this.$store.state.globalParams.output))
 
 		console.log('exe 路径：' + remote.app.getPath('exe'))
 		console.log('electron 执行路径：' + remote.app.getAppPath())
@@ -869,6 +873,10 @@ export default {
 					level: 0
 				})
 				electronStore.set('ffbox.buildNumber', buildNumber)
+				electronStore.set('input', this.$store.state.globalParams.input)
+				electronStore.set('video', this.$store.state.globalParams.video)
+				electronStore.set('audio', this.$store.state.globalParams.audio)
+				electronStore.set('output', this.$store.state.globalParams.output)
 			} else {
 				this.$store.commit('replacePara', {
 					input: electronStore.get('input'),
@@ -901,7 +909,7 @@ function getFFmpegParaArray (filepath, iParams, vParams, aParams, oParams, withQ
 	ret.push((withQuotes ? '"' : '') + filepath + (withQuotes ? '"' : ''))
 	ret.push(...vGenerator.getVideoParam(vParams))
 	ret.push(...aGenerator.getAudioParam(aParams))
-	ret.push(...fGenerator.getOutputParam(oParams, commonfunc.getFilePathWithoutPostfix(filepath) + '_converted', withQuotes))
+	ret.push(...fGenerator.getOutputParam(oParams, commonfunc.getFilePathWithoutPostfix(filepath), withQuotes))
 	ret.push('-y')
 	return ret
 }

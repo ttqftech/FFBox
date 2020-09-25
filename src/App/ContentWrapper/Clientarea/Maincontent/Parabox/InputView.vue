@@ -1,20 +1,23 @@
 <template>
 	<div id="input-view">
 		<combobox title="硬件解码" :text="$store.state.globalParams.input.hwaccel" :list="hwaccelsList" @change="onChange('combo', 'hwaccel', $event)"></combobox>
+		<inputbox title="剪辑起点" :text="$store.state.globalParams.input.begin" @change="onChange('input', 'begin', $event)" type="duration"></inputbox>
+		<inputbox title="剪辑终点" :text="$store.state.globalParams.input.end" @change="onChange('input', 'end', $event)" type="duration"></inputbox>
 	</div>
 </template>
 
 <script>
 import { hwaccels, generator } from '@/App/Codecs/formats'
 import Combobox from './Components/Combobox'
+import Inputbox from './Components/Inputbox'
 // import Checkbox from './Components/Checkbox'
 
 export default {
 	name: 'InputView',
 	components: {
-		Combobox
+		Combobox, Inputbox
 	},
-	props: {		
+	props: {
 	},
 	computed: {
 		// 用途是给 template 读取，因为它不能直接读取 import 的变量

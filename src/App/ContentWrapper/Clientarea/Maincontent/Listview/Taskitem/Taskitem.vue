@@ -85,7 +85,7 @@ export default {
 	name: 'TaskItem',
 	components: {},
 	props: {
-		id: String,
+		id: [Number, String],
 		duration: String,
 		filename: String,
 		before: Object,

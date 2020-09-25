@@ -7,7 +7,7 @@
 		<button class="infoicon" @click="switchSponsorCenter();" :class="$store.state.showSponsorCenter ? 'infoicon-selected' : 'infoicon-unselected'" aria-label="打赏中心开关">
 			<img src="/images/sponsor.svg" /><div style="width: 12px"></div>
 		</button>
-		<div id="output-folder">{{ outputFolder }}</div>
+		<div id="output-folder"></div>
 	</footer>
 </template>
 
@@ -16,7 +16,6 @@ export default {
 	name: 'Statusbar',
 	props: {},
 	data: () => { return {
-		outputFolder: '输出文件夹：与输入相同'
 	}},
 	computed: {
 		ffmpegVersion: function () {
