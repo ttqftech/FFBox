@@ -15,34 +15,34 @@ export default {
 	},
 	data: () => { return {
 		focused: false,
-        inputText: '-',
-        typeCheckOK: false
+		inputText: '-',
+		typeCheckOK: false
 	}},
 	props: {
 		// paramName: String,
 		title: String,
-        text: String,
-        long: [Boolean, String],
-        type: String
+		text: String,
+		long: [Boolean, String],
+		type: String
 	},
 	computed: {
-        selectorStyle: function () {
-            var ret = {}
-            if (!this.typeCheckOK) {
-                ret.border = '#E66 1px solid'
-                ret.boxShadow = '0 0 12px hsla(0, 100%, 60%, 0.3), 0px 4px 8px rgba(0, 0, 0, 0.1)'
-                if (this.focused) {
-                    ret.background = '#FEE'
-                } else {
-                    ret.background = '#F3E3E3'
-                }
-            } else {
-                if (this.focused) {
-                    ret.background = 'white'
-                }
-            }
-            return ret
-        }
+		selectorStyle: function () {
+			var ret = {}
+			if (!this.typeCheckOK) {
+				ret.border = '#E66 1px solid'
+				ret.boxShadow = '0 0 12px hsla(0, 100%, 60%, 0.3), 0px 4px 8px rgba(0, 0, 0, 0.1)'
+				if (this.focused) {
+					ret.background = '#FEE'
+				} else {
+					ret.background = '#F3E3E3'
+				}
+			} else {
+				if (this.focused) {
+					ret.background = 'white'
+				}
+			}
+			return ret
+		}
 	},
 	methods: {
 		onBlur: function (event) {
@@ -59,28 +59,28 @@ export default {
 	watch: {
 		text: function (newValue, oldValue) {		// props 的 text 只有单向数据流，因此新增 data 的 inputText 做双向绑定和事件监听
 			this.inputText = newValue
-        },
-        inputText: {
-            handler: function (newValue, oldValue) {
-                if (!newValue) {
-                    this.typeCheckOK = true
-                    return
-                }
-                switch (this.type) {
-                    case 'duration':
-                        if (newValue.match(/^\d+(.\d+){0,1}$/) || newValue.match(/^\d+:\d{2}(.\d+){0,1}$/) || newValue.match(/^\d+:\d{2}:\d{2}(.\d+){0,1}$/)) {
-                            this.typeCheckOK = true
-                        } else {
-                            this.typeCheckOK = false
-                        }
-                        break;
-                    default:
-                        this.typeCheckOK = true
-                        break;
-                }
-            },
-            immediate: true
-        }
+		},
+		inputText: {
+			handler: function (newValue, oldValue) {
+				if (!newValue) {
+					this.typeCheckOK = true
+					return
+				}
+				switch (this.type) {
+					case 'duration':
+						if (newValue.match(/^\d+(.\d+){0,1}$/) || newValue.match(/^\d+:\d{2}(.\d+){0,1}$/) || newValue.match(/^\d+:\d{2}:\d{2}(.\d+){0,1}$/)) {
+							this.typeCheckOK = true
+						} else {
+							this.typeCheckOK = false
+						}
+						break;
+					default:
+						this.typeCheckOK = true
+						break;
+				}
+			},
+			immediate: true
+		}
 	},
 	mounted: function () {
 		this.inputText = this.text
@@ -113,7 +113,7 @@ export default {
 			background: #F7F7F7;
 			border: #AAA 1px solid;
 			box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-            transition: box-shadow 0.2s linear, border 0.2s linear;
+			transition: box-shadow 0.2s linear, border 0.2s linear;
 		}
 		.inputbox-selector:hover {
 			background: white;
