@@ -44,7 +44,44 @@ const TASK_ERROR = 6;
 
 Vue.use(Vuex)
 
-var saveAllParaTimer
+const defaultParams = {
+	input: {
+		hwaccel: '不使用'
+	},
+	video: {
+		vcodec: 'HEVC',
+		vencoder: '默认',
+		resolution: '不改变',
+		framerate: '不改变',
+		ratecontrol: 'CRF',
+		ratevalue: 0.5,
+		detail: {
+			preset: 0.5,
+			tune: '默认',
+			profile: '自动',
+			level: '自动',
+			quality: 'balanced',
+			pix_fmt: '自动'	
+		}
+	},
+	audio: {
+		enable: 1,
+		acodec: '不重新编码',
+		aencoder: '默认',
+		ratecontrol: 'CBR/ABR',
+		ratevalue: 0.5,
+		vol: 0.5,
+		detail: {
+			sample_fmt: '自动',
+			channel_layout: '自动'
+		}
+	},
+	output: {
+		format: 'MP4',
+		moveflags: false,
+		filename: '[input]_converted.[extension]'
+	}
+}
 
 const store = new Vuex.Store({
 	state: {
@@ -92,44 +129,7 @@ const store = new Vuex.Store({
 			onMouseUp: []
 		},
 		// 全局参数
-		globalParams: {
-			input: {
-				hwaccel: '不使用'
-			},
-			video: {
-				vcodec: 'HEVC',
-				vencoder: '默认',
-				resolution: '不改变',
-				framerate: '不改变',
-				ratecontrol: 'CRF',
-				ratevalue: 0.5,
-				detail: {
-					preset: 0.5,
-					tune: '默认',
-					profile: '自动',
-					level: '自动',
-					quality: 'balanced',
-					pix_fmt: '自动'	
-				}
-			},
-			audio: {
-				enable: 1,
-				acodec: '不重新编码',
-				aencoder: '默认',
-				ratecontrol: 'CBR/ABR',
-				ratevalue: 0.5,
-				vol: 0.5,
-				detail: {
-					sample_fmt: '自动',
-					channel_layout: '自动'
-				}
-			},
-			output: {
-				format: 'MP4',
-				moveflags: false,
-				filename: '[input]_converted.[extension]'
-			}
-		},
+		globalParams: Object.assign({}, defaultParams),
 		// 全局命令行接收到的信息
 		cmdData: '',
 		// FFmpeg 是否已安装以及版本
@@ -614,27 +614,29 @@ const store = new Vuex.Store({
 		dragParabox (state, value) {
 			state.draggerPos = value
 		},
-		// 修改参数，保存到本地磁盘（args：type (input | video | videoDetail | audio | audioDetail | output), key, value）
+		// 修改参数，保存到本地磁盘（args：type (input | video | videoDetail | audio | audioDetail | output), key, value）。args 不传则直接存盘
 		changePara (state, args) {
-			switch (args.type) {
-				case 'input':
-					state.globalParams.input[args.key] = args.value
-					break;
-				case 'video':
-					state.globalParams.video[args.key] = args.value
-					break;
-				case 'videoDetail':
-					state.globalParams.video.detail[args.key] = args.value
-					break;
-				case 'audio':
-					state.globalParams.audio[args.key] = args.value
-					break;
-				case 'audioDetail':
-					state.globalParams.audio.detail[args.key] = args.value
-					break;
-				case 'output':
-					state.globalParams.output[args.key] = args.value
-					break;
+			if (args) {
+				switch (args.type) {
+					case 'input':
+						state.globalParams.input[args.key] = args.value
+						break;
+					case 'video':
+						state.globalParams.video[args.key] = args.value
+						break;
+					case 'videoDetail':
+						state.globalParams.video.detail[args.key] = args.value
+						break;
+					case 'audio':
+						state.globalParams.audio[args.key] = args.value
+						break;
+					case 'audioDetail':
+						state.globalParams.audio.detail[args.key] = args.value
+						break;
+					case 'output':
+						state.globalParams.output[args.key] = args.value
+						break;
+				}
 			}
 			// 更改到一些不匹配的值后会导致 getFFmpegParaArray 出错，但是修正代码就在后面，因此仅需忽略它，让它继续运行下去，不要急着更新
 			Vue.nextTick(() => {
@@ -659,8 +661,8 @@ const store = new Vuex.Store({
 			})
 
 			// 存盘
-			clearTimeout(saveAllParaTimer)
-			saveAllParaTimer = setTimeout(() => {
+			clearTimeout(window.saveAllParaTimer)
+			window.saveAllParaTimer = setTimeout(() => {
 				electronStore.set('input', state.globalParams.input)
 				electronStore.set('video', state.globalParams.video)
 				electronStore.set('audio', state.globalParams.audio)
@@ -668,9 +670,13 @@ const store = new Vuex.Store({
 				console.log("参数已保存")
 			}, 700);
 		},
-		// 使用任务的参数替换参数盒
+		// 使用任务的参数替换参数盒，after 不传值为重置为默认
 		replacePara (state, after) {
-			state.globalParams = after
+			if (after) {
+				state.globalParams = after
+			} else {
+				state.globalParams = Object.assign({}, defaultParams)
+			}
 			Vue.nextTick(() => {
 				Vue.set(state.globalParams, 'paraArray', getFFmpegParaArray('[输入文件名]', state.globalParams.input, state.globalParams.video, state.globalParams.audio, state.globalParams.output))
 			})
@@ -893,7 +899,7 @@ export default {
 		// 捐助提示
 		setTimeout(() => {
 			this.$store.commit('pushMsg', {
-				msg: '您的打赏是我更新软件的动力！如果感觉软件不错，欢迎点击下方状态栏的打赏中心慷慨解囊！',
+				msg: '觉得好用的话，可以点击下方状态栏的“支持作者”给 github 上的项目点一个⭐哦～',
 				level: 0
 			})
 		}, 60000)
