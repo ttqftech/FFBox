@@ -157,9 +157,9 @@ class FFmpeg {
 					} else if (msg.includes(`Starting second pass: moving the moov atom to the beginning of the file`)) {
 						this.emit("pending", "正在移动文件信息到文件头");
 					}
-				} else if (thisLine.includes(`ffmpeg version`)) {									// 🔵 version：找到 ffmpeg，并读出版本，需要放在读取文件信息后，也要放在“Conversion”后
+				} else if (thisLine.includes(`ffmpeg version`)) {									// 🔵 version：找到 ffmpeg，并读出版本，需要放在读取文件信息后，也要放在“Conversion”后。注意有时候 version 后会附带网址，所以以空格作为结束
 					if (this.getSingleMsg) {
-						this.emit(`version`, selectString(thisLine, `version `, ` Copyright`, 0).text);
+						this.emit(`version`, selectString(thisLine, `version `, ` `, 0).text);
 						this.status = -1;
 					}
 				} else if (thisLine.includes(`Error while opening encoder for output stream`)) {	// ⚪ error：例：Error initializing output stream 0:0 -- Error while opening encoder for output stream #0:0 - maybe incorrect parameters such as bit_rate, rate, width or height
@@ -340,6 +340,13 @@ class FFmpeg {
 					detached: false,
 					shell: false
 				});
+				break;
+			case "darwin":
+				spawn("kill", ["-s", "STOP", this.cmd.pid], {
+					detached: false,
+					shell: false
+				})
+				break;
 			default:
 		}
 		this.status = 0;
@@ -357,6 +364,13 @@ class FFmpeg {
 					detached: false,
 					shell: false
 				});
+				break;
+			case "darwin":
+				spawn("kill", ["-s", "CONT", this.cmd.pid], {
+					detached: false,
+					shell: false
+				});
+				break;
 			default:
 		}
 		this.status = 1;

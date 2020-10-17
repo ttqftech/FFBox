@@ -147,7 +147,7 @@ export default {
 					width: calc(100% - 4px);
 					height: calc(100% - 4px);
 					resize: none;
-					font-family: Consolas,helvetica,黑体,苹方,"苹方 中等",Roboto;
+					font-family: Consolas,monaco,黑体,苹方-简,苹方,Roboto;
 					font-weight: 400;
 				}
 				.commandwin-box textarea::-webkit-scrollbar {
