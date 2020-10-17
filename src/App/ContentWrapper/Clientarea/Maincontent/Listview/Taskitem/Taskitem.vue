@@ -590,7 +590,7 @@ export default {
 						font-weight: 600;
 						transform: translateY(-51%);
 						font-size: 15px;
-						font-family: Bahnschrift,Calibri,"SF Electrotome",苹方,"苹方 粗体",微软雅黑,"Segoe UI",Consolas,Roboto,黑体;
+						font-family: Bahnschrift,Calibri,"SF Electrotome",Avenir,苹方-简,苹方,微软雅黑,"Segoe UI",Consolas,Roboto,黑体;
 					}
 					.taskitem-large .taskitem-graph-description {
 						position: absolute;
@@ -773,7 +773,7 @@ export default {
 						font-weight: 600;
 						transform: translateY(-51%);
 						font-size: 15px;
-						font-family: Bahnschrift,Calibri,"SF Electrotome",苹方,"苹方 粗体",微软雅黑,"Segoe UI",Consolas,Roboto,黑体;
+						font-family: Bahnschrift,Calibri,"SF Electrotome",Avenir,苹方-简,苹方,微软雅黑,"Segoe UI",Consolas,Roboto,黑体;
 					}
 					.taskitem-large-run .taskitem-graph-description {
 						position: absolute;
@@ -956,7 +956,7 @@ export default {
 						font-weight: 600;
 						transform: translateY(-51%);
 						font-size: 12px;
-						font-family: Bahnschrift,Calibri,"SF Electrotome",苹方,"苹方 粗体",微软雅黑,"Segoe UI",Consolas,Roboto,黑体;
+						font-family: Bahnschrift,Calibri,"SF Electrotome",Avenir,苹方-简,苹方,微软雅黑,"Segoe UI",Consolas,Roboto,黑体;
 					}
 					.taskitem-small .taskitem-graph-description {
 						position: absolute;
@@ -1130,7 +1130,7 @@ export default {
 						font-weight: 600;
 						transform: translateY(-51%);
 						font-size: 12px;
-						font-family: Bahnschrift,Calibri,"SF Electrotome",苹方,"苹方 粗体",微软雅黑,"Segoe UI",Consolas,Roboto,黑体;
+						font-family: Bahnschrift,Calibri,"SF Electrotome",Avenir,苹方-简,苹方,微软雅黑,"Segoe UI",Consolas,Roboto,黑体;
 					}
 					.taskitem-small-run .taskitem-graph-description {
 						position: absolute;

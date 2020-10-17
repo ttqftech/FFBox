@@ -829,7 +829,7 @@ export default {
 				this.$store.commit('cmdDataArrived', { msg: data })
 			});
 			ffmpeg.on("version", (data) => {
-				if (data[0] != null) {
+				if (data) {
 					this.$store.commit('FFmpegVersion_update', data)
 				} else {
 					this.$store.commit('FFmpegVersion_update', '-')
@@ -930,7 +930,8 @@ function getFFmpegParaArray (filepath, iParams, vParams, aParams, oParams, withQ
 		user-select: none;
 	}
 	#app {
-		font-family: 苹方, "苹方 中等", 微软雅黑, "Segoe UI", Consolas, Avenir, Helvetica, Arial, sans-serif, 黑体;
+		font-family: 苹方-简, 苹方, 微软雅黑, "Segoe UI", Consolas, Avenir, Arial, Helvetica, sans-serif, 黑体;
+		font-weight: 500;
 		-webkit-font-smoothing: antialiased;
 		-moz-osx-font-smoothing: grayscale;
 		text-align: center;

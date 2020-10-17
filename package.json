@@ -17,9 +17,7 @@
   },
   "main": "background.js",
   "dependencies": {
-    "core-js": "^3.6.5",
     "electron-store": "^5.2.0",
-    "jquery": "^3.5.1",
     "vue": "^2.6.11",
     "vuex": "^3.4.0"
   },
