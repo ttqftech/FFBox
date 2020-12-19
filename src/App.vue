@@ -930,8 +930,8 @@ function getFFmpegParaArray (filepath, iParams, vParams, aParams, oParams, withQ
 		user-select: none;
 	}
 	#app {
-		font-family: 苹方-简, 苹方, 微软雅黑, "Segoe UI", Consolas, Avenir, Arial, Helvetica, sans-serif, 黑体;
-		font-weight: 500;
+		font-family: "PingFang SC", 苹方, 微软雅黑, "Segoe UI", Consolas, Avenir, Arial, Helvetica, sans-serif, 黑体;
+		font-weight: 400;
 		-webkit-font-smoothing: antialiased;
 		-moz-osx-font-smoothing: grayscale;
 		text-align: center;
