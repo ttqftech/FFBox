@@ -39,11 +39,11 @@
 
 1. 下载本工程。  
 2. 安装 Node.js。详情可见 [Node.js 官网](https://nodejs.org/en/)。安装完毕后，执行 `node --version`，可显示 Node.js 版本。安装过程中，应当自动安装 npm。检验方法：`npm --version`。
-3. 安装依赖库。进入工程文件夹，执行 `yarn` 进行依赖库的安装。如没有 yarn，需执行 `npm install yarn -g`  
+3. 安装依赖库。进入工程文件夹，执行 `yarn` 进行依赖库的安装。如没有 yarn，需执行 `npm install yarn -g`。如果速度慢可换源：`yarn config set registry https://registry.npm.taobao.org`。  
 4. 依赖库安装完成后，执行 `yarn electron:serve`，即可运行 FFBox。  
 5. 如需输出二进制包，执行 `yarn electron:build`。经试验，目前该工具存在一些问题。请在生成后进入 `dist_electron/bundled` 执行以下步骤的操作。  
 6. 将 `package.json` 中 `devDependencies` 字段中除了 electron 以外的属性全部删除，以节省空间。  
-7. 执行 `yarn`  
+7. 执行 `yarn`。  
 8. Windows 用户执行 `electron-builder build --win [target]`，其中 `[target]` 为输出类型，经测试可用的项有 nsis（msi 安装包）、nsis-web（msi 安装外壳 + 程序压缩文件）、portable（单文件便携式）、msi（msi 安装包）、dir（程序文件夹）。  
 8. Linux 用户执行 `electron-builder build --linux [target]`，其中 `[target]` 为输出类型，经测试可用的项有 AppImage（单文件便携式）、deb（Debian 系操作系统安装包）、dir（程序文件夹）。  
 

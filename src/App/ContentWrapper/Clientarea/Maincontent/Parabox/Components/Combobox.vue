@@ -189,6 +189,7 @@ function getWindowOffsetTop(obj) {
 				padding: 0;
 				outline: none;
 				font-family: inherit;
+				font-size: 13px;
 				color: inherit;
 			}
 			.combobox-selector-img {
