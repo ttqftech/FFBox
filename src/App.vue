@@ -6,9 +6,9 @@
 </template>
 
 <script>
-const version = '2.5'
-const buildNumber = 8
-//	1.0	1.1	2.0	2.1	2.2	2.3	2.4 2.5
+const version = '2.6'
+const buildNumber = 9
+//	1.0	1.1	2.0	2.1	2.2	2.3	2.4 2.5 2.6
 
 import ContentWrapper from './App/ContentWrapper'
 import FloatingContent from './App/FloatingContent'
