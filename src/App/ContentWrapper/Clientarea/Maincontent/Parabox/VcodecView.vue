@@ -6,10 +6,11 @@
 		<combobox title="输出帧速" :text="$store.state.globalParams.video.framerate" :list="frameratesList" @change="onChange('combo', 'framerate', $event)" v-show="hasParameters > 0"></combobox>
 		<combobox title="码率控制" :text="$store.state.globalParams.video.ratecontrol" :list="ratecontrolsList" @change="onChange('combo', 'ratecontrol', $event)" v-if="ratecontrolsList != 0"></combobox>
 		<slider v-if="ratecontrolSlider != null" :title="ratecontrolSlider.display" :value="$store.state.globalParams.video.ratevalue" :tags="ratecontrolSlider.tags" :step="ratecontrolSlider.step" :valueToText="ratecontrolSlider.valueToText" :valueProcess="ratecontrolSlider.valueProcess" @change="onChange('slider', 'ratevalue', $event)"></slider>
-		<div v-for="(parameter, index) in parametersList" :key="index" :class="{ comboParent: parameter.mode == 'combo', sliderParent: parameter.mode == 'slider' }">
-			<combobox class="fullSpace" v-if="parameter.mode == 'combo'" :title="parameter.display" :text="$store.state.globalParams.video.detail[parameter.parameter]" :list="parameter.items" @change="onDetailChange('combo', parameter.parameter, $event)"></combobox>
-			<slider class="fullSpace" v-if="parameter.mode == 'slider'" :title="parameter.display" :value="$store.state.globalParams.video.detail[parameter.parameter]" :tags="parameter.tags" :step="parameter.step" :valueToText="parameter.valueToText" :valueProcess="parameter.valueProcess" @change="onDetailChange('slider', parameter.parameter, $event)"></slider>
-		</div>
+		<component :is="['combobox', 'slider'][['combo', 'slider'].findIndex(mode => parameter.mode == mode)]" v-for="(parameter, index) in parametersList" :key="index"
+		  :title="parameter.display" @change="onDetailChange(parameter.mode, parameter.parameter, $event)"
+		  :text="$store.state.globalParams.video.detail[parameter.parameter]" :list="parameter.items"
+		  :value="$store.state.globalParams.video.detail[parameter.parameter]" :tags="parameter.tags" :step="parameter.step" :valueToText="parameter.valueToText" :valueProcess="parameter.valueProcess"
+		></component>
 		<!-- <button @click="getVideoParams()">输出参数</button> -->
 	</div>
 </template>
@@ -203,25 +204,5 @@ export default {
 		align-items: center;	/* 一行 */
 		/* align-content: space-between;	 多行 */
 		justify-content: space-around;
-	}
-
-	.sliderParent {
-		position: relative;
-		width: calc(100% - 16px);
-		height: 56px;
-		margin: 4px 24px;
-		/* transition: all 0.5s; */
-	}
-	.comboParent {
-		position: relative;
-		width: 210px;
-		height: 56px;
-		margin: 4px 24px;
-	}
-	.fullSpace {
-		width: 100%;
-		height: 100%;
-		margin: 0;
-		padding: 0;
 	}
 </style>

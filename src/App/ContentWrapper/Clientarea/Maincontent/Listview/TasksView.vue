@@ -112,6 +112,7 @@ export default {
 			}
 		})(),
 		onItemClicked: function (event, id, index) {
+			console.log(event)
 			var currentSelection = new Set(this.$store.state.taskSelection)
 			if (event.shiftKey) {
 				if (this.taskSelection_last != -1) {		// 之前没选东西，现在选一堆
@@ -127,7 +128,7 @@ export default {
 				} else {							// 之前没选东西，现在选第一个
 					currentSelection = new Set([id])
 				}
-			} else if (event.ctrlKey == true) {
+			} else if (event.ctrlKey == true || remote.process.platform == 'darwin' && event.metaKey == true) {
 				if (currentSelection.has(id)) {
 					currentSelection.delete(id);
 				} else {
