@@ -1,6 +1,6 @@
 {
   "name": "FFBox",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "description": "An user-friendly ffmpeg GUI",
   "private": true,
   "author": {
@@ -34,6 +34,9 @@
     "appId": "ttqftech.ffbox",
     "electronDownload": {
       "mirror": "https://npm.taobao.org/mirrors/electron/"
+    },
+    "mac": {
+      "icon": "512.ico"
     }
   }
 }

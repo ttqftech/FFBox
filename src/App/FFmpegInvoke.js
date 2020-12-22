@@ -1,26 +1,14 @@
 const commonfunc = require('./commonfunc.js');
-// import 和 require 都行
-// import { getKbpsValue, getFormattedBitrate, getFormattedTime, getTimeValue, selectString, replaceString, scanf, getFilePathWithoutPostfix } from './commonfunc.js'
-const getKbpsValue = commonfunc.getKbpsValue;
-const getFormattedBitrate = commonfunc.getFormattedBitrate;
-const getTimeValue = commonfunc.getTimeValue;
-const getFormattedTime = commonfunc.getFormattedTime;
-
+// import from 或者 require 然后 . 引用都行
 const selectString  = commonfunc.selectString;
 const replaceString = commonfunc.replaceString;
 const scanf = commonfunc.scanf;
-
-const getFilePathWithoutPostfix = commonfunc.getFilePathWithoutPostfix;
 
 let spawn, remote
 if (process.env.IS_ELECTRON) {
 	spawn = window.require('child_process').spawn;
 	remote = window.require('electron').remote
 }
-
-var taskProgress = [];					// 用于动态显示进度
-var taskProgress_size = [];				// 因为 size 的更新速度很慢，所以单独拎出来
-var dashboardTimers = [];				// 放定时器，用于暂停后恢复
 
 class FFmpeg {
 	constructor (func, params) {		// 构造器，传入 func: 0: 直接执行 ffmpeg　1: 检测 ffmpeg 版本　２：多媒体文件信息读取
