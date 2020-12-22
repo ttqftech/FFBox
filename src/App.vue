@@ -14,6 +14,7 @@ import ContentWrapper from './App/ContentWrapper'
 import FloatingContent from './App/FloatingContent'
 import Vue from 'vue'
 import Vuex from 'vuex'
+import path from 'path'	// path 编译后可用于浏览器
 
 let ElectronStore, electronStore, ipc, remote, currentWindow
 if (process.env.IS_ELECTRON) {
@@ -79,7 +80,7 @@ const defaultParams = {
 	output: {
 		format: 'MP4',
 		moveflags: false,
-		filename: '[input]_converted.[extension]'
+		filename: '[filename]_converted.[fileext]'
 	}
 }
 
@@ -863,38 +864,44 @@ export default {
 		// 更新全局参数输出
 		this.$set(this.$store.state.globalParams, 'paraArray', getFFmpegParaArray('[输入文件名]', this.$store.state.globalParams.input, this.$store.state.globalParams.video, this.$store.state.globalParams.audio, this.$store.state.globalParams.output))
 
-		console.log('exe 路径：' + remote.app.getPath('exe'))
-		console.log('electron 执行路径：' + remote.app.getAppPath())
+		if (process.env.IS_ELECTRON) {
+			console.log('exe 路径：' + remote.app.getPath('exe'))
+			console.log('electron 执行路径：' + remote.app.getAppPath())
+		}
 		console.log('node 路径：' + process.execPath)
 		console.log('命令执行根路径：' + process.cwd())
 		// console.log('命令执行根路径（resolve）：' + resolve('./'))
 		console.log('页面 js 文件路径：' + __dirname)
 		
-		// 初始化 FFmpeg
-		setTimeout(() => {
-			this.initFFmpeg()
-			if (!electronStore.has('ffbox.buildNumber') || electronStore.get('ffbox.buildNumber') != buildNumber) {
-				this.$store.commit('pushMsg', {
-					msg: '欢迎使用 FFBox v' + version + '！',
-					level: 0
-				})
-				electronStore.set('ffbox.buildNumber', buildNumber)
-				electronStore.set('input', this.$store.state.globalParams.input)
-				electronStore.set('video', this.$store.state.globalParams.video)
-				electronStore.set('audio', this.$store.state.globalParams.audio)
-				electronStore.set('output', this.$store.state.globalParams.output)
-			} else {
-				this.$store.commit('replacePara', {
-					input: electronStore.get('input'),
-					video: electronStore.get('video'),
-					audio: electronStore.get('audio'),
-					output: electronStore.get('output'),
-				})
-			}
-		}, 1);
+		if (process.env.IS_ELECTRON) {
+			// 初始化 FFmpeg
+			setTimeout(() => {
+				this.initFFmpeg()
+				if (!electronStore.has('ffbox.buildNumber') || electronStore.get('ffbox.buildNumber') != buildNumber) {
+					this.$store.commit('pushMsg', {
+						msg: '欢迎使用 FFBox v' + version + '！',
+						level: 0
+					})
+					electronStore.set('ffbox.buildNumber', buildNumber)
+					electronStore.set('input', this.$store.state.globalParams.input)
+					electronStore.set('video', this.$store.state.globalParams.video)
+					electronStore.set('audio', this.$store.state.globalParams.audio)
+					electronStore.set('output', this.$store.state.globalParams.output)
+				} else {
+					this.$store.commit('replacePara', {
+						input: electronStore.get('input'),
+						video: electronStore.get('video'),
+						audio: electronStore.get('audio'),
+						output: electronStore.get('output'),
+					})
+				}
+			}, 1);
 
-		// 挂载退出确认
-		ipc.on("exitConfirm", () => this.$store.commit('closeConfirm'));
+			// 挂载退出确认
+			ipc.on("exitConfirm", () => this.$store.commit('closeConfirm'));
+		} else {
+			this.$store.commit('FFmpegVersion_update', '浏览器环境暂未支持转码任务')
+		}
 
 		// 捐助提示
 		setTimeout(() => {
@@ -915,7 +922,7 @@ function getFFmpegParaArray (filepath, iParams, vParams, aParams, oParams, withQ
 	ret.push((withQuotes ? '"' : '') + filepath + (withQuotes ? '"' : ''))
 	ret.push(...vGenerator.getVideoParam(vParams))
 	ret.push(...aGenerator.getAudioParam(aParams))
-	ret.push(...fGenerator.getOutputParam(oParams, commonfunc.getFilePathWithoutPostfix(filepath), withQuotes))
+	ret.push(...fGenerator.getOutputParam(oParams, path.dirname(filepath), path.basename(filepath, path.extname(filepath)), withQuotes))
 	ret.push('-y')
 	return ret
 }

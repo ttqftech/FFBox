@@ -218,20 +218,6 @@ function scanf (input, format, splitter = ' ') {
 	return returnList;				
 }
 
-// 去除路径名中的文件名后缀
-function getFilePathWithoutPostfix (path) {
-	var lastPoint = path.lastIndexOf(".");
-	if (lastPoint != -1) {							// 路径名有点
-		if (lastPoint > path.lastIndexOf("\\")) {	// 文件名有点
-			return path.slice(0, lastPoint);
-		} else {
-			return path;							// 路径有点，但不在文件名里
-		}
-	} else {										// 路径名里一个点也没有，全数返回
-		return path;
-	}
-}
-
 // 获取随机字符串
 function randomString (length = 6, chars = 'abcdefghijklmnopqrstuvwxyz') {
 	var result = '';
@@ -251,7 +237,6 @@ if (typeof global !== 'undefined') {
 	exports.selectString = selectString
 	exports.replaceString = replaceString
 	exports.scanf = scanf
-	exports.getFilePathWithoutPostfix = getFilePathWithoutPostfix
 	exports.randomString = randomString
 	// 下面这句作用相同
 	// module.exports = { getKbpsValue, getFormattedBitrate, getFormattedTime, getTimeValue, selectString, replaceString, scanf, getFilePathWithoutPostfix }
