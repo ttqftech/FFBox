@@ -4,7 +4,7 @@
 		<checkbox title="元数据前移" :checked="$store.state.globalParams.output.moveflags" @change="onChange('checkbox', 'moveflags', $event)"></checkbox>
 		<inputbox title="剪辑起点" :text="$store.state.globalParams.output.begin" @change="onChange('output', 'begin', $event)" type="duration"></inputbox>
 		<inputbox title="剪辑终点" :text="$store.state.globalParams.output.end" @change="onChange('output', 'end', $event)" type="duration"></inputbox>
-		<inputbox title="输出文件名" :text="$store.state.globalParams.output.filename" @change="onChange('output', 'filename', $event)" long=true></inputbox>
+		<inputbox title="输出文件名" :text="$store.state.globalParams.output.filename" @change="onChange('output', 'filename', $event)" long=true placeholder="[filedir]：文件所在目录；[filebasename]：文件基础名；[fileext]：文件扩展名" notNull=true></inputbox>
 	</div>
 </template>
 

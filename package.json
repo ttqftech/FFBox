@@ -18,6 +18,7 @@
   "main": "background.js",
   "dependencies": {
     "electron-store": "^5.2.0",
+    "upath": "^2.0.1",
     "vue": "^2.6.11",
     "vuex": "^3.4.0"
   },

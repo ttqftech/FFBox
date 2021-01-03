@@ -14,7 +14,7 @@ import ContentWrapper from './App/ContentWrapper'
 import FloatingContent from './App/FloatingContent'
 import Vue from 'vue'
 import Vuex from 'vuex'
-import path from 'path'	// path 编译后可用于浏览器
+import upath from 'upath'
 
 let ElectronStore, electronStore, ipc, remote, currentWindow
 if (process.env.IS_ELECTRON) {
@@ -80,7 +80,7 @@ const defaultParams = {
 	output: {
 		format: 'MP4',
 		moveflags: false,
-		filename: '[filename]_converted.[fileext]'
+		filename: '[filedir]/[filebasename]_converted.[fileext]'
 	}
 }
 
@@ -641,7 +641,7 @@ const store = new Vuex.Store({
 			}
 			// 更改到一些不匹配的值后会导致 getFFmpegParaArray 出错，但是修正代码就在后面，因此仅需忽略它，让它继续运行下去，不要急着更新
 			Vue.nextTick(() => {
-				Vue.set(state.globalParams, 'paraArray', getFFmpegParaArray('[输入文件名]', state.globalParams.input, state.globalParams.video, state.globalParams.audio, state.globalParams.output))
+				Vue.set(state.globalParams, 'paraArray', getFFmpegParaArray('[输入目录]/[输入文件名].[输入扩展名]', state.globalParams.input, state.globalParams.video, state.globalParams.audio, state.globalParams.output))
 				// state.globalParams.paraArray = getFFmpegParaArray('[输入文件名]', state.globalParams.input, state.globalParams.video, state.globalParams.audio, state.globalParams.output)
 				// state.globalParams = JSON.parse(JSON.stringify(state.globalParams))
 
@@ -679,7 +679,7 @@ const store = new Vuex.Store({
 				state.globalParams = Object.assign({}, defaultParams)
 			}
 			Vue.nextTick(() => {
-				Vue.set(state.globalParams, 'paraArray', getFFmpegParaArray('[输入文件名]', state.globalParams.input, state.globalParams.video, state.globalParams.audio, state.globalParams.output))
+				Vue.set(state.globalParams, 'paraArray', getFFmpegParaArray('[输入目录]/[输入文件名].[输入扩展名]', state.globalParams.input, state.globalParams.video, state.globalParams.audio, state.globalParams.output))
 			})
 		},
 		// 添加任务（args：name, path, callback（传回添加后的 id））
@@ -862,7 +862,7 @@ export default {
 			}
 		})
 		// 更新全局参数输出
-		this.$set(this.$store.state.globalParams, 'paraArray', getFFmpegParaArray('[输入文件名]', this.$store.state.globalParams.input, this.$store.state.globalParams.video, this.$store.state.globalParams.audio, this.$store.state.globalParams.output))
+		this.$set(this.$store.state.globalParams, 'paraArray', getFFmpegParaArray('[输入目录]/[输入文件名].[输入扩展名]', this.$store.state.globalParams.input, this.$store.state.globalParams.video, this.$store.state.globalParams.audio, this.$store.state.globalParams.output))
 
 		if (process.env.IS_ELECTRON) {
 			console.log('exe 路径：' + remote.app.getPath('exe'))
@@ -922,7 +922,7 @@ function getFFmpegParaArray (filepath, iParams, vParams, aParams, oParams, withQ
 	ret.push((withQuotes ? '"' : '') + filepath + (withQuotes ? '"' : ''))
 	ret.push(...vGenerator.getVideoParam(vParams))
 	ret.push(...aGenerator.getAudioParam(aParams))
-	ret.push(...fGenerator.getOutputParam(oParams, path.dirname(filepath), path.basename(filepath, path.extname(filepath)), withQuotes))
+	ret.push(...fGenerator.getOutputParam(oParams, upath.dirname(filepath), upath.trimExt(upath.basename(filepath)), withQuotes))
 	ret.push('-y')
 	return ret
 }
