@@ -141,7 +141,7 @@ const hwaccels = [
 ]
 
 const generator = {
-	getOutputParam: function (outputParams, filedir, filename, withQuotes = false) {
+	getOutputParam: function (outputParams, filedir, filebasename, withQuotes = false) {
 		var ret = []
 		if (outputParams.format != '无') {
 			var format = formats.find((value) => {
@@ -166,7 +166,7 @@ const generator = {
 			}
 			var outputFileName = outputParams.filename
 			outputFileName = outputFileName.replace(/\[filedir\]/g, filedir)
-			outputFileName = outputFileName.replace(/\[filename\]/g, filename)
+			outputFileName = outputFileName.replace(/\[filebasename\]/g, filebasename)
 			outputFileName = outputFileName.replace(/\[fileext\]/g, extension)
 			if (withQuotes) {
 				outputFileName = '"' + outputFileName + '"'

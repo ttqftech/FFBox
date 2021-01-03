@@ -2,7 +2,7 @@
 	<div class="inputbox" :style="{ width: long ? 'calc(100% - 28px)' : '210px' }">
 		<div class="inputbox-title">{{ title }}</div>
 		<div class="inputbox-selector" :style="selectorStyle">
-			<input type="text" v-model="inputText" @blur="onBlur" @focus="onFocus" @input="onInput">
+			<input type="text" v-model="inputText" @blur="onBlur" @focus="onFocus" @input="onInput" :placeholder="placeholder">
 		</div>
 	</div>
 </template>
@@ -16,25 +16,26 @@ export default {
 	data: () => { return {
 		focused: false,
 		inputText: '-',
-		typeCheckOK: false
+		typeCheckOK: true
 	}},
 	props: {
-		// paramName: String,
 		title: String,
 		text: String,
 		long: [Boolean, String],
-		type: String
+		type: String,
+		placeholder: String,
+		notNull: [Boolean, String]
 	},
 	computed: {
 		selectorStyle: function () {
 			var ret = {}
-			if (!this.typeCheckOK) {
+			if (!this.typeCheckOK || (this.notNull && this.inputText == '')) {
 				ret.border = '#E66 1px solid'
-				ret.boxShadow = '0 0 12px hsla(0, 100%, 60%, 0.3), 0px 4px 8px rgba(0, 0, 0, 0.1)'
+				ret.boxShadow = '0 0 12px hsla(0, 100%, 60%, 0.3), 0px 4px 8px rgba(0, 0, 0, 0.05)'
 				if (this.focused) {
 					ret.background = '#FEE'
 				} else {
-					ret.background = '#F3E3E3'
+					ret.background = '#F7E7E7'
 				}
 			} else {
 				if (this.focused) {
@@ -121,7 +122,7 @@ export default {
 		.inputbox-selector:active {
 			background: #E7E7E7;
 		}
-			.inputbox-selector input {
+			.inputbox-selector>input {
 				position: absolute;
 				left: 6px;
 				width: calc(100% - 12px);
@@ -134,6 +135,10 @@ export default {
 				outline: none;
 				font-family: inherit;
 				color: inherit;
+			}
+			.inputbox-selector>input::placeholder {
+				font-size: 13px;
+				opacity: 0.25;
 			}
 
 </style>
