@@ -2,6 +2,7 @@
 node_modules
 /dist
 /server
+*.ico
 
 # local env files
 .env.local

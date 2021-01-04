@@ -134,9 +134,16 @@ export default {
 				padding: 0;
 				outline: none;
 				font-family: inherit;
+				font-size: 13px;
 				color: inherit;
 			}
 			.inputbox-selector>input::placeholder {
+				font-size: 13px;
+				opacity: 0.1;
+				font-style: italic;
+				transition: opacity 0.15s linear;
+			}
+			.inputbox-selector>input:hover::placeholder {
 				font-size: 13px;
 				opacity: 0.25;
 			}
