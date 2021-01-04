@@ -30,14 +30,5 @@
     "electron-devtools-installer": "^3.1.0",
     "vue-cli-plugin-electron-builder": "~2.0.0-rc.4",
     "vue-template-compiler": "^2.6.11"
-  },
-  "build": {
-    "appId": "ttqftech.ffbox",
-    "electronDownload": {
-      "mirror": "https://npm.taobao.org/mirrors/electron/"
-    },
-    "mac": {
-      "icon": "512.ico"
-    }
   }
 }
