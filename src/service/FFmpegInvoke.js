@@ -1,8 +1,9 @@
-const commonfunc = require('./commonfunc.js');
+// const utils = require('../common/utils.js');
 // import from 或者 require 然后 . 引用都行
-const selectString  = commonfunc.selectString;
-const replaceString = commonfunc.replaceString;
-const scanf = commonfunc.scanf;
+const selectString  = utils.selectString;
+const replaceString = utils.replaceString;
+const scanf = utils.scanf;
+import { selectString, replaceString, scanf }  from '../common/utils'
 
 let spawn, remote
 if (process.env.IS_ELECTRON) {

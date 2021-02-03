@@ -17,5 +17,11 @@ module.exports = {
                 }
             }
         }
+    },
+    pages: {
+        index: {
+            entry: 'src/electron/entry.js',
+            filename: 'electron.html'
+        }
     }
 }

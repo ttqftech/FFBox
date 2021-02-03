@@ -1,20 +1,17 @@
 <template>
 	<div id="app">
-		<content-wrapper></content-wrapper>
-		<floating-content></floating-content>
+		<main-frame></main-frame>
 	</div>
 </template>
 
 <script>
-const version = '2.6'
-const buildNumber = 9
-//	1.0	1.1	2.0	2.1	2.2	2.3	2.4 2.5 2.6
+const version = '3.0'
+const buildNumber = 10
+//	1.0	1.1	2.0	2.1	2.2	2.3	2.4 2.5 2.6 3.0
 
-import ContentWrapper from './App/ContentWrapper'
-import FloatingContent from './App/FloatingContent'
+import MainFrame from './containers/MainFrame'
 import Vue from 'vue'
 import Vuex from 'vuex'
-import upath from 'upath'
 
 let ElectronStore, electronStore, ipc, remote, currentWindow
 if (process.env.IS_ELECTRON) {
@@ -27,62 +24,16 @@ if (process.env.IS_ELECTRON) {
 
 const maxThreads = 2
 
-import { FFmpeg } from '@/App/FFmpegInvoke'
-import { generator as fGenerator } from '@/App/Codecs/formats'
-import { generator as vGenerator } from '@/App/Codecs/vcodecs'
-import { generator as aGenerator } from '@/App/Codecs/acodecs'
-import commonfunc from '@/App/commonfunc'
+import { FFmpeg } from '../common/FFmpegInvoke'
+import { generator as fGenerator } from '../common/formats'
+import { generator as vGenerator } from '../common/vcodecs'
+import { generator as aGenerator } from '../common/acodecs'
+import { FFBoxService } from "../service/FFboxService";
+import { TaskStatus } from "../service/types";
 
-const TASK_DELETED = -2;
-const TASK_PENDING = -1;
-const TASK_STOPPED = 0;
-const TASK_RUNNING = 1;
-const TASK_PAUSED = 2;
-const TASK_STOPPING = 3;
-const TASK_FINISHING = 4;
-const TASK_FINISHED = 5;
-const TASK_ERROR = 6;
+let ffboxService
 
 Vue.use(Vuex)
-
-const defaultParams = {
-	input: {
-		hwaccel: '不使用'
-	},
-	video: {
-		vcodec: 'HEVC',
-		vencoder: '默认',
-		resolution: '不改变',
-		framerate: '不改变',
-		ratecontrol: 'CRF',
-		ratevalue: 0.5,
-		detail: {
-			preset: 0.5,
-			tune: '默认',
-			profile: '自动',
-			level: '自动',
-			quality: 'balanced',
-			pix_fmt: '自动'	
-		}
-	},
-	audio: {
-		enable: 1,
-		acodec: '不重新编码',
-		aencoder: '默认',
-		ratecontrol: 'CBR/ABR',
-		ratevalue: 0.5,
-		vol: 0.5,
-		detail: {
-			sample_fmt: '自动',
-			channel_layout: '自动'
-		}
-	},
-	output: {
-		format: 'MP4',
-		moveflags: false,
-		filename: '[filedir]/[filebasename]_converted.[fileext]'
-	}
-}
 
 const store = new Vuex.Store({
 	state: {
@@ -90,28 +41,27 @@ const store = new Vuex.Store({
 		showSponsorCenter: false,
 		// 是否显示通知中心
 		showInfoCenter: false,
-		// 所有未删除通知
-		infos: [],
+		// 本地通知
+		localNotifications: [],
 		// 当前在屏幕上显示的气泡
-		popups: [],
+		// popups: [],
 		// Tooltip
-		showTooltip: false,
-		tooltipText: '',
-		tooltipPosition: {
-		},
+		// showTooltip: false,
+		// tooltipText: '',
+		// tooltipPosition: {},
 		// 当前在屏幕上显示的弹窗
-		msgboxs: [],
+		// msgboxs: [],
 		// 组合列表
-		showCombomenu: false,
-		comboList: [],
-		comboDefault: '',
-		comboDescription: '暂无描述',
-		comboPosition: {
-			left: '0px',
-			top: '0px',
-			height: '0px'
-		},
-		comboSelectionHandler: null,
+		// showCombomenu: false,
+		// comboList: [],
+		// comboDefault: '',
+		// comboDescription: '暂无描述',
+		// comboPosition: {
+		// 	left: '0px',
+		// 	top: '0px',
+		// 	height: '0px'
+		// },
+		// comboSelectionHandler: null,
 		// 左边栏选择的项目
 		listselected: 0,
 		paraselected: 1,
@@ -121,8 +71,6 @@ const store = new Vuex.Store({
 		tasks: {},
 		// 选中的任务
 		taskSelection: new Set(),
-		// 任务序号记录
-		taskIndex: 0,
 		// 所有控件需要截获的鼠标操作都可以加到这些列表里捕获
 		onPointerEvents: {
 			onMouseDown: [],
@@ -141,237 +89,34 @@ const store = new Vuex.Store({
 		overallProgressTimerID: NaN
 	},
 	getters: {
-		// 进度条按 taskArray 里的所有任务之和算（未运行、运行中、暂停、已完成）
-		// queueTaskCount：运行中、暂停、正在停止
-		// workingTaskCount：运行中
-		workingTaskCount (state) {
-			var count = 0
-			for (const task of Object.values(state.tasks)) {
-				if (task.status == TASK_RUNNING) {
-					count++
-				}
-			}
-			// console.log(`workingTaskCount: ${count}`)
-			return count
-		},
-		queueTaskCount (state) {
-			var count = 0
-			for (const task of Object.values(state.tasks)) {
-				if (task.status == TASK_RUNNING || task.status == TASK_PAUSED || task.status == TASK_STOPPING || task.status == TASK_FINISHING) {
-					count++
-				}
-			}
-			// console.log(`queueTaskCount: ${count}`)
-			return count
-		}
 	},
 	mutations: {
 		// 点击开始/暂停按钮
 		startNpause (state) {
-			if ((state.workingStatus == 0 && Object.keys(state.tasks).length > 0) || state.workingStatus == -1) {		// 开始任务
-				state.workingStatus = 1
-				this.commit('taskArrange')
+			if (state.workingStatus === 0 || state.workingStatus === -1) {		// 开始任务
+				ffboxService.queueAssign();
 			} else if (state.workingStatus == 1) {
-				state.workingStatus = -1
-				this.commit('taskArrange')
+				ffboxService.queuePause();
 			}
 		},
 		pauseNremove (state, id) {
 			var task = state.tasks[id]
 			switch (task.status) {
 				case TASK_STOPPED:		// 未运行，点击直接删除任务
-					this.commit('taskDelete', id)
+					ffboxService.taskDelete(id);
 					break;
 				case TASK_RUNNING:		// 正在运行，暂停
-					this.commit('taskPause', id)
+					ffboxService.taskPause(id);
 					break;
 				case TASK_PAUSED:		// 已经暂停，点击重置任务
 				case TASK_FINISHED:		// 运行完成，点击重置任务
 				case TASK_STOPPING:		// 正在停止，点击强制重置（taskReset 自动判断）
 				case TASK_ERROR:		// 任务出错，点击重置任务
-					this.commit('taskReset', id)
+					ffboxService.taskReset(id);
 					break;
 				case TASK_PENDING:		// 未定义行为
-					break;
+					throw '未定义行为'
 			}
-		},
-		// workingStatus == 0 状态下调用：把所有任务暂停；workingStatus == 1/-1 状态下调用，按最大运行数运行队列任务
-		taskArrange (state, startFrom = 0) {
-			if (state.workingStatus == 1) {		// 开始安排任务
-				// if (getters.queueTaskNumber == 0) {					// 队列为空，开始进行第一个任务。该功能反函数对应于 overallProgressTimer();
-				// }
-				// var started_atLeast = false
-				while (this.getters.workingTaskCount < maxThreads) {
-					var started_thisTime = false;
-					var count = 0
-					for (const [id, task] of Object.entries(state.tasks)) {
-						if (count++ < startFrom) {
-							continue
-						}
-						if (task.status == TASK_STOPPED) {			// 从还没开始干活的抽一个出来干
-							this.commit('taskStart', id)
-							started_thisTime = true
-							// started_atLeast = true
-							break
-						} else if (task.status == TASK_PAUSED) {	// 从暂停开始干活的抽一个出来干
-							this.commit('taskResume', id)
-							started_thisTime = true
-							// started_atLeast = true
-							break
-						}
-					}
-					if (!started_thisTime) {			// 遍历完了，没有可以继续开始的任务，停止安排新工作
-						break;
-					}
-				}
-				// state.tasks = new Map(state.tasks)		// 刷新所有单个任务
-				if (this.getters.queueTaskCount == 0) {			// 遍历完了也没有开始新任务，此处 queueTaskCount 用于代替 started_atLeast
-					state.workingStatus = 0
-				} else {						// 队列中有新增任务了
-					clearInterval(state.overallProgressTimerID)
-					state.overallProgressTimerID = setInterval(() => {
-						this.commit('overallProgressTimer')
-					}, 80);
-				}
-			} else {							// 暂停所有任务
-				for (const [id, task] of Object.entries(state.tasks)) {
-					if (task.status == TASK_RUNNING) {
-						this.commit('taskPause', id)
-					}
-				}
-				this.commit('overallProgressTimer')
-			}
-			this.commit('overallProgressTimer')
-			// state.tasks = new Map(state.tasks)	// 刷新所有单个任务
-		},
-		// 【TASK_STOPPED / TASK_ERROR】 => 【TASK_RUNNING】 => 【TASK_FINISHED / TASK_ERROR】
-		taskStart (state, id) {
-			var task = state.tasks[id]
-			task.status = TASK_RUNNING
-			task.taskProgress = []
-			task.taskProgress_size = []
-			var newFFmpeg = new FFmpeg(0, getFFmpegParaArray(task.filepath, task.after.input, task.after.video, task.after.audio, task.after.output))
-			newFFmpeg.on('finished', () => {
-				task.status = TASK_FINISHED
-				task.progress_smooth.progress = 1
-				this.commit('pushMsg', {
-					msg: '文件【' + task.filename + '】已转码完成',
-					level: 1
-				})
-				clearInterval(task.dashboardTimer)
-				// state.tasks = new Map(state.tasks)		// 刷新所有单个任务
-				var pos = 0
-				for (const id_ of Object.keys(state.tasks)) {	// 开始下一个任务，但是不要开始上一个任务
-					if (id_ == id) {
-						break
-					} else {
-						pos++
-					}
-				}
-				this.commit('taskArrange', pos)
-			})
-			newFFmpeg.on('status', (status) => {
-				task.taskProgress.push([new Date().getTime() / 1000, status.frame, status.time])
-				if (status.size != task.taskProgress_size.slice(-1)) {
-					task.taskProgress_size.push([new Date().getTime() / 1000, status.size])
-				}
-			})
-			newFFmpeg.on('data', (data) => {
-				this.commit('cmdDataArrived', { id, msg: data })
-			})
-			newFFmpeg.on('error', (error) => {
-				task.errorInfo.push(error.description)
-			})
-			newFFmpeg.on('warning', (warning) => {
-				this.commit('pushMsg', {
-					msg: task.filename + '：' + warning.description,
-					level: 2
-				})
-			})
-			newFFmpeg.on('critical', (errors) => {
-				task.status = TASK_ERROR
-				this.commit('pushMsg', {
-					msg: '文件【' + task.filename + '】转码失败。' + [...errors].join('') + '请到左侧的指令面板查看详细原因。',
-					level: 3
-				})
-				clearInterval(task.dashboardTimer)
-				if (task.progress_smooth.progress == 0) {
-					task.progress_smooth.progress = 1
-				}
-				// state.tasks = new Map(state.tasks)		// 刷新所有单个任务
-				this.commit('taskArrange')
-			})
-			task.taskProgress_size.push([new Date().getTime() / 1000, 0])
-			task.taskProgress.push([new Date().getTime() / 1000, 0, 0])
-			task.FFmpeg = newFFmpeg
-			task.dashboardTimer = setInterval(() => {
-				this.commit('dashboardTimer', id)
-			}, 40);
-			// state.tasks = new Map(state.tasks)		// 刷新所有单个任务
-		},
-		// 【TASK_RUNNING】 => 【TASK_PAUSED】
-		taskPause (state, id) {
-			var task = state.tasks[id]
-			task.status = TASK_PAUSED
-			task.FFmpeg.pause()
-			clearInterval(task.dashboardTimer)
-			task.lastPaused = new Date().getTime() / 1000
-			// state.tasks = new Map(state.tasks)		// 刷新所有单个任务
-		},
-		// 【TASK_PAUSED】 => 【TASK_RUNNING】
-		taskResume (state, id) {
-			var task = state.tasks[id]
-			task.status = TASK_RUNNING
-			var nowSysTime = new Date().getTime() / 1000
-			for (const item of task.taskProgress) {
-				item[0] += nowSysTime - task.lastPaused
-			}
-			for (const item of task.taskProgress_size) {
-				item[0] += nowSysTime - task.lastPaused
-			}
-			task.dashboardTimer = setInterval(() => {
-				this.commit('dashboardTimer', id)
-			}, 40);
-			task.FFmpeg.resume()
-			// state.tasks = new Map(state.tasks)		// 刷新所有单个任务
-		},
-		// 【TASK_PAUSED / TASK_STOPPING / TASK_FINISHED】 => 【TASK_STOPPED】
-		taskReset (state, id) {
-			var task = state.tasks[id]
-			// if 语句两个分支的代码重合度很高，区分的原因是因为暂停状态下重置是异步的
-			if (task.status == TASK_PAUSED) {				// 暂停状态下重置
-				task.status = TASK_STOPPING
-				clearInterval(task.dashboardTimer)
-				task.FFmpeg.exit(() => {
-					task.status = TASK_STOPPED
-					task.progress_smooth.progress = 0
-					task.FFmpeg = null
-					// state.tasks = new Map(state.tasks)		// 刷新所有单个任务
-					this.commit('overallProgressTimer')
-				})
-			} else if (task.status == TASK_STOPPING) {		// 正在停止状态下强制重置
-				task.status = TASK_STOPPED
-				clearInterval(task.dashboardTimer)
-				task.FFmpeg.forceKill(() => {
-					task.progress_smooth.progress = 0
-					task.FFmpeg = null
-					// state.tasks = new Map(state.tasks)		// 刷新所有单个任务
-					this.commit('overallProgressTimer')
-				})
-			} else if (task.status == TASK_FINISHED || task.status == TASK_ERROR) {		// 完成状态下重置
-				task.status = TASK_STOPPED
-				task.progress_smooth.progress = 0
-				// state.tasks = new Map(state.tasks)		// 刷新所有单个任务
-				this.commit('overallProgressTimer')
-			}
-		},
-		// 【TASK_STOPPED / TASK_FINISHED / TASK_ERROR】 => 【TASK_DELETED】
-		taskDelete (state, id) {
-			var task = state.tasks[id]
-			task.status = TASK_DELETED
-			delete state.tasks[id]
-			// state.tasks = new Map(state.tasks)		// 刷新所有单个任务
-			this.commit('overallProgressTimer')
 		},
 		dashboardTimer (state, id) {
 			var task = state.tasks[id]
@@ -684,6 +429,7 @@ const store = new Vuex.Store({
 		},
 		// 添加任务（args：name, path, callback（传回添加后的 id））
 		addTask (state, args) {
+			ffboxService.taskAdd(args.path, args.name);
 			var id = state.taskIndex++
 			// var id = Symbol()
 			var task = {
@@ -821,87 +567,97 @@ const store = new Vuex.Store({
 export default {
 	name: 'App',
 	components: {
-		ContentWrapper, FloatingContent
+		MainFrame
 	},
 	methods: {
-		async initFFmpeg () {
-			var ffmpeg = new FFmpeg(1);
-			ffmpeg.on("data", (data) => {
-				this.$store.commit('cmdDataArrived', { msg: data })
-			});
-			ffmpeg.on("version", (data) => {
-				if (data) {
-					this.$store.commit('FFmpegVersion_update', data)
-				} else {
-					this.$store.commit('FFmpegVersion_update', '-')
-					// document.getElementById("dropfilesimage").style.backgroundImage = "image/drop_files_noffmpeg.png";
-				}
-			})
+		handleFFmpegVersion(content) {
+
+		},
+		handleTasklistUpdate(content) {
+
+		},
+		handleTaskUpdate(id, content) {
+
+		},
+		handleCmdUpdate(id, content) {
+
+		},
+		handleProgressUpdate(id, content) {
+
+		},
+		handleTaskNotification(id, content) {
+
+		},
+		handleWorkingStatusUpdate(value) {
+			
 		}
-			},
+	},
 	beforeCreate: function () {
-		document.querySelector('body').className = "body"
+		document.querySelector('body').className = "body";
 	},
 	mounted: function () {
-		document.title = 'FFBox v' + version + (process.env.NODE_ENV != 'production' ? 'd' : '')
+		document.title = 'FFBox v' + version + (process.env.NODE_ENV != 'production' ? 'd' : '');
+		window.ffboxService = new FFBoxService();
+		ffboxService = window.ffboxService;
 
 		// 全局鼠标拖动响应注册
 		window.addEventListener('mousedown', (event) => {
 			for (const iterator of this.$store.state.onPointerEvents.onMouseDown) {
-				iterator.func(event)
+				iterator.func(event);
 			}
 		})
 		window.addEventListener('mousemove', (event) => {
 			for (const iterator of this.$store.state.onPointerEvents.onMouseMove) {
-				iterator.func(event)
+				iterator.func(event);
 			}
 		})
 		window.addEventListener('mouseup', (event) => {
 			for (const iterator of this.$store.state.onPointerEvents.onMouseUp) {
-				iterator.func(event)
+				iterator.func(event);
 			}
 		})
 		// 更新全局参数输出
-		this.$set(this.$store.state.globalParams, 'paraArray', getFFmpegParaArray('[输入目录]/[输入文件名].[输入扩展名]', this.$store.state.globalParams.input, this.$store.state.globalParams.video, this.$store.state.globalParams.audio, this.$store.state.globalParams.output))
+		// this.$set(this.$store.state.globalParams, 'paraArray', getFFmpegParaArray('[输入文件名]', this.$store.state.globalParams.input, this.$store.state.globalParams.video, this.$store.state.globalParams.audio, this.$store.state.globalParams.output))
 
-		if (process.env.IS_ELECTRON) {
-			console.log('exe 路径：' + remote.app.getPath('exe'))
-			console.log('electron 执行路径：' + remote.app.getAppPath())
-		}
+		console.log('exe 路径：' + remote.app.getPath('exe'))
+		console.log('electron 执行路径：' + remote.app.getAppPath())
 		console.log('node 路径：' + process.execPath)
 		console.log('命令执行根路径：' + process.cwd())
 		// console.log('命令执行根路径（resolve）：' + resolve('./'))
 		console.log('页面 js 文件路径：' + __dirname)
 		
-		if (process.env.IS_ELECTRON) {
-			// 初始化 FFmpeg
-			setTimeout(() => {
-				this.initFFmpeg()
-				if (!electronStore.has('ffbox.buildNumber') || electronStore.get('ffbox.buildNumber') != buildNumber) {
-					this.$store.commit('pushMsg', {
-						msg: '欢迎使用 FFBox v' + version + '！',
-						level: 0
-					})
-					electronStore.set('ffbox.buildNumber', buildNumber)
-					electronStore.set('input', this.$store.state.globalParams.input)
-					electronStore.set('video', this.$store.state.globalParams.video)
-					electronStore.set('audio', this.$store.state.globalParams.audio)
-					electronStore.set('output', this.$store.state.globalParams.output)
-				} else {
-					this.$store.commit('replacePara', {
-						input: electronStore.get('input'),
-						video: electronStore.get('video'),
-						audio: electronStore.get('audio'),
-						output: electronStore.get('output'),
-					})
-				}
-			}, 1);
+		// 初始化 FFmpeg
+		ffboxService.initFFmpeg();
+		ffboxService.on('ffmpegVersion', (data) => {
+			if (data.content !== '') {
+				this.$store.commit('FFmpegVersion_update', data.content);
+			} else {
+				this.$store.commit('FFmpegVersion_update', '-');
+			}
+		})
+		setTimeout(() => {
+			if (!electronStore.has('ffbox.buildNumber') || electronStore.get('ffbox.buildNumber') != buildNumber) {
+				this.$store.commit('pushMsg', {
+					msg: '欢迎使用 FFBox v' + version + '！',
+					level: 0
+				});
+				electronStore.set('ffbox.buildNumber', buildNumber)
+				electronStore.set('input', this.$store.state.globalParams.input)
+				electronStore.set('video', this.$store.state.globalParams.video)
+				electronStore.set('audio', this.$store.state.globalParams.audio)
+				electronStore.set('output', this.$store.state.globalParams.output)
+			} else {
+				this.$store.commit('replacePara', {
+					input: electronStore.get('input'),
+					video: electronStore.get('video'),
+					audio: electronStore.get('audio'),
+					output: electronStore.get('output'),
+				});
+			}
+		}, 0);
 
-			// 挂载退出确认
-			ipc.on("exitConfirm", () => this.$store.commit('closeConfirm'));
-		} else {
-			this.$store.commit('FFmpegVersion_update', '浏览器环境暂未支持转码任务')
-		}
+		// 挂载退出确认
+		ipc.on("exitConfirm", () => this.$store.commit('closeConfirm'));
 
 		// 捐助提示
 		setTimeout(() => {
@@ -910,21 +666,11 @@ export default {
 				level: 0
 			})
 		}, 60000)
+
+		// 挂载 ffboxService 各种更新事件
+
 	},
 	store
-}
-
-function getFFmpegParaArray (filepath, iParams, vParams, aParams, oParams, withQuotes = false) {
-	var ret = []
-	ret.push('-hide_banner')
-	ret.push(...fGenerator.getInputParam(iParams))
-	ret.push('-i')
-	ret.push((withQuotes ? '"' : '') + filepath + (withQuotes ? '"' : ''))
-	ret.push(...vGenerator.getVideoParam(vParams))
-	ret.push(...aGenerator.getAudioParam(aParams))
-	ret.push(...fGenerator.getOutputParam(oParams, upath.dirname(filepath), upath.trimExt(upath.basename(filepath)), withQuotes))
-	ret.push('-y')
-	return ret
 }
 
 </script>

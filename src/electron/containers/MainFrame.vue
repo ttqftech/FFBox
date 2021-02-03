@@ -16,7 +16,7 @@ import Infocenter from './ContentWrapper/Infocenter'
 import Sponsorcenter from './ContentWrapper/Sponsorcenter'
 
 export default {
-	name: 'ContentWrapper',
+	name: 'MainFrame',
 	components: {
 		Titlebar, Clientarea, Statusbar, Infocenter, Sponsorcenter
 	},

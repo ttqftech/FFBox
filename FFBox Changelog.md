@@ -1,5 +1,8 @@
 # FFBox Changelog
 
+`2021-01-31` FFBox service 实现  
+`2021-01-30` 试验了 capacitor 框架；项目结构重构  
+
 # v2.6
 
 - 增加了 macOS 系统的相关支持

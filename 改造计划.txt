@@ -1,0 +1,46 @@
+src
+	common
+		utils
+		vcodecs
+		acodecs
+		formats
+	electron
+		components
+			parabox
+				ButtonBox
+				CheckBox
+				Combobox
+				Inputbox
+				Slider
+			floating
+				Popup
+				Msgbox
+				Tooltip
+			Taskitem
+		containers
+			MainFrame
+				Titlebar
+				StatusBar
+				InfoCenter
+				SponsorCenter
+				Clientarea
+					Sidebar
+					Maincontent
+						Listview
+							TasksView
+							CommandView
+						Parabox
+							ShorcutsView
+							InputView
+							VcodecView
+							AcodecView
+							EffectView
+							OutputView
+		styles
+
+		App.vue
+		main.js // main 挂载 App.vue 组件
+	service
+		service // FFmpegInvoke
+	background.js
+	
