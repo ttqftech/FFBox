@@ -13,7 +13,7 @@
 </template>
 
 <script>
-import Taskitem from './Taskitem/Taskitem'
+import Taskitem from '@/electron/components/Taskitem'
 
 let remote, currentWindow
 if (process.env.IS_ELECTRON) {

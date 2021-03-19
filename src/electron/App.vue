@@ -24,12 +24,12 @@ if (process.env.IS_ELECTRON) {
 
 const maxThreads = 2
 
-import { FFmpeg } from '../common/FFmpegInvoke'
 import { generator as fGenerator } from '../common/formats'
 import { generator as vGenerator } from '../common/vcodecs'
 import { generator as aGenerator } from '../common/acodecs'
-import { FFBoxService } from "../service/FFboxService";
-import { TaskStatus } from "../service/types";
+import { FFBoxService } from "@/service/FFBoxService";
+
+import { defaultParams } from "../common/defaultParams";
 
 let ffboxService
 

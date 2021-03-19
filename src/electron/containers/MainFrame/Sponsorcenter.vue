@@ -72,7 +72,7 @@ if (process.env.IS_ELECTRON) {
 	// 不能引入 child_process，因为不是 node 环境
 }
 
-import Buttonbox from "@/App/ContentWrapper/Clientarea/Maincontent/Parabox/Components/Buttonbox.vue";
+import Buttonbox from "@/electron/components/parabox/Buttonbox.vue";
 
 export default {
 	name: 'Sponsorcenter',

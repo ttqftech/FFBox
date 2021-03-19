@@ -16,10 +16,10 @@
 </template>
 
 <script>
-import { vcodecs, resolution, framerate, generator } from '@/App/Codecs/vcodecs'
-import Combobox from './Components/Combobox'
-import Checkbox from './Components/Checkbox'
-import Slider from './Components/Slider'
+import { vcodecs, resolution, framerate, generator } from '@/common/vcodecs'
+import Combobox from '@/electron/components/parabox/Combobox'
+import Checkbox from '@/electron/components/parabox/Checkbox'
+import Slider from '@/electron/components/parabox/Slider'
 
 export default {
 	name: 'VcodecView',

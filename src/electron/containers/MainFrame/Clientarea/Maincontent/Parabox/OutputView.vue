@@ -9,10 +9,10 @@
 </template>
 
 <script>
-import { formats, generator } from '@/App/Codecs/formats'
-import Combobox from './Components/Combobox'
-import Checkbox from './Components/Checkbox'
-import Inputbox from './Components/Inputbox'
+import { formats, generator } from '@/common/formats'
+import Combobox from '@/electron/components/parabox/Combobox'
+import Checkbox from '@/electron/components/parabox/Checkbox'
+import Inputbox from '@/electron/components/parabox/Inputbox'
 
 export default {
 	name: 'OutputView',

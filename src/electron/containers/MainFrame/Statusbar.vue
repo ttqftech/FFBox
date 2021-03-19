@@ -1,12 +1,12 @@
 <template>
 	<footer id="statusbar">
 		<div id="ffmpeg-version">{{ ffmpegVersion }}</div>
-		<button class="infoicon" @click="switchInfoCenter();" :class="$store.state.showInfoCenter ? 'infoicon-selected' : 'infoicon-unselected'" aria-label="通知中心开关">
+		<!-- <button class="infoicon" @click="switchInfoCenter();" :class="$store.state.showInfoCenter ? 'infoicon-selected' : 'infoicon-unselected'" aria-label="通知中心开关">
 			<img src="/images/info-transparent.svg" /><span class="infocount">{{ this.$store.state.infos.length }}</span>
 		</button>
 		<button class="infoicon" @click="switchSponsorCenter();" :class="$store.state.showSponsorCenter ? 'infoicon-selected' : 'infoicon-unselected'" aria-label="打赏中心开关">
 			<img src="/images/sponsor.svg" /><div style="width: 12px"></div>
-		</button>
+		</button> -->
 		<div id="output-folder"></div>
 	</footer>
 </template>

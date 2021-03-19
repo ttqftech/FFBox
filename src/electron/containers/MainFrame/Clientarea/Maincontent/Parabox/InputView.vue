@@ -7,10 +7,10 @@
 </template>
 
 <script>
-import { hwaccels, generator } from '@/App/Codecs/formats'
-import Combobox from './Components/Combobox'
-import Inputbox from './Components/Inputbox'
-// import Checkbox from './Components/Checkbox'
+import { hwaccels, generator } from '@/common/formats'
+import Combobox from '@/electron/components/parabox/Combobox'
+import Inputbox from '@/electron/components/parabox/Inputbox'
+// import Checkbox from '@/electron/components/parabox/Checkbox'
 
 export default {
 	name: 'InputView',

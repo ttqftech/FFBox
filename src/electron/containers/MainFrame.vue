@@ -9,11 +9,11 @@
 </template>
 
 <script>
-import Titlebar from './ContentWrapper/Titlebar'
-import Clientarea from './ContentWrapper/Clientarea'
-import Statusbar from './ContentWrapper/Statusbar'
-import Infocenter from './ContentWrapper/Infocenter'
-import Sponsorcenter from './ContentWrapper/Sponsorcenter'
+import Titlebar from './MainFrame/Titlebar'
+import Clientarea from './MainFrame/Clientarea'
+import Statusbar from './MainFrame/Statusbar'
+import Infocenter from './MainFrame/Infocenter'
+import Sponsorcenter from './MainFrame/Sponsorcenter'
 
 export default {
 	name: 'MainFrame',
