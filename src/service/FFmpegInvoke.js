@@ -1,8 +1,8 @@
 // const utils = require('../common/utils.js');
 // import from 或者 require 然后 . 引用都行
-const selectString  = utils.selectString;
-const replaceString = utils.replaceString;
-const scanf = utils.scanf;
+// const selectString  = utils.selectString;
+// const replaceString = utils.replaceString;
+// const scanf = utils.scanf;
 import { selectString, replaceString, scanf }  from '../common/utils'
 
 let spawn, remote

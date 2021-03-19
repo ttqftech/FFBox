@@ -69,7 +69,7 @@
 </template>
 
 <script>
-import { getFormattedTime } from '@/App/commonfunc.js'
+import { getFormattedTime } from '@/common/utils.js'
 
 const TASK_DELETED = -2;
 const TASK_PENDING = -1;

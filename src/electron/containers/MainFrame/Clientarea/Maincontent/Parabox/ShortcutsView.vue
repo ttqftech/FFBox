@@ -11,7 +11,7 @@
 </template>
 
 <script>
-import Buttonbox from "./Components/Buttonbox";
+import Buttonbox from "@/electron/components/parabox/Buttonbox";
 
 export default {
 	name: 'ShorcutsView',

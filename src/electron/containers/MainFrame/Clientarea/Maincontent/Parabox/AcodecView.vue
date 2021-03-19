@@ -15,10 +15,10 @@
 </template>
 
 <script>
-import { acodecs, volSlider, generator } from '@/App/Codecs/acodecs'
-import Combobox from './Components/Combobox'
-import Checkbox from './Components/Checkbox'
-import Slider from './Components/Slider'
+import { acodecs, volSlider, generator } from '@/common/acodecs'
+import Combobox from '@/electron/components/parabox/Combobox'
+import Checkbox from '@/electron/components/parabox/Checkbox'
+import Slider from '@/electron/components/parabox/Slider'
 
 export default {
 	name: 'AcodecView',
