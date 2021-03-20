@@ -116,7 +116,7 @@ export default {
 		}
 	},
 	mounted: function () {
-		fetch('http://ffbox.ttqf.tech:33269/update/check', {
+		fetch('http://ffbox.ttqf.tech/update/check', {
 			method: 'GET',
 		}).then(response => {
 			response.text().then(data => {
@@ -160,7 +160,7 @@ function getWindowOffsetTop(obj) {
 		top: 0;
 		width: 100%;
 		height: 28px;
-		z-index: 5;
+		z-index: 100;
 		background: linear-gradient(180deg, hsl(0deg, 0%, 100%), hsl(0, 0%, 92.5%));
 		box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1 ),
 					0  4px  8px -3px rgba(0, 0, 0, 0.1 );

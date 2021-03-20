@@ -1,4 +1,4 @@
-import { ServiceTask, TaskStatus, outputParams, FFBoxServiceEvent, Notification, NotificationLevel, FFmpegProgress, WorkingStatus } from "./types";
+import { ServiceTask, TaskStatus, outputParams, FFBoxServiceEvent, Notification, NotificationLevel, FFmpegProgress, WorkingStatus } from "@/types/types";
 import { getFFmpegParaArray } from "../common/getFFmpegParaArray";
 import { EventEmitter } from "events";
 import { FFmpeg } from './FFmpegInvoke'

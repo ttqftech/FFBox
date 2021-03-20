@@ -1,4 +1,4 @@
-import { outputParams } from "../service/types";
+import { outputParams } from "@/types/types";
 
 export const defaultParams: outputParams = {
     input: {
