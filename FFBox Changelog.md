@@ -1,5 +1,6 @@
 # FFBox Changelog
 
+`2021-03-20` 气泡组件重构完成；TypeScript 相关改造  
 `2021-03-18` 实验了通过 Vue 插件的方式实现气泡；项目结构重构  
 `2021-01-31` FFBox service 实现  
 `2021-01-30` 试验了 capacitor 框架；项目结构重构  

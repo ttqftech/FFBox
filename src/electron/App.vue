@@ -4,7 +4,7 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
 const version = '3.0'
 const buildNumber = 10
 //	1.0	1.1	2.0	2.1	2.2	2.3	2.4 2.5 2.6 3.0
@@ -12,6 +12,8 @@ const buildNumber = 10
 import MainFrame from './containers/MainFrame'
 import Vue from 'vue'
 import Vuex from 'vuex'
+
+import Popup from './components/floating/Popup/index.js'
 
 let ElectronStore, electronStore, ipc, remote, currentWindow
 if (process.env.IS_ELECTRON) {
@@ -30,10 +32,14 @@ import { generator as aGenerator } from '../common/acodecs'
 import { FFBoxService } from "@/service/FFBoxService";
 
 import { defaultParams } from "../common/defaultParams";
+import { CombinedVueInstance, ExtendedVue } from 'vue/types/vue'
+import { NotificationLevel } from '@/types/types'
 
-let ffboxService
+let ffboxService: FFBoxService;
+let mainVue: any;
 
 Vue.use(Vuex)
+Vue.use(Popup);
 
 const store = new Vuex.Store({
 	state: {
@@ -100,24 +106,8 @@ const store = new Vuex.Store({
 			}
 		},
 		pauseNremove (state, id) {
-			var task = state.tasks[id]
-			switch (task.status) {
-				case TASK_STOPPED:		// 未运行，点击直接删除任务
-					ffboxService.taskDelete(id);
-					break;
-				case TASK_RUNNING:		// 正在运行，暂停
-					ffboxService.taskPause(id);
-					break;
-				case TASK_PAUSED:		// 已经暂停，点击重置任务
-				case TASK_FINISHED:		// 运行完成，点击重置任务
-				case TASK_STOPPING:		// 正在停止，点击强制重置（taskReset 自动判断）
-				case TASK_ERROR:		// 任务出错，点击重置任务
-					ffboxService.taskReset(id);
-					break;
-				case TASK_PENDING:		// 未定义行为
-					throw '未定义行为'
-			}
-		},
+
+},
 		dashboardTimer (state, id) {
 			var task = state.tasks[id]
 			var index = task.taskProgress.length - 1;			// 上标 = 长度 - 1
@@ -240,19 +230,21 @@ const store = new Vuex.Store({
 			}
 		},
 		// 发布消息（args：msg, level）
-		pushMsg (state, args) {
-			let id = Symbol()
-			state.infos.push({
-				msg: args.msg, level: args.level, time: + new Date(), id
-			})
-			state.popups.push({
-				msg: args.msg, level: args.level, id
+		pushMsg (state, args: { message: string, level: NotificationLevel }) {
+			// let id = Symbol()
+			// state.infos.push({
+			// 	msg: args.msg, level: args.level, time: + new Date(), id
+			// })
+			mainVue.$popup({
+				message: args.message,
+				level: args.level,
 			})
 		},
 		// 仅弹出气泡，不记录消息
-		popup (state, args) {
-			state.popups.push({
-				msg: args.msg, level: args.level, id: Symbol()
+		popup (state, args: { message: string, level: NotificationLevel }) {
+			mainVue.$popup({
+				message: args.message,
+				level: args.level,
 			})
 		},
 		// 删除第 index 条消息
@@ -593,12 +585,13 @@ export default {
 		}
 	},
 	beforeCreate: function () {
-		document.querySelector('body').className = "body";
+		document.querySelector('body')!.className = "body";
 	},
 	mounted: function () {
 		document.title = 'FFBox v' + version + (process.env.NODE_ENV != 'production' ? 'd' : '');
 		window.ffboxService = new FFBoxService();
 		ffboxService = window.ffboxService;
+		mainVue = this;
 
 		// 全局鼠标拖动响应注册
 		window.addEventListener('mousedown', (event) => {
@@ -662,10 +655,21 @@ export default {
 		// 捐助提示
 		setTimeout(() => {
 			this.$store.commit('pushMsg', {
-				msg: '觉得好用的话，可以点击下方状态栏的“支持作者”给 github 上的项目点一个⭐哦～',
+				message: '觉得好用的话，可以点击下方状态栏的“支持作者”给 github 上的项目点一个⭐哦～',
 				level: 0
 			})
-		}, 60000)
+		}, 120000)
+
+		const pushMsg = () => {
+			this.$store.commit('pushMsg',{
+				message: 'Helloo测试测试!!!!!啦啦啦啦啦啦<br />Helloo测试测试!!!!!啦啦啦啦啦啦',
+				level: Math.floor(Math.random() * 4)
+			})
+			setTimeout(() => {
+				pushMsg();
+			}, 3200);
+		}
+		pushMsg();
 
 		// 挂载 ffboxService 各种更新事件
 
