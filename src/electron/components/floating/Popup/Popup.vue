@@ -133,7 +133,7 @@ export default {
 		border: none;
 		margin: auto;
 		padding: 0;
-		transition: transform 0.5s cubic-bezier(0.4, 1.3, 0.4, 1);
+		transition: transform 0.7s cubic-bezier(0.35, 1.4, 0.2, 0.95);
 		z-index: 10;
 	}
 		.popupanimate-enter {

@@ -14,6 +14,7 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 
 import Popup from './components/floating/Popup/index.js'
+import Msgbox from './components/floating/Msgbox/index.js'
 
 let ElectronStore, electronStore, ipc, remote, currentWindow
 if (process.env.IS_ELECTRON) {
@@ -34,12 +35,14 @@ import { FFBoxService } from "@/service/FFBoxService";
 import { defaultParams } from "../common/defaultParams";
 import { CombinedVueInstance, ExtendedVue } from 'vue/types/vue'
 import { NotificationLevel } from '@/types/types'
+import { ButtonRole } from './components/floating/Msgbox/Msgbox'
 
 let ffboxService: FFBoxService;
 let mainVue: any;
 
 Vue.use(Vuex)
 Vue.use(Popup);
+Vue.use(Msgbox);
 
 const store = new Vuex.Store({
 	state: {
@@ -49,15 +52,11 @@ const store = new Vuex.Store({
 		showInfoCenter: false,
 		// 本地通知
 		localNotifications: [],
-		// 当前在屏幕上显示的气泡
-		// popups: [],
 		// Tooltip
 		// showTooltip: false,
 		// tooltipText: '',
 		// tooltipPosition: {},
 		// 当前在屏幕上显示的弹窗
-		// msgboxs: [],
-		// 组合列表
 		// showCombomenu: false,
 		// comboList: [],
 		// comboDefault: '',
@@ -107,7 +106,7 @@ const store = new Vuex.Store({
 		},
 		pauseNremove (state, id) {
 
-},
+		},
 		dashboardTimer (state, id) {
 			var task = state.tasks[id]
 			var index = task.taskProgress.length - 1;			// 上标 = 长度 - 1
@@ -251,15 +250,6 @@ const store = new Vuex.Store({
 		deleteMsg (state, index) {
 			state.infos.splice(index, 1)
 		},
-		// 删除 popup 元素
-		popupDisappear (state, id) {
-			let index = state.popups.find((value) => {
-				if (id == value.id) {
-					return true
-				}
-			})
-			state.popups.splice(index, 1)
-		},
 		// 显示 Tooltip（args：text, position）
 		showTooltip (state, args) {
 			if (args.text == '') {
@@ -272,22 +262,6 @@ const store = new Vuex.Store({
 		// 清除 Tooltip
 		clearTooltip (state) {
 			state.showTooltip = false
-		},
-		// 发布弹窗（args：title, content, onOK, onCancel）
-		msgbox (state, args) {
-			let id = Symbol()
-			state.msgboxs.push({
-				title: args.title, content: args.content, onOK: args.onOK, onCancel: args.onCancel, id
-			})
-		},
-		// 删除弹窗
-		msgboxDisappear (state, id) {
-			let index = state.msgboxs.findIndex((value) => {
-				if (id == value.id) {
-					return true
-				}
-			})
-			state.msgboxs.splice(index, 1)
 		},
 		// 弹出组合框（args：list, default, position, handler）
 		showCombomenu (state, args) {
@@ -544,11 +518,10 @@ const store = new Vuex.Store({
 				ipc.send('close');
 			}
 			if (this.getters.queueTaskCount > 0) {
-				this.commit('msgbox', {
+				mainVue.$confirm({
 					title: '要退出咩？',
 					content: `您还有 ${this.getters.queueTaskCount} 个任务未完成，要退出🐴？`,
-					onOK: readyToClose,
-				})
+				}).then(readyToClose);
 			} else {
 				readyToClose();
 			}
@@ -662,14 +635,50 @@ export default {
 
 		const pushMsg = () => {
 			this.$store.commit('pushMsg',{
-				message: 'Helloo测试测试!!!!!啦啦啦啦啦啦<br />Helloo测试测试!!!!!啦啦啦啦啦啦',
+				message: generateRandomStr(Math.random() * 128),
 				level: Math.floor(Math.random() * 4)
 			})
 			setTimeout(() => {
 				pushMsg();
 			}, 3200);
 		}
-		pushMsg();
+		function generateRandomStr(num: number) {
+			let ret = '';
+			for (let i = 0; i < num; i++) {
+				ret += String.fromCharCode(Math.floor(Math.random() * 128));
+			}
+			return ret;
+		}
+		// pushMsg();
+		// (this as any).$confirm({
+		// 	title: '标题',
+		// 	content: '文字',
+		// }).then(() => {
+		// 	alert('成功');
+		// }).catch(() => {
+		// 	alert('失败');
+		// });
+		(this as any).$msgbox({
+			title: '消息弹窗',
+			content: '啦啦啦啦啦啦啦啦啦',
+			buttons: [
+				{
+					text: '确认',
+					callback: () => console.log('确认'),
+					role: ButtonRole.Confirm
+				},
+				{
+					text: '中间',
+					callback: () => console.log('中间'),
+					role: ButtonRole.Normal
+				},
+				{
+					text: '取消',
+					callback: () => console.log('确认'),
+					role: ButtonRole.Cancel
+				},
+			]
+		});
 
 		// 挂载 ffboxService 各种更新事件
 
@@ -685,9 +694,9 @@ export default {
 		padding: 0;
 		background-color: transparent;
 		user-select: none;
+		font-family: "PingFang SC", 苹方, 微软雅黑, "Segoe UI", Consolas, Avenir, Arial, Helvetica, sans-serif, 黑体;
 	}
 	#app {
-		font-family: "PingFang SC", 苹方, 微软雅黑, "Segoe UI", Consolas, Avenir, Arial, Helvetica, sans-serif, 黑体;
 		font-weight: 400;
 		-webkit-font-smoothing: antialiased;
 		-moz-osx-font-smoothing: grayscale;
