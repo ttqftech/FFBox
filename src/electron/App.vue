@@ -9,12 +9,13 @@ const version = '3.0'
 const buildNumber = 10
 //	1.0	1.1	2.0	2.1	2.2	2.3	2.4 2.5 2.6 3.0
 
-import MainFrame from './containers/MainFrame'
+import MainFrame from './containers/MainFrame.vue'
 import Vue from 'vue'
 import Vuex from 'vuex'
 
 import Popup from './components/floating/Popup/index.js'
 import Msgbox from './components/floating/Msgbox/index.js'
+import Tooltip from './components/floating/Tooltip/index.js'
 
 let ElectronStore, electronStore, ipc, remote, currentWindow
 if (process.env.IS_ELECTRON) {
@@ -33,9 +34,7 @@ import { generator as aGenerator } from '../common/acodecs'
 import { FFBoxService } from "@/service/FFBoxService";
 
 import { defaultParams } from "../common/defaultParams";
-import { CombinedVueInstance, ExtendedVue } from 'vue/types/vue'
 import { NotificationLevel } from '@/types/types'
-import { ButtonRole } from './components/floating/Msgbox/Msgbox'
 
 let ffboxService: FFBoxService;
 let mainVue: any;
@@ -43,6 +42,7 @@ let mainVue: any;
 Vue.use(Vuex)
 Vue.use(Popup);
 Vue.use(Msgbox);
+Vue.use(Tooltip);
 
 const store = new Vuex.Store({
 	state: {
@@ -52,10 +52,6 @@ const store = new Vuex.Store({
 		showInfoCenter: false,
 		// 本地通知
 		localNotifications: [],
-		// Tooltip
-		// showTooltip: false,
-		// tooltipText: '',
-		// tooltipPosition: {},
 		// 当前在屏幕上显示的弹窗
 		// showCombomenu: false,
 		// comboList: [],
@@ -249,19 +245,6 @@ const store = new Vuex.Store({
 		// 删除第 index 条消息
 		deleteMsg (state, index) {
 			state.infos.splice(index, 1)
-		},
-		// 显示 Tooltip（args：text, position）
-		showTooltip (state, args) {
-			if (args.text == '') {
-				return
-			}
-			state.showTooltip = true
-			state.tooltipText = args.text
-			state.tooltipPosition = args.position
-		},
-		// 清除 Tooltip
-		clearTooltip (state) {
-			state.showTooltip = false
 		},
 		// 弹出组合框（args：list, default, position, handler）
 		showCombomenu (state, args) {
@@ -658,27 +641,27 @@ export default {
 		// }).catch(() => {
 		// 	alert('失败');
 		// });
-		(this as any).$msgbox({
-			title: '消息弹窗',
-			content: '啦啦啦啦啦啦啦啦啦',
-			buttons: [
-				{
-					text: '确认',
-					callback: () => console.log('确认'),
-					role: ButtonRole.Confirm
-				},
-				{
-					text: '中间',
-					callback: () => console.log('中间'),
-					role: ButtonRole.Normal
-				},
-				{
-					text: '取消',
-					callback: () => console.log('确认'),
-					role: ButtonRole.Cancel
-				},
-			]
-		});
+		// (this as any).$msgbox({
+		// 	title: '消息弹窗',
+		// 	content: '啦啦啦啦啦啦啦啦啦',
+		// 	buttons: [
+		// 		{
+		// 			text: '确认',
+		// 			callback: () => console.log('确认'),
+		// 			role: ButtonRole.Confirm
+		// 		},
+		// 		{
+		// 			text: '中间',
+		// 			callback: () => console.log('中间'),
+		// 			role: ButtonRole.Normal
+		// 		},
+		// 		{
+		// 			text: '取消',
+		// 			callback: () => console.log('取消'),
+		// 			role: ButtonRole.Cancel
+		// 		},
+		// 	]
+		// });
 
 		// 挂载 ffboxService 各种更新事件
 

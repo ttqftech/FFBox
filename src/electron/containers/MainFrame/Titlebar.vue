@@ -91,16 +91,16 @@ export default {
 		},
 		// 处理 tooltip
 		handleMouseEnter: function (event, text) {
-			this.$store.commit('showTooltip', {
+			this.$tooltip.show({
 				text,
 				position: {
 					right: `calc(100% - ${getWindowOffsetLeft(event.target)}px)`,
 					top: getWindowOffsetTop(event.target) + event.target.offsetHeight + 'px'
 				}
-			})
+			});
 		},
 		handleMouseLeave: function () {
-			this.$store.commit('clearTooltip')
+			this.$tooltip.hide();
 		},
 		gotoWebsite: function () {
 			switch (remote.process.platform) {

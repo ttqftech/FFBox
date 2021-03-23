@@ -84,13 +84,13 @@ export default {
 				...horizontal,
 				...vertical
 			}
-			this.$store.commit('showTooltip', {
+			this.$tooltip.show({
 				text: this.comboList[index].description,
 				position
-			})
+			});
 		},
 		handleMouseLeave: function () {
-			this.$store.commit('clearTooltip')
+			this.$toolip.hide();
 		}
 	},
 	computed: {

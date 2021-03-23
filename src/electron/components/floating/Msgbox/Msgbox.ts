@@ -29,7 +29,7 @@ type Instances = Array<{
 let instances: Instances = [];
 let seed = 0;
 
-const Msgbox = function(options: MsgboxOptions) {
+const Msgbox = function (options: MsgboxOptions) {
 	let id = seed++;
 
 	let instance = new MsgboxConstructor({

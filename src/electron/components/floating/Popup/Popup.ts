@@ -16,7 +16,7 @@ type Instances = Array<{
 let instances: Instances = [];
 let seed = 0;
 
-const Popup = function(options: PopupOptions) {
+const Popup = function (options: PopupOptions) {
 	if (!options.level) {
 		options.level = 0;
 	}
@@ -52,10 +52,9 @@ function handleOnClose(id: number) {
 
 function reCalcVerticalOffset() {
 	for (let i = 0, totalHeight = 0; i < instances.length; i++) {
-		setTimeout((index: number, instances: Instances, totalHeight: number) => {
-			let instance = instances[index].instance;
-			instance.$props.verticalOffset = totalHeight;
-		}, i * 33, i, [...instances], totalHeight);
+		let instance = instances[i].instance;
+		instance.$props.index = i;
+		instance.$props.verticalOffset = totalHeight;
 		totalHeight += instances[i].instance.$el.clientHeight + 16;
 	}		
 }
