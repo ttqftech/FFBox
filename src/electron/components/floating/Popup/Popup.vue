@@ -1,5 +1,5 @@
 <template>
-	<dialog class="popup" @mouseenter="onMouseEnter" @mouseleave="onMouseLeave" :style="positionStyle(verticalOffset)">
+	<dialog class="popup" @mouseenter="onMouseEnter" @mouseleave="onMouseLeave" :style="positionStyle(delayedVerticalOffset)">
 		<transition name="popupanimate" @after-leave="afterLeave">
 			<div v-if="show" :class="bgClass">
 				<div class="popup-progress">
@@ -30,6 +30,7 @@ export default {
 		level: Number, // 0 1 2 3
 		verticalOffset: Number,
 		onClose: Function,
+		index: Number, // 用于计算 delayedVerticalOffset
 	},
 	data: () => {
 		return {
@@ -37,6 +38,7 @@ export default {
 			duration: 0,
 			timeLeft: 0,
 			mouseIn: false,
+			delayedVerticalOffset: 0,
 		}
 	},
 	computed: {
@@ -65,12 +67,19 @@ export default {
 			}
 		},
 		positionStyle: function () {
-			return function (verticalOffset: number) {
+			return function (delayedVerticalOffset: number) {
 				return {
-					'transform': `translateY(-${verticalOffset}px)`
+					'transform': `translateY(-${delayedVerticalOffset}px)`
 				};
 			}
 		},
+	},
+	watch: {
+		verticalOffset: function (newValue: number, oldValue: number) {
+			setTimeout(() => {
+				this.delayedVerticalOffset = newValue;
+			}, 33 * this.index);				
+		}
 	},
 	mounted: function () {
 		// 设置动画并自动退出

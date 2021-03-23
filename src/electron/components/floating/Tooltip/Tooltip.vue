@@ -1,8 +1,8 @@
 <template>
-	<div id="tooltip" :style="$store.state.tooltipPosition">
+	<div id="tooltip" :style="position">
 		<transition name="tooltipanimate">
-			<div v-if="$store.state.showTooltip" id="tooltip-box">
-				<div id="tooltip-message" v-html="$store.state.tooltipText"></div>
+			<div v-if="show" id="tooltip-box">
+				<div id="tooltip-message" v-html="text"></div>
 			</div>
 		</transition>
 	</div>
@@ -11,8 +11,11 @@
 <script>
 export default {
 	name: 'Tooltip',
-	props: [
-	],
+	props: {
+		text: String,
+		position: Object,
+		show: Boolean
+	},
 }
 </script>
 
@@ -26,7 +29,7 @@ export default {
 		padding: 0;
         */
 		position: absolute;
-		z-index: 10;
+		z-index: 100;
         pointer-events: none !important;
         max-width: calc(200px + 25%);
 	}
