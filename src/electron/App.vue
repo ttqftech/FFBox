@@ -34,7 +34,7 @@ import { generator as aGenerator } from '../common/acodecs'
 import { FFBoxService } from "@/service/FFBoxService";
 
 import { defaultParams } from "../common/defaultParams";
-import { NotificationLevel } from '@/types/types'
+import { NotificationLevel, ServiceTask, WorkingStatus } from '@/types/types'
 
 let ffboxService: FFBoxService;
 let mainVue: any;
@@ -512,31 +512,31 @@ const store = new Vuex.Store({
 	}
 })
 
-export default {
+export default Vue.extend({
 	name: 'App',
 	components: {
 		MainFrame
 	},
 	methods: {
-		handleFFmpegVersion(content) {
+		handleFFmpegVersion(content: string) {
 
 		},
-		handleTasklistUpdate(content) {
+		handleTasklistUpdate(content: Array<number>) {
 
 		},
-		handleTaskUpdate(id, content) {
+		handleTaskUpdate(id: number, content: ServiceTask) {
 
 		},
-		handleCmdUpdate(id, content) {
+		handleCmdUpdate(id: number, content: string) {
 
 		},
-		handleProgressUpdate(id, content) {
+		handleProgressUpdate(id: number, content: any) {
 
 		},
-		handleTaskNotification(id, content) {
+		handleTaskNotification(id: number, content: string, level: NotificationLevel) {
 
 		},
-		handleWorkingStatusUpdate(value) {
+		handleWorkingStatusUpdate(value: WorkingStatus) {
 			
 		}
 	},
@@ -667,7 +667,7 @@ export default {
 
 	},
 	store
-}
+})
 
 </script>
 

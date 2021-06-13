@@ -3,7 +3,7 @@ import { FFmpeg } from './FFmpegInvoke'
 export enum FFBoxServiceEvent {
 	ffmpegVersion = 'ffmpegVersion',	// content: string
 	tasklistUpdate = 'tasklistUpdate',	// content: Array<number>
-	taskUpdate = 'taskUpdate',	// id: number, content: ServerTask
+	taskUpdate = 'taskUpdate',	// id: number, content: ServiceTask
 	cmdUpdate = 'cmdUpdate',	// id: number, content: string
 	progressUpdate = 'progressUpdate',		// id: number, content: {...}
 	taskNotification = 'taskNotification',	// id: number, content: string, level: NotificationLevel

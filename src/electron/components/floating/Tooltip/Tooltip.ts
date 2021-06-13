@@ -16,7 +16,6 @@ const Tooltip = function () {
 };
 
 Tooltip.install = function (Vue: any, options: any) {
-	console.log('plugin installed', Vue);
 	Vue.prototype.$tooltip = Tooltip;
 }
 
