@@ -17,7 +17,6 @@
     "storybook": "start-storybook -p 6006",
     "build-storybook": "build-storybook"
   },
-  "main": "background.js",
   "dependencies": {
     "@types/events": "^3.0.0",
     "electron-store": "^5.2.0",

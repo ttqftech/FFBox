@@ -21,9 +21,10 @@
 </template>
 
 <script lang="ts">
+import Vue from 'vue'
 import { NotificationLevel } from '@/types/types'
 
-export default {
+export default Vue.extend({
 	name: 'Popup',
 	props: {
 		message: String,
@@ -127,7 +128,7 @@ export default {
 			this.mouseIn = false;
 		},
 	}
-}
+})
 </script>
 
 <style scoped>

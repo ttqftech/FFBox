@@ -55,7 +55,6 @@ function handleOnClose(id: number) {
 }
 
 Msgbox.install = function (Vue: any, options: any) {
-	console.log('plugin installed', Vue);
 	Vue.prototype.$msgbox = Msgbox;
 	Vue.prototype.$alert = Msgbox.alert;
 	Vue.prototype.$confirm = Msgbox.confirm;

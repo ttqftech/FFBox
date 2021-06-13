@@ -8,15 +8,17 @@
 	</div>
 </template>
 
-<script>
-export default {
+<script lang="ts">
+import Vue from 'vue'
+
+export default Vue.extend({
 	name: 'Tooltip',
 	props: {
 		text: String,
 		position: Object,
 		show: Boolean
 	},
-}
+})
 </script>
 
 <style scoped>

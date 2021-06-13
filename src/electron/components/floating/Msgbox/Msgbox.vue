@@ -20,9 +20,10 @@
 </template>
 
 <script lang="ts">
+import Vue from 'vue';
 import { ButtonRole, Buttons } from './Msgbox'
 
-export default {
+export default Vue.extend({
 	name: 'Msgbox',
 	props: {
 		title: String,
@@ -89,8 +90,7 @@ export default {
 			}
 		}
 	}
-	
-}
+})
 </script>
 
 <style scoped>
