@@ -32,7 +32,7 @@ export default {
 		position: relative;
 		width: 100%;
 		height: 100%;
-		background: hsl(0, 0%, 92.5%);
+		background: transparent;
 		overflow: hidden;
 		border-radius: 14px;
 	}

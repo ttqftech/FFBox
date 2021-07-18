@@ -47,7 +47,7 @@ export default {
 		width: 100%;
 		height: 24px;
 		z-index: 5;
-		background: #466edc;		
+		background: hsl(224, 68%, 57%);		
 	}
 		#ffmpeg-version {
 			float: left;

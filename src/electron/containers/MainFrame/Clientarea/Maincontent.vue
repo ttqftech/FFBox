@@ -27,6 +27,7 @@ export default {
 		height: 100%;
 		left: 139px;
 		width: calc(100% - 139px);
+		background: hsla(0, 0%, 92.5%, 1);
 		overflow: hidden;
 	}
 </style>
