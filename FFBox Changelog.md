@@ -1,5 +1,8 @@
 # FFBox Changelog
 
+`2021-07-19` 完成 Windows 端 FFBoxHelper 基本功能  
+`2021-07-07` 进行 Windows 端 FFBoxHelper 制作  
+`2021-06-14` 更新了一些 TypeScript 定义  
 `2021-03-23` 优化气泡组件缓动动画逻辑；Tooltip 组件改造完成  
 `2021-03-21` 优化气泡组件动画；弹窗组件改造完成  
 `2021-03-20` 气泡组件重构完成；TypeScript 相关改造  

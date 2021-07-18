@@ -17,13 +17,14 @@ import Popup from './components/floating/Popup/index.js'
 import Msgbox from './components/floating/Msgbox/index.js'
 import Tooltip from './components/floating/Tooltip/index.js'
 
-let ElectronStore, electronStore, ipc, remote, currentWindow
+let ElectronStore, electronStore, ipc, remote, currentWindow, spawn
 if (process.env.IS_ELECTRON) {
 	ElectronStore = window.require('electron-store')
 	electronStore = new ElectronStore()
 	ipc = window.require('electron').ipcRenderer
 	remote = window.require('electron').remote
 	currentWindow = remote.getCurrentWindow();
+	spawn = window.require('child_process').spawn;
 }
 
 const maxThreads = 2
@@ -548,6 +549,27 @@ export default Vue.extend({
 		window.ffboxService = new FFBoxService();
 		ffboxService = window.ffboxService;
 		mainVue = this;
+
+		console.warn('123');
+		let result = spawn("FFBoxHelper.exe", undefined, {
+			detached: false,
+			shell: true,
+			encoding: 'utf8'
+		});
+		console.log(result);
+		result.stdout.on('data', (data) => {
+			console.warn(data.toString());
+		})
+		setTimeout(() => {
+			// 保持最上层
+			var hwnd
+			ipc.on('hwnd', (event, data) => {
+				hwnd = data[0] + data[1] * 2**8 + data[2] * 2**16 + data[3] * 2**24
+				console.log(`本窗口 hwnd：` + hwnd)
+				result.stdin.write(`2p${hwnd.toString().padStart(7, '0')}`);
+			})
+			ipc.send('getHwnd')
+		}, 2500);
 
 		// 全局鼠标拖动响应注册
 		window.addEventListener('mousedown', (event) => {
