@@ -5,9 +5,10 @@
 	</button>
 </template>
 
-<script>
+<script lang="ts">
+import Vue from 'vue';
 
-export default {
+export default Vue.extend({
 	name: 'Buttonbox',
 	components: {
 	},
@@ -18,11 +19,11 @@ export default {
 	computed: {
 	},
 	methods: {
-		onClick: function (event) {
-			this.$emit('click')
+		onClick: function (event: MouseEvent) {
+			this.$emit('click');
 		}
 	},
-}
+});
 </script>
 
 <style scoped>

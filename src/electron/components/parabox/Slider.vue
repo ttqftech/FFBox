@@ -11,9 +11,10 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
+import Vue from 'vue';
 
-export default {
+export default Vue.extend({
 	name: 'Slider',
 	components: {		
 	},
@@ -29,107 +30,70 @@ export default {
 	computed: {
 	},
 	methods: {
-		dragStart: function (event) {
-			event.preventDefault()
-			var id = Symbol()
-			var mouseDownX = event.pageX || event.touches[0].pageX;				// 鼠标在页面（窗口）内的坐标
-			var slipper = event.target.className == 'slider-module-slipper' ? true : false
+		dragStart: function (event: DragEvent) {
+			event.preventDefault();
+			let mouseDownX = event.pageX || event.touches[0].pageX;				// 鼠标在页面（窗口）内的坐标
+			let slipper = event.target!.className == 'slider-module-slipper' ? true : false;
+			let sliderLeft: number, sliderWidth: number, slipperOffsetX: number;
 			if (slipper) {
-				var sliderLeft = getWindowOffsetLeft(event.target.parentElement)
-				var sliderWidth = event.target.parentElement.offsetWidth
-				var slipperOffsetX = event.offsetX - event.target.offsetWidth / 2
+				sliderLeft = event.target!.parentElement.getBoundingClientRect().left;
+				sliderWidth = event.target!.parentElement.offsetWidth;
+				slipperOffsetX = event.offsetX - event.target!.offsetWidth / 2;
+				event.target!.focus();
 			} else {
-				var sliderLeft = getWindowOffsetLeft(event.target)
-				var sliderWidth = event.target.offsetWidth
-				var slipperOffsetX = 0
+				sliderLeft = event.target!.getBoundingClientRect().left;
+				sliderWidth = event.target!.offsetWidth;
+				slipperOffsetX = 0;
 			}
 			// 添加鼠标事件捕获，将其独立为一个函数，以便于 mouseDown 直接触发 mouseMove
-			var handleMouseMove = (event) => {
-				var value = (parseInt(event.pageX || event.touches[0].pageX) - sliderLeft - slipperOffsetX) / sliderWidth	// event.pageX == 0 时短路逻辑失效，会报错，不影响使用
+			let handleMouseMove = (event: Partial<MouseEvent>) => {
+				let value = (parseInt(event.pageX || event.touches[0].pageX) - sliderLeft - slipperOffsetX) / sliderWidth;	// event.pageX == 0 时短路逻辑失效，会报错，不影响使用
 				if (value > 1) {
-					value = 1
+					value = 1;
 				} else if (value < 0) {
-					value = 0
+					value = 0;
 				}
 				value = this.valueProcess(value)
 				if (value != lastValue) {
-					this.$emit('change', value)
-					lastValue = value
+					this.$emit('change', value);
+					lastValue = value;
 				}
 			}
-			this.$store.commit('addPointerEvents', {
-				type: "mousemove",
-				id,
-				// 处理鼠标拖动
-				func: handleMouseMove
-			})
-			this.$store.commit('addPointerEvents', {
-				type: "mouseup",
-				id,
-				// 移除鼠标事件捕获
-				func: (event) => {
-					this.$store.commit('removePointerEvents', {
-						type: "mousemove",
-						id
-					})
-					this.$store.commit('removePointerEvents', {
-						type: "mouseup",
-						id
-					})
-				}
-			})
+			let handleMouseUp = (event: MouseEvent) => {
+				document.removeEventListener('mousemove', handleMouseMove);
+	    		document.removeEventListener('mouseup', handleMouseUp);
+			};
+	    	document.addEventListener('mousemove', handleMouseMove);
+	    	document.addEventListener('mouseup', handleMouseUp);
+
 			// lastValue 用于减少频繁提交参数更改的次数
-			var lastValue = NaN
-			handleMouseMove({ pageX: event.pageX })	// mouseDown 直接触发 mouseMove
+			let lastValue = NaN;
+			handleMouseMove({ pageX: event.pageX });	// mouseDown 直接触发 mouseMove
 		},
-		onKeypress: function (event) {
+		onKeypress: function (event: KeyboardEvent) {
 			if (event.key == 'ArrowLeft' || event.key == 'ArrowRight') {
-				var direction, delta, sum
+				let direction, delta, sum;
 				if (event.key == 'ArrowLeft') {
-					direction = -1
+					direction = -1;
 				} else {
-					direction = 1
+					direction = 1;
 				}
 				if (this.step) {
-					delta = 1 / this.step
+					delta = 1 / this.step;
 				} else {
-					delta = 0.01
+					delta = 0.01;
 				}
-				sum = this.value + direction * delta
+				sum = this.value + direction * delta;
 				if (sum < 0) {
-					sum = 0
+					sum = 0;
 				} else if (sum > 1) {
-					sum = 1
+					sum = 1;
 				}
-				this.$emit('change', sum)
-			} else {
-
+				this.$emit('change', sum);
 			}
 		}
 	},
-}
-
-// 计算元素相对于窗口的 left 和 top
-function getWindowOffsetLeft(obj) {
-	var realNum = obj.offsetLeft;
-	var positionParent = obj.offsetParent;  // 获取上一级定位元素对象
-	
-	while(positionParent != null) {
-		realNum += positionParent.offsetLeft;
-		positionParent = positionParent.offsetParent;
-	}
-	return realNum;
-}
-function getWindowOffsetTop(obj) {
-	var realNum = obj.offsetTop;
-	var positionParent = obj.offsetParent;  // 获取上一级定位元素对象
-	
-	while(positionParent != null) {
-		realNum += positionParent.offsetTop - positionParent.scrollTop;
-		positionParent = positionParent.offsetParent;
-	}
-	return realNum;
-}
+});
 
 </script>
 

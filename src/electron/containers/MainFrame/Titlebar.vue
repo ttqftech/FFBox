@@ -23,18 +23,20 @@
 	</div>
 </template>
 
-<script>
-let remote, currentWindow, exec
+<script lang="ts">
+import Vue from 'vue';
+
+let remote, currentWindow, exec；
 if (process.env.IS_ELECTRON) {
-	remote = window.require('electron').remote
-	currentWindow = remote.getCurrentWindow()
-	exec = window.require('child_process').exec
+	remote = window.require('electron').remote;
+	currentWindow = remote.getCurrentWindow();
+	exec = window.require('child_process').exec;
 } else {
 	// 不能引入 electron，会报错：fs.existsSync is not a function
 	// 不能引入 child_process，因为不是 node 环境
 }
 
-export default {
+export default Vue.extend({
 	name: 'Titlebar',
 	props: {
 	},
@@ -87,16 +89,16 @@ export default {
 		},
 		// 关闭按钮
 		close: function () {
-			this.$store.commit('closeConfirm')
+			this.$store.commit('closeConfirm');
 		},
 		// 处理 tooltip
-		handleMouseEnter: function (event, text) {
+		handleMouseEnter: function (event: MouseEvent, text) {
 			this.$tooltip.show({
 				text,
 				position: {
-					right: `calc(100% - ${getWindowOffsetLeft(event.target)}px)`,
-					top: getWindowOffsetTop(event.target) + event.target.offsetHeight + 'px'
-				}
+					right: `calc(100% - ${event.target!.getBoundingClientRect().left}px)`,
+					top: event.target!.getBoundingClientRect().top + event.target!.offsetHeight + 'px',
+				},
 			});
 		},
 		handleMouseLeave: function () {
@@ -120,37 +122,15 @@ export default {
 			method: 'GET',
 		}).then(response => {
 			response.text().then(data => {
-				data = JSON.parse(data)
+				data = JSON.parse(data);
 				if (data.buildNumber > this.$store.state.buildNumber) {
-					console.log('发现新版本：' + data.version)
-					this.newVersion = data
+					console.log('发现新版本：' + data.version);
+					this.newVersion = data;
 				}
 			})
 		})
 	}
-}
-
-// 计算元素相对于窗口的 left 和 top
-function getWindowOffsetLeft(obj) {
-	var realNum = obj.offsetLeft;
-	var positionParent = obj.offsetParent;  // 获取上一级定位元素对象
-	
-	while(positionParent != null) {
-		realNum += positionParent.offsetLeft;
-		positionParent = positionParent.offsetParent;
-	}
-	return realNum;
-}
-function getWindowOffsetTop(obj) {
-	var realNum = obj.offsetTop;
-	var positionParent = obj.offsetParent;  // 获取上一级定位元素对象
-	
-	while(positionParent != null) {
-		realNum += positionParent.offsetTop - positionParent.scrollTop;
-		positionParent = positionParent.offsetParent;
-	}
-	return realNum;
-}
+})
 
 </script>
 

@@ -7,9 +7,10 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
+import Vue from 'vue';
 
-export default {
+export default Vue.extend({
 	name: 'Inputbox',
 	components: {		
 	},
@@ -28,65 +29,66 @@ export default {
 	},
 	computed: {
 		selectorStyle: function () {
-			var ret = {}
+			var ret: any = {};
 			if (!this.typeCheckOK || (this.notNull && this.inputText == '')) {
-				ret.border = '#E66 1px solid'
-				ret.boxShadow = '0 0 12px hsla(0, 100%, 60%, 0.3), 0px 4px 8px rgba(0, 0, 0, 0.05)'
+				ret.border = '#E66 1px solid';
+				ret.boxShadow = '0 0 12px hsla(0, 100%, 60%, 0.3), 0px 4px 8px rgba(0, 0, 0, 0.05)';
 				if (this.focused) {
-					ret.background = '#FEE'
+					ret.background = '#FEE';
 				} else {
-					ret.background = '#F7E7E7'
+					ret.background = '#F7E7E7';
 				}
 			} else {
 				if (this.focused) {
-					ret.background = 'white'
+					ret.background = 'white';
 				}
 			}
-			return ret
+			return ret;
 		}
 	},
 	methods: {
-		onBlur: function (event) {
-			this.focused = false
+		onBlur: function (event: FocusEvent) {
+			this.focused = false;
 		},
-		onFocus: function (event) {
-			event.target.selectionEnd = event.target.selectionStart
+		onFocus: function (event: FocusEvent) {
+			event.target!.selectionEnd = event.target!.selectionStart
 			this.focused = true
 		},
-		onInput: function (event) {
-			this.$emit('change', event.target.value)
+		onInput: function (event: KeyboardEvent) {
+			this.$emit('change', event.target!.value)
 		}
 	},
 	watch: {
 		text: function (newValue, oldValue) {		// props 的 text 只有单向数据流，因此新增 data 的 inputText 做双向绑定和事件监听
-			this.inputText = newValue
+			this.inputText = newValue;
 		},
 		inputText: {
 			handler: function (newValue, oldValue) {
 				if (!newValue) {
-					this.typeCheckOK = true
-					return
+					this.typeCheckOK = true;
+					return;
 				}
 				switch (this.type) {
 					case 'duration':
 						if (newValue.match(/^\d+(.\d+){0,1}$/) || newValue.match(/^\d+:\d{2}(.\d+){0,1}$/) || newValue.match(/^\d+:\d{2}:\d{2}(.\d+){0,1}$/)) {
-							this.typeCheckOK = true
+							this.typeCheckOK = true;
 						} else {
-							this.typeCheckOK = false
+							this.typeCheckOK = false;
 						}
 						break;
 					default:
-						this.typeCheckOK = true
+						this.typeCheckOK = true;
 						break;
 				}
 			},
-			immediate: true
+			immediate: true,
 		}
 	},
 	mounted: function () {
-		this.inputText = this.text
+		this.inputText = this.text;
 	}
-}
+});
+
 </script>
 
 <style scoped>

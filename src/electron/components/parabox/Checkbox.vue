@@ -8,9 +8,10 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
+import Vue from 'vue';
 
-export default {
+export default Vue.extend({
 	name: 'Combobox',
 	components: {		
 	},
@@ -25,102 +26,65 @@ export default {
 	computed: {
 	},
 	methods: {
-		dragStart: function (event) {
-			event.preventDefault()
-			var id = Symbol()
-			var mouseDownX = event.pageX || event.touches[0].pageX;			// 鼠标在页面（窗口）内的坐标
-			if (event.target.className == "checkbox-slipper") {
-				var sliderLeft = getWindowOffsetLeft(event.target.parentElement)
-				var sliderWidth = event.target.parentElement.offsetWidth
+		dragStart: function (event: MouseEvent) {
+			event.preventDefault();
+			let mouseDownX = event.pageX || event.touches[0].pageX;			// 鼠标在页面（窗口）内的坐标
+			let sliderLeft: number, sliderWidth: number;
+			if (event.target!.className == "checkbox-slipper") {
+				sliderLeft = event.target!.parentElement.getBoundingClientRect().left;
+				sliderWidth = event.target!.parentElement.offsetWidth;
 			} else {
-				var sliderLeft = getWindowOffsetLeft(event.target)
-				var sliderWidth = event.target.offsetWidth
+				sliderLeft = event.target!.getBoundingClientRect().left;
+				sliderWidth = event.target!.offsetWidth;
 			}
-			this.beforeChecked = this.checked
+			this.beforeChecked = this.checked;
 			// 添加鼠标事件捕获，将其独立为一个函数，以便于 mouseDown 直接触发 mouseMove
-			var handleMouseMove = (event) => {
-				var valueX = parseInt(event.pageX || event.touches[0].pageX) - sliderLeft
-				if (valueX < sliderWidth / 2) {
-					valueX = false
+			let handleMouseMove = (event: Partial<MouseEvent>) => {
+				let valueX: any = parseInt(event.pageX || event.touches[0].pageX) - sliderLeft;
+				if (valueX < sliderWidth / 2) {;
+					valueX = false;
 				} else {
-					valueX = true
+					valueX = true;
 				}
 				if (valueX != lastValue) {
-					this.$emit('change', valueX)
-					lastValue = valueX
+					this.$emit('change', valueX);
+					lastValue = valueX;
 				}
 			}
-			this.$store.commit('addPointerEvents', {
-				type: "mousemove",
-				id,
-				// 处理鼠标拖动
-				func: handleMouseMove
-			})
-			this.$store.commit('addPointerEvents', {
-				type: "mouseup",
-				id,
-				// 移除鼠标事件捕获
-				func: (event) => {
-					// 处理只点一下没有动的情况
-					if (Math.abs(mouseDownX - parseInt(event.pageX || event.touches[0].pageX)) <= 3) {
-						if (this.checked && this.beforeChecked) {
-							this.$emit('change', false)
-						} else if (!this.checked && !this.beforeChecked) {
-							this.$emit('change', true)
-						}
+			let handleMouseUp = (event: MouseEvent) => {
+				// 处理只点一下没有动的情况
+				if (Math.abs(mouseDownX - parseInt(event.pageX || event.touches[0].pageX)) <= 3) {
+					if (this.checked && this.beforeChecked) {
+						this.$emit('change', false);
+					} else if (!this.checked && !this.beforeChecked) {
+						this.$emit('change', true);
 					}
-					this.$store.commit('removePointerEvents', {
-						type: "mousemove",
-						id
-					})
-					this.$store.commit('removePointerEvents', {
-						type: "mouseup",
-						id
-					})
 				}
-			})
-			var lastValue = NaN
-			handleMouseMove({ pageX: event.pageX })	// mouseDown 直接触发 mouseMove
+				document.removeEventListener('mousemove', handleMouseMove);
+	    		document.removeEventListener('mouseup', handleMouseUp);
+			};
+	    	document.addEventListener('mousemove', handleMouseMove);
+	    	document.addEventListener('mouseup', handleMouseUp);
+			var lastValue = NaN;
+			handleMouseMove({ pageX: event.pageX });	// mouseDown 直接触发 mouseMove
 		},
-		onKeydown: function (event) {
+		onKeydown: function (event: KeyboardEvent) {
 			if (event.key == 'ArrowLeft') {
-				this.$emit('change', false)
+				this.$emit('change', false);
 			} else if (event.key == 'ArrowRight') {
-				this.$emit('change', true)
+				this.$emit('change', true);
 			}
 		},
-		onKeyup: function (event) {
+		onKeyup: function (event: KeyboardEvent) {
 			if (event.key == ' ' || event.key == 'Enter') {
-				this.$emit('change', !this.checked)
+				this.$emit('change', !this.checked);
 			}
 		}
 	},
 	mounted: function () {
 		this.beforeChecked = this.checked
 	}
-}
-
-// 计算元素相对于窗口的 left 和 top
-function getWindowOffsetLeft(obj) {
-	var realNum = obj.offsetLeft;
-	var positionParent = obj.offsetParent;  // 获取上一级定位元素对象
-	
-	while(positionParent != null) {
-		realNum += positionParent.offsetLeft;
-		positionParent = positionParent.offsetParent;
-	}
-	return realNum;
-}
-function getWindowOffsetTop(obj) {
-	var realNum = obj.offsetTop;
-	var positionParent = obj.offsetParent;  // 获取上一级定位元素对象
-	
-	while(positionParent != null) {
-		realNum += positionParent.offsetTop - positionParent.scrollTop;
-		positionParent = positionParent.offsetParent;
-	}
-	return realNum;
-}
+});
 
 </script>
 
