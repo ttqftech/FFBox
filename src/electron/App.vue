@@ -550,14 +550,13 @@ export default Vue.extend({
 		ffboxService = window.ffboxService;
 		mainVue = this;
 
-		console.warn('123');
-		let result = spawn("FFBoxHelper.exe", undefined, {
+		console.warn('正在启动 helper');
+		let helper = spawn("FFBoxHelper.exe", undefined, {
 			detached: false,
 			shell: true,
 			encoding: 'utf8'
 		});
-		console.log(result);
-		result.stdout.on('data', (data) => {
+		helper.stdout.on('data', (data) => {
 			console.warn(data.toString());
 		})
 		setTimeout(() => {
@@ -566,10 +565,10 @@ export default Vue.extend({
 			ipc.on('hwnd', (event, data) => {
 				hwnd = data[0] + data[1] * 2**8 + data[2] * 2**16 + data[3] * 2**24
 				console.log(`本窗口 hwnd：` + hwnd)
-				result.stdin.write(`2p${hwnd.toString().padStart(7, '0')}`);
+				helper.stdin.write(`2p${hwnd.toString().padStart(7, '0')}`);
 			})
 			ipc.send('getHwnd')
-		}, 2500);
+		}, 500);
 
 		// 全局鼠标拖动响应注册
 		window.addEventListener('mousedown', (event) => {

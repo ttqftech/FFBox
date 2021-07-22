@@ -1,4 +1,4 @@
-import { FFmpeg } from './FFmpegInvoke'
+import { FFmpeg } from '@/service/FFmpegInvoke'
 
 export enum FFBoxServiceEvent {
 	ffmpegVersion = 'ffmpegVersion',	// content: string
@@ -66,16 +66,16 @@ export interface ServiceTask {
 		normal: Array<{
 			realTime: number,
 			mediaTime: number,
-			frame: number;
+			frame: number,
 		}>
 		size: Array<{
 			realTime: number,
-			size: number;
+			size: number,
 		}>
 	},
 	lastPaused: number,		// 用于暂停后恢复时计算速度
 	cmdData: string,
-	notifications: Array<Notification>;
+	notifications: Array<Notification>,
 	errorInfo: Array<string>,
 }
 
@@ -90,4 +90,28 @@ export enum WorkingStatus {
 	paused = -1,
 	stopped = 0,
 	running = 1,
+}
+
+export interface BaseComboItem {
+	sName: string,
+	lName: string,
+	imageName?: string,
+	imageOffset?: number,
+	description?: string,
+}
+
+export type Parameter = {
+	mode: 'slider',
+	parameter: string,
+	display: string,
+	step: number,	// 档位数量，无档置 0
+	tags: Map<number, string>,	// 刻度
+	valueToText: (value: any) => string,	// 将值转换为供 UI 显示的文字
+	valueProcess: (value: any) => number,	// 调整滑块时作为中间过程调用，一般用于吸附、档位等功能
+	valueToParam: (value: any) => string,	// 将值转换为供 ffmpeg 识别的参数值
+} | {
+	mode: 'combo',
+	parameter: string,
+	display: string,
+	items: Array<BaseComboItem>,
 }
