@@ -1,9 +1,9 @@
 <template>
 	<div id="tasks-view" @dragenter="onDragenter($event)" @dragover="onDragenter($event)" @dragleave="onDragleave($event)" @drop="onDrop($event)">
 		<button id="startbutton" class="startbutton " :class="startbuttonClass" @click="$store.commit('startNpause')">{{ this.$store.state.workingStatus > 0 ? '⏸暂停' : '▶开始' }}</button>
-		<div id="tasklist-wrapper">
+		<div id="tasklist-wrapper" ref="tasklist_wrapper">
 			<div id="tasklist">
-				<taskitem v-for="(task, index) in taskList" :key="parseInt(task.id)" :id='task.id' :duration="task.duration" :filename="task.filename" :before="task.before" :after="task.after" :progress_smooth="task.progress_smooth" :status="task.status" :selected="taskSelected(task.id)" :computed_after="task.computedAfter" @itemClicked="onItemClicked($event, task.id, index)" @pauseNremove="onItemPauseNdelete(task.id)"></taskitem>
+				<taskitem v-for="(task, index) in taskList" :key="parseInt(task.id)" :id='task.id' :duration="task.duration" :filename="task.filename" :before="task.before" :after="task.after" :progress_smooth="task.progress_smooth" :status="task.status" :selected="taskSelected(task.id)" @itemClicked="onItemClicked($event, task.id, index)" @pauseNremove="onItemPauseNdelete(task.id)"></taskitem>
 			</div>
 			<div id="dropfilesdiv" @click="itemUnselect">
 				<div id="dropfilesimage" @click="debugLauncher" :style="{ 'backgroundImage': `url(${dropfilesimage})` }"></div>
@@ -12,88 +12,89 @@
 	</div>
 </template>
 
-<script>
-import Taskitem from '@/electron/components/Taskitem'
+<script lang="ts">
+import Vue from 'vue';
 
-let remote, currentWindow
+import Taskitem from '@/electron/components/Taskitem.vue'
+import { NotificationLevel, Server, ServiceTask } from '@/types/types';
+
+let remote, currentWindow;
 if (process.env.IS_ELECTRON) {
 	remote = window.require('electron').remote
 	currentWindow = remote.getCurrentWindow()
 }
 
-const TASK_DELETED = -2;
-const TASK_PENDING = -1;
-const TASK_STOPPED = 0;
-const TASK_RUNNING = 1;
-const TASK_PAUSED = 2;
-const TASK_STOPPING = 3;
-const TASK_FINISHING = 4;
-const TASK_FINISHED = 5;
-const TASK_ERROR = 6;
-
-export default {
+export default Vue.extend({
 	name: 'TasksView',
 	components: {
 		Taskitem
 	},
-	props: {
-	},
 	data: () => { return {
-		taskSelection_last: -1,
+		selectedTask_last: -1,
 		draggingFiles: false,
 		lastTaskListLength: 0		// 记录上一次计算 taskList 的长度，如变大了说明拖进来文件，就要滚动到底
 	}},
 	computed: {
-		taskList: function () {
-			console.log('taskList updated at ' + new Date().getTime())
-			var ret = [];
-			for (const [id, task] of Object.entries(this.$store.state.tasks)) {
-				ret.push({ ...task, id })
+		taskList: function (): Array<ServiceTask> {
+			console.log('taskList updated at ' + new Date().getTime());
+			let currentServer: Server = this.$store.getters.currentServer;
+			if (!currentServer) {
+				return [];
+			}
+			let ret = [];
+			for (const [id, task] of Object.entries(currentServer.tasks)) {
+				ret.push({ ...task, id });
 			}
 			// 新任务加入，滚动到底
 			if (ret.length > this.lastTaskListLength) {
-				// v2.4 开始这里不需要加延时了
-				// this.$store.commit('taskSelection_update', new Set([(ret.slice(ret.length - 1)[0]).id]))
-				var tasklistWrapper = document.getElementById('tasklist-wrapper')
-				tasklistWrapper.scrollTop = tasklistWrapper.scrollHeight - tasklistWrapper.offsetHeight
+				let tasklistWrapper = this.$refs.tasklist_wrapper as Element;
+				tasklistWrapper.scrollTop = tasklistWrapper.scrollHeight - tasklistWrapper.offsetHeight;
 			}
-			this.lastTaskListLength = ret.length
-			return ret
+			this.lastTaskListLength = ret.length;
+			return ret;
 		},
-		taskSelected: function () {
-			// this.$store.state.taskSelection		// 使 Vue 监听到 taskSelection 的变化，否则 Vue 只是在监听下面的 function（后来改成使用 store 存储 taskSelection，每次直接更新整个 Set 的引用，因此这里不需要了）
-			// onItemClicked 使 this.taskSelection 产生变化，触发 taskSelected，taskitem 的 selected prop 更新，触发重新渲染
-			return function (id) {
-				return this.$store.state.taskSelection.has(id)
+		taskSelected: function (): (id: number) => boolean {
+			// this.$store.state.selectedTask		// 使 Vue 监听到 selectedTask 的变化，否则 Vue 只是在监听下面的 function（后来改成使用 store 存储 selectedTask，每次直接更新整个 Set 的引用，因此这里不需要了）
+			// onItemClicked 使 this.selectedTask 产生变化，触发 taskSelected，taskitem 的 selected prop 更新，触发重新渲染
+			return (id: number) => {
+				return this.$store.state.selectedTask.has(id);
 			}
 		},
-		dropfilesimage: function () {
-			if (this.$store.state.FFmpegVersion != '-') {
+		dropfilesimage: function (): string {
+			let currentServer: Server = this.$store.getters.currentServer;
+			if (!currentServer) {
+				return '/images/drop_files_noserver.png';
+			}
+			if (currentServer.ffmpegVersion != '-') {
 				if (this.draggingFiles) {
-					return '/images/drop_files_ok.png'
+					return '/images/drop_files_ok.png';
 				} else {
-					return '/images/drop_files.png'
+					return '/images/drop_files.png';
 				}
 			} else {
-				return '/images/drop_files_noffmpeg.png'
+				return '/images/drop_files_noffmpeg.png';
 			}
 		},
-		startbuttonClass: function () {
-			return this.$store.state.workingStatus > 0 ? 'startbutton-yellow' : 'startbutton-green'
+		startbuttonClass: function (): string {
+			let currentServer: Server = this.$store.getters.currentServer;
+			if (!currentServer) {
+				return 'startbutton-gray';
+			}
+			return currentServer.workingStatus > 0 ? 'startbutton-yellow' : 'startbutton-green';
 		}
 	},
 	methods: {
-		debugLauncher: (function () {
-			var clickSpeedCounter = 0
-			var clickSpeedTimer = 0
-			var clickSpeedTimerStatus = false
-			return function () {
+		debugLauncher: (() => {
+			let clickSpeedCounter = 0;
+			let clickSpeedTimer = 0;
+			let clickSpeedTimerStatus = false;
+			return () => {
 				clickSpeedCounter += 20;
 				if (clickSpeedCounter > 100) {
-					this.$store.commit('popup', {
-						msg: '打开开发者工具',
-						level: 0
-					})
+					this.$popup({
+						message: '打开开发者工具',
+						level: NotificationLevel.info
+					});
 					currentWindow.openDevTools();
 					clickSpeedCounter = 0;
 					clearInterval(clickSpeedTimer);
@@ -111,22 +112,21 @@ export default {
 				}
 			}
 		})(),
-		onItemClicked: function (event, id, index) {
-			console.log(event)
-			var currentSelection = new Set(this.$store.state.taskSelection)
+		onItemClicked: function (event: MouseEvent, id: number, index: number) {
+			let currentSelection = new Set(this.$store.state.selectedTask);
 			if (event.shiftKey) {
-				if (this.taskSelection_last != -1) {		// 之前没选东西，现在选一堆
-					currentSelection.clear()
-					var minIndex = Math.min(this.taskSelection_last, index);
-					var maxIndex = Math.max(this.taskSelection_last, index);
+				if (this.selectedTask_last != -1) {		// 之前没选东西，现在选一堆
+					currentSelection.clear();
+					var minIndex = Math.min(this.selectedTask_last, index);
+					var maxIndex = Math.max(this.selectedTask_last, index);
 					for (var i = minIndex; i <= maxIndex; i++) {	// 对 taskOrder 里指定区域项目进行选择
-						currentSelection.add(this.taskList[i].id)
+						currentSelection.add(this.taskList[i].id);
 						// if (taskArray.has(id)) {	// 如果任务未被删除
 						// 	currentSelection.add(i);
 						// }
 					}
 				} else {							// 之前没选东西，现在选第一个
-					currentSelection = new Set([id])
+					currentSelection = new Set([id]);
 				}
 			} else if (event.ctrlKey == true || remote.process.platform == 'darwin' && event.metaKey == true) {
 				if (currentSelection.has(id)) {
@@ -135,48 +135,51 @@ export default {
 					currentSelection.add(id);
 				}
 			} else {
-				currentSelection.clear()
-				currentSelection.add(id)
+				currentSelection.clear();
+				currentSelection.add(id);
 			}
-			this.taskSelection_last = index;
-			// this.taskSelection = new Set([...this.taskSelection])	// 更新自身的引用值以触发 computed: taskSelected
-			this.$store.commit('taskSelection_update', currentSelection)
+			this.selectedTask_last = index;
+			// this.selectedTask = new Set([...this.selectedTask])	// 更新自身的引用值以触发 computed: taskSelected
+			this.$store.commit('selectedTask_update', currentSelection);
 		},
 		itemUnselect: function () {
-			this.$store.commit('taskSelection_update', new Set())
+			this.$store.commit('selectedTask_update', new Set());
 		},
-		onItemPauseNdelete: function (id) {
-			this.$store.commit('pauseNremove', id)
+		onItemPauseNdelete: function (id: string) {
+			this.$store.commit('pauseNremove', id);
 		},
-		onDragenter: function (event) {
+		onDragenter: function (event: DragEvent) {
 			// 这里把 dragenter 和 dragover 都引到这里了，拖动时会高频率调用，虽然不是很好，但是不加 dragover 会导致 drop 没反应
-			if (this.$store.state.FFmpegVersion != '-') {
-				event.preventDefault()
-				this.draggingFiles = true
+			let currentServer: Server = this.$store.getters.currentServer;
+			if (!currentServer || currentServer.ffmpegVersion === '-') {
+				return;
 			}
+			event.preventDefault();
+			this.draggingFiles = true;
 		},
-		onDragleave: function (event) {
-			event.preventDefault()
-			this.draggingFiles = false
+		onDragleave: function (event: DragEvent) {
+			event.preventDefault();
+			this.draggingFiles = false;
 		},
-		onDrop: function (event) {	// 此函数触发四次 taskList update，分别为加入任务、ffmpeg data、ffmpeg metadata、taskSelection update
-			event.stopPropagation()
-			this.draggingFiles = false
-			var dropDelayCount = 0
-			var fileCount = event.dataTransfer.files.length
-			let newIDs = []
-			for (const file of event.dataTransfer.files) {
+		onDrop: function (event: DragEvent) {	// 此函数触发四次 taskList update，分别为加入任务、ffmpeg data、ffmpeg metadata、selectedTask update
+			event.stopPropagation();
+			this.draggingFiles = false;
+			let dropDelayCount = 0;
+			let files = (event.dataTransfer && event.dataTransfer.files) || [];
+			let fileCount = files.length
+			let newIDs: Array<string> = [];
+			for (const file of files) {
 				setTimeout(() => {	// v2.4 版本开始完全可以不要延时，但是太生硬，所以加个动画
-					console.log(file.path)
-					this.$store.commit('addTask', { name: file.name, path: file.path, callback: id => {
-						newIDs.push(id + '')
+					console.log(file.path);
+					this.$store.commit('addTask', { name: file.name, path: file.path, callback: (id: string) => {
+						newIDs.push(id + '');
 						if (--fileCount == 0) {
-							this.$store.commit('taskSelection_update', new Set(newIDs))
+							this.$store.commit('selectedTask_update', new Set(newIDs));
 						}
 					}})
 				}, dropDelayCount);
 				// console.log(dropDelayCount)
-				dropDelayCount += 33.33
+				dropDelayCount += 33.33;
 			}
 		}
 	},
@@ -189,7 +192,7 @@ export default {
 		}
 		*/
 	}
-}
+});
 
 </script>
 
@@ -201,36 +204,43 @@ export default {
 		/* background: #EEE; */
 	}
 		.startbutton-green {
-			background: linear-gradient(180deg, #5e5, #3c3);
+			background: linear-gradient(180deg, hsl(120, 80%, 65%), hsl(120, 60%, 50%));
 			box-shadow: 0px -1px 1px 0px rgba(255, 255, 255, 0.3),
 						0px 1px 1px 0px rgba(16, 16, 16, 0.15),
 						0px 2px 6px 0px rgba(0, 0, 0, 0.15),
-						0px 4px 16px -4px #5e5;
+						0px 4px 16px -4px hsl(120, 80%, 65%);
 		}
 		.startbutton-green:active {
-			background: linear-gradient(180deg, #292, #3c3);
+			background: linear-gradient(180deg, hsl(120, 65%, 35%), hsl(120, 60%, 50%));
 		}
 		.startbutton-green:hover {
 			box-shadow: 0px -1px 1px 0px rgba(255, 255, 255, 0.3),
 						0px 1px 1px 0px rgba(16, 16, 16, 0.15),
 						0px 2px 6px 0px rgba(0, 0, 0, 0.15),
-						0px 4px 24px 0px #5e5;
+						0px 4px 24px 0px hsl(120, 80%, 65%);
 		}
 		.startbutton-yellow {
-			background: linear-gradient(180deg, #ed5, #cb3);
+			background: linear-gradient(180deg, hsl(54, 80%, 65%), hsl(54, 60%, 50%));
 			box-shadow: 0px -1px 1px 0px rgba(255, 255, 255, 0.3),
 						0px 1px 1px 0px rgba(16, 16, 16, 0.15),
 						0px 2px 6px 0px rgba(0, 0, 0, 0.15),
-						0px 4px 16px -4px #ed5;
+						0px 4px 16px -4px hsl(54, 80%, 65%);
 		}
 		.startbutton-yellow:active {
-			background: linear-gradient(180deg, #992, #cb3);
+			background: linear-gradient(180deg, hsl(54, 65%, 35%), hsl(54, 60%, 50%));
 		}
 		.startbutton-yellow:hover {
 			box-shadow: 0px -1px 1px 0px rgba(255, 255, 255, 0.3),
 						0px 1px 1px 0px rgba(16, 16, 16, 0.15),
 						0px 2px 6px 0px rgba(0, 0, 0, 0.15),
-						0px 4px 24px 0px #ed5;
+						0px 4px 24px 0px hsl(54, 80%, 65%);
+		}
+		.startbutton-gray {
+			background: linear-gradient(180deg, hsl(0, 0%, 65%), hsl(0, 0%, 50%));
+			box-shadow: 0px -1px 1px 0px rgba(255, 255, 255, 0.3),
+						0px 1px 1px 0px rgba(16, 16, 16, 0.15),
+						0px 2px 6px 0px rgba(0, 0, 0, 0.15),
+						0px 4px 16px -4px hsl(0, 0%, 65%);
 		}
 		.startbutton {
 			position: absolute;

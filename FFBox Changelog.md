@@ -1,5 +1,7 @@
 # FFBox Changelog
 
+`2021-07-28` 进行 ListView、CommandView、TasksView、Taskitem 的相关改造  
+`2021-07-26` 更新了 store state 中的属性及 TypeScript 定义；去除 store 的全局键鼠事件机制  
 `2021-07-22` combobox 操作逻辑优化完成；部分组件代码规范性优化；去除 getWindowOffsetLeft/Top；去除 store 的全局键鼠事件机制  
 `2021-07-19` 完成 Windows 端 FFBoxHelper 基本功能，优化 combobox 操作逻辑  
 `2021-07-07` 进行 Windows 端 FFBoxHelper 制作  

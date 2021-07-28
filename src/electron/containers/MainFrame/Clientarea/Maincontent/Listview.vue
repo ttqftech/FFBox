@@ -1,34 +1,26 @@
 <template>
 	<div id="listview" :style="{ height: $store.state.draggerPos + '%' }">
 		<transition name="listviews-ani">
-			<tasks-view v-show="$store.state.listselected == 0"></tasks-view>
+			<tasks-view v-show="$store.state.listSelected == 0"></tasks-view>
 		</transition>
 		<transition name="listviews-ani">
-			<command-view v-show="$store.state.listselected == 1" :show="$store.state.listselected == 1"></command-view>
+			<command-view v-show="$store.state.listSelected == 1"></command-view>
 		</transition>
 	</div>
 </template>
 
-<script>
-import TasksView from './Listview/TasksView'
-import CommandView from './Listview/CommandView'
+<script lang="ts">
+import Vue from 'vue';
 
-export default {
+import TasksView from './Listview/TasksView.vue'
+import CommandView from './Listview/CommandView.vue'
+
+export default Vue.extend({
 	name: 'Listview',
 	components: {
 		TasksView, CommandView
 	},
-	props: {
-		
-	},
-	data: () => { return {
-		// draggerPos: $store.state.draggerPos + "%"
-	}},
-	computed: {
-	},
-	methods: {
-	}
-}
+});
 </script>
 
 <style scoped>
@@ -54,20 +46,4 @@ export default {
 			transform: translateY(0);
 		}
 
-		/*
-		.listwindow {
-			transition: opacity 0.3s, transform 0.3s;
-		}
-		.listwindow-selected {
-			z-index: 1;
-			opacity: 1;
-			transform: translateY(0);
-		}
-		.listwindow-unselected {
-			z-index: 0;
-			opacity: 0;
-			transform: translateY(40px);
-		}
-		*/
-				
 </style>

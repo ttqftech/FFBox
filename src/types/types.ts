@@ -1,4 +1,4 @@
-import { FFmpeg } from '@/service/FFmpegInvoke'
+import { FFmpeg } from '../service/FFmpegInvoke'
 
 export enum FFBoxServiceEvent {
 	ffmpegVersion = 'ffmpegVersion',	// content: string
@@ -37,6 +37,13 @@ export interface FFmpegProgress {
 	time: number;		// 秒
 	bitrate: number;	// kbps
 	speed: number;
+}
+
+export enum NotificationLevel {
+	info = 0,
+	ok = 1,
+	warning = 2,
+	error = 3,
 }
 
 export interface Notification {
@@ -79,17 +86,33 @@ export interface ServiceTask {
 	errorInfo: Array<string>,
 }
 
-export enum NotificationLevel {
-	info = 0,
-	ok = 1,
-	warning = 2,
-	error = 3,
-}
-
 export enum WorkingStatus {
 	paused = -1,
 	stopped = 0,
 	running = 1,
+}
+
+export interface Server {
+	tasks: Array<ServiceTask>;
+	ffmpegVersion: string;
+	workingStatus: WorkingStatus;
+	progress: 0.0;	// 由每个任务更新时计算出来
+}
+
+export interface StoreState {
+	// 界面类
+	showSponsorCenter: boolean;
+	showInfoCenter: boolean;
+	listSelected: number;
+	paraSelected: number;
+	draggerPos: number;
+	// 非界面类
+	notifications: Array<Notification>;
+	servers: Map<string, Server>;
+	currentServerName: string;
+	selectedTask: Set<string>;
+	globalParams: outputParams;
+	overallProgressTimerID: any;
 }
 
 export interface BaseComboItem {
