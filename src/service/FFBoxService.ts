@@ -1,4 +1,4 @@
-import { ServiceTask, TaskStatus, outputParams, FFBoxServiceEvent, Notification, NotificationLevel, FFmpegProgress, WorkingStatus } from "@/types/types";
+import { ServiceTask, TaskStatus, outputParams, FFBoxServiceEvent, Notification, NotificationLevel, FFmpegProgress, WorkingStatus } from "../types/types";
 import { getFFmpegParaArray } from "../common/getFFmpegParaArray";
 import { EventEmitter } from "events";
 import { FFmpeg } from './FFmpegInvoke'
@@ -98,7 +98,6 @@ export class FFBoxService extends EventEmitter {
 				abitrate: '读取中',
 			},
 			after: this.globalTask.after,
-			// computedAfter: {},					// 一些用于给 taskitem 显示的数据，没有其他用途。尽量不往 taskitem 引入那么多需要它自己计算的东西了
 			paraArray: [],
 			ffmpeg: null,
 			status: TaskStatus.TASK_STOPPED,
@@ -169,7 +168,7 @@ export class FFBoxService extends EventEmitter {
 
 	/**
 	 * 启动单个任务
-	 * 【TASK_STOPPED / TASK_ERROR】 => 【TASK_RUNNING】 => 【TASK_FINISHED / TASK_ERROR】
+	 * 【TASK_STOPPED】 => 【TASK_RUNNING】 => 【TASK_FINISHED / TASK_ERROR】
 	 * @param id 任务 id
 	 */
 	public taskStart(id: number): void {
@@ -319,7 +318,7 @@ export class FFBoxService extends EventEmitter {
 		});
 	}
 
-	// 【TASK_PAUSED / TASK_STOPPING / TASK_FINISHED】 => 【TASK_STOPPED】
+	// 【TASK_PAUSED / TASK_STOPPING / TASK_FINISHED / TASK_ERROR】 => 【TASK_STOPPED】
 	/**
 	 * 重置任务（收尾/强行，根据状态决定）
 	 * @param id 任务 id

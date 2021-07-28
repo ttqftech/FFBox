@@ -35,7 +35,7 @@ import { generator as aGenerator } from '../common/acodecs'
 import { FFBoxService } from "@/service/FFBoxService";
 
 import { defaultParams } from "../common/defaultParams";
-import { NotificationLevel, ServiceTask, WorkingStatus } from '@/types/types'
+import { StoreState, NotificationLevel, ServiceTask, WorkingStatus, TaskStatus } from '@/types/types'
 
 let ffboxService: FFBoxService;
 let mainVue: any;
@@ -45,64 +45,69 @@ Vue.use(Popup);
 Vue.use(Msgbox);
 Vue.use(Tooltip);
 
-const store = new Vuex.Store({
+const store = new Vuex.Store<StoreState>({
 	state: {
-		version, buildNumber,
+		// 界面类
 		showSponsorCenter: false,
-		// 是否显示通知中心
 		showInfoCenter: false,
-		// 本地通知
-		localNotifications: [],
-		// 当前在屏幕上显示的弹窗
-		// showCombomenu: false,
-		// comboList: [],
-		// comboDefault: '',
-		// comboDescription: '暂无描述',
-		// comboPosition: {
-		// 	left: '0px',
-		// 	top: '0px',
-		// 	height: '0px'
-		// },
-		// comboSelectionHandler: null,
-		// 左边栏选择的项目
-		listselected: 0,
-		paraselected: 1,
-		// 拖动器位置，数值越高越往下
+		listSelected: 0,
+		paraSelected: 1,
 		draggerPos: 60,
-		// 所有任务
-		tasks: {},
-		// 选中的任务
-		taskSelection: new Set(),
-		// 所有控件需要截获的鼠标操作都可以加到这些列表里捕获
-		onPointerEvents: {
-			onMouseDown: [],
-			onMouseMove: [],
-			onMouseUp: []
-		},
-		// 全局参数
+		// 非界面类
+		notifications: [],
+		servers: new Map([
+			['local', { tasks: [], ffmpegVersion: '', workingStatus: WorkingStatus.stopped, progress: 0 }]
+		]),
+		currentServerName: 'local',
+		selectedTask: new Set(),
 		globalParams: Object.assign({}, defaultParams),
-		// 全局命令行接收到的信息
-		cmdData: '',
-		// FFmpeg 是否已安装以及版本
-		FFmpegVersion: '',
-		// 是否正在执行任务
-		workingStatus: 0,			// -1：暂停　0：停止　1：运行
-		progress: 0.0,
-		overallProgressTimerID: NaN
+		overallProgressTimerID: NaN,
 	},
 	getters: {
+		currentServer (state) {
+			return state.servers.get(state.currentServerName);
+		}
 	},
 	mutations: {
+		// 切换显示/不显示打赏中心
+		showSponsorCenter_update (state, value: boolean) {
+			state.showSponsorCenter = value;
+			if (state.showSponsorCenter && state.showInfoCenter) {
+				state.showInfoCenter = false;
+			}
+		},
+		// 切换显示/不显示通知中心
+		showInfoCenter_update (state, value) {
+			state.showInfoCenter = value
+			if (state.showSponsorCenter && state.showInfoCenter) {
+				state.showSponsorCenter = false
+			}
+		},
 		// 点击开始/暂停按钮
 		startNpause (state) {
-			if (state.workingStatus === 0 || state.workingStatus === -1) {		// 开始任务
+			let currentServer = state.servers.get(state.currentServerName);
+			if (!currentServer) {
+				return;
+			}
+			if (currentServer.workingStatus === WorkingStatus.stopped || currentServer.workingStatus === WorkingStatus.paused) {		// 开始任务
 				ffboxService.queueAssign();
-			} else if (state.workingStatus == 1) {
+			} else {
 				ffboxService.queuePause();
 			}
 		},
-		pauseNremove (state, id) {
-
+		pauseNremove (state, id: number) {
+			let currentServer = state.servers.get(state.currentServerName);
+			if (!currentServer) {
+				return;
+			}
+			let task = currentServer.tasks[id];
+			if (task.status === TaskStatus.TASK_RUNNING) {
+				ffboxService.taskPause(id);
+			} else if (task.status === TaskStatus.TASK_PAUSED || task.status === TaskStatus.TASK_STOPPING || task.status === TaskStatus.TASK_FINISHED || task.status === TaskStatus.TASK_ERROR) {
+				ffboxService.taskReset(id);
+			} else if (task.status === TaskStatus.TASK_STOPPED) {
+				ffboxService.taskDelete(id);
+			}
 		},
 		dashboardTimer (state, id) {
 			var task = state.tasks[id]
@@ -211,21 +216,7 @@ const store = new Vuex.Store({
 				clearInterval(state.overallProgressTimerID);
 			}
 		},
-		// 切换显示/不显示打赏中心
-		showSponsorCenter_update (state, value) {
-			state.showSponsorCenter = value
-			if (state.showSponsorCenter && state.showInfoCenter) {
-				state.showInfoCenter = false
-			}
-		},
-		// 切换显示/不显示通知中心
-		showInfoCenter_update (state, value) {
-			state.showInfoCenter = value
-			if (state.showSponsorCenter && state.showInfoCenter) {
-				state.showSponsorCenter = false
-			}
-		},
-		// 发布消息（args：msg, level）
+		// 发布本地消息（args：msg, level）
 		pushMsg (state, args: { message: string, level: NotificationLevel }) {
 			// let id = Symbol()
 			// state.infos.push({
@@ -247,63 +238,12 @@ const store = new Vuex.Store({
 		deleteMsg (state, index) {
 			state.infos.splice(index, 1)
 		},
-		// 弹出组合框（args：list, default, position, handler）
-		showCombomenu (state, args) {
-			state.showCombomenu = true
-			state.comboList = args.list
-			state.comboDefault = args.default
-			state.comboPosition = args.position
-			state.comboSelectionHandler = args.handler
-		},
-		// 关闭组合框
-		combomenuDisappear (state) {
-			state.showCombomenu = false
-		},
 		// 更改左侧边栏选择的项目，其中（0~1）更改 list，（2~8）更改 para
 		listNparaSelect (state, value) {
 			if (value < 2) {
-				state.listselected = value
+				state.listSelected = value
 			} else {
-				state.paraselected = value - 2
-			}
-		},
-		// 处理所有控件需要截获的鼠标操作添加操作（args：type("mousedown"|"mousemove"|"mouseup"), id, func）
-		addPointerEvents (state, args) {
-			if (typeof args.func != "function") {
-				return
-			}
-			switch (args.type) {
-				case "mousedown":
-					state.onPointerEvents.onMouseDown.push({func: args.func, id: args.id})
-					break;
-				case "mousemove":
-					state.onPointerEvents.onMouseMove.push({func: args.func, id: args.id})
-					break;
-				case "mouseup":
-					state.onPointerEvents.onMouseUp.push({func: args.func, id: args.id})
-					break;
-			}
-		},
-		removePointerEvents (state, args) {
-			var iterator 
-			switch (args.type) {
-				case "mousedown":
-					iterator = state.onPointerEvents.onMouseDown
-					break;
-				case "mousemove":
-					iterator = state.onPointerEvents.onMouseMove
-					break;
-				case "mouseup":
-					iterator = state.onPointerEvents.onMouseUp
-					break;
-			}
-			var index = iterator.findIndex((value) => {
-				if (value.id == args.id) {
-					return true
-				}
-			})
-			if (index != -1) {
-				iterator.splice(index, 1)
+				state.paraSelected = value - 2
 			}
 		},
 		// 拖动参数盒的横杠
@@ -340,19 +280,15 @@ const store = new Vuex.Store({
 				// state.globalParams.paraArray = getFFmpegParaArray('[输入文件名]', state.globalParams.input, state.globalParams.video, state.globalParams.audio, state.globalParams.output)
 				// state.globalParams = JSON.parse(JSON.stringify(state.globalParams))
 
-				for (const id of state.taskSelection) {
+				for (const id of state.selectedTask) {
 					var task = state.tasks[id]
 					task.after = JSON.parse(JSON.stringify(state.globalParams))
 					task.paraArray = getFFmpegParaArray(task.filepath, task.after.input, task.after.video, task.after.audio, task.after.output, true)
-					task.computedAfter = {
-						vrate: vGenerator.getRateControlParam(task.after.video),
-						arate: aGenerator.getRateControlParam(task.after.audio)
-					}
 				}
 
 				// 刷新所有单个任务
 				// state.tasks = new Map(state.tasks)	// 更新整个 tasks，因为 TasksView -> computed -> taskList -> this.$store.state.tasks.get(id) 仅监听到 tasks 这层，无法获知取出的单个 task 的变化
-				// this.commit('taskSelection_update', new Set([...state.taskSelection]))
+				// this.commit('selectedTask_update', new Set([...state.selectedTask]))
 				// paraPreview();					// 这句要在上面 for 之后，因为上面的 for 用于同步全局与单个文件
 			})
 
@@ -396,7 +332,6 @@ const store = new Vuex.Store({
 					abitrate: '读取中',
 				},
 				after: JSON.parse(JSON.stringify(state.globalParams)),
-				computedAfter: {},					// 一些用于给 taskitem 显示的数据，没有其他用途。尽量不往 taskitem 引入那么多需要它自己计算的东西了
 				paraArray: [],
 				progress: {
 					progress: 0,
@@ -426,10 +361,6 @@ const store = new Vuex.Store({
 
 			// 更新命令行参数
 			task.paraArray = getFFmpegParaArray(task.filepath, task.after.input, task.after.video, task.after.audio, task.after.output, true)
-			task.computedAfter = {
-				vrate: vGenerator.getRateControlParam(task.after.video),
-				arate: aGenerator.getRateControlParam(task.after.audio)
-			}
 
 			// FFmpeg 读取媒体信息
 			var ffmpeg = new FFmpeg(2, ["-hide_banner", "-i", args.path, "-f", "null"])
@@ -461,9 +392,9 @@ const store = new Vuex.Store({
 				args.callback(id)
 			}
 		},
-		taskSelection_update (state, set) {
-			// console.log('taskSelection updated at ' + new Date().getTime())
-			state.taskSelection = set
+		selectedTask_update (state, set) {
+			// console.log('selectedTask updated at ' + new Date().getTime())
+			state.selectedTask = set
 			if (set.size > 0) {
 				for (const id of set) {
 					this.commit('replacePara', state.tasks[id].after)
@@ -489,7 +420,7 @@ const store = new Vuex.Store({
 					task.cmdData = task.cmdData.slice(4000)
 				}
 			}
-			state.taskSelection = new Set(state.taskSelection)
+			state.selectedTask = new Set(state.selectedTask)
 		},
 		// 刷新 FFmpeg 版本信息
 		FFmpegVersion_update (state, info) {
@@ -570,22 +501,6 @@ export default Vue.extend({
 			ipc.send('getHwnd')
 		}, 500);
 
-		// 全局鼠标拖动响应注册
-		window.addEventListener('mousedown', (event) => {
-			for (const iterator of this.$store.state.onPointerEvents.onMouseDown) {
-				iterator.func(event);
-			}
-		})
-		window.addEventListener('mousemove', (event) => {
-			for (const iterator of this.$store.state.onPointerEvents.onMouseMove) {
-				iterator.func(event);
-			}
-		})
-		window.addEventListener('mouseup', (event) => {
-			for (const iterator of this.$store.state.onPointerEvents.onMouseUp) {
-				iterator.func(event);
-			}
-		})
 		// 更新全局参数输出
 		// this.$set(this.$store.state.globalParams, 'paraArray', getFFmpegParaArray('[输入文件名]', this.$store.state.globalParams.input, this.$store.state.globalParams.video, this.$store.state.globalParams.audio, this.$store.state.globalParams.output))
 
@@ -653,37 +568,6 @@ export default Vue.extend({
 			}
 			return ret;
 		}
-		// pushMsg();
-		// (this as any).$confirm({
-		// 	title: '标题',
-		// 	content: '文字',
-		// }).then(() => {
-		// 	alert('成功');
-		// }).catch(() => {
-		// 	alert('失败');
-		// });
-		// (this as any).$msgbox({
-		// 	title: '消息弹窗',
-		// 	content: '啦啦啦啦啦啦啦啦啦',
-		// 	buttons: [
-		// 		{
-		// 			text: '确认',
-		// 			callback: () => console.log('确认'),
-		// 			role: ButtonRole.Confirm
-		// 		},
-		// 		{
-		// 			text: '中间',
-		// 			callback: () => console.log('中间'),
-		// 			role: ButtonRole.Normal
-		// 		},
-		// 		{
-		// 			text: '取消',
-		// 			callback: () => console.log('取消'),
-		// 			role: ButtonRole.Cancel
-		// 		},
-		// 	]
-		// });
-
 		// 挂载 ffboxService 各种更新事件
 
 	},

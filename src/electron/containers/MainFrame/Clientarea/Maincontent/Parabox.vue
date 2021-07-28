@@ -3,52 +3,48 @@
 		<div id="parabox-dragger" @mousedown="dragStart" @touchstart="dragStart">
 			<div id="parabox-dragger-left"></div>
 			<div id="parabox-dragger-right"></div>
-			<div id="parabox-name" :style="{ backgroundPositionY: (100 / 7) * $store.state.paraselected + (100 / 7 * 2) + '%' }"></div>
+			<div id="parabox-name" :style="{ backgroundPositionY: (100 / 7) * $store.state.paraSelected + (100 / 7 * 2) + '%' }"></div>
 		</div>
 		<div id="paraboxes">
 			<transition name="paraboxes-ani">
-				<shortcuts-view v-show="$store.state.paraselected == 0"></shortcuts-view>
+				<shortcuts-view v-show="$store.state.paraSelected == 0"></shortcuts-view>
 			</transition>
 			<transition name="paraboxes-ani">
-				<input-view v-show="$store.state.paraselected == 1"></input-view>
+				<input-view v-show="$store.state.paraSelected == 1"></input-view>
 			</transition>
 			<transition name="paraboxes-ani">
-				<vcodec-view v-show="$store.state.paraselected == 2"></vcodec-view>
+				<vcodec-view v-show="$store.state.paraSelected == 2"></vcodec-view>
 			</transition>
 			<transition name="paraboxes-ani">
-				<acodec-view v-show="$store.state.paraselected == 3"></acodec-view>
+				<acodec-view v-show="$store.state.paraSelected == 3"></acodec-view>
 			</transition>
 			<transition name="paraboxes-ani">
-				<effect-view v-show="$store.state.paraselected == 4"></effect-view>
+				<effect-view v-show="$store.state.paraSelected == 4"></effect-view>
 			</transition>
 			<transition name="paraboxes-ani">
-				<output-view v-show="$store.state.paraselected == 5"></output-view>
+				<output-view v-show="$store.state.paraSelected == 5"></output-view>
 			</transition>
 		</div>
 	</div>
 </template>
 
-<script>
-import ShortcutsView from './Parabox/ShortcutsView'
-import InputView from './Parabox/InputView'
-import VcodecView from './Parabox/VcodecView'
-import AcodecView from './Parabox/AcodecView'
-import EffectView from './Parabox/EffectView'
-import OutputView from './Parabox/OutputView'
+<script lang="ts">
+import Vue from 'vue'
 
-export default {
+import ShortcutsView from './Parabox/ShortcutsView.vue'
+import InputView from './Parabox/InputView.vue'
+import VcodecView from './Parabox/VcodecView.vue'
+import AcodecView from './Parabox/AcodecView.vue'
+import EffectView from './Parabox/EffectView.vue'
+import OutputView from './Parabox/OutputView.vue'
+
+export default Vue.extend({
 	name: 'Parabox',
 	components: {
 		ShortcutsView, InputView, VcodecView, AcodecView, EffectView, OutputView
 	},
-	props: {
-	},
-	data: () => { return {
-		// mouseEventId: undefined,
-		// mouseDownY: 0
-	}},
 	methods: {
-		dragStart: function (event) {
+		dragStart: function (event: DragEvent) {
 			/*
 				笔记：普通函数与箭头函数的区别
 				普通函数，this 作用域为调用者作用域——
@@ -59,46 +55,31 @@ export default {
 					如下方处理鼠标拖动，this 指向这里的 this，也就是的 VueComponent
 			*/
 			// TODO：在 vue-cli 的开发中，不应直接操作 DOM
-			event.preventDefault()
-			var id = Symbol()
-			var mouseDownY = event.pageY || event.touches[0].pageY
-			var topHeight = document.getElementById("listview").offsetHeight					// topHeight: 列表视图顶部的高度
-			var fullHeight = document.getElementById("maincontent").offsetHeight;				// fullHeight: maincontent 的总高度
+			event.preventDefault();
+			let mouseDownY = event.pageY || event.touches[0].pageY;
+			let topHeight = document.getElementById("listview")!.offsetHeight					// topHeight: 列表视图顶部的高度
+			let fullHeight = document.getElementById("maincontent")!.offsetHeight;				// fullHeight: maincontent 的总高度
 			// 添加鼠标事件捕获
-			this.$store.commit('addPointerEvents', {
-				type: "mousemove",
-				id,
-				// 处理鼠标拖动
-				func: (event) => {
-					var offsetY = parseInt(event.pageY || event.touches[0].pageY) - mouseDownY;		// offsetY: 鼠标相比按下时移动的高度
-					var finalHeight = topHeight - (-offsetY);										// finalHeight: 最终等效的高度。这里要减负，否则 js 会当作字符串连接处理
-					var listPercent = finalHeight / fullHeight;
-					// console.log(offsetY, listPercent)
-					if (listPercent >= 0 && listPercent <= 1) {
-						this.$store.commit('dragParabox', listPercent * 100)
-					} else {
-						this.$store.commit('dragParabox', listPercent < 0 ? 0 : 100)
-					}
+			let handleMouseMove = (event: Partial<MouseEvent>) => {
+				let offsetY = parseInt(event.pageY || event.touches[0].pageY) - mouseDownY;		// offsetY: 鼠标相比按下时移动的高度
+				let finalHeight = topHeight - (-offsetY);										// finalHeight: 最终等效的高度。这里要减负，否则 js 会当作字符串连接处理
+				let listPercent = finalHeight / fullHeight;
+				// console.log(offsetY, listPercent)
+				if (listPercent >= 0 && listPercent <= 1) {
+					this.$store.commit('dragParabox', listPercent * 100);
+				} else {
+					this.$store.commit('dragParabox', listPercent < 0 ? 0 : 100);
 				}
-			})
-			this.$store.commit('addPointerEvents', {
-				type: "mouseup",
-				id,
-				// 移除鼠标事件捕获
-				func: () => {
-					this.$store.commit('removePointerEvents', {
-						type: "mousemove",
-						id
-					})
-					this.$store.commit('removePointerEvents', {
-						type: "mouseup",
-						id
-					})
-				}
-			})
+			}
+			let handleMouseUp = () => {
+				window.removeEventListener('mousemove', handleMouseMove);
+				window.removeEventListener('mouseup', handleMouseUp);
+			}
+			window.addEventListener('mousemove', handleMouseMove);
+			window.addEventListener('mouseup', handleMouseUp);
 		}
 	}
-}
+});
 </script>
 
 <style scoped>

@@ -4,78 +4,86 @@
 			<div id="outputCommand">
 				<div class="commandwin-title" v-html="`FFmpeg 输出（${selectedTask == null ? '全局' : selectedTask.filepath}）`"></div>
 				<div class="commandwin-box">
-					<textarea id="commandwin-output" readonly v-html="textareaOutput"></textarea>
+					<textarea id="commandwin-output" ref="commandwin_output" readonly v-html="textareaOutput"></textarea>
 				</div>
 			</div>
 			<div id="currentCommand">
 				<div class="commandwin-title" id="commandwin-current-title" v-html="`当前文件指令（${selectedTask == null ? '未选择文件' : selectedTask.filepath}）`"></div>
 				<div class="commandwin-box">
-					<textarea id="commandwin-current" readonly v-model="textareaCurrent"></textarea>
+					<textarea id="commandwin-current" ref="commandwin_current" readonly v-model="textareaCurrent"></textarea>
 				</div>
 			</div>
 			<div id="globalCommand">
 				<div class="commandwin-title">全局指令</div>
 				<div class="commandwin-box">
-					<textarea id="commandwin-global" readonly v-model="textareaGlobal"></textarea>
+					<textarea id="commandwin-global" ref="commandwin_global" readonly v-model="textareaGlobal"></textarea>
 				</div>
 			</div>			
 		</div>
 	</div>
 </template>
 
-<script>
-export default {
+<script lang="ts">
+import { Server, ServiceTask } from '@/types/types';
+import Vue from 'vue';
+
+export default Vue.extend({
 	name: 'CommandView',
-	components: {},
 	props: {
 		show: Boolean	// 不显示时不更新，节省能源	
 	},
 	computed: {
-		selectedTask: function () {
+		selectedTask: function (): ServiceTask | null {
+			let currentServer: Server = this.$store.getters.currentServer;
+			if (!currentServer) {
+				return null;
+			}
 			// 无选择时返回 null，选择时返回第一个
-			if (this.$store.state.taskSelection.size == 0) {
-				return null
-			} else if (this.$store.state.taskSelection.size > 0) {
-				var task
-				for (const id of this.$store.state.taskSelection) {
-					task = this.$store.state.tasks[id]
-					break
+			if (this.$store.state.selectedTask.size == 0) {
+				return null;
+			} else if (this.$store.state.selectedTask.size > 0) {
+				let task: ServiceTask | null = null;
+				for (const id of this.$store.state.selectedTask) {
+					task = currentServer.tasks[id];
+					break;
 				}
-				return task
+				return task;
 			}
+			return null;
 		},
-		textareaOutput: function () {
+		textareaOutput: function (): string {
 			if (!this.show) {
-				return
+				return '';
 			}
-			var selectedTask_res = this.selectedTask
 			this.$nextTick(() => {
-				const commandwin_output = document.getElementById('commandwin-output')
-				commandwin_output.scrollTop = commandwin_output.scrollHeight - commandwin_output.offsetHeight
+				const commandwin_output = this.$refs.commandwin_output;
+				commandwin_output.scrollTop = commandwin_output.scrollHeight - commandwin_output.offsetHeight;
 			})
-			if (selectedTask_res == null) {
-				// 显示全局 cmd
-				return this.$store.state.cmdData
+			if (this.selectedTask) {
+				return this.selectedTask.cmdData;
 			} else {
-				return selectedTask_res.cmdData
+				// 显示全局 cmd
+				return this.$store.state.cmdData;
 			}
 		},
-		textareaCurrent: function () {
-			var selectedTask_res = this.selectedTask
-			if (selectedTask_res != null) {
-				return ['ffmpeg', ...selectedTask_res.paraArray].join(' ')
-			} 
+		textareaCurrent: function (): string {
+			if (this.selectedTask) {
+				return ['ffmpeg', ...this.selectedTask.paraArray].join(' ');
+			} else {
+				return '';
+			}
 		},
-		textareaGlobal: function () {
-			var globalParaArray = this.$store.state.globalParams.paraArray
-			if (globalParaArray != null) {
-				return ['ffmpeg', ...globalParaArray].join(' ')
+		textareaGlobal: function (): string {
+			let globalParaArray = this.$store.state.globalParams.paraArray
+			if (globalParaArray) {
+				return ['ffmpeg', ...globalParaArray].join(' ');
+			} else {
+				return '';
 			}
 		}
 	},
-	methods: {
-	}
-}
+});
+
 </script>
 
 <style scoped>

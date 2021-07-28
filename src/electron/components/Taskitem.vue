@@ -34,9 +34,9 @@
 					<div class="taskitem-img-size"></div>
 					<span class="taskitem-span-size" :class="{ 'taskitem-size-compact': after.video.resolution != '不改变' }" v-html="$options.filters.resolutionXtoBR(after.video.resolution)"></span>
 					<div class="taskitem-img-vratecontrol"></div>
-					<span class="taskitem-span-vratecontrol">{{ computed_after.vrate.value }}</span>
+					<span class="taskitem-span-vratecontrol">{{ videoRateControl }}</span>
 					<div class="taskitem-img-aratecontrol"></div>
-					<span class="taskitem-span-aratecontrol">{{ computed_after.arate.value }}</span>
+					<span class="taskitem-span-aratecontrol">{{ audioRateControl }}</span>
 				</div>
 				<div class="taskitem-graphs">
 					<div class="taskitem-graph">
@@ -68,22 +68,16 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
+import Vue from 'vue';
+
 import { getFormattedTime } from '@/common/utils.js'
+import { TaskStatus } from "@/types/types";
+import { generator as vGenerator } from '@/common/vcodecs'
+import { generator as aGenerator } from '@/common/acodecs'
 
-const TASK_DELETED = -2;
-const TASK_PENDING = -1;
-const TASK_STOPPED = 0;
-const TASK_RUNNING = 1;
-const TASK_PAUSED = 2;
-const TASK_STOPPING = 3;
-const TASK_FINISHING = 4;
-const TASK_FINISHED = 5;
-const TASK_ERROR = 6;
-
-export default {
+export default Vue.extend({
 	name: 'TaskItem',
-	components: {},
 	props: {
 		id: [Number, String],
 		duration: String,
@@ -93,61 +87,59 @@ export default {
 		progress_smooth: Object,
 		status: Number,
 		selected: Boolean,
-		computed_after: Object
 	},
-	data: () => { return {
-	}},
 	computed: {
-		taskItemStyle: function () {
-			var running = this.status == TASK_RUNNING || this.status == TASK_PAUSED || this.status == TASK_STOPPING || this.status == TASK_FINISHING
-			var selected = this.selected
+		// 样式部分
+		taskItemStyle: function (): string {
+			let running = this.status === TaskStatus.TASK_RUNNING || this.status === TaskStatus.TASK_PAUSED || this.status === TaskStatus.TASK_STOPPING || this.status === TaskStatus.TASK_FINISHING;
+			let selected = this.selected;
 			if (!running && !selected) {
-				return 'taskitem-small'
+				return 'taskitem-small';
 			} else if (!running && selected) {
-				return 'taskitem-large'
+				return 'taskitem-large';
 			} else if (running && !selected) {
-				return 'taskitem-small-run'
+				return 'taskitem-small-run';
 			} else if (running && selected) {
-				return 'taskitem-large-run'
+				return 'taskitem-large-run';
 			}
+			return '';
 		},
-		backgroundStyle: function () {
+		backgroundStyle: function (): string {
 			switch (this.status) {
-				case TASK_RUNNING: case TASK_FINISHING:
-					return 'progress-green'
-					break;
-				case TASK_PAUSED: case TASK_STOPPING:
-					return 'progress-yellow'
-					break;
-				case TASK_FINISHED: case TASK_STOPPED:
-					return 'progress-gray'
-					break;
-				case TASK_ERROR:
-					return 'progress-red'
-					break;
+				case TaskStatus.TASK_RUNNING: case TaskStatus.TASK_FINISHING:
+					return 'progress-green';
+				case TaskStatus.TASK_PAUSED: case TaskStatus.TASK_STOPPING:
+					return 'progress-yellow';
+				case TaskStatus.TASK_FINISHED: case TaskStatus.TASK_STOPPED:
+					return 'progress-gray';
+				case TaskStatus.TASK_ERROR:
+					return 'progress-red';
 			}
+			return '';
 		},
-		deleteButtonBackgroundPositionX: function () {
+		deleteButtonBackgroundPositionX: function (): string {
 			switch (this.status) {
-				case TASK_STOPPED:
-					return '0px'	// 删除按钮
-				case TASK_RUNNING:
-					return '-16px'	// 暂停按钮
-				case TASK_PAUSED: case TASK_STOPPING: case TASK_FINISHING: case TASK_FINISHED: case TASK_ERROR:
-					return '-32px'	// 重置按钮
+				case TaskStatus.TASK_STOPPED:
+					return '0px';	// 删除按钮
+				case TaskStatus.TASK_RUNNING:
+					return '-16px';	// 暂停按钮
+				case TaskStatus.TASK_PAUSED: case TaskStatus.TASK_STOPPING: case TaskStatus.TASK_FINISHING: case TaskStatus.TASK_FINISHED: case TaskStatus.TASK_ERROR:
+					return '-32px';	// 重置按钮
 			}
+			return '';
 		},
-		deleteButtonAriaLabel: function () {
+		deleteButtonAriaLabel: function (): string {
 			switch (this.status) {
-				case TASK_STOPPED: case TASK_FINISHED:
+				case TaskStatus.TASK_STOPPED: case TaskStatus.TASK_FINISHED:
 					return '删除任务' + this.filename
-				case TASK_RUNNING:
+				case TaskStatus.TASK_RUNNING:
 					return '暂停任务' + this.filename
-				case TASK_PAUSED: case TASK_STOPPING: case TASK_FINISHING: case TASK_FINISHED:
+				case TaskStatus.TASK_PAUSED: case TaskStatus.TASK_STOPPING: case TaskStatus.TASK_FINISHING: case TaskStatus.TASK_FINISHED:
 					return '重置任务' + this.filename
 			}
+			return '删除暂停重置按钮';
 		},
-		// 仪表盘
+		// 仪表盘部分
 		// 计算方式：(log(数值) / log(底，即每增长多少倍数为一格) + 数值为 1 时偏移多少格) / 格数
 		// 　　　或：(log(数值 / 想要以多少作为最低值) / log(底，即每增长多少倍数为一格)) / 格数
 		dashboard_bitrate: function () {
@@ -172,53 +164,58 @@ export default {
 			var valueEven = this.progress_smooth.frame % 2 - 1;
 			if (valueEven < 0) { valueEven = 0; }
 			return "background: conic-gradient(#DDD 0%, #DDD " + valueEven * 75 + "%, #36D " + valueEven * 75 + "%, #36D " + valueOdd * 75 + "%, #DDD " + valueOdd * 75 + "%, #DDD 75%, transparent 75%);";	
-		}
+		},
+		// 码率部分
+		videoRateControl: function (): string {
+			return vGenerator.getRateControlParam(this.after.video).value;
+		},
+		audioRateControl: function (): string {
+			return aGenerator.getRateControlParam(this.after.audio).value;
+		},
 	},
 	filters: {
-		getFormattedTime: function (duration) {
+		getFormattedTime: function (duration: number): string {
 			if (isNaN(duration)) {	// 静态图片
-				return '--:--:--.--'
-			} else if (typeof duration == 'number') {
-				return getFormattedTime(duration)
+				return '--:--:--.--';
+			} else if (typeof duration === 'number') {
+				return getFormattedTime(duration);
 			} else {
-				return duration
+				return duration;
 			}
 		},
-		resolutionXtoBR: function (str) {
-			return str.replace('x', '<br />')
+		resolutionXtoBR: function (str: string) {
+			return str.replace('x', '<br />');
 		},
-		bitrateFilter: function (kbps) {
+		bitrateFilter: function (kbps: number) {
 			if (kbps >= 10000) {
-				return (kbps / 1000).toFixed(1) + ' M'
+				return (kbps / 1000).toFixed(1) + ' M';
 			} else {
-				return (kbps / 1000).toFixed(2) + ' M'
+				return (kbps / 1000).toFixed(2) + ' M';
 			}
 		},
-		speedFilter: function (value) {
+		speedFilter: function (value: number) {
 			if (value < 10) {
-				return value.toFixed(2) + ' ×'
+				return value.toFixed(2) + ' ×';
 			} else {
-				return value.toFixed(1) + ' ×'
+				return value.toFixed(1) + ' ×';
 			}
 		},
-		timeFilter: function (value) {
+		timeFilter: function (value: number) {
 			if (value < 100) {
-				return value.toFixed(2)
+				return value.toFixed(2);
 			} else {
-				return value.toFixed(1)
+				return value.toFixed(1);
 			}
 		},
-		beforeBitrateFilter: function (kbps) {
+		beforeBitrateFilter: function (kbps: number) {
 			if (kbps >= 10000) {
-				return (kbps / 1000).toFixed(1) + ' Mbps'
+				return (kbps / 1000).toFixed(1) + ' Mbps';
 			} else {
-				return kbps + ' kbps'
+				return kbps + ' kbps';
 			}
 		},
 	},
-	methods: {
-	}
-}
+});
 
 </script>
 
