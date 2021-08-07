@@ -1,6 +1,6 @@
-import { outputParams } from "@/types/types";
+import { OutputParams } from "@/types/types";
 
-export const defaultParams: outputParams = {
+export const defaultParams: OutputParams = {
     input: {
 		hwaccel: '不使用'
 	},

@@ -6,7 +6,7 @@
 			<div id="icon-square" :style="{opacity: progressOpacity}"></div>
 		</div>
 		<div id="title" :style="{left: titleLeft}">{{ titlebarText }}</div>
-		<button id="updatecheck-button" aria-label="点击更新" v-if="newVersion != null" :style="{ left: newVersionLeft }" @mouseenter="handleMouseEnter($event, newVersionText)" @mouseleave="handleMouseLeave()" @click="gotoWebsite">
+		<button id="updatecheck-button" aria-label="点击更新" v-if="newVersion" :style="{ left: newVersionLeft }" @mouseenter="handleMouseEnter($event, newVersionText)" @mouseleave="handleMouseLeave()" @click="gotoWebsite">
 			有新版本
 		</button>
 		<div id="titlebar-control">
@@ -25,8 +25,10 @@
 
 <script lang="ts">
 import Vue from 'vue';
+import { version, buildNumber } from "@/types/constants";
+import { FFBoxVersion, NormalApiWrapper } from '@/types/types';
 
-let remote, currentWindow, exec；
+let remote: any, currentWindow: any, exec: any;
 if (process.env.IS_ELECTRON) {
 	remote = window.require('electron').remote;
 	currentWindow = remote.getCurrentWindow();
@@ -36,13 +38,16 @@ if (process.env.IS_ELECTRON) {
 	// 不能引入 child_process，因为不是 node 环境
 }
 
-export default Vue.extend({
+interface Data {
+	isMaximized: boolean;
+	newVersion: null | FFBoxVersion;
+}
+
+export default Vue.extend<Data, any, any, any>({
 	name: 'Titlebar',
-	props: {
-	},
 	data: () => { return {
 		isMaximized: false,
-		newVersion: null
+		newVersion: null,
 	}},
 	computed: {
 		progressOpacity: function () {	// 暂停、运行状态下输出 1，否则 0
@@ -64,11 +69,11 @@ export default Vue.extend({
 			return this.$store.state.workingStatus ? '320px' : 'calc(50% + 88px)'
 		},
 		titlebarText: function () {		// 暂停、运行状态下输出进度，否则没有
-			return (this.$store.state.workingStatus ? '进度：' + (this.$store.state.progress * 100).toFixed(3) + ' % - ' : '') + '丹参盒 v' + this.$store.state.version + (process.env.NODE_ENV != 'production' ? 'd' : '')
+			return (this.$store.state.workingStatus ? '进度：' + (this.$store.state.progress * 100).toFixed(3) + ' % - ' : '') + '丹参盒 v' + version + (process.env.NODE_ENV != 'production' ? 'd' : '')
 		},
 		newVersionText: function () {
-			if (this.newVersion != null) {
-				return `发现新版本：${this.newVersion.version}<br />点击跳转到官网下载`
+			if (this.newVersion) {
+				return `发现新版本：${this.newVersion!.version}<br />点击跳转到官网下载`
 			}
 		}
 	},
@@ -92,7 +97,7 @@ export default Vue.extend({
 			this.$store.commit('closeConfirm');
 		},
 		// 处理 tooltip
-		handleMouseEnter: function (event: MouseEvent, text) {
+		handleMouseEnter: function (event: MouseEvent, text: string) {
 			this.$tooltip.show({
 				text,
 				position: {
@@ -120,17 +125,17 @@ export default Vue.extend({
 	mounted: function () {
 		fetch('http://ffbox.ttqf.tech/update/check', {
 			method: 'GET',
-		}).then(response => {
-			response.text().then(data => {
-				data = JSON.parse(data);
-				if (data.buildNumber > this.$store.state.buildNumber) {
-					console.log('发现新版本：' + data.version);
-					this.newVersion = data;
+		}).then((response) => {
+			response.text().then((data_s) => {
+				let data = JSON.parse(data_s) as NormalApiWrapper<FFBoxVersion>;
+				if (data.status === 200 && data.data.buildNumber > buildNumber) {
+					console.log('发现新版本：' + data.data.version);
+					this.newVersion = data.data;
 				}
 			})
 		})
 	}
-})
+});
 
 </script>
 
