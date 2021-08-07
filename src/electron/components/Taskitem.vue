@@ -71,7 +71,7 @@
 <script lang="ts">
 import Vue from 'vue';
 
-import { getFormattedTime } from '@/common/utils.js'
+import { getFormattedTime } from '@/common/utils'
 import { TaskStatus } from "@/types/types";
 import { generator as vGenerator } from '@/common/vcodecs'
 import { generator as aGenerator } from '@/common/acodecs'

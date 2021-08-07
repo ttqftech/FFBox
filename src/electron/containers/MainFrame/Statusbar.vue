@@ -3,41 +3,46 @@
 		<div id="ffmpeg-version">{{ ffmpegVersion }}</div>
 		<!-- <button class="infoicon" @click="switchInfoCenter();" :class="$store.state.showInfoCenter ? 'infoicon-selected' : 'infoicon-unselected'" aria-label="通知中心开关">
 			<img src="/images/info-transparent.svg" /><span class="infocount">{{ this.$store.state.infos.length }}</span>
-		</button>
+		</button> -->
 		<button class="infoicon" @click="switchSponsorCenter();" :class="$store.state.showSponsorCenter ? 'infoicon-selected' : 'infoicon-unselected'" aria-label="打赏中心开关">
 			<img src="/images/sponsor.svg" /><div style="width: 12px"></div>
-		</button> -->
+		</button>
 		<div id="output-folder"></div>
 	</footer>
 </template>
 
-<script>
-export default {
+<script lang="ts">
+import { Server } from '@/types/types';
+import Vue from 'vue';
+
+export default Vue.extend({
 	name: 'Statusbar',
-	props: {},
-	data: () => { return {
-	}},
 	computed: {
-		ffmpegVersion: function () {
-			if (this.$store.state.FFmpegVersion == ''){
-				return '当前 FFmpeg 版本：检测中'
-			} else if (this.$store.state.FFmpegVersion == '-'){
-				return '当前 FFmpeg 版本：FFmpeg 未安装或未配置环境变量！'
-			} else {
-				return '当前 FFmpeg 版本：' + this.$store.state.FFmpegVersion
+		ffmpegVersion: function (): string {
+			let currentServer = this.$store.getters.currentServer as Server;
+			if (!currentServer) {
+				return 'FFBox 服务连接失败，请重新打开应用！';
 			}
+			let ret = `当前服务器：${this.$store.state.currentServerName}，`;
+			if (currentServer.ffmpegVersion === ''){
+				ret += 'FFmpeg 版本：检测中';
+			} else if (currentServer.ffmpegVersion === '-'){
+				ret += 'FFmpeg 版本：FFmpeg 未安装或未配置环境变量！请访问 FFBox 官网获取相关说明';
+			} else {
+				ret += 'FFmpeg 版本：' + currentServer.ffmpegVersion;
+			}
+			return ret;
 		}
 	},
 	methods: {
 		switchInfoCenter: function () {
-			this.$store.commit('showInfoCenter_update', !this.$store.state.showInfoCenter)
+			this.$store.commit('showInfoCenter_update', !this.$store.state.showInfoCenter);
 		},
 		switchSponsorCenter: function () {
-			this.$store.commit('showSponsorCenter_update', !this.$store.state.showSponsorCenter)
+			this.$store.commit('showSponsorCenter_update', !this.$store.state.showSponsorCenter);
 		}
 	}
-	
-}
+});
 </script>
 
 <style scoped>

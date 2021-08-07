@@ -2,15 +2,15 @@ import { FFmpeg } from '../service/FFmpegInvoke'
 
 export enum FFBoxServiceEvent {
 	ffmpegVersion = 'ffmpegVersion',	// content: string
+	workingStatusUpdate = 'workingStatusUpdate',	// value: WorkingStatus
 	tasklistUpdate = 'tasklistUpdate',	// content: Array<number>
 	taskUpdate = 'taskUpdate',	// id: number, content: ServiceTask
 	cmdUpdate = 'cmdUpdate',	// id: number, content: string
 	progressUpdate = 'progressUpdate',		// id: number, content: {...}
 	taskNotification = 'taskNotification',	// id: number, content: string, level: NotificationLevel
-	workingStatusUpdate = 'workingStatusUpdate',	// value: WorkingStatus
 }
 
-export interface outputParams {
+export interface OutputParams {
 	input: any;
 	video: any;
 	audio: any;
@@ -53,37 +53,55 @@ export interface Notification {
 }
 
 export interface ServiceTask {
-	filename: string,
-	filepath: string,
+	// 服务端与客户端保持同步
+	fileName: string;
+	filePath: string;
 	before: {
-		format: string,
-		duration: string,
-		vcodec: string,
-		acodec: string,
-		vresolution: string,
-		vframerate: string,
-		vbitrate: string,
-		abitrate: string,
-	},
-	after: any,
-	paraArray: Array<string>,
-	ffmpeg: FFmpeg | null,
-	status: TaskStatus,
+		format: string;
+		duration: string;
+		vcodec: string;
+		acodec: string;
+		vresolution: string;
+		vframerate: string;
+		vbitrate: string;
+		abitrate: string;
+	};
+	after: any;
+	paraArray: Array<string>;
+	status: TaskStatus;
 	taskProgress: {
 		normal: Array<{
-			realTime: number,
-			mediaTime: number,
-			frame: number,
+			realTime: number;
+			mediaTime: number;
+			frame: number;
 		}>
 		size: Array<{
-			realTime: number,
-			size: number,
+			realTime: number;
+			size: number;
 		}>
-	},
-	lastPaused: number,		// 用于暂停后恢复时计算速度
-	cmdData: string,
-	notifications: Array<Notification>,
-	errorInfo: Array<string>,
+	};
+	cmdData: string;
+	errorInfo: Array<string>;
+	lastPaused: number;		// 用于暂停后恢复时计算速度
+	notifications: Array<Notification>;
+	// 仅存在于服务端
+	ffmpeg?: FFmpeg | null;
+	// 仅存在于客户端
+	progress?: {
+		progress: number;
+		bitrate: number;
+		speed: number;
+		time: number;
+		frame: number;
+	};
+	progress_smooth?: {
+		progress: number;
+		bitrate: number;
+		speed: number;
+		time: number;
+		frame: number;
+	};
+	dashboardTimer?: number;
 }
 
 export enum WorkingStatus {
@@ -108,19 +126,19 @@ export interface StoreState {
 	draggerPos: number;
 	// 非界面类
 	notifications: Array<Notification>;
-	servers: Map<string, Server>;
+	servers: {[key: string]: Server};
 	currentServerName: string;
 	selectedTask: Set<string>;
-	globalParams: outputParams;
+	globalParams: OutputParams;
 	overallProgressTimerID: any;
 }
 
 export interface BaseComboItem {
-	sName: string,
-	lName: string,
-	imageName?: string,
-	imageOffset?: number,
-	description?: string,
+	sName: string;
+	lName: string;
+	imageName?: string;
+	imageOffset?: number;
+	description?: string;
 }
 
 export type Parameter = {
@@ -137,4 +155,15 @@ export type Parameter = {
 	parameter: string,
 	display: string,
 	items: Array<BaseComboItem>,
+}
+
+export interface NormalApiWrapper<T> {
+	status: number;
+	message: string;
+	data: T;
+}
+
+export interface FFBoxVersion {
+	version: string;
+	buildNumber: number;
 }

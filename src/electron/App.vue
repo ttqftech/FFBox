@@ -5,19 +5,15 @@
 </template>
 
 <script lang="ts">
-const version = '3.0'
-const buildNumber = 10
-//	1.0	1.1	2.0	2.1	2.2	2.3	2.4 2.5 2.6 3.0
-
-import MainFrame from './containers/MainFrame.vue'
 import Vue from 'vue'
 import Vuex from 'vuex'
 
-import Popup from './components/floating/Popup/index.js'
-import Msgbox from './components/floating/Msgbox/index.js'
-import Tooltip from './components/floating/Tooltip/index.js'
+import MainFrame from '@/electron/containers/MainFrame.vue'
+import Popup from '@/electron/components/floating/Popup/index'
+import Msgbox from '@/electron/components/floating/Msgbox/index.js'
+import Tooltip from '@/electron/components/floating/Tooltip/index.js'
 
-let ElectronStore, electronStore, ipc, remote, currentWindow, spawn
+let ElectronStore, electronStore: any, ipc: any, remote: any, currentWindow: any, spawn: any
 if (process.env.IS_ELECTRON) {
 	ElectronStore = window.require('electron-store')
 	electronStore = new ElectronStore()
@@ -29,13 +25,13 @@ if (process.env.IS_ELECTRON) {
 
 const maxThreads = 2
 
-import { generator as fGenerator } from '../common/formats'
-import { generator as vGenerator } from '../common/vcodecs'
-import { generator as aGenerator } from '../common/acodecs'
 import { FFBoxService } from "@/service/FFBoxService";
 
 import { defaultParams } from "../common/defaultParams";
-import { StoreState, NotificationLevel, ServiceTask, WorkingStatus, TaskStatus } from '@/types/types'
+import { StoreState, NotificationLevel, ServiceTask, WorkingStatus, TaskStatus, Server } from '@/types/types'
+import { getInitialTask } from '@/common/utils'
+import { version, buildNumber } from "@/types/constants";
+import { getFFmpegParaArray } from '@/common/getFFmpegParaArray'
 
 let ffboxService: FFBoxService;
 let mainVue: any;
@@ -55,9 +51,9 @@ const store = new Vuex.Store<StoreState>({
 		draggerPos: 60,
 		// 非界面类
 		notifications: [],
-		servers: new Map([
-			['local', { tasks: [], ffmpegVersion: '', workingStatus: WorkingStatus.stopped, progress: 0 }]
-		]),
+		servers: {
+			'local': { tasks: [], ffmpegVersion: '', workingStatus: WorkingStatus.stopped, progress: 0 }
+		},
 		currentServerName: 'local',
 		selectedTask: new Set(),
 		globalParams: Object.assign({}, defaultParams),
@@ -65,7 +61,7 @@ const store = new Vuex.Store<StoreState>({
 	},
 	getters: {
 		currentServer (state) {
-			return state.servers.get(state.currentServerName);
+			return state.servers[state.currentServerName];
 		}
 	},
 	mutations: {
@@ -83,9 +79,21 @@ const store = new Vuex.Store<StoreState>({
 				state.showSponsorCenter = false
 			}
 		},
+		// 更改左侧边栏选择的项目，其中（0~1）更改 list，（2~8）更改 para
+		listNparaSelect (state, value) {
+			if (value < 2) {
+				state.listSelected = value
+			} else {
+				state.paraSelected = value - 2
+			}
+		},
+		// 拖动参数盒的横杠
+		dragParabox (state, value) {
+			state.draggerPos = value
+		},
 		// 点击开始/暂停按钮
 		startNpause (state) {
-			let currentServer = state.servers.get(state.currentServerName);
+			let currentServer = state.servers[state.currentServerName];
 			if (!currentServer) {
 				return;
 			}
@@ -96,7 +104,7 @@ const store = new Vuex.Store<StoreState>({
 			}
 		},
 		pauseNremove (state, id: number) {
-			let currentServer = state.servers.get(state.currentServerName);
+			let currentServer = state.servers[state.currentServerName];
 			if (!currentServer) {
 				return;
 			}
@@ -238,18 +246,6 @@ const store = new Vuex.Store<StoreState>({
 		deleteMsg (state, index) {
 			state.infos.splice(index, 1)
 		},
-		// 更改左侧边栏选择的项目，其中（0~1）更改 list，（2~8）更改 para
-		listNparaSelect (state, value) {
-			if (value < 2) {
-				state.listSelected = value
-			} else {
-				state.paraSelected = value - 2
-			}
-		},
-		// 拖动参数盒的横杠
-		dragParabox (state, value) {
-			state.draggerPos = value
-		},
 		// 修改参数，保存到本地磁盘（args：type (input | video | videoDetail | audio | audioDetail | output), key, value）。args 不传则直接存盘
 		changePara (state, args) {
 			if (args) {
@@ -313,84 +309,31 @@ const store = new Vuex.Store<StoreState>({
 				Vue.set(state.globalParams, 'paraArray', getFFmpegParaArray('[输入目录]/[输入文件名].[输入扩展名]', state.globalParams.input, state.globalParams.video, state.globalParams.audio, state.globalParams.output))
 			})
 		},
-		// 添加任务（args：name, path, callback（传回添加后的 id））
+		/**
+		 * 添加任务
+		 * @param args name, path, callback（传回添加后的 id）
+		 */
 		addTask (state, args) {
-			ffboxService.taskAdd(args.path, args.name);
-			var id = state.taskIndex++
-			// var id = Symbol()
-			var task = {
-				filename: args.name,
-				filepath: args.path,
-				before: {
-					format: '读取中',
-					duration: '--:--:--.--',
-					vcodec: '读取中',
-					acodec: '读取中',
-					vresolution: '读取中',
-					vframerate: '读取中',
-					vbitrate: '读取中',
-					abitrate: '读取中',
-				},
-				after: JSON.parse(JSON.stringify(state.globalParams)),
-				paraArray: [],
-				progress: {
-					progress: 0,
-					bitrate: 0,
-					speed: 0,
-					time: 0,
-					frame: 0,
-				},
-				progress_smooth: {
-					progress: 0,
-					bitrate: 0,
-					speed: 0,
-					time: 0,
-					frame: 0,
-				},
-				FFmpeg: null,
-				status: TASK_STOPPED,
-				taskProgress: [],					// 用于动态显示进度
-				taskProgress_size: [],				// 因为 size 的更新速度很慢，所以单独拎出来
-				dashboardTimer: NaN,				// 刷新进度的计时器，刷新间隔 40ms
-				lastPaused: new Date().getTime() / 1000,	// 用于暂停后恢复时计算速度
-				cmdData: '',
-				errorInfo: []
+			let currentServer = state.servers[state.currentServerName];
+			if (!currentServer) {
+				return;
 			}
-			// state.tasks[id] = task		// 监听不到
-			Vue.set(state.tasks, id, task)	// store 中没有 $set，因此使用静态方法更新
-
-			// 更新命令行参数
-			task.paraArray = getFFmpegParaArray(task.filepath, task.after.input, task.after.video, task.after.audio, task.after.output, true)
-
-			// FFmpeg 读取媒体信息
-			var ffmpeg = new FFmpeg(2, ["-hide_banner", "-i", args.path, "-f", "null"])
-			ffmpeg.on("data", (data) => {
-				this.commit('cmdDataArrived', { id, msg: data })
-			});
-			ffmpeg.on('metadata', (input) => {
-				task.before.format = input.format
-				task.before.duration = input.duration
-				task.before.vcodec = input.vcodec == undefined ? "-" : input.vcodec
-				task.before.vresolution = input.vcodec == undefined ? "-" : input.vresolution.replace("x", "<br />")
-				task.before.vbitrate = input.vbitrate == undefined ? "-" : input.vbitrate
-				task.before.vframerate = input.vframerate == undefined ? "-" : input.vframerate
-				task.before.format = input.format
-				task.before.acodec = input.acodec == undefined ? "-" : input.acodec
-				task.before.abitrate = input.abitrate == undefined ? "-" : input.abitrate
-			})
-			ffmpeg.on("critical", (errors) => {
-				var reason = '';
-				errors.forEach((value) => {
-					reason += value;
-				})
-				this.commit('pushMsg', { msg: args.path + "：" + reason, level: 2 });
-				setTimeout(() => {
-					delete state.tasks[id]
-				}, 100);
-			})
+			let id = ffboxService.taskAdd(args.path, args.name, state.globalParams);
+			let newTask = getInitialTask(args.name, args.path, 'client', state.globalParams);
+			currentServer.tasks[id] = newTask;
 			if (typeof args.callback == 'function') {
-				args.callback(id)
+				args.callback(id);
 			}
+		},
+		/**
+		 * 当接收到 service 过来的 FFBoxServiceEvent.tasklistUpdate 后调用此处更新列表
+		 */
+		updateTaskList (state, newList) {
+			let currentServer = state.servers[state.currentServerName];
+			if (!currentServer) {
+				return;
+			}
+			currentServer.tasks = newList;
 		},
 		selectedTask_update (state, set) {
 			// console.log('selectedTask updated at ' + new Date().getTime())
@@ -402,29 +345,15 @@ const store = new Vuex.Store<StoreState>({
 				}
 			}
 		},
-		// 接收到 cmd 消息（args：msg, id）
-		cmdDataArrived (state, args) {
-			// console.log(args.msg)
-			if (args.msg.slice(-1) != '\n') {
-				args.msg += '\n'
+		/**
+		 * 当接收到 service 过来的 FFBoxServiceEvent.ffmpegVersion 后调用此处
+		 */
+		FFmpegVersion_update (state, content) {
+			let currentServer = state.servers[state.currentServerName];
+			if (!currentServer) {
+				return;
 			}
-			if (typeof args.id == 'undefined') {
-				state.cmdData += args.msg
-				if (state.cmdData.length > 40000) {
-					state.cmdData = state.cmdData.slice(4000)
-				}
-			} else {
-				var task = state.tasks[args.id]
-				task.cmdData += args.msg
-				if (task.cmdData.length > 40000) {
-					task.cmdData = task.cmdData.slice(4000)
-				}
-			}
-			state.selectedTask = new Set(state.selectedTask)
-		},
-		// 刷新 FFmpeg 版本信息
-		FFmpegVersion_update (state, info) {
-			state.FFmpegVersion = info
+			currentServer.ffmpegVersion = content;
 		},
 		// 关闭窗口事件触发时调用
 		closeConfirm (state) {
@@ -451,26 +380,92 @@ export default Vue.extend({
 	},
 	methods: {
 		handleFFmpegVersion(content: string) {
-
-		},
-		handleTasklistUpdate(content: Array<number>) {
-
-		},
-		handleTaskUpdate(id: number, content: ServiceTask) {
-
-		},
-		handleCmdUpdate(id: number, content: string) {
-
-		},
-		handleProgressUpdate(id: number, content: any) {
-
-		},
-		handleTaskNotification(id: number, content: string, level: NotificationLevel) {
-
+			let currentServer: Server = this.$store.getters.currentServer;
+			if (!currentServer) {
+				return;
+			}
+			currentServer.ffmpegVersion = content;
 		},
 		handleWorkingStatusUpdate(value: WorkingStatus) {
-			
-		}
+			let currentServer: Server = this.$store.state.servers[this.$store.state.currentServerName];
+			if (!currentServer) {
+				return;
+			}
+			currentServer.workingStatus = value;
+		},
+		handleTasklistUpdate(content: Array<number>) {
+			let currentServer: Server = this.$store.getters.currentServer;
+			if (!currentServer) {
+				return;
+			}
+
+			let localI = 0;
+			let remoteI = 0;
+			let localKeys = Object.keys(currentServer.tasks).map(Number);	// [1,2,4,5,6,7]
+			let remoteKeys = content;										// [1,2,4,6,7,8]
+			let newTaskList: Array<ServiceTask> = [];
+			while (localI < localKeys.length || remoteI < remoteKeys.length) {
+				let localKey = localKeys[localI];
+				let remoteKey = remoteKeys[remoteI];
+				if (localI >= localKeys.length) {
+					// 本地下标越界，说明远端添加任务了
+					newTaskList[remoteKey] = ffboxService.getTask(remoteKey);	// TODO
+					remoteI++;
+				} else if (remoteI >= remoteKeys.length) {
+					// 远端下标越界，说明远端删除了最后面的若干个任务
+					break;
+				} else if (localKey > remoteKey) {
+					// 本地跳号了，说明远端删除了中间的任务
+					localI++;
+				} else if (localKey === remoteKey) {
+					// 从 local 处直接复制
+					newTaskList[localKey] = currentServer.tasks[localKey];
+					localI++;
+					remoteI++;
+				}
+			}
+			this.$store.commit('updateTaskList', newTaskList);
+		},
+		/**
+		 * 更新整个 task
+		 */
+		handleTaskUpdate(id: number, content: ServiceTask) {
+			let currentServer: Server = this.$store.state.servers[this.$store.state.currentServerName];
+			if (!currentServer) {
+				return;
+			}
+			currentServer.tasks[id] = content;
+		},
+		/**
+		 * 增量更新 cmdData
+		 */
+		handleCmdUpdate(id: number, content: string) {
+			let currentServer: Server = this.$store.state.servers[this.$store.state.currentServerName];
+			if (!currentServer) {
+				return;
+			}
+			currentServer.tasks[id].cmdData += content;
+		},
+		/**
+		 * 整个更新 taskProgress
+		 */
+		handleProgressUpdate(id: number, content: any) {
+			let currentServer: Server = this.$store.state.servers[this.$store.state.currentServerName];
+			if (!currentServer) {
+				return;
+			}
+			currentServer.tasks[id].taskProgress = content;
+		},
+		/**
+		 * 增量更新 notifications
+		 */
+		handleTaskNotification(id: number, content: string, level: NotificationLevel) {
+			let currentServer: Server = this.$store.state.servers[this.$store.state.currentServerName];
+			if (!currentServer) {
+				return;
+			}
+			currentServer.tasks[id].notifications.push({ content, level, time: new Date().getTime() });
+		},
 	},
 	beforeCreate: function () {
 		document.querySelector('body')!.className = "body";

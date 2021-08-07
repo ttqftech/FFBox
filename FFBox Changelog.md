@@ -1,5 +1,7 @@
 # FFBox Changelog
 
+`2021-08-07` 修正 store state 中的 servers 类型  
+`2021-07-29` 进行 utils 的 TypeScript 改造；App 新增 Service 事件处理机制；store 进行新增任务的相关改造  
 `2021-07-28` 进行 ListView、CommandView、TasksView、Taskitem 的相关改造  
 `2021-07-26` 更新了 store state 中的属性及 TypeScript 定义；去除 store 的全局键鼠事件机制  
 `2021-07-22` combobox 操作逻辑优化完成；部分组件代码规范性优化；去除 getWindowOffsetLeft/Top；去除 store 的全局键鼠事件机制  

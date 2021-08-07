@@ -1,29 +1,41 @@
-// 传入 "xxx kbps"，返回 xxx
-function getKbpsValue (text) {	
+// #region 格式转换区
+
+import { OutputParams, ServiceTask, TaskStatus } from "@/types/types";
+
+/** 
+ * 传入 "xxx kbps"，返回比特率（Kbps）
+ */
+export function getKbpsValue (text: string): number {	
 	return parseInt(text.slice(0, -5));
 }
 
-// 传入 xxx，返回 "xxx kbps" 或 "xxx Mbps"
-function getFormattedBitrate (Kbps) {
+/**
+ * 传入比特率（Kbps），返回 "xxx kbps" 或 "xxx Mbps"
+ */
+export function getFormattedBitrate (Kbps: number): string {
 	return Kbps < 1000 ? Kbps + " kbps" : (Kbps / 1000).toFixed(1) + " Mbps";
 }
 
-// 传入秒数，返回 --:--:--.--
-function getFormattedTime (timeValue) {
-	if (timeValue != -1) {
-		var Hour = parseInt(timeValue / 3600);
-		var Minute = parseInt((timeValue - Hour * 3600) / 60);
-		var Second = timeValue - Hour * 3600 - Minute * 60;
-		return ("0" + Hour).slice(-2) + ":" + ("0" + Minute).slice(-2) + ":" + ("0" + Second.toFixed(2)).slice(-5);	
+/**
+ * 传入秒数，返回 --:--:--.--
+ */
+export function getFormattedTime (timeValue: number): string {
+	if (timeValue !== -1) {
+		let Hour = Math.floor(timeValue / 3600);
+		let Minute = Math.floor((timeValue - Hour * 3600) / 60);
+		let Second = timeValue - Hour * 3600 - Minute * 60;
+		return ("0" + Hour).slice(-2) + ":" + ("0" + Minute).slice(-2) + ":" + ("0" + Second.toFixed(2)).slice(-5);
 	} else {
-		return "时长未知"
+		return "时长未知";
 	}
 }
 
-// 传入 --:--:--.--，返回秒数
-function getTimeValue (timeString) {
-	if (timeString != "N/A") {
-		var seconds = timeString.slice(0, 2) * 3600 + timeString.slice(3, 5) * 60 - (-timeString.slice(6));
+/**
+ * 传入 --:--:--.--，返回秒数
+ */
+export function getTimeValue (timeString: string): number {
+	if (timeString !== "N/A") {
+		let seconds = parseInt(timeString.slice(0, 2)) * 3600 + parseInt(timeString.slice(3, 5)) * 60 - (-timeString.slice(6));
 		if (seconds > 0) {
 			return seconds;
 		} else {
@@ -34,6 +46,9 @@ function getTimeValue (timeString) {
 	}
 }
 
+// #endregion
+
+// #region 字符串转换区
 
 /**
  * 传入头尾字符串，抽取字符串中间的部分，并返回字符串和抽取后的位置
@@ -44,17 +59,18 @@ function getTimeValue (timeString) {
  * @param {boolean} includePostLength   返回的识别结束后的位置是否包含后缀长度
  * @returns {text: string, pos: number} 抽取的部分和抽取后的位置
  */
-function selectString (text, pre, post = '', begin = 0, includePostLength = false) {
-	var outText;
-	var outPos = -1;
-	var prePos = text.indexOf(pre, begin);
-	if (prePos != -1) {
-		if (post == '') {
-			var postPos = text.length;
+export function selectString (text: string, pre: string, post = '', begin = 0, includePostLength = false) {
+	let outText;
+	let outPos = -1;
+	let prePos = text.indexOf(pre, begin);
+	if (prePos !== -1) {
+		let postPos;
+		if (post === '') {
+			postPos = text.length;
 		} else {
-			var postPos = text.indexOf(post, prePos + pre.length);
+			postPos = text.indexOf(post, prePos + pre.length);
 		}
-		if (postPos != -1) {
+		if (postPos !== -1) {
 			outText = text.slice(prePos + pre.length, postPos);
 			outPos = postPos;
 			if (includePostLength) {
@@ -74,13 +90,13 @@ function selectString (text, pre, post = '', begin = 0, includePostLength = fals
  * @param {number} end   识别结束的位置
  * @returns {string} 替换后的字符串
  */
-function replaceString (text, searchValue, replaceValue, start, end) {
-	var front = text.slice(0, start);
-	var mid = text.slice(start, end);
+export function replaceString (text: string, searchValue: string, replaceValue: string, start: number, end: number): string {
+	let front = text.slice(0, start);
+	let mid = text.slice(start, end);
 	while (mid.indexOf(searchValue) != -1) {
 		mid = mid.replace(searchValue, replaceValue);
 	}
-	var rear = text.slice(end);
+	let rear = text.slice(end);
 	return front + mid + rear;
 }
 
@@ -91,12 +107,12 @@ function replaceString (text, searchValue, replaceValue, start, end) {
  * @param {string} format 格式
  * @param {string} splitter 用于作为 %s 结束标记的分隔符
  */
-function scanf (input, format, splitter = ' ') {
-	var i = 0, j = 0;
-	var c = '', f = '';		// c：正在匹配的输入字符		f：正在匹配的格式字符
-	var status = 0;			// 0：正常逐位匹配		1：正在匹配字符串		2：正在匹配数字		4：匹配结束
-	var str = "";			// 字符串或数字匹配过程中的字符串
-	var returnList = [];
+export function scanf (input: string, format: string, splitter = ' '): Array<any> {
+	let i = 0, j = 0;
+	let c = '', f = '';		// c：正在匹配的输入字符		f：正在匹配的格式字符
+	let status = 0;			// 0：正常逐位匹配		1：正在匹配字符串		2：正在匹配数字		4：匹配结束
+	let str = "";			// 字符串或数字匹配过程中的字符串
+	let returnList: Array<any> = [];
 	while (status != 4) {
 		switch (status) {
 			case 0:			// 正常逐位匹配
@@ -114,7 +130,7 @@ function scanf (input, format, splitter = ' ') {
 							case 'c':		// 字符匹配，直接再读取一次
 								c = input[i++];
 								if (c != undefined) {
-									returnList.push[c.charCodeAt()];
+									returnList.push(c.charCodeAt(0));
 								} else {
 									status = 4;
 								}
@@ -218,29 +234,70 @@ function scanf (input, format, splitter = ' ') {
 	return returnList;				
 }
 
-// 获取随机字符串
-function randomString (length = 6, chars = 'abcdefghijklmnopqrstuvwxyz') {
-	var result = '';
-	for (var i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
+/**
+ * 获取随机字符串
+ */
+export function randomString (length = 6, dictionary = 'abcdefghijklmnopqrstuvwxyz'): string {
+	let result = '';
+	for (let i = length; i > 0; --i) result += dictionary[Math.floor(Math.random() * dictionary.length)];
 	return result;
 }
 
-if (typeof window !== 'undefined') {
-	// Browser Env
-}
-if (typeof global !== 'undefined') {
-	// Node Env
-	exports.getKbpsValue = getKbpsValue
-	exports.getFormattedBitrate = getFormattedBitrate
-	exports.getFormattedTime = getFormattedTime
-	exports.getTimeValue = getTimeValue
-	exports.selectString = selectString
-	exports.replaceString = replaceString
-	exports.scanf = scanf
-	exports.randomString = randomString
-	// 下面这句作用相同
-	// module.exports = { getKbpsValue, getFormattedBitrate, getFormattedTime, getTimeValue, selectString, replaceString, scanf, getFilePathWithoutPostfix }
-}
-// 如果必定是经过 babel 编译后执行，则可以用下面的这句，而不用 module.exports，作用相同。主要是 export 要求必定在顶层，不能套在 if 里面，因此不使用这种方法
-// export { getKbpsValue, getFormattedBitrate, getFormattedTime, getTimeValue, selectString, replaceString, scanf, getFilePathWithoutPostfix }
+// #endregion
 
+// #region 初始值区
+
+export function getInitialTask(fileName: string, filePath: string, mode: 'client' | 'server' | '' = '', outputParams?: OutputParams): ServiceTask {
+	let ret: ServiceTask = {
+		fileName: fileName,
+		filePath: filePath,
+		before: {
+			format: '读取中',
+			duration: '--:--:--.--',
+			vcodec: '读取中',
+			acodec: '读取中',
+			vresolution: '读取中',
+			vframerate: '读取中',
+			vbitrate: '读取中',
+			abitrate: '读取中',
+		},
+		after: {},
+		paraArray: [],
+		status: TaskStatus.TASK_STOPPED,
+		taskProgress: {
+			normal: [],
+			size: [],
+		},
+		cmdData: '',
+		errorInfo: [],
+		lastPaused: new Date().getTime() / 1000,	// 用于暂停后恢复时计算速度
+		notifications: [],
+	}
+	if (mode === 'client') {
+		Object.assign(ret, {
+			progress: {
+				progress: 0,
+				bitrate: 0,
+				speed: 0,
+				time: 0,
+				frame: 0,
+			},
+			progress_smooth: {
+				progress: 0,
+				bitrate: 0,
+				speed: 0,
+				time: 0,
+				frame: 0,
+			},
+			dashboardTimer: NaN,
+		});
+	} else if (mode === 'server') {
+		Object.assign(ret, { ffmpeg: null });
+	}
+	if (outputParams) {
+		Object.assign(ret, { after: outputParams });
+	}
+	return ret;
+}
+
+// #endregion
