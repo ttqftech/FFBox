@@ -1,6 +1,6 @@
 // #region 格式转换区
 
-import { OutputParams, ServiceTask, TaskStatus } from "@/types/types";
+import { OutputParams, ServiceTask, Task, TaskStatus, UITask } from "@/types/types";
 
 /** 
  * 传入 "xxx kbps"，返回比特率（Kbps）
@@ -247,8 +247,8 @@ export function randomString (length = 6, dictionary = 'abcdefghijklmnopqrstuvwx
 
 // #region 初始值区
 
-export function getInitialTask(fileName: string, filePath: string, mode: 'client' | 'server' | '' = '', outputParams?: OutputParams): ServiceTask {
-	let ret: ServiceTask = {
+export function getInitialTask(fileName: string, filePath: string, outputParams?: OutputParams): Task {
+	let ret: Task = {
 		fileName: fileName,
 		filePath: filePath,
 		before: {
@@ -273,8 +273,26 @@ export function getInitialTask(fileName: string, filePath: string, mode: 'client
 		lastPaused: new Date().getTime() / 1000,	// 用于暂停后恢复时计算速度
 		notifications: [],
 	}
-	if (mode === 'client') {
-		Object.assign(ret, {
+	if (outputParams) {
+		Object.assign(ret, { after: outputParams });
+	}
+	return ret;
+}
+
+export function getInitialServiceTask(fileName: string, filePath: string, outputParams?: OutputParams): ServiceTask {
+	let ret: ServiceTask = {
+		...getInitialTask(fileName, filePath, outputParams),
+		...{
+			ffmpeg: null
+		}
+	}
+	return ret;
+}
+
+export function getInitialUITask(fileName: string, filePath: string, outputParams?: OutputParams): UITask {
+	let ret: UITask = {
+		...getInitialTask(fileName, filePath, outputParams),
+		...{
 			progress: {
 				progress: 0,
 				bitrate: 0,
@@ -290,14 +308,43 @@ export function getInitialTask(fileName: string, filePath: string, mode: 'client
 				frame: 0,
 			},
 			dashboardTimer: NaN,
-		});
-	} else if (mode === 'server') {
-		Object.assign(ret, { ffmpeg: null });
+		}
 	}
-	if (outputParams) {
-		Object.assign(ret, { after: outputParams });
-	}
-	return ret;
+	return ret;	
+}
+
+// #endregion
+
+// #region 实用功能
+
+type FUNC = (...args: any) => any;
+
+/**
+ * 拷贝自 https://www.npmjs.com/package/typed-emitter
+ */
+export type Arguments<T> = [T] extends [(...args: infer U) => any]
+	? U
+	: [T] extends [void] ? [] : [T];
+
+export interface TypedEventEmitter<Events> {
+	addListener<E extends keyof Events> (event: E, listener: Events[E]): this
+	on<E extends keyof Events> (event: E, listener: Events[E]): this
+	once<E extends keyof Events> (event: E, listener: Events[E]): this
+	prependListener<E extends keyof Events> (event: E, listener: Events[E]): this
+	prependOnceListener<E extends keyof Events> (event: E, listener: Events[E]): this
+  
+	off<E extends keyof Events>(event: E, listener: Events[E]): this
+	removeAllListeners<E extends keyof Events> (event?: E): this
+	removeListener<E extends keyof Events> (event: E, listener: Events[E]): this
+  
+	emit<E extends keyof Events> (event: E, ...args: Arguments<Events[E]>): boolean
+	eventNames (): (keyof Events | string | symbol)[]
+	rawListeners<E extends keyof Events> (event: E): Function[]
+	listeners<E extends keyof Events> (event: E): Function[]
+	listenerCount<E extends keyof Events> (event: E): number
+  
+	getMaxListeners (): number
+	setMaxListeners (maxListeners: number): this
 }
 
 // #endregion

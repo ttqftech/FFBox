@@ -1,13 +1,13 @@
 import { FFmpeg } from '../service/FFmpegInvoke'
 
-export enum FFBoxServiceEvent {
-	ffmpegVersion = 'ffmpegVersion',	// content: string
-	workingStatusUpdate = 'workingStatusUpdate',	// value: WorkingStatus
-	tasklistUpdate = 'tasklistUpdate',	// content: Array<number>
-	taskUpdate = 'taskUpdate',	// id: number, content: ServiceTask
-	cmdUpdate = 'cmdUpdate',	// id: number, content: string
-	progressUpdate = 'progressUpdate',		// id: number, content: {...}
-	taskNotification = 'taskNotification',	// id: number, content: string, level: NotificationLevel
+export interface FFBoxServiceEvent {
+	ffmpegVersion: (arg: {content: string}) => void;
+	workingStatusUpdate: (arg: {value: WorkingStatus}) => void;
+	tasklistUpdate: (arg: {content: Array<number>}) => void;
+	taskUpdate: (arg: {id: number; content: ServiceTask}) => void;
+	cmdUpdate: (arg: {id: number, content: string}) => void;
+	progressUpdate: (arg: {id: number, content: any}) => void;
+	taskNotification: (arg: {id: number, content: string, level: NotificationLevel}) => void;
 }
 
 export interface OutputParams {
@@ -52,8 +52,7 @@ export interface Notification {
 	level: NotificationLevel;
 }
 
-export interface ServiceTask {
-	// 服务端与客户端保持同步
+export interface Task {
 	fileName: string;
 	filePath: string;
 	before: {
@@ -84,24 +83,28 @@ export interface ServiceTask {
 	errorInfo: Array<string>;
 	lastPaused: number;		// 用于暂停后恢复时计算速度
 	notifications: Array<Notification>;
-	// 仅存在于服务端
-	ffmpeg?: FFmpeg | null;
-	// 仅存在于客户端
-	progress?: {
+}
+
+export interface ServiceTask extends Task {
+	ffmpeg: FFmpeg | null;
+}
+
+export interface UITask extends Task {
+	progress: {
 		progress: number;
 		bitrate: number;
 		speed: number;
 		time: number;
 		frame: number;
 	};
-	progress_smooth?: {
+	progress_smooth: {
 		progress: number;
 		bitrate: number;
 		speed: number;
 		time: number;
 		frame: number;
 	};
-	dashboardTimer?: number;
+	dashboardTimer: number;
 }
 
 export enum WorkingStatus {
@@ -111,7 +114,7 @@ export enum WorkingStatus {
 }
 
 export interface Server {
-	tasks: Array<ServiceTask>;
+	tasks: Array<UITask>;
 	ffmpegVersion: string;
 	workingStatus: WorkingStatus;
 	progress: 0.0;	// 由每个任务更新时计算出来

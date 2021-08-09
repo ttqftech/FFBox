@@ -3,7 +3,7 @@
 		<button id="startbutton" class="startbutton " :class="startbuttonClass" @click="$store.commit('startNpause')">{{ this.$store.state.workingStatus > 0 ? '⏸暂停' : '▶开始' }}</button>
 		<div id="tasklist-wrapper" ref="tasklist_wrapper">
 			<div id="tasklist">
-				<taskitem v-for="(task, index) in taskList" :key="parseInt(task.id)" :id='task.id' :duration="task.duration" :filename="task.filename" :before="task.before" :after="task.after" :progress_smooth="task.progress_smooth" :status="task.status" :selected="taskSelected(task.id)" @itemClicked="onItemClicked($event, task.id, index)" @pauseNremove="onItemPauseNdelete(task.id)"></taskitem>
+				<taskitem v-for="(task, index) in taskList" :key="parseInt(task.id)" :id='task.id' :duration="task.duration" :filename="task.fileName" :before="task.before" :after="task.after" :progress_smooth="task.progress_smooth" :status="task.status" :selected="taskSelected(task.id)" @itemClicked="onItemClicked($event, task.id, index)" @pauseNremove="onItemPauseNdelete(task.id)"></taskitem>
 			</div>
 			<div id="dropfilesdiv" @click="itemUnselect">
 				<div id="dropfilesimage" @click="debugLauncher" :style="{ 'backgroundImage': `url(${dropfilesimage})` }"></div>
@@ -16,9 +16,9 @@
 import Vue from 'vue';
 
 import Taskitem from '@/electron/components/Taskitem.vue'
-import { NotificationLevel, Server, ServiceTask } from '@/types/types';
+import { NotificationLevel, Server, UITask } from '@/types/types';
 
-let remote, currentWindow;
+let remote: any, currentWindow: any;
 if (process.env.IS_ELECTRON) {
 	remote = window.require('electron').remote
 	currentWindow = remote.getCurrentWindow()
@@ -35,22 +35,24 @@ export default Vue.extend({
 		lastTaskListLength: 0		// 记录上一次计算 taskList 的长度，如变大了说明拖进来文件，就要滚动到底
 	}},
 	computed: {
-		taskList: function (): Array<ServiceTask> {
-			console.log('taskList updated at ' + new Date().getTime());
+		taskList: function (): Array<UITask> {
 			let currentServer: Server = this.$store.getters.currentServer;
 			if (!currentServer) {
 				return [];
 			}
 			let ret = [];
 			for (const [id, task] of Object.entries(currentServer.tasks)) {
-				ret.push({ ...task, id });
+				if (id !== '-1') {
+					ret.push({ ...task, id });
+				}
 			}
 			// 新任务加入，滚动到底
 			if (ret.length > this.lastTaskListLength) {
 				let tasklistWrapper = this.$refs.tasklist_wrapper as Element;
-				tasklistWrapper.scrollTop = tasklistWrapper.scrollHeight - tasklistWrapper.offsetHeight;
+				tasklistWrapper.scrollTop = tasklistWrapper.scrollHeight - tasklistWrapper.getBoundingClientRect().height;
 			}
 			this.lastTaskListLength = ret.length;
+			console.log('taskList updated at ' + new Date().getTime(), ret);
 			return ret;
 		},
 		taskSelected: function (): (id: number) => boolean {

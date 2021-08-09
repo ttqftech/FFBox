@@ -28,13 +28,14 @@ const maxThreads = 2
 import { FFBoxService } from "@/service/FFBoxService";
 
 import { defaultParams } from "../common/defaultParams";
-import { StoreState, NotificationLevel, ServiceTask, WorkingStatus, TaskStatus, Server } from '@/types/types'
-import { getInitialTask } from '@/common/utils'
+import { StoreState, NotificationLevel, ServiceTask, WorkingStatus, TaskStatus, Server, UITask, Task } from '@/types/types'
+import { getInitialUITask } from '@/common/utils'
 import { version, buildNumber } from "@/types/constants";
 import { getFFmpegParaArray } from '@/common/getFFmpegParaArray'
+import { mergeTaskFromService } from '@/service/netApi'
 
 let ffboxService: FFBoxService;
-let mainVue: any;
+let mainVue: Vue;
 
 Vue.use(Vuex)
 Vue.use(Popup);
@@ -65,6 +66,7 @@ const store = new Vuex.Store<StoreState>({
 		}
 	},
 	mutations: {
+		// #region 纯 UI
 		// 切换显示/不显示打赏中心
 		showSponsorCenter_update (state, value: boolean) {
 			state.showSponsorCenter = value;
@@ -91,6 +93,7 @@ const store = new Vuex.Store<StoreState>({
 		dragParabox (state, value) {
 			state.draggerPos = value
 		},
+		// #endregion
 		// 点击开始/暂停按钮
 		startNpause (state) {
 			let currentServer = state.servers[state.currentServerName];
@@ -118,6 +121,7 @@ const store = new Vuex.Store<StoreState>({
 			}
 		},
 		dashboardTimer (state, id) {
+			/*
 			var task = state.tasks[id]
 			var index = task.taskProgress.length - 1;			// 上标 = 长度 - 1
 			var avgTotal = 6, avgCount = 0;						// avgTotal 为权重值，每循环一次 - 1；avgCount 每循环一次加一次权重
@@ -194,8 +198,10 @@ const store = new Vuex.Store<StoreState>({
 			}
 			task.progress_smooth = JSON.parse(JSON.stringify(task.progress_smooth))
 			// state.taskOrder = [...state.taskOrder]			// 刷新 TasksView 的 taskList
+			*/
 		},
 		overallProgressTimer (state) {
+			/*
 			if (this.getters.queueTaskCount > 0) {
 				var totalTime = 0.000001;
 				var totalProcessedTime = 0;
@@ -223,8 +229,11 @@ const store = new Vuex.Store<StoreState>({
 				currentWindow.setProgressBar(0, {mode: "none"});
 				clearInterval(state.overallProgressTimerID);
 			}
+			*/
 		},
-		// 发布本地消息（args：msg, level）
+		/**
+		 * 发布本地消息（存在 store 中，非 local service 的 globalTask）
+		 */
 		pushMsg (state, args: { message: string, level: NotificationLevel }) {
 			// let id = Symbol()
 			// state.infos.push({
@@ -233,14 +242,12 @@ const store = new Vuex.Store<StoreState>({
 			mainVue.$popup({
 				message: args.message,
 				level: args.level,
-			})
-		},
-		// 仅弹出气泡，不记录消息
-		popup (state, args: { message: string, level: NotificationLevel }) {
-			mainVue.$popup({
-				message: args.message,
+			});
+			state.notifications.push({
+				time: new Date().getTime(),
+				content: args.message,
 				level: args.level,
-			})
+			});
 		},
 		// 删除第 index 条消息
 		deleteMsg (state, index) {
@@ -272,14 +279,25 @@ const store = new Vuex.Store<StoreState>({
 			}
 			// 更改到一些不匹配的值后会导致 getFFmpegParaArray 出错，但是修正代码就在后面，因此仅需忽略它，让它继续运行下去，不要急着更新
 			Vue.nextTick(() => {
-				Vue.set(state.globalParams, 'paraArray', getFFmpegParaArray('[输入目录]/[输入文件名].[输入扩展名]', state.globalParams.input, state.globalParams.video, state.globalParams.audio, state.globalParams.output))
 				// state.globalParams.paraArray = getFFmpegParaArray('[输入文件名]', state.globalParams.input, state.globalParams.video, state.globalParams.audio, state.globalParams.output)
-				// state.globalParams = JSON.parse(JSON.stringify(state.globalParams))
-
+				state.globalParams = Object.assign({}, state.globalParams);
+				
+				let currentServer = state.servers[state.currentServerName];
+				if (!currentServer) {
+					return;
+				}
+				// 收集需要批量更新的输出参数，交给 service
+				let needToUpdateIds: Array<number> = [];
 				for (const id of state.selectedTask) {
-					var task = state.tasks[id]
-					task.after = JSON.parse(JSON.stringify(state.globalParams))
-					task.paraArray = getFFmpegParaArray(task.filepath, task.after.input, task.after.video, task.after.audio, task.after.output, true)
+					let task = currentServer.tasks[parseInt(id)];
+					task.after = Object.assign({}, state.globalParams);
+					needToUpdateIds.push(parseInt(id));
+				}
+				// paraArray 由 service 算出后回填本地
+				let result = ffboxService.setParameter(needToUpdateIds, state.globalParams);
+				for (const indexNid of Object.entries(needToUpdateIds)) {
+					let task = currentServer.tasks[parseInt(indexNid[0])];
+					task.paraArray = result[indexNid[1]];
 				}
 
 				// 刷新所有单个任务
@@ -289,25 +307,22 @@ const store = new Vuex.Store<StoreState>({
 			})
 
 			// 存盘
-			clearTimeout(window.saveAllParaTimer)
-			window.saveAllParaTimer = setTimeout(() => {
-				electronStore.set('input', state.globalParams.input)
-				electronStore.set('video', state.globalParams.video)
-				electronStore.set('audio', state.globalParams.audio)
-				electronStore.set('output', state.globalParams.output)
-				console.log("参数已保存")
+			clearTimeout((window as any).saveAllParaTimer);
+			(window as any).saveAllParaTimer = setTimeout(() => {
+				electronStore.set('input', state.globalParams.input);
+				electronStore.set('video', state.globalParams.video);
+				electronStore.set('audio', state.globalParams.audio);
+				electronStore.set('output', state.globalParams.output);
+				console.log("参数已保存");
 			}, 700);
 		},
 		// 使用任务的参数替换参数盒，after 不传值为重置为默认
 		replacePara (state, after) {
 			if (after) {
-				state.globalParams = after
+				state.globalParams = after;
 			} else {
-				state.globalParams = Object.assign({}, defaultParams)
+				state.globalParams = Object.assign({}, defaultParams);
 			}
-			Vue.nextTick(() => {
-				Vue.set(state.globalParams, 'paraArray', getFFmpegParaArray('[输入目录]/[输入文件名].[输入扩展名]', state.globalParams.input, state.globalParams.video, state.globalParams.audio, state.globalParams.output))
-			})
 		},
 		/**
 		 * 添加任务
@@ -319,41 +334,25 @@ const store = new Vuex.Store<StoreState>({
 				return;
 			}
 			let id = ffboxService.taskAdd(args.path, args.name, state.globalParams);
-			let newTask = getInitialTask(args.name, args.path, 'client', state.globalParams);
+			let newTask = getInitialUITask(args.name, args.path, state.globalParams);
 			currentServer.tasks[id] = newTask;
 			if (typeof args.callback == 'function') {
 				args.callback(id);
 			}
 		},
-		/**
-		 * 当接收到 service 过来的 FFBoxServiceEvent.tasklistUpdate 后调用此处更新列表
-		 */
-		updateTaskList (state, newList) {
-			let currentServer = state.servers[state.currentServerName];
-			if (!currentServer) {
-				return;
-			}
-			currentServer.tasks = newList;
-		},
 		selectedTask_update (state, set) {
 			// console.log('selectedTask updated at ' + new Date().getTime())
-			state.selectedTask = set
+			state.selectedTask = set;
 			if (set.size > 0) {
+				let currentServer = state.servers[state.currentServerName];
+				if (!currentServer) {
+					return;
+				}
 				for (const id of set) {
-					this.commit('replacePara', state.tasks[id].after)
+					this.commit('replacePara', currentServer.tasks[id].after);
 					break
 				}
 			}
-		},
-		/**
-		 * 当接收到 service 过来的 FFBoxServiceEvent.ffmpegVersion 后调用此处
-		 */
-		FFmpegVersion_update (state, content) {
-			let currentServer = state.servers[state.currentServerName];
-			if (!currentServer) {
-				return;
-			}
-			currentServer.ffmpegVersion = content;
 		},
 		// 关闭窗口事件触发时调用
 		closeConfirm (state) {
@@ -369,7 +368,29 @@ const store = new Vuex.Store<StoreState>({
 			} else {
 				readyToClose();
 			}
-		}
+		},
+		// #region handle FFBox service event，似乎不需要用
+		/**
+		 * 当接收到 service 过来的 FFBoxServiceEvent.tasklistUpdate 后调用此处更新列表
+		 */
+		updateTaskList (state, newList) {
+			let currentServer = state.servers[state.currentServerName];
+			if (!currentServer) {
+				return;
+			}
+			currentServer.tasks = newList;
+		},
+		/**
+		 * 当接收到 service 过来的 FFBoxServiceEvent.ffmpegVersion 后调用此处
+		 */
+		FFmpegVersion_update (state, content) {
+			let currentServer = state.servers[state.currentServerName];
+			if (!currentServer) {
+				return;
+			}
+			currentServer.ffmpegVersion = content;
+		},
+		// #endregion
 	}
 })
 
@@ -384,7 +405,7 @@ export default Vue.extend({
 			if (!currentServer) {
 				return;
 			}
-			currentServer.ffmpegVersion = content;
+			currentServer.ffmpegVersion = content || '-';
 		},
 		handleWorkingStatusUpdate(value: WorkingStatus) {
 			let currentServer: Server = this.$store.state.servers[this.$store.state.currentServerName];
@@ -401,15 +422,17 @@ export default Vue.extend({
 
 			let localI = 0;
 			let remoteI = 0;
-			let localKeys = Object.keys(currentServer.tasks).map(Number);	// [1,2,4,5,6,7]
-			let remoteKeys = content;										// [1,2,4,6,7,8]
-			let newTaskList: Array<ServiceTask> = [];
+			let localKeys = Object.keys(currentServer.tasks).map(Number).filter((value) => value >= 0);	// [1,3,4,5]
+			let remoteKeys = content.filter((value) => value >= 0);										// [1,3,5,6,7]
+			let newTaskList: Array<UITask> = [];
 			while (localI < localKeys.length || remoteI < remoteKeys.length) {
 				let localKey = localKeys[localI];
 				let remoteKey = remoteKeys[remoteI];
 				if (localI >= localKeys.length) {
 					// 本地下标越界，说明远端添加任务了
-					newTaskList[remoteKey] = ffboxService.getTask(remoteKey);	// TODO
+					let newTask = getInitialUITask('', '');
+					newTask = mergeTaskFromService(newTask, ffboxService.getTask(remoteKey) as Task);
+					newTaskList[remoteKey] = newTask;
 					remoteI++;
 				} else if (remoteI >= remoteKeys.length) {
 					// 远端下标越界，说明远端删除了最后面的若干个任务
@@ -424,7 +447,7 @@ export default Vue.extend({
 					remoteI++;
 				}
 			}
-			this.$store.commit('updateTaskList', newTaskList);
+			currentServer.tasks = Object.assign(newTaskList, {'-1': currentServer.tasks[-1]});
 		},
 		/**
 		 * 更新整个 task
@@ -434,7 +457,8 @@ export default Vue.extend({
 			if (!currentServer) {
 				return;
 			}
-			currentServer.tasks[id] = content;
+			currentServer.tasks[id] = mergeTaskFromService(currentServer.tasks[id], content);
+			currentServer.tasks = Object.assign({}, currentServer.tasks);
 		},
 		/**
 		 * 增量更新 cmdData
@@ -444,7 +468,11 @@ export default Vue.extend({
 			if (!currentServer) {
 				return;
 			}
-			currentServer.tasks[id].cmdData += content;
+			let task = currentServer.tasks[id];
+			if (task.cmdData.slice(-1) !== '\n' && task.cmdData.length) {
+				task.cmdData += '\n';
+			}
+			task.cmdData += content;
 		},
 		/**
 		 * 整个更新 taskProgress
@@ -465,6 +493,16 @@ export default Vue.extend({
 				return;
 			}
 			currentServer.tasks[id].notifications.push({ content, level, time: new Date().getTime() });
+
+		},
+		// 读取 service 中 task id 为 -1 的 globalTask
+		updateGlobalTask () {
+			let currentServer: Server = this.$store.state.servers[this.$store.state.currentServerName];
+			if (!currentServer) {
+				return;
+			}
+			let newTask = getInitialUITask('', '');
+			currentServer.tasks[-1] = mergeTaskFromService(newTask, ffboxService.getTask(-1) as Task);
 		},
 	},
 	beforeCreate: function () {
@@ -472,9 +510,8 @@ export default Vue.extend({
 	},
 	mounted: function () {
 		document.title = 'FFBox v' + version + (process.env.NODE_ENV != 'production' ? 'd' : '');
-		window.ffboxService = new FFBoxService();
-		ffboxService = window.ffboxService;
 		mainVue = this;
+		(window as any).mainVue = mainVue;
 
 		console.warn('正在启动 helper');
 		let helper = spawn("FFBoxHelper.exe", undefined, {
@@ -499,22 +536,15 @@ export default Vue.extend({
 		// 更新全局参数输出
 		// this.$set(this.$store.state.globalParams, 'paraArray', getFFmpegParaArray('[输入文件名]', this.$store.state.globalParams.input, this.$store.state.globalParams.video, this.$store.state.globalParams.audio, this.$store.state.globalParams.output))
 
-		console.log('exe 路径：' + remote.app.getPath('exe'))
-		console.log('electron 执行路径：' + remote.app.getAppPath())
-		console.log('node 路径：' + process.execPath)
-		console.log('命令执行根路径：' + process.cwd())
-		// console.log('命令执行根路径（resolve）：' + resolve('./'))
-		console.log('页面 js 文件路径：' + __dirname)
-		
+		console.log(
+			'exe 路径　　　　　：' + remote.app.getPath('exe') + '\n' +
+			'electron 执行路径：' + remote.app.getAppPath() + '\n' +
+			'node 路径　　　　 ：' + process.execPath + '\n' +
+			'命令执行根路径　　 ：' + process.cwd() + '\n' +
+		// 	'命令执行根路径（resolve）：' + resolve('./') + '\n' +
+			'页面 js 文件路径　：' + __dirname + '\n'
+		);
 		// 初始化 FFmpeg
-		ffboxService.initFFmpeg();
-		ffboxService.on('ffmpegVersion', (data) => {
-			if (data.content !== '') {
-				this.$store.commit('FFmpegVersion_update', data.content);
-			} else {
-				this.$store.commit('FFmpegVersion_update', '-');
-			}
-		})
 		setTimeout(() => {
 			if (!electronStore.has('ffbox.buildNumber') || electronStore.get('ffbox.buildNumber') != buildNumber) {
 				this.$store.commit('pushMsg', {
@@ -547,24 +577,64 @@ export default Vue.extend({
 			})
 		}, 120000)
 
-		const pushMsg = () => {
-			this.$store.commit('pushMsg',{
-				message: generateRandomStr(Math.random() * 128),
-				level: Math.floor(Math.random() * 4)
-			})
-			setTimeout(() => {
-				pushMsg();
-			}, 3200);
-		}
-		function generateRandomStr(num: number) {
-			let ret = '';
-			for (let i = 0; i < num; i++) {
-				ret += String.fromCharCode(Math.floor(Math.random() * 128));
-			}
-			return ret;
-		}
 		// 挂载 ffboxService 各种更新事件
-
+		window.ffboxService = new FFBoxService();
+		ffboxService = window.ffboxService;
+		ffboxService.on('ffmpegVersion', (data) => {
+			console.log('event: ffmpegVersion', data);
+			this.$store.commit('pushMsg',{
+				message: 'event: ffmpegVersion',
+				level: Math.floor(Math.random() * 4),
+			})
+			this.handleFFmpegVersion(data.content);
+		});
+		ffboxService.on('workingStatusUpdate', (data) => {
+			console.log('event: workingStatusUpdate', data);
+			this.$store.commit('pushMsg',{
+				message: 'event: workingStatusUpdate',
+				level: Math.floor(Math.random() * 4),
+			})
+			this.handleWorkingStatusUpdate(data.value);
+		});
+		ffboxService.on('tasklistUpdate', (data) => {
+			console.log('event: tasklistUpdate', data);
+			this.$store.commit('pushMsg',{
+				message: 'event: tasklistUpdate',
+				level: Math.floor(Math.random() * 4),
+			})
+			this.handleTasklistUpdate(data.content);
+		});
+		ffboxService.on('taskUpdate', (data) => {
+			console.log('event: taskUpdate', data);
+			this.$store.commit('pushMsg',{
+				message: 'event: taskUpdate',
+				level: Math.floor(Math.random() * 4),
+			})
+			this.handleTaskUpdate(data.id, data.content);
+		});
+		ffboxService.on('cmdUpdate', (data) => {
+			console.log('event: cmdUpdate', data);
+			this.$store.commit('pushMsg',{
+				message: 'event: cmdUpdate',
+				level: Math.floor(Math.random() * 4),
+			})
+			this.handleCmdUpdate(data.id, data.content);
+		});
+		ffboxService.on('taskNotification', (data) => {
+			console.log('event: taskNotification', data);
+			this.$store.commit('pushMsg',{
+				message: 'event: taskNotification',
+				level: Math.floor(Math.random() * 4),
+			})
+			this.handleTaskNotification(data.id, data.content, data.level);
+			mainVue.$popup({
+				message: data.content,
+				level: data.level,
+			});
+		});
+		this.updateGlobalTask();
+		this.handleTasklistUpdate(ffboxService.getTaskList());
+		console.log('App 加载完成');
 	},
 	store
 })
@@ -590,8 +660,4 @@ export default Vue.extend({
 		height: 100vh;
 		overflow: hidden;
 	}
-	content-wrapper {
-		border: red 1px solid;
-	}
-
 </style>

@@ -1,5 +1,6 @@
 # FFBox Changelog
 
+`2021-08-08` FFBoxServiceEvent 改造；全局任务改为 id 为 -1 的任务；完成 Service 与 UI 的包括任务列表变更、任务信息变更、调参、通知信息、命令行的信息通讯    
 `2021-08-07` 修正 store state 中的 servers 类型  
 `2021-07-29` 进行 utils 的 TypeScript 改造；App 新增 Service 事件处理机制；store 进行新增任务的相关改造  
 `2021-07-28` 进行 ListView、CommandView、TasksView、Taskitem 的相关改造  

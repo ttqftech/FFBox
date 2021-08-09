@@ -1,10 +1,10 @@
 <template>
 	<div id="listview" :style="{ height: $store.state.draggerPos + '%' }">
 		<transition name="listviews-ani">
-			<tasks-view v-show="$store.state.listSelected == 0"></tasks-view>
+			<tasks-view v-show="$store.state.listSelected === 0"></tasks-view>
 		</transition>
 		<transition name="listviews-ani">
-			<command-view v-show="$store.state.listSelected == 1"></command-view>
+			<command-view v-show="$store.state.listSelected === 1" :show="$store.state.listSelected === 1"></command-view>
 		</transition>
 	</div>
 </template>
