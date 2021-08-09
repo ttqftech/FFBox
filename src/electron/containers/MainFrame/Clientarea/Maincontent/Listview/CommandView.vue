@@ -2,13 +2,13 @@
 	<div id="command-view">
 		<div id="commandwin" class="commandwin-small">
 			<div id="outputCommand">
-				<div class="commandwin-title" v-html="`FFmpeg 输出（${selectedTask == null ? '全局' : selectedTask.filepath}）`"></div>
+				<div class="commandwin-title" v-html="`FFmpeg 输出（${selectedTask == null ? '全局' : selectedTask.filePath}）`"></div>
 				<div class="commandwin-box">
 					<textarea id="commandwin-output" ref="commandwin_output" readonly v-html="textareaOutput"></textarea>
 				</div>
 			</div>
 			<div id="currentCommand">
-				<div class="commandwin-title" id="commandwin-current-title" v-html="`当前文件指令（${selectedTask == null ? '未选择文件' : selectedTask.filepath}）`"></div>
+				<div class="commandwin-title" id="commandwin-current-title" v-html="`当前文件指令（${selectedTask == null ? '未选择文件' : selectedTask.filePath}）`"></div>
 				<div class="commandwin-box">
 					<textarea id="commandwin-current" ref="commandwin_current" readonly v-model="textareaCurrent"></textarea>
 				</div>
@@ -24,8 +24,10 @@
 </template>
 
 <script lang="ts">
-import { Server, ServiceTask } from '@/types/types';
 import Vue from 'vue';
+
+import { getFFmpegParaArray } from '@/common/getFFmpegParaArray';
+import { Server, UITask } from '@/types/types';
 
 export default Vue.extend({
 	name: 'CommandView',
@@ -33,16 +35,16 @@ export default Vue.extend({
 		show: Boolean	// 不显示时不更新，节省能源	
 	},
 	computed: {
-		selectedTask: function (): ServiceTask | null {
+		selectedTask: function (): UITask | null {
 			let currentServer: Server = this.$store.getters.currentServer;
 			if (!currentServer) {
 				return null;
 			}
 			// 无选择时返回 null，选择时返回第一个
-			if (this.$store.state.selectedTask.size == 0) {
+			if (this.$store.state.selectedTask.size === 0) {
 				return null;
 			} else if (this.$store.state.selectedTask.size > 0) {
-				let task: ServiceTask | null = null;
+				let task: UITask | null = null;
 				for (const id of this.$store.state.selectedTask) {
 					task = currentServer.tasks[id];
 					break;
@@ -56,14 +58,18 @@ export default Vue.extend({
 				return '';
 			}
 			this.$nextTick(() => {
-				const commandwin_output = this.$refs.commandwin_output;
-				commandwin_output.scrollTop = commandwin_output.scrollHeight - commandwin_output.offsetHeight;
+				const commandwin_output = this.$refs.commandwin_output as Element;
+				commandwin_output.scrollTop = commandwin_output.scrollHeight - commandwin_output.getBoundingClientRect().height;
 			})
 			if (this.selectedTask) {
 				return this.selectedTask.cmdData;
 			} else {
+				let currentServer: Server = this.$store.getters.currentServer;
+				if (!currentServer) {
+					return '';
+				}
 				// 显示全局 cmd
-				return this.$store.state.cmdData;
+				return currentServer.tasks[-1].cmdData;
 			}
 		},
 		textareaCurrent: function (): string {
@@ -74,7 +80,8 @@ export default Vue.extend({
 			}
 		},
 		textareaGlobal: function (): string {
-			let globalParaArray = this.$store.state.globalParams.paraArray
+			let globalParams = this.$store.state.globalParams;
+			let globalParaArray = getFFmpegParaArray('[输入目录]/[输入文件名].[输入扩展名]', globalParams.input, globalParams.video, globalParams.audio, globalParams.output);
 			if (globalParaArray) {
 				return ['ffmpeg', ...globalParaArray].join(' ');
 			} else {
