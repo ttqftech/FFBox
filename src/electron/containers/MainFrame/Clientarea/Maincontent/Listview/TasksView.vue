@@ -1,6 +1,6 @@
 <template>
 	<div id="tasks-view" @dragenter="onDragenter($event)" @dragover="onDragenter($event)" @dragleave="onDragleave($event)" @drop="onDrop($event)">
-		<button id="startbutton" class="startbutton " :class="startbuttonClass" @click="$store.commit('startNpause')">{{ this.$store.state.workingStatus > 0 ? '⏸暂停' : '▶开始' }}</button>
+		<button id="startbutton" class="startbutton " :class="startbuttonClass" @click="$store.commit('startNpause')">{{ startbuttonText }}</button>
 		<div id="tasklist-wrapper" ref="tasklist_wrapper">
 			<div id="tasklist">
 				<taskitem v-for="(task, index) in taskList" :key="parseInt(task.id)" :id='task.id' :duration="task.duration" :filename="task.fileName" :before="task.before" :after="task.after" :progress_smooth="task.progress_smooth" :status="task.status" :selected="taskSelected(task.id)" @itemClicked="onItemClicked($event, task.id, index)" @pauseNremove="onItemPauseNdelete(task.id)"></taskitem>
@@ -35,14 +35,15 @@ export default Vue.extend({
 		lastTaskListLength: 0		// 记录上一次计算 taskList 的长度，如变大了说明拖进来文件，就要滚动到底
 	}},
 	computed: {
-		taskList: function (): Array<UITask> {
+		taskList: function (): Array<UITask & {id: number}> {
 			let currentServer: Server = this.$store.getters.currentServer;
 			if (!currentServer) {
 				return [];
 			}
 			let ret = [];
-			for (const [id, task] of Object.entries(currentServer.tasks)) {
-				if (id !== '-1') {
+			for (const [id_s, task] of Object.entries(currentServer.tasks)) {
+				let id = parseInt(id_s);
+				if (id_s !== '-1') {
 					ret.push({ ...task, id });
 				}
 			}
@@ -76,6 +77,13 @@ export default Vue.extend({
 			} else {
 				return '/images/drop_files_noffmpeg.png';
 			}
+		},
+		startbuttonText: function () {
+			let currentServer: Server = this.$store.getters.currentServer;
+			if (!currentServer) {
+				return '-';
+			}
+			return currentServer.workingStatus > 0 ? '⏸暂停' : '▶开始'
 		},
 		startbuttonClass: function (): string {
 			let currentServer: Server = this.$store.getters.currentServer;
@@ -169,12 +177,12 @@ export default Vue.extend({
 			let dropDelayCount = 0;
 			let files = (event.dataTransfer && event.dataTransfer.files) || [];
 			let fileCount = files.length
-			let newIDs: Array<string> = [];
+			let newIDs: Array<number> = [];
 			for (const file of files) {
 				setTimeout(() => {	// v2.4 版本开始完全可以不要延时，但是太生硬，所以加个动画
 					console.log(file.path);
-					this.$store.commit('addTask', { name: file.name, path: file.path, callback: (id: string) => {
-						newIDs.push(id + '');
+					this.$store.commit('addTask', { name: file.name, path: file.path, callback: (id: number) => {
+						newIDs.push(id);
 						if (--fileCount == 0) {
 							this.$store.commit('selectedTask_update', new Set(newIDs));
 						}

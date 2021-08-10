@@ -208,7 +208,9 @@ export default Vue.extend({
 			}
 		},
 		beforeBitrateFilter: function (kbps: number) {
-			if (kbps >= 10000) {
+			if (isNaN(kbps)) {
+				return '读取中';
+			} else if (kbps >= 10000) {
 				return (kbps / 1000).toFixed(1) + ' Mbps';
 			} else {
 				return kbps + ' kbps';

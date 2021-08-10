@@ -57,7 +57,7 @@ const store = new Vuex.Store<StoreState>({
 		},
 		currentServerName: 'local',
 		selectedTask: new Set(),
-		globalParams: Object.assign({}, defaultParams),
+		globalParams: JSON.parse(JSON.stringify(defaultParams)),
 		overallProgressTimerID: NaN,
 	},
 	getters: {
@@ -120,116 +120,8 @@ const store = new Vuex.Store<StoreState>({
 				ffboxService.taskDelete(id);
 			}
 		},
-		dashboardTimer (state, id) {
-			/*
-			var task = state.tasks[id]
-			var index = task.taskProgress.length - 1;			// 上标 = 长度 - 1
-			var avgTotal = 6, avgCount = 0;						// avgTotal 为权重值，每循环一次 - 1；avgCount 每循环一次加一次权重
-			var deltaSysTime = 0, deltaFrame = 0, deltaTime = 0
-			while (index > 1 && task.taskProgress.length - index < 6) {													// 数据量按最大 6 条算，忽略第 1 条
-				deltaSysTime += (task.taskProgress[index][0] - task.taskProgress[index - 1][0]) * avgTotal;				// x 轴
-				deltaFrame += (task.taskProgress[index][1] - task.taskProgress[index - 1][1]) * avgTotal;					// y 轴
-				deltaTime += (task.taskProgress[index][2] - task.taskProgress[index - 1][2]) * avgTotal;					// y 轴
-				avgCount += avgTotal;
-				avgTotal--;
-				index--;
-			}
-			deltaSysTime /= avgCount; deltaFrame /= avgCount; deltaTime /= avgCount;							// 取平均
-			index = task.taskProgress.length - 1			// 上标 = 长度 - 1
-			var frameK = (deltaFrame / deltaSysTime); var frameB = task.taskProgress[index][1] - frameK * task.taskProgress[index][0];		// b = y1 - x1 * k;
-			var timeK = (deltaTime / deltaSysTime); var timeB = task.taskProgress[index][2] - timeK * task.taskProgress[index][0];
-
-			// size 专属处理区域
-			var index = task.taskProgress_size.length - 1;	// 上标 = 长度 - 1
-			var avgTotal = 3, avgCount = 0;					// avgTotal 为权重值，每循环一次 - 1；avgCount 每循环一次加一次权重
-			var deltaSysTime = 0, deltaSize = 0;
-			while (index > 0 && task.taskProgress_size.length - index < 3) {												// 数据量按最大 3 条算，无需忽略第 1 条
-				deltaSysTime += (task.taskProgress_size[index][0] - task.taskProgress_size[index - 1][0]) * avgTotal;		// x 轴
-				deltaSize += (task.taskProgress_size[index][1] - task.taskProgress_size[index - 1][1]) * avgTotal;		// y 轴
-				avgCount += avgTotal;
-				avgTotal--;
-				index--;
-			}
-			deltaSysTime /= avgCount; deltaSize /= avgCount;	// 取平均
-			index = task.taskProgress_size.length - 1;		// 上标 = 长度 - 1
-			var sizeK = (deltaSize / deltaSysTime); var sizeB = task.taskProgress_size[index][1] - sizeK * task.taskProgress_size[index][0];
-
-			var sysTime = new Date().getTime() / 1000;
-			var currentFrame = frameK * sysTime + frameB;
-			var currentTime = timeK * sysTime + timeB;		// 单位：s
-			var currentSize = sizeK * sysTime + sizeB;		// 单位：kB
-			// console.log("frameK: " + frameK + ", timeK: " + timeK + ", sizeK: " + sizeK);
-			// console.log("currentFrame: " + currentFrame + ", currentTime: " + currentTime + ", currentSize: " + currentSize);
-
-			// 界面显示内容：码率、速度、时间、帧
-			// 计算方法：码率：Δ大小/Δ时间　速度：（带视频：Δ帧/视频帧速/Δ系统时间　纯音频：Δ时间/Δ系统时间（秒））　时间、帧：平滑
-			if (task.before.duration != -1) {
-				var progress = currentTime / task.before.duration
-				if (isNaN(progress) || progress == Infinity) {
-					task.progress.progress = 0
-				} else {
-					task.progress.progress = progress
-				}
-			} else {
-				task.progress.progress = 0.5;
-			}
-			if (task.progress.progress < 0.995) {				// 进度满了就别更新了
-				task.progress.bitrate = (sizeK / timeK) * 8;
-				if (task.before.vframerate != "-") {				// 可以读出帧速，用帧速算更准确
-					task.progress.speed = frameK / task.before.vframerate;
-				} else {
-					task.progress.speed = 0;
-				}
-				task.progress.time = currentTime;
-				task.progress.frame = currentFrame;
-
-				// 平滑处理
-				task.progress_smooth.progress = task.progress_smooth.progress * 0.7 + task.progress.progress * 0.3;
-				task.progress_smooth.bitrate  = task.progress_smooth.bitrate * 0.9 + task.progress.bitrate * 0.1;
-				task.progress_smooth.speed    = task.progress_smooth.speed * 0.6 + task.progress.speed * 0.4;
-				task.progress_smooth.time     = task.progress_smooth.time * 0.7 + task.progress.time * 0.3;
-				task.progress_smooth.frame    = task.progress_smooth.frame * 0.7 + task.progress.frame * 0.3;
-				if (isNaN(task.progress_smooth.bitrate) || task.progress_smooth.bitrate == Infinity) {task.progress_smooth.bitrate = 0;} 
-				if (isNaN(task.progress_smooth.speed)) {task.progress_smooth.speed = 0;} 
-				if (isNaN(task.progress_smooth.time)) {task.progress_smooth.time = 0;} 
-				if (isNaN(task.progress_smooth.frame)) {task.progress_smooth.frame = 0;} 
-			} else {
-				task.progress.progress = 1;
-			}
-			task.progress_smooth = JSON.parse(JSON.stringify(task.progress_smooth))
-			// state.taskOrder = [...state.taskOrder]			// 刷新 TasksView 的 taskList
-			*/
-		},
-		overallProgressTimer (state) {
-			/*
-			if (this.getters.queueTaskCount > 0) {
-				var totalTime = 0.000001;
-				var totalProcessedTime = 0;
-				for (const task of Object.values(state.tasks)) {
-					totalTime += task.before.duration;
-					totalProcessedTime += task.progress_smooth.progress * task.before.duration;
-				}
-				var progress = totalProcessedTime / totalTime;
-				state.progress = progress
-				if (this.getters.workingTaskCount > 0) {
-					currentWindow.setProgressBar(parseFloat(progress * 0.99 + 0.01), {mode: "normal"});
-				} else {
-					state.workingStatus = -1
-					currentWindow.setProgressBar(parseFloat(progress * 0.99 + 0.01), {mode: "paused"});
-					clearInterval(state.overallProgressTimerID);
-				}
-			} else {			// 任务全部结束
-				if (state.workingStatus == 1) {
-					if (!currentWindow.isVisible()) {
-						currentWindow.flashFrame(true);
-					}
-					clearInterval(state.overallProgressTimerID);
-				}
-				state.workingStatus = 0
-				currentWindow.setProgressBar(0, {mode: "none"});
-				clearInterval(state.overallProgressTimerID);
-			}
-			*/
+		setOverallProgressTimer (state, timerID) {
+			state.overallProgressTimerID = timerID;
 		},
 		/**
 		 * 发布本地消息（存在 store 中，非 local service 的 globalTask）
@@ -255,6 +147,7 @@ const store = new Vuex.Store<StoreState>({
 		},
 		// 修改参数，保存到本地磁盘（args：type (input | video | videoDetail | audio | audioDetail | output), key, value）。args 不传则直接存盘
 		changePara (state, args) {
+			console.log('changepara');
 			if (args) {
 				switch (args.type) {
 					case 'input':
@@ -280,17 +173,18 @@ const store = new Vuex.Store<StoreState>({
 			// 更改到一些不匹配的值后会导致 getFFmpegParaArray 出错，但是修正代码就在后面，因此仅需忽略它，让它继续运行下去，不要急着更新
 			Vue.nextTick(() => {
 				// state.globalParams.paraArray = getFFmpegParaArray('[输入文件名]', state.globalParams.input, state.globalParams.video, state.globalParams.audio, state.globalParams.output)
-				state.globalParams = Object.assign({}, state.globalParams);
+				// state.globalParams = Object.assign({}, state.globalParams);
 				
 				let currentServer = state.servers[state.currentServerName];
 				if (!currentServer) {
 					return;
 				}
+
 				// 收集需要批量更新的输出参数，交给 service
 				let needToUpdateIds: Array<number> = [];
 				for (const id of state.selectedTask) {
 					let task = currentServer.tasks[parseInt(id)];
-					task.after = Object.assign({}, state.globalParams);
+					task.after = JSON.parse(JSON.stringify(state.globalParams));
 					needToUpdateIds.push(parseInt(id));
 				}
 				// paraArray 由 service 算出后回填本地
@@ -299,11 +193,6 @@ const store = new Vuex.Store<StoreState>({
 					let task = currentServer.tasks[parseInt(indexNid[0])];
 					task.paraArray = result[indexNid[1]];
 				}
-
-				// 刷新所有单个任务
-				// state.tasks = new Map(state.tasks)	// 更新整个 tasks，因为 TasksView -> computed -> taskList -> this.$store.state.tasks.get(id) 仅监听到 tasks 这层，无法获知取出的单个 task 的变化
-				// this.commit('selectedTask_update', new Set([...state.selectedTask]))
-				// paraPreview();					// 这句要在上面 for 之后，因为上面的 for 用于同步全局与单个文件
 			})
 
 			// 存盘
@@ -319,9 +208,9 @@ const store = new Vuex.Store<StoreState>({
 		// 使用任务的参数替换参数盒，after 不传值为重置为默认
 		replacePara (state, after) {
 			if (after) {
-				state.globalParams = after;
+				state.globalParams = JSON.parse(JSON.stringify(after));
 			} else {
-				state.globalParams = Object.assign({}, defaultParams);
+				state.globalParams = JSON.parse(JSON.stringify(defaultParams));
 			}
 		},
 		/**
@@ -329,19 +218,18 @@ const store = new Vuex.Store<StoreState>({
 		 * @param args name, path, callback（传回添加后的 id）
 		 */
 		addTask (state, args) {
+			console.log('addtask');
 			let currentServer = state.servers[state.currentServerName];
 			if (!currentServer) {
 				return;
 			}
-			let id = ffboxService.taskAdd(args.path, args.name, state.globalParams);
-			let newTask = getInitialUITask(args.name, args.path, state.globalParams);
-			currentServer.tasks[id] = newTask;
+			let id = ffboxService.taskAdd(args.path, args.name, JSON.parse(JSON.stringify(state.globalParams)));
 			if (typeof args.callback == 'function') {
 				args.callback(id);
 			}
 		},
 		selectedTask_update (state, set) {
-			// console.log('selectedTask updated at ' + new Date().getTime())
+			console.log('selectedTask updated at ' + new Date().getTime(), [...(set as Set<any>)]);
 			state.selectedTask = set;
 			if (set.size > 0) {
 				let currentServer = state.servers[state.currentServerName];
@@ -350,7 +238,7 @@ const store = new Vuex.Store<StoreState>({
 				}
 				for (const id of set) {
 					this.commit('replacePara', currentServer.tasks[id].after);
-					break
+					break;
 				}
 			}
 		},
@@ -413,6 +301,22 @@ export default Vue.extend({
 				return;
 			}
 			currentServer.workingStatus = value;
+			if (currentServer.workingStatus === WorkingStatus.running && !this.$store.state.overallProgressTimerID) {
+				let timerID = setInterval(overallProgressTimer, 80, this.$store.state.workingStatus, currentServer);
+				this.$store.commit('setOverallProgressTimer', timerID);
+				overallProgressTimer(this.$store.state.workingStatus, currentServer);
+			} else if (currentServer.workingStatus === WorkingStatus.stopped && this.$store.state.overallProgressTimerID) {
+				clearInterval(this.$store.state.overallProgressTimerID);
+				this.$store.commit('setOverallProgressTimer', NaN);
+				overallProgressTimer(this.$store.state.workingStatus, currentServer);
+				if (!currentWindow.isVisible()) {
+					currentWindow.flashFrame(true);
+				}
+			} else if (currentServer.workingStatus === WorkingStatus.paused && this.$store.state.overallProgressTimerID) {
+				clearInterval(this.$store.state.overallProgressTimerID);
+				this.$store.commit('setOverallProgressTimer', NaN);
+				overallProgressTimer(this.$store.state.workingStatus, currentServer);
+			}
 		},
 		handleTasklistUpdate(content: Array<number>) {
 			let currentServer: Server = this.$store.getters.currentServer;
@@ -457,8 +361,24 @@ export default Vue.extend({
 			if (!currentServer) {
 				return;
 			}
-			currentServer.tasks[id] = mergeTaskFromService(currentServer.tasks[id], content);
-			currentServer.tasks = Object.assign({}, currentServer.tasks);
+			let task = mergeTaskFromService(currentServer.tasks[id], content);
+			currentServer.tasks[id] = task;
+			// timer 相关处理
+			if (task.status === TaskStatus.TASK_RUNNING && !task.dashboardTimer) {
+				task.dashboardTimer = setInterval(dashboardTimer, 50, task);
+			} else if (task.dashboardTimer) {
+				clearInterval(task.dashboardTimer);
+				task.dashboardTimer = NaN;
+			}
+			// 进度条相关处理
+			if (task.status === TaskStatus.TASK_FINISHED || task.status === TaskStatus.TASK_ERROR) {
+				task.progress.progress = 1;
+				task.progress_smooth.progress = 1;
+			} else if (task.status === TaskStatus.TASK_STOPPED) {
+				task.progress.progress = 0;
+				task.progress_smooth.progress = 0;
+			}
+			// currentServer.tasks = Object.assign({}, currentServer.tasks);
 		},
 		/**
 		 * 增量更新 cmdData
@@ -613,11 +533,11 @@ export default Vue.extend({
 			this.handleTaskUpdate(data.id, data.content);
 		});
 		ffboxService.on('cmdUpdate', (data) => {
-			console.log('event: cmdUpdate', data);
-			this.$store.commit('pushMsg',{
-				message: 'event: cmdUpdate',
-				level: Math.floor(Math.random() * 4),
-			})
+			// console.log('event: cmdUpdate', data);
+			// this.$store.commit('pushMsg',{
+			// 	message: 'event: cmdUpdate',
+			// 	level: Math.floor(Math.random() * 4),
+			// })
 			this.handleCmdUpdate(data.id, data.content);
 		});
 		ffboxService.on('taskNotification', (data) => {
@@ -637,7 +557,124 @@ export default Vue.extend({
 		console.log('App 加载完成');
 	},
 	store
-})
+});
+
+/**
+ * 计算单个任务的 timer 函数，根据计算结果原地修改 progress 和 progress_smooth
+ */
+function dashboardTimer(task: UITask) {
+	console.log('dashboardTimer');
+	{
+		let prog = task.taskProgress.normal;
+		let index = prog.length - 1;
+		let avgTotal = 6, avgCount = 0;						// avgTotal 为权重值，每循环一次 - 1；avgCount 每循环一次加一次权重
+		let deltaRealTime = 0, deltaFrame = 0, deltaTime = 0;
+		while (index > 1 && prog.length - index < 6) {												// 数据量按最大 6 条算，忽略第 1 条
+			deltaRealTime += (prog[index].realTime - prog[index - 1].realTime) * avgTotal;			// x 轴
+			deltaFrame += (prog[index].frame - prog[index - 1].frame) * avgTotal;					// y 轴
+			deltaTime += (prog[index].mediaTime - prog[index - 1].mediaTime) * avgTotal;			// y 轴
+			avgCount += avgTotal;
+			avgTotal--;
+			index--;
+		}
+		deltaRealTime /= avgCount; deltaFrame /= avgCount; deltaTime /= avgCount;							// 取平均
+		index = prog.length - 1;
+		var frameK = (deltaFrame / deltaRealTime); var frameB = prog[index].frame - frameK * prog[index].realTime;		// b = y1 - x1 * k;
+		var timeK = (deltaTime / deltaRealTime); var timeB = prog[index].mediaTime - timeK * prog[index].realTime;
+	}
+	{
+		var prog = task.taskProgress.size;
+		var index = prog.length - 1;
+		var avgTotal = 3, avgCount = 0;					// avgTotal 为权重值，每循环一次 - 1；avgCount 每循环一次加一次权重
+		var deltaSysTime = 0, deltaSize = 0;
+		while (index > 0 && prog.length - index < 3) {												// 数据量按最大 3 条算，无需忽略第 1 条
+			deltaSysTime += (prog[index].realTime - prog[index - 1].realTime) * avgTotal;		// x 轴
+			deltaSize += (prog[index].size - prog[index - 1].size) * avgTotal;		// y 轴
+			avgCount += avgTotal;
+			avgTotal--;
+			index--;
+		}
+		deltaSysTime /= avgCount; deltaSize /= avgCount;	// 取平均
+		index = prog.length - 1;
+		var sizeK = (deltaSize / deltaSysTime); var sizeB = prog[index].size - sizeK * prog[index].realTime;
+	}
+
+	let sysTime = new Date().getTime() / 1000;
+	let currentFrame = frameK * sysTime + frameB;
+	let currentTime = timeK * sysTime + timeB;		// 单位：s
+	let currentSize = sizeK * sysTime + sizeB;		// 单位：kB
+	// console.log("frameK: " + frameK + ", timeK: " + timeK + ", sizeK: " + sizeK);
+	// console.log("currentFrame: " + currentFrame + ", currentTime: " + currentTime + ", currentSize: " + currentSize);
+
+	// 界面显示内容：码率、速度、时间、帧
+	// 计算方法：码率：Δ大小/Δ时间　速度：（带视频：Δ帧/视频帧速/Δ系统时间　纯音频：Δ时间/Δ系统时间（秒））　时间、帧：平滑
+	if (task.before.duration !== -1) {
+		var progress = currentTime / task.before.duration
+		if (isNaN(progress) || progress == Infinity) {
+			task.progress.progress = 0
+		} else {
+			task.progress.progress = progress
+		}
+	} else {
+		task.progress.progress = 0.5;
+	}
+	if (task.progress.progress < 0.995) {				// 进度满了就别更新了
+		task.progress.bitrate = (sizeK / timeK) * 8;
+		if (!isNaN(task.before.vframerate)) {				// 可以读出帧速，用帧速算更准确
+			task.progress.speed = frameK / task.before.vframerate;
+		} else {
+			task.progress.speed = 0;
+		}
+		task.progress.time = currentTime;
+		task.progress.frame = currentFrame;
+
+		// 平滑处理
+		task.progress_smooth.progress = task.progress_smooth.progress * 0.7 + task.progress.progress * 0.3;
+		task.progress_smooth.bitrate  = task.progress_smooth.bitrate * 0.9 + task.progress.bitrate * 0.1;
+		task.progress_smooth.speed    = task.progress_smooth.speed * 0.6 + task.progress.speed * 0.4;
+		task.progress_smooth.time     = task.progress_smooth.time * 0.7 + task.progress.time * 0.3;
+		task.progress_smooth.frame    = task.progress_smooth.frame * 0.7 + task.progress.frame * 0.3;
+		if (isNaN(task.progress_smooth.bitrate) || task.progress_smooth.bitrate == Infinity) {task.progress_smooth.bitrate = 0;} 
+		if (isNaN(task.progress_smooth.speed)) {task.progress_smooth.speed = 0;} 
+		if (isNaN(task.progress_smooth.time)) {task.progress_smooth.time = 0;} 
+		if (isNaN(task.progress_smooth.frame)) {task.progress_smooth.frame = 0;} 
+	} else {
+		task.progress.progress = 1;
+	}
+	// task.progress_smooth = Object.assign({}, task.progress_smooth); 
+}
+
+/**
+ * 计算整体进度的 timer，根据计算结果修改 currentServer.progress 和 progressBar
+ */
+function overallProgressTimer(workingStatus: WorkingStatus, currentServer: Server) {
+	console.log('overall');
+	let tasks = currentServer.tasks;
+	let totalTime = 0.000001;
+	let totalProcessedTime = 0;
+	for (const task of Object.values(tasks)) {
+		if (!task.before.duration) {
+			continue;
+		}
+		totalTime += task.before.duration;
+		totalProcessedTime += task.progress_smooth.progress * task.before.duration;
+	}
+	let progress = totalProcessedTime / totalTime;
+	currentServer.progress = progress;
+	let mode = '';
+	switch (workingStatus) {
+		case WorkingStatus.running:
+			mode = 'normal'
+			break;
+		case WorkingStatus.paused:
+			mode = 'paused'
+			break;
+		case WorkingStatus.stopped:
+			mode = 'none'
+			break;
+	}
+	currentWindow.setProgressBar(progress * 0.99 + 0.01, {mode});
+}
 
 </script>
 

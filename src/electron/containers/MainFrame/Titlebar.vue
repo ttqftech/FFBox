@@ -26,7 +26,7 @@
 <script lang="ts">
 import Vue from 'vue';
 import { version, buildNumber } from "@/types/constants";
-import { FFBoxVersion, NormalApiWrapper } from '@/types/types';
+import { FFBoxVersion, NormalApiWrapper, Server, WorkingStatus } from '@/types/types';
 
 let remote: any, currentWindow: any, exec: any;
 if (process.env.IS_ELECTRON) {
@@ -50,26 +50,39 @@ export default Vue.extend<Data, any, any, any>({
 		newVersion: null,
 	}},
 	computed: {
+		workingStatusNProgress: function () {
+			let currentServer: Server = this.$store.getters.currentServer;
+			if (!currentServer) {
+				return {
+					workingStatus: WorkingStatus.stopped,
+					progress: 0,
+				};
+			}
+			return {
+				workingStatus: currentServer.workingStatus,
+				progress: currentServer.progress,
+			};
+		},
 		progressOpacity: function () {	// 暂停、运行状态下输出 1，否则 0
-			return this.$store.state.workingStatus ? 1 : 0
+			return this.workingStatusNProgress.workingStatus ? 1 : 0
 		},
 		progressColor: function () {	// 暂停状态下为黄色，否则绿色
-			return this.$store.state.workingStatus == -1 ? 'titlebar-background-yellow' : 'titlebar-background-green'
+			return this.workingStatusNProgress.workingStatus == -1 ? 'titlebar-background-yellow' : 'titlebar-background-green'
 		},
 		progressWidth: function () {	// 暂停、运行状态下输出宽度，否则 0
-			return this.$store.state.workingStatus ? this.$store.state.progress * 100 + '%' : 0
+			return this.workingStatusNProgress.workingStatus ? this.workingStatusNProgress.progress * 100 + '%' : 0
 		},
 		titleLeft: function () {		// 暂停、运行状态下输出左侧，否则中间
-			return this.$store.state.workingStatus ? '88px' : '50%'
+			return this.workingStatusNProgress.workingStatus ? '88px' : '50%'
 		},
 		iconsLeft: function () {		// 暂停、运行状态下输出左侧，否则中间
-			return this.$store.state.workingStatus ? '24px' : 'calc(50% - 64px)'
+			return this.workingStatusNProgress.workingStatus ? '24px' : 'calc(50% - 64px)'
 		},
 		newVersionLeft: function () {
-			return this.$store.state.workingStatus ? '320px' : 'calc(50% + 88px)'
+			return this.workingStatusNProgress.workingStatus ? '320px' : 'calc(50% + 88px)'
 		},
 		titlebarText: function () {		// 暂停、运行状态下输出进度，否则没有
-			return (this.$store.state.workingStatus ? '进度：' + (this.$store.state.progress * 100).toFixed(3) + ' % - ' : '') + '丹参盒 v' + version + (process.env.NODE_ENV != 'production' ? 'd' : '')
+			return (this.workingStatusNProgress.workingStatus ? '进度：' + (this.workingStatusNProgress.progress * 100).toFixed(3) + ' % - ' : '') + '丹参盒 v' + version + (process.env.NODE_ENV != 'production' ? 'd' : '')
 		},
 		newVersionText: function () {
 			if (this.newVersion) {
