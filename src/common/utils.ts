@@ -253,15 +253,20 @@ export function getInitialTask(fileName: string, filePath: string, outputParams?
 		filePath: filePath,
 		before: {
 			format: '读取中',
-			duration: '--:--:--.--',
+			duration: NaN,
 			vcodec: '读取中',
 			acodec: '读取中',
 			vresolution: '读取中',
-			vframerate: '读取中',
-			vbitrate: '读取中',
-			abitrate: '读取中',
+			vframerate: NaN,
+			vbitrate: NaN,
+			abitrate: NaN,
 		},
-		after: {},
+		after: {
+			input: {},
+			video: {},
+			audio: {},
+			output: {},		
+		},
 		paraArray: [],
 		status: TaskStatus.TASK_STOPPED,
 		taskProgress: {
@@ -316,8 +321,6 @@ export function getInitialUITask(fileName: string, filePath: string, outputParam
 // #endregion
 
 // #region 实用功能
-
-type FUNC = (...args: any) => any;
 
 /**
  * 拷贝自 https://www.npmjs.com/package/typed-emitter

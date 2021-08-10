@@ -5,7 +5,7 @@ export interface FFBoxServiceEvent {
 	workingStatusUpdate: (arg: {value: WorkingStatus}) => void;
 	tasklistUpdate: (arg: {content: Array<number>}) => void;
 	taskUpdate: (arg: {id: number; content: ServiceTask}) => void;
-	cmdUpdate: (arg: {id: number, content: string}) => void;
+	cmdUpdate: (arg: {id: number, content: string, append: boolean}) => void;
 	progressUpdate: (arg: {id: number, content: any}) => void;
 	taskNotification: (arg: {id: number, content: string, level: NotificationLevel}) => void;
 }
@@ -57,15 +57,15 @@ export interface Task {
 	filePath: string;
 	before: {
 		format: string;
-		duration: string;
+		duration: number;
 		vcodec: string;
 		acodec: string;
 		vresolution: string;
-		vframerate: string;
-		vbitrate: string;
-		abitrate: string;
+		vframerate: number;
+		vbitrate: number;
+		abitrate: number;
 	};
-	after: any;
+	after: OutputParams;
 	paraArray: Array<string>;
 	status: TaskStatus;
 	taskProgress: {
@@ -117,7 +117,7 @@ export interface Server {
 	tasks: Array<UITask>;
 	ffmpegVersion: string;
 	workingStatus: WorkingStatus;
-	progress: 0.0;	// 由每个任务更新时计算出来
+	progress: number;	// 由每个任务更新时计算出来
 }
 
 export interface StoreState {

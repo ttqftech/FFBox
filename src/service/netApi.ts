@@ -18,6 +18,6 @@ export function convertAnyTaskToTask(task: ServiceTask | UITask): Task {
 
 export function mergeTaskFromService(self: UITask, remote: Task): UITask {
     let ret = self;
-    Object.assign(ret, remote);
+    Object.assign(ret, JSON.parse(JSON.stringify(remote)));
     return ret;
 }

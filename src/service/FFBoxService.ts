@@ -39,10 +39,10 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 	 */
 	public initFFmpeg(): void {
 		let ffmpeg = new FFmpeg(1);
-		ffmpeg.on("data", (data: string) => {
+		ffmpeg.on('data', (data: string) => {
 			this.setCmdText(-1, data);
 		});
-		ffmpeg.on("version", (data: string) => {
+		ffmpeg.on('version', (data: string) => {
 			if (data[0]) {
 				this.ffmpegVersion = data;
 			} else {
@@ -67,24 +67,23 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 		task.paraArray = getFFmpegParaArray(task.filePath, task.after.input, task.after.video, task.after.audio, task.after.output, true);
 
 		// FFmpeg 读取媒体信息
-		let ffmpeg = new FFmpeg(2, ["-hide_banner", "-i", filePath, "-f", "null"]);
-		ffmpeg.on("data", (data: string) => {
+		let ffmpeg = new FFmpeg(2, ['-hide_banner', '-i', filePath, '-f', 'null']);
+		ffmpeg.on('data', (data: string) => {
 			this.setCmdText(id, data);
-			this.emit('cmdUpdate', { id, content: data });
 		});
 		ffmpeg.on('metadata', (input: any) => {
 			task.before.format = input.format;
 			task.before.duration = input.duration;
-			task.before.vcodec = input.vcodec === undefined ? "-" : input.vcodec;
-			task.before.vresolution = input.vcodec === undefined ? "-" : input.vresolution.replace("x", "<br />");
-			task.before.vbitrate = input.vbitrate === undefined ? "-" : input.vbitrate;
-			task.before.vframerate = input.vframerate === undefined ? "-" : input.vframerate;
+			task.before.vcodec = input.vcodec === undefined ? '-' : input.vcodec;
+			task.before.vresolution = input.vcodec === undefined ? '-' : input.vresolution.replace('x', '<br />');
+			task.before.vbitrate = input.vbitrate === undefined ? '-' : input.vbitrate;
+			task.before.vframerate = input.vframerate === undefined ? '-' : input.vframerate;
 			task.before.format = input.format;
-			task.before.acodec = input.acodec === undefined ? "-" : input.acodec;
-			task.before.abitrate = input.abitrate === undefined ? "-" : input.abitrate;
+			task.before.acodec = input.acodec === undefined ? '-' : input.acodec;
+			task.before.abitrate = input.abitrate === undefined ? '-' : input.abitrate;
 			this.emit('taskUpdate', { id, content: task });
 		})
-		ffmpeg.on("critical", (errors: Array<string>) => {
+		ffmpeg.on('critical', (errors: Array<string>) => {
 			let reason = '';
 			errors.forEach((value) => {
 				reason += value;
@@ -139,6 +138,7 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 			normal: [],
 			size: [],
 		};
+		this.setCmdText(id, '', false);
 		let newFFmpeg = new FFmpeg(0, getFFmpegParaArray(task.filePath, task.after.input, task.after.video, task.after.audio, task.after.output));
 		newFFmpeg.on('finished', () => {
 			task.status = TaskStatus.TASK_FINISHED;
@@ -168,22 +168,23 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 				mediaTime: status.time,
 				frame: status.frame,
 			});
-			if (status.size != task.taskProgress.size.slice(-1)[0].size) {
+			// size 每隔一段体积才更新一次，所以单独对待
+			if (status.size !== task.taskProgress.size.slice(-1)[0].size) {
 				task.taskProgress.size.push({
-					realTime: new Date().getTime() / 1000, 
+					realTime: new Date().getTime() / 1000,
 					size: status.size,
 				});
 			}
+			// 限制列表最大长度为 6
+			task.taskProgress.normal.splice(0, task.taskProgress.normal.length - 6);
+			task.taskProgress.size.splice(0, task.taskProgress.size.length - 6);
 			this.emit('progressUpdate', {
 				id,
 				content: task.taskProgress,
 			});
 		});
 		newFFmpeg.on('data', (data: string) => {
-			this.emit('cmdUpdate', {
-				id,
-				content: data,
-			});
+			this.setCmdText(id, data);
 		});
 		newFFmpeg.on('error', (error: any) => {
 			task.errorInfo.push(error.description);
@@ -229,8 +230,9 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 	 * 暂停单个任务
 	 * 【TASK_RUNNING】 => 【TASK_PAUSED】
 	 * @param id 任务 id
+	 * @param startFromBehind 是否继续安排后面未开始的任务，默认为 true
 	 */
-	public taskPause(id: number): void {
+	public taskPause(id: number, startFromBehind: boolean = true): void {
 		let task = this.tasklist[id];
 		if (!task) {
 			throw Error(`任务不存在！任务 id：${id}`);
@@ -244,6 +246,9 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 			id,
 			content: task,
 		});
+		if (startFromBehind) {
+			this.queueAssign(Object.keys(this.tasklist).findIndex((key) => parseInt(key) === id) + 1);
+		}
 	}
 
 	/**
@@ -337,7 +342,7 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 	 * 获取【正在运行】的任务数
 	 */
 	public getWorkingTaskCount(): number {
-		let count: number = -1;		// 去掉 globalTask
+		let count = 0;
 		for (const task of Object.values(this.tasklist)) {
 			if (task.status === TaskStatus.TASK_RUNNING) {
 				count++;
@@ -394,8 +399,12 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 				break;
 			}
 		}
-		if (this.getQueueTaskCount() === 0) {			// 遍历完了也没有开始新任务，此处 queueTaskCount 用于代替 started_atLeast
+		if (this.getQueueTaskCount() === 0) {			// 安排完成后依然没有一个待处理任务
 			this.setWorkingStatus(WorkingStatus.stopped);
+		} else if (this.getWorkingTaskCount() === 0) {	// 安排完成后有待处理任务，但没有开始
+			this.setWorkingStatus(WorkingStatus.paused);
+		} else {
+			this.setWorkingStatus(WorkingStatus.running);
 		}
 	}
 
@@ -403,9 +412,10 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 	 * 暂停处理队列
 	 */
 	public queuePause() {
+		this.setWorkingStatus(WorkingStatus.paused);
 		for (const [id, task] of Object.entries(this.tasklist)) {
 			if (task.status === TaskStatus.TASK_RUNNING) {
-				this.taskPause(parseInt(id));
+				this.taskPause(parseInt(id), false);
 			}
 		}
 	}
@@ -443,24 +453,25 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 	/**
 	 * 收到 cmd 内容通用回调
 	 * @param id 任务 id
-	 * @param text 文本
+	 * @param content 文本
 	 * @param append 附加到末尾，默认 true
 	 */
-	private setCmdText(id: number, text: string, append: boolean = true): void {
+	private setCmdText(id: number, content: string, append: boolean = true): void {
 		let task = this.tasklist[id];
 		if (!append) {
-			task.cmdData = text;
+			task.cmdData = content;
 		} else {
-			if (text.length) {
+			if (content.length) {
 				if (task.cmdData.slice(-1) !== '\n' && task.cmdData.length) {
 					task.cmdData += '\n';
 				}
-				task.cmdData += text;
+				task.cmdData += content;
 			}
 		}
 		this.emit('cmdUpdate', {
 			id,
-			content: text,
+			content,
+			append,
 		});
 	}
 
