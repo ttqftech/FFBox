@@ -1,6 +1,16 @@
 module.exports = {
     pluginOptions: {
         electronBuilder: {
+            /*
+            chainWebpackMainProcess: (config) => {
+                // Chain webpack config for electron main process only
+            },
+            chainWebpackRendererProcess: (config) => {
+                // Chain webpack config for electron renderer process only (won't be applied to web builds)
+                console.log(config);
+                config.target = 'electron-renderer';
+            },
+            */
             builderOptions: {
                 appId: 'ttqftech.ffbox',
                 productName: 'FFBox',

@@ -2,7 +2,6 @@ import { ServiceTask, TaskStatus, OutputParams, FFBoxServiceEvent, Notification,
 import { getFFmpegParaArray } from "../common/getFFmpegParaArray";
 import { EventEmitter } from "events";
 import { FFmpeg } from './FFmpegInvoke'
-import { Bridge } from "./bridge";
 import { defaultParams } from "../common/defaultParams";
 import { getInitialServiceTask, TypedEventEmitter } from "@/common/utils";
 import { convertAnyTaskToTask } from "./netApi";
@@ -152,15 +151,7 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 				content: task,
 			});
 			
-			let pos = 0;
-			for (const id_ of Object.keys(this.tasklist)) {	// 开始下一个任务，但是不要开始上一个任务
-				if (id_ === id.toString()) {
-					break;
-				} else {
-					pos++;
-				}
-			}
-			this.queueAssign(pos);
+			this.queueAssign(Object.keys(this.tasklist).findIndex((key) => parseInt(key) === id) + 1);
 		});
 		newFFmpeg.on('status', (status: FFmpegProgress) => {
 			task.taskProgress.normal.push({
@@ -207,7 +198,7 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 				id,
 				content: task,
 			});
-			this.queueAssign();
+			this.queueAssign(Object.keys(this.tasklist).findIndex((key) => parseInt(key) === id) + 1);
 		});
 		task.taskProgress.normal.push({
 			realTime: new Date().getTime() / 1000,
@@ -300,6 +291,7 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 					id,
 					content: task,
 				});
+				this.queueCheck();
 			});
 		} else if (task.status === TaskStatus.TASK_STOPPING) {		// 正在停止状态下强制重置
 			task.status = TaskStatus.TASK_STOPPED;
@@ -309,10 +301,12 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 					id,
 					content: task,
 				});
+				this.queueCheck();
 			});
 		} else if (task.status === TaskStatus.TASK_FINISHED || task.status === TaskStatus.TASK_ERROR) {		// 完成状态下重置
 			task.status = TaskStatus.TASK_STOPPED;
 		}
+		this.queueCheck();
 		this.emit('taskUpdate', {
 			id,
 			content: task,
@@ -399,12 +393,23 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 				break;
 			}
 		}
-		if (this.getQueueTaskCount() === 0) {			// 安排完成后依然没有一个待处理任务
-			this.setWorkingStatus(WorkingStatus.stopped);
-		} else if (this.getWorkingTaskCount() === 0) {	// 安排完成后有待处理任务，但没有开始
-			this.setWorkingStatus(WorkingStatus.paused);
+		this.queueCheck();
+	}
+
+	/**
+	 * 检查队列状态，以此更新 workingStatus
+	 */
+	private queueCheck(): void {
+		let newWorkingStatus: WorkingStatus;
+		if (this.getQueueTaskCount() === 0) {			// 没有一个待处理任务
+			newWorkingStatus = WorkingStatus.stopped;
+		} else if (this.getWorkingTaskCount() === 0) {	// 有待处理任务，但没有开始
+			newWorkingStatus = WorkingStatus.paused;
 		} else {
-			this.setWorkingStatus(WorkingStatus.running);
+			newWorkingStatus = WorkingStatus.running;
+		}
+		if (this.workingStatus !== newWorkingStatus) {
+			this.setWorkingStatus(newWorkingStatus);
 		}
 	}
 

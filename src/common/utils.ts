@@ -1,5 +1,6 @@
 // #region 格式转换区
 
+import nodeBridge from "@/electron/bridge/nodeBridge";
 import { OutputParams, ServiceTask, Task, TaskStatus, UITask } from "@/types/types";
 
 /** 
@@ -321,6 +322,27 @@ export function getInitialUITask(fileName: string, filePath: string, outputParam
 // #endregion
 
 // #region 实用功能
+
+export function jumpToUrl(url: string): void {
+	if (nodeBridge.isElectron) {
+		switch (nodeBridge.os) {
+			case 'MacOS':
+				nodeBridge.exec('open ' + url);
+				break;
+			case 'Windows':
+				nodeBridge.exec('start ' + url);
+				break;
+			case 'Linux':
+				nodeBridge.exec('xdg-open', [url]);
+				break;
+			default:
+				window.open(url);
+				break;
+		}
+	} else {
+		window.open(url);
+	}
+}
 
 /**
  * 拷贝自 https://www.npmjs.com/package/typed-emitter
