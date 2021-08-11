@@ -5,16 +5,17 @@
 			<h1 id="Sponsorcenter-title">支持作者</h1>
 			<div id="Sponsorcenter-crossline"></div>
 			<div id="Sponsorcenter-box">
-				<p>觉得好用的话，来 Github 点个星嘛～（当然也能提交 issues）</p>
+				<p>觉得好用的话，来 GitHub 点个星嘛～（当然也能提交 issues）</p>
 				<div class="QRscreens">
-					<buttonbox text="github" imgsrc="/images/github.svg" @click="jumpToGithub"></buttonbox>
+					<buttonbox text="GitHub" imgsrc="/images/github.svg" @click="jumpToGithub"></buttonbox>
+					<buttonbox text="Gitee" imgsrc="/images/gitee.svg" @click="jumpToGitee"></buttonbox>
 				</div>
 				<p>每日一分</p>
 				<div class="QRscreens">
 					<div class="QRscreen QRscreen-alipayredenvelop">
 						<div class="QRuppertext"><strong>扫码领红包</strong></div>
 						<div class="QRbox">
-							<canvas class="QRbox-wrapper" id="qr-alipayredenvelop"></canvas>
+							<canvas class="QRbox-wrapper" ref="qr_alipayredenvelop"></canvas>
 						</div>
 						<div class="QRlowertext">打开支付宝[<strong>扫一扫</strong>]</div>
 						<div class="QRtitle">
@@ -27,7 +28,7 @@
 					<div class="QRscreen QRscreen-alipay">
 						<div class="QRuppertext">推荐使用<strong>支付宝</strong></div>
 						<div class="QRbox">
-							<canvas class="QRbox-wrapper" id="qr-alipay"></canvas>
+							<canvas class="QRbox-wrapper" ref="qr_alipay"></canvas>
 						</div>
 						<div class="QRlowertext">滔滔清风</div>
 						<div class="QRtitle">
@@ -37,7 +38,7 @@
 					<div class="QRscreen QRscreen-wechatpay">
 						<div class="QRuppertext">支付就用微信支付</div>
 						<div class="QRbox">
-							<canvas class="QRbox-wrapper" id="qr-wechatpay"></canvas>
+							<canvas class="QRbox-wrapper" ref="qr_wechatpay"></canvas>
 						</div>
 						<div class="QRlowertext">滔滔清风</div>
 						<div class="QRtitle">
@@ -47,7 +48,7 @@
 					<div class="QRscreen QRscreen-qqpay">
 						<div class="QRuppertext">QQ 支付</div>
 						<div class="QRbox">
-							<canvas class="QRbox-wrapper" id="qr-qqpay"></canvas>
+							<canvas class="QRbox-wrapper" ref="qr_qqpay"></canvas>
 						</div>
 						<div class="QRlowertext">滔滔清风</div>
 						<div class="QRtitle">
@@ -61,58 +62,51 @@
 	</div>
 </template>
 
-<script>
-let remote, currentWindow, exec
-if (process.env.IS_ELECTRON) {
-	remote = window.require('electron').remote
-	currentWindow = remote.getCurrentWindow()
-	exec = window.require('child_process').exec
-} else {
-	// 不能引入 electron，会报错：fs.existsSync is not a function
-	// 不能引入 child_process，因为不是 node 环境
-}
+<script lang="ts">
+import Vue from 'vue';
 
 import Buttonbox from "@/electron/components/parabox/Buttonbox.vue";
+import { jumpToUrl } from '@/common/utils';
 
-export default {
+export default Vue.extend({
 	name: 'Sponsorcenter',
 	components: {
 		Buttonbox
 	},
-	computed: {
-	},
 	methods: {
 		jumpToGithub: function () {
-			switch (remote.process.platform) {
-			case "darwin":
-				exec('open ' + 'https://github.com/ttqftech/FFBox/');
-				break;
-			case "win32":
-				exec('start ' + 'https://github.com/ttqftech/FFBox/');
-				break;
-			default:
-				exec('xdg-open', ['https://github.com/ttqftech/FFBox/']);
-			}
+			jumpToUrl('https://github.com/ttqftech/FFBox/');
+
+		},
+		jumpToGitee: function () {
+			jumpToUrl('https://gitee.com/ttqf/FFBox');
+
+		},
+		paintAllQRcode: function () {
+			paintQRcode2canvas(this.$refs.qr_alipayredenvelop as HTMLCanvasElement, alipayRedEnvelopQR());
+			paintQRcode2canvas(this.$refs.qr_alipay as HTMLCanvasElement, alipayQR());
+			paintQRcode2canvas(this.$refs.qr_wechatpay as HTMLCanvasElement, wechatpayQR());
+			paintQRcode2canvas(this.$refs.qr_qqpay as HTMLCanvasElement, qqpayQR());
 		}
 	},
 	mounted: function () {
-		paintAllQRcode()
+		this.paintAllQRcode();
 	}
-}
+});
 
 // 传入 HexEditor 从第一个像素开始的内容，需要 4 位灰度色 bmp，反向行序
 // 传入二维码大小
-function getQR (hexString, size, linesize) {
-	var QRstring = hexString.replace(/ /g, '')
-	var QRcode = []
+function getQR (hexString: string, size: number, linesize: number): Array<Array<string>> {
+	let QRstring = hexString.replace(/ /g, '');
+	let QRcode: Array<Array<string>> = [];
 	for (let i = 0; i < size; i++) {
-		QRcode[i] = []
+		QRcode[i] = [];
 		for (let j = 0; j < size; j++) {
-			let pos = i * linesize + j
-			QRcode[i][j] = QRstring[pos]
+			let pos = i * linesize + j;
+			QRcode[i][j] = QRstring[pos];
 		}
 	}
-	return QRcode
+	return QRcode;
 }
 
 function alipayRedEnvelopQR() {
@@ -128,34 +122,27 @@ function qqpayQR () {
 	return getQR(`00 00 00 0F F0 00 0F FF F0 FF FF F0 F0 F0 00 0F FF FF 0F 00 00 00 00 00 0F FF FF 0F 0F 00 00 0F F0 F0 F0 00 0F 0F 0F F0 0F F0 FF 0F FF FF 00 00 0F 00 0F 0F F0 F0 F0 FF FF 00 F0 FF F0 FF 00 00 00 F0 FF 0F 00 0F 08 08 0F 00 0F 0F 00 FF F0 FF 00 0F 00 00 FF 00 FF 0F FF F0 0F 0F 00 0F 08 08 0F 00 0F 0F F0 00 FF F0 FF F0 00 00 0F FF FF 00 FF 00 0F 0F 00 0F 00 00 0F FF FF 0F 0F 0F 0F FF 00 0F 0F FF 0F 0F F0 F0 FF FF FF 0F FF FF 08 08 00 00 00 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 00 00 00 00 00 FF FF FF FF FF F0 F0 F0 FF F0 0F FF 0F 00 00 0F 00 F0 FF FF FF FF F8 08 00 00 0F 00 0F F0 FF F0 0F 0F 00 00 0F F0 F0 00 FF F0 F0 F0 F0 F0 F8 08 F0 FF 0F F0 00 0F 00 00 FF FF F0 F0 F0 FF F0 0F FF F0 00 FF FF F0 00 00 FF F0 F0 00 00 F0 0F FF F0 FF F0 FF 00 0F F0 F0 0F 0F FF 00 F0 00 F0 00 F0 00 00 F0 00 F0 00 00 0F 00 FF F0 00 F0 FF 00 00 F0 F0 F0 00 0F F0 00 0F 00 0F 0F 0F 00 00 F0 00 00 F0 00 00 FF F0 0F FF 00 00 F0 FF F0 F0 00 FF FF FF F0 00 F0 0F FF FF F0 FF FF F0 FF FF 00 0F F0 0F FF FF 00 F0 00 00 F0 FF 0F 00 00 0F FF F0 0F 0F F0 0F FF F0 F0 F0 0F 00 0F FF 00 F8 08 0F 00 00 FF 00 0F F0 00 F0 00 FF F0 00 F0 00 0F 00 FF FF 0F 00 00 F0 00 FF 0F 0F 0F FF 00 FF FF 00 00 00 F0 0F FF FF 00 FF FF F0 FF F0 F0 00 00 00 F0 F0 FF F0 FF FF 00 FF 00 F0 FF 00 F0 FF 00 F0 FF 00 F0 0F F0 08 08 00 F0 F0 0F 00 0F 0F FF F0 0F 0F F0 0F 0F FF FF F0 00 FF 0F 00 00 F8 08 0F FF 0F FF 00 F0 00 FF F0 0F FF F0 0F F0 00 00 00 00 FF FF F0 0F F8 08 00 F0 00 00 00 FF F0 F0 00 0F 00 00 0F 00 FF 0F FF F0 00 00 00 F0 F0 00 F0 FF 0F FF 00 0F 0F FF F0 FF 05 A6 00 FF FF 00 FF F0 0F FF 0F 0F F8 08 0F 00 0F 0F 00 0F 00 F0 0F 00 0B B9 0F FF 00 FF 00 00 0F 0F 00 F0 F0 00 0F F0 0F FF 0F 0F F0 FF FF FF 0F 5F 00 00 00 FF 0F 0F 0F FF 0F 00 F0 00 00 0F 00 00 0F FF 0F F0 FF 00 00 00 00 FF F0 F0 F0 0F 00 00 00 FF F0 00 00 0F 0F F0 F0 F0 F0 0F F0 F0 0F 00 0F FF 00 00 0F FF 00 0F FF 00 00 00 0F 0F F0 00 0F 0F F0 FF F0 0F 00 FF F0 0F 00 F0 F0 00 00 FF 00 00 F8 08 0F 00 FF FF FF F0 F0 FF FF 0F 00 00 0F FF 0F F0 0F F0 FF FF F0 0F F8 08 FF FF FF 00 F0 0F 00 F0 0F 00 0F FF 0F 00 FF 0F FF 0F FF F0 00 FF 00 00 00 F0 FF FF 00 00 00 F0 FF F0 F0 F0 0F F0 0F 00 FF FF 00 F0 FF F0 F8 08 F0 00 0F 00 0F F0 0F 0F FF FF 00 0F FF 0F 00 F0 00 0F F0 FF FF F0 F0 00 0F FF 0F FF F0 FF FF F0 FF 0F FF FF 00 00 0F 00 00 F0 FF 00 0F 0F F8 08 FF F0 00 0F 00 00 00 F0 0F 00 00 FF 00 0F F0 F0 FF 0F 00 F0 0F FF F8 08 00 0F 0F FF F0 0F 0F F0 FF F0 F0 00 00 FF 00 00 0F FF 0F FF F0 0F 08 08 FF FF 0F 00 00 00 0F FF F0 0F F0 F0 FF 00 F0 F0 00 00 00 FF F0 00 F8 08 F0 00 0F FF F0 0F 00 FF FF F0 00 00 00 F0 0F F0 0F 00 F0 FF 00 00 08 08 0F F0 0F 00 0F F0 FF FF 00 0F 00 00 00 FF F0 0F F0 0F 00 00 0F 00 F8 08 FF FF FF FF 0F F0 00 00 FF F0 0F FF 0F F0 0F 00 F0 FF 0F FF 00 F0 00 00 00 00 00 0F 0F 00 F0 FF F0 00 0F 0F 00 0F F0 F0 F0 00 0F 0F 00 FF F0 00 0F FF FF 0F F0 0F 00 FF 00 0F 0F FF 00 00 0F 0F 0F 0F 0F FF 0F 00 08 08 0F 00 0F 0F 0F 0F 0F FF 0F 0F 00 00 00 FF F0 0F FF 0F 00 00 0F F0 00 00 0F 00 0F 0F 0F 00 FF F0 F0 F0 F0 F0 0F F0 00 00 FF F0 F0 00 00 F0 F0 00 0F 00 0F 0F 0F FF F0 F0 FF 00 F0 00 F0 00 F0 F0 00 00 0F 0F FF 0F 00 00 0F FF FF 0F 00 F0 FF 00 00 0F 0F F0 FF 00 0F 00 0F F0 F0 FF 0F 0F F0 00 00 00 00 0F 0F 00 F0 FF 0F 00 F0 0F 00 F0 FF 00 F0 00 FF 0F 0F F0 F8 08 00 00`, 45, 45 + 3)
 }
 
-function paintQRcode2canvas (canvas, QRcode) {
-	var width = 168 * window.devicePixelRatio
-	var height = 168 * window.devicePixelRatio
-	canvas.setAttribute('width', width)
-	canvas.setAttribute('height', height)
-	var ctx = canvas.getContext('2d')
+function paintQRcode2canvas (canvas: HTMLCanvasElement, QRcode: Array<Array<string>>) {
+	let width = 168 * window.devicePixelRatio;
+	let height = 168 * window.devicePixelRatio;
+	canvas.setAttribute('width', width + '');
+	canvas.setAttribute('height', height + '');
+	let ctx = canvas.getContext('2d')!;
 	
 	// 绘制背景色
-	ctx.fillStyle = '#FF0000'
-	ctx.strokeStyle = '#FF0000'
-	ctx.fillRect(0, 0, width, height)
+	ctx.fillStyle = '#FF0000';
+	ctx.strokeStyle = '#FF0000';
+	ctx.fillRect(0, 0, width, height);
 
 	// 绘制二维码
-	var size = QRcode.length
-	var d = width / size
+	let size = QRcode.length;
+	let d = width / size;
 	for (let i = 0; i < size; i++) {
 		for (let j = 0; j < size; j++) {
-			ctx.fillStyle = '#' + QRcode[i][j] + QRcode[i][j] + QRcode[i][j]
-			ctx.fillRect(Math.floor(j * d), Math.floor(i * d), Math.floor((j+1)) * d - Math.floor(j * d), Math.floor((i+1) * d) - Math.floor(i * d))
+			ctx.fillStyle = '#' + QRcode[i][j] + QRcode[i][j] + QRcode[i][j];
+			ctx.fillRect(Math.floor(j * d), Math.floor(i * d), Math.floor((j+1)) * d - Math.floor(j * d), Math.floor((i+1) * d) - Math.floor(i * d));
 		}
 	}
-}
-
-function paintAllQRcode () {
-	paintQRcode2canvas(document.getElementById('qr-alipayredenvelop'), alipayRedEnvelopQR())
-	paintQRcode2canvas(document.getElementById('qr-alipay'), alipayQR())
-	paintQRcode2canvas(document.getElementById('qr-wechatpay'), wechatpayQR())
-	paintQRcode2canvas(document.getElementById('qr-qqpay'), qqpayQR())
 }
 
 </script>

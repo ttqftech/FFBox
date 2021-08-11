@@ -3,7 +3,7 @@
 		<button id="startbutton" class="startbutton " :class="startbuttonClass" @click="$store.commit('startNpause')">{{ startbuttonText }}</button>
 		<div id="tasklist-wrapper" ref="tasklist_wrapper">
 			<div id="tasklist">
-				<taskitem v-for="(task, index) in taskList" :key="parseInt(task.id)" :id='task.id' :duration="task.duration" :filename="task.fileName" :before="task.before" :after="task.after" :progress_smooth="task.progress_smooth" :status="task.status" :selected="taskSelected(task.id)" @itemClicked="onItemClicked($event, task.id, index)" @pauseNremove="onItemPauseNdelete(task.id)"></taskitem>
+				<taskitem v-for="(task, index) in taskList" :key="parseInt(task.id)" :id='task.id' :duration="task.duration" :file_name="task.fileName" :before="task.before" :after="task.after" :progress_smooth="task.progress_smooth" :status="task.status" :selected="taskSelected(task.id)" @itemClicked="onItemClicked($event, task.id, index)" @pauseNremove="onItemPauseNdelete(task.id)"></taskitem>
 			</div>
 			<div id="dropfilesdiv" @click="itemUnselect">
 				<div id="dropfilesimage" @click="debugLauncher" :style="{ 'backgroundImage': `url(${dropfilesimage})` }"></div>
@@ -17,12 +17,7 @@ import Vue from 'vue';
 
 import Taskitem from '@/electron/components/Taskitem.vue'
 import { NotificationLevel, Server, UITask } from '@/types/types';
-
-let remote: any, currentWindow: any;
-if (process.env.IS_ELECTRON) {
-	remote = window.require('electron').remote
-	currentWindow = remote.getCurrentWindow()
-}
+import nodeBridge from "@/electron/bridge/nodeBridge";
 
 export default Vue.extend({
 	name: 'TasksView',
@@ -98,14 +93,14 @@ export default Vue.extend({
 			let clickSpeedCounter = 0;
 			let clickSpeedTimer = 0;
 			let clickSpeedTimerStatus = false;
-			return () => {
+			return function () {
 				clickSpeedCounter += 20;
 				if (clickSpeedCounter > 100) {
 					this.$popup({
 						message: '打开开发者工具',
 						level: NotificationLevel.info
 					});
-					currentWindow.openDevTools();
+					nodeBridge.remote?.getCurrentWindow().openDevTools();
 					clickSpeedCounter = 0;
 					clearInterval(clickSpeedTimer);
 					clickSpeedTimerStatus = false;
@@ -138,7 +133,7 @@ export default Vue.extend({
 				} else {							// 之前没选东西，现在选第一个
 					currentSelection = new Set([id]);
 				}
-			} else if (event.ctrlKey == true || remote.process.platform == 'darwin' && event.metaKey == true) {
+			} else if (event.ctrlKey == true || nodeBridge.os === 'MacOS' && event.metaKey == true) {
 				if (currentSelection.has(id)) {
 					currentSelection.delete(id);
 				} else {

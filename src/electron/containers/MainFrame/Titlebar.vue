@@ -25,18 +25,11 @@
 
 <script lang="ts">
 import Vue from 'vue';
+
 import { version, buildNumber } from "@/types/constants";
 import { FFBoxVersion, NormalApiWrapper, Server, WorkingStatus } from '@/types/types';
-
-let remote: any, currentWindow: any, exec: any;
-if (process.env.IS_ELECTRON) {
-	remote = window.require('electron').remote;
-	currentWindow = remote.getCurrentWindow();
-	exec = window.require('child_process').exec;
-} else {
-	// 不能引入 electron，会报错：fs.existsSync is not a function
-	// 不能引入 child_process，因为不是 node 环境
-}
+import nodeBridge from "@/electron/bridge/nodeBridge";
+import { jumpToUrl } from '@/common/utils';
 
 interface Data {
 	isMaximized: boolean;
@@ -93,10 +86,14 @@ export default Vue.extend<Data, any, any, any>({
 	methods: {
 		// 最小化按钮
 		minimum: function () {
-			currentWindow.minimize();
+			nodeBridge.remote?.getCurrentWindow().minimize();
 		},
 		// 窗口模式按钮
 		windowmode: function () {
+			let currentWindow = nodeBridge.remote?.getCurrentWindow();
+			if (!currentWindow) {
+				return;
+			}
 			if (currentWindow.isMaximized() || this.isMaximized == true) {
 				currentWindow.unmaximize();
 				this.isMaximized = false;
@@ -115,7 +112,7 @@ export default Vue.extend<Data, any, any, any>({
 				text,
 				position: {
 					right: `calc(100% - ${event.target!.getBoundingClientRect().left}px)`,
-					top: event.target!.getBoundingClientRect().top + event.target!.offsetHeight + 'px',
+					top: event.target!.offsetTop + event.target!.offsetHeight + 'px',
 				},
 			});
 		},
@@ -123,16 +120,7 @@ export default Vue.extend<Data, any, any, any>({
 			this.$tooltip.hide();
 		},
 		gotoWebsite: function () {
-			switch (remote.process.platform) {
-			case "darwin":
-				exec('open ' + 'http://FFBox.ttqf.tech/');
-				break;
-			case "win32":
-				exec('start ' + 'http://FFBox.ttqf.tech/');
-				break;
-			default:
-				exec('xdg-open', ['http://FFBox.ttqf.tech/']);
-			}
+			jumpToUrl('http://FFBox.ttqf.tech/');
 		}
 	},
 	mounted: function () {

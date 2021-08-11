@@ -8,7 +8,7 @@
 					<div class="taskitem-previewbox-img"></div>
 				</div>
 				<span class="taskitem-timing">{{ before.duration | getFormattedTime }}</span>
-				<span class="taskitem-filename">{{ filename }}</span>
+				<span class="taskitem-filename">{{ file_name }}</span>
 				<div class="taskitem-info taskitem-infobefore">
 					<div class="taskitem-img-format"></div>
 					<span class="taskitem-span-format">{{ before.format }}</span>
@@ -72,16 +72,27 @@
 import Vue from 'vue';
 
 import { getFormattedTime } from '@/common/utils'
-import { TaskStatus } from "@/types/types";
+import { OutputParams, TaskStatus, Task, UITask } from "@/types/types";
 import { generator as vGenerator } from '@/common/vcodecs'
 import { generator as aGenerator } from '@/common/acodecs'
 
-export default Vue.extend({
+interface Props {
+	id: number;
+	duration: number;
+	file_name: string;
+	before: Task['before'];
+	after: OutputParams;
+	progress_smooth: UITask['progress_smooth'];
+	status: number;
+	selected: boolean;
+}
+
+export default Vue.extend<{}, any, any, Props>({
 	name: 'TaskItem',
 	props: {
-		id: [Number, String],
-		duration: String,
-		filename: String,
+		id: Number,
+		duration: Number,
+		file_name: String,
 		before: Object,
 		after: Object,
 		progress_smooth: Object,
@@ -131,11 +142,11 @@ export default Vue.extend({
 		deleteButtonAriaLabel: function (): string {
 			switch (this.status) {
 				case TaskStatus.TASK_STOPPED: case TaskStatus.TASK_FINISHED:
-					return '删除任务' + this.filename
+					return '删除任务' + this.file_name
 				case TaskStatus.TASK_RUNNING:
-					return '暂停任务' + this.filename
+					return '暂停任务' + this.file_name
 				case TaskStatus.TASK_PAUSED: case TaskStatus.TASK_STOPPING: case TaskStatus.TASK_FINISHING: case TaskStatus.TASK_FINISHED:
-					return '重置任务' + this.filename
+					return '重置任务' + this.file_name
 			}
 			return '删除暂停重置按钮';
 		},
@@ -201,10 +212,16 @@ export default Vue.extend({
 			}
 		},
 		timeFilter: function (value: number) {
-			if (value < 100) {
-				return value.toFixed(2);
+			let left = value;
+			let hour = Math.floor(left / 3600); left -= hour * 3600;
+			let minute = Math.floor(left / 60); left -= minute * 60;
+			let second = left;
+			if (hour) {
+				return `${hour}:${minute.toString().padStart(2, '0')}:${second.toFixed(0).toString().padStart(2, '0')}`;
+			} else if (minute) {
+				return `${minute}:${second.toFixed(1).padStart(4, '0')}`;
 			} else {
-				return value.toFixed(1);
+				return second.toFixed(2);
 			}
 		},
 		beforeBitrateFilter: function (kbps: number) {
@@ -473,6 +490,7 @@ export default Vue.extend({
 				font-size: 12px;
 			}
 			.taskitem-large .taskitem-filename {
+				display: -webkit-box;
 				position: absolute;
 				left: 112px;
 				top: 8px;
@@ -480,6 +498,8 @@ export default Vue.extend({
 				height: 66px;
 				font-size: 23.5px;
 				font-weight: bold;
+				-webkit-line-clamp: 2;
+				-webkit-box-orient: vertical;
 			}
 			.taskitem-large .taskitem-info {
 				height: 68px;
@@ -655,6 +675,7 @@ export default Vue.extend({
 				font-size: 12px;
 			}
 			.taskitem-large-run .taskitem-filename {
+				display: -webkit-box;
 				position: absolute;
 				left: 112px;
 				top: 8px;
@@ -662,6 +683,8 @@ export default Vue.extend({
 				height: 66px;
 				font-size: 23.5px;
 				font-weight: bold;
+				-webkit-line-clamp: 2;
+				-webkit-box-orient: vertical;
 			}
 			.taskitem-large-run .taskitem-info {
 				height: 68px;
@@ -843,6 +866,8 @@ export default Vue.extend({
 				height: 28px;
 				font-size: 20px;
 				font-weight: bold;
+				white-space: nowrap;
+				text-overflow: ellipsis;
 			}
 			.taskitem-small .taskitem-info {
 				height: 48px;
@@ -1017,6 +1042,8 @@ export default Vue.extend({
 				height: 28px;
 				font-size: 20px;
 				font-weight: bold;
+				white-space: nowrap;
+				text-overflow: ellipsis;
 			}
 			.taskitem-small-run .taskitem-info {
 				height: 48px;

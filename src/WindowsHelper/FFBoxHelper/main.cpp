@@ -8,7 +8,7 @@
 
 using namespace std;
 
-const UINT8 OP_BUFFER_LENGTH = 8;
+const UINT8 OP_BUFFER_LENGTH = 9;	// 最后一位恒为 0，所以最终可用的大小是它减去 1
 
 int main();
 void resetOpBuffer(char* pointer, UINT8* opBufferIndex);
@@ -17,7 +17,7 @@ int main() {
 	char chr;					// 当前读入的字符
 	char status = 0;			// 状态定义：　0：初始　1：传入 PID，暂停或恢复进程　2：传入 hWnd，设置毛玻璃或恢复　z：退出本程序　　　　　
 	char opSymbol;				// 一般用作操作方向开关，具体行为由操作定义
-	char opBuffer[OP_BUFFER_LENGTH] = { 0, 0, 0, 0, 0, 0, 0, 0 };	// 最后一位恒为 0
+	char opBuffer[OP_BUFFER_LENGTH] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	UINT8 opBufferIndex = 0;	// 循环读入 opBuffer 时的序号
 	chr = getchar();
 	status = '0';

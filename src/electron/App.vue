@@ -13,26 +13,16 @@ import Popup from '@/electron/components/floating/Popup/index'
 import Msgbox from '@/electron/components/floating/Msgbox/index.js'
 import Tooltip from '@/electron/components/floating/Tooltip/index.js'
 
-let ElectronStore, electronStore: any, ipc: any, remote: any, currentWindow: any, spawn: any
-if (process.env.IS_ELECTRON) {
-	ElectronStore = window.require('electron-store')
-	electronStore = new ElectronStore()
-	ipc = window.require('electron').ipcRenderer
-	remote = window.require('electron').remote
-	currentWindow = remote.getCurrentWindow();
-	spawn = window.require('child_process').spawn;
-}
+const maxThreads = 2;
 
-const maxThreads = 2
-
-import { FFBoxService } from "@/service/FFBoxService";
-
-import { defaultParams } from "../common/defaultParams";
 import { StoreState, NotificationLevel, ServiceTask, WorkingStatus, TaskStatus, Server, UITask, Task } from '@/types/types'
-import { getInitialUITask } from '@/common/utils'
 import { version, buildNumber } from "@/types/constants";
-import { getFFmpegParaArray } from '@/common/getFFmpegParaArray'
+import { getInitialUITask } from '@/common/utils'
+import { defaultParams } from "../common/defaultParams";
+import { FFBoxService } from "@/service/FFBoxService";
 import { mergeTaskFromService } from '@/service/netApi'
+import nodeBridge from "./bridge/nodeBridge";
+import osBridge from "./bridge/osBridge";
 
 let ffboxService: FFBoxService;
 let mainVue: Vue;
@@ -147,7 +137,6 @@ const store = new Vuex.Store<StoreState>({
 		},
 		// 修改参数，保存到本地磁盘（args：type (input | video | videoDetail | audio | audioDetail | output), key, value）。args 不传则直接存盘
 		changePara (state, args) {
-			console.log('changepara');
 			if (args) {
 				switch (args.type) {
 					case 'input':
@@ -172,9 +161,6 @@ const store = new Vuex.Store<StoreState>({
 			}
 			// 更改到一些不匹配的值后会导致 getFFmpegParaArray 出错，但是修正代码就在后面，因此仅需忽略它，让它继续运行下去，不要急着更新
 			Vue.nextTick(() => {
-				// state.globalParams.paraArray = getFFmpegParaArray('[输入文件名]', state.globalParams.input, state.globalParams.video, state.globalParams.audio, state.globalParams.output)
-				// state.globalParams = Object.assign({}, state.globalParams);
-				
 				let currentServer = state.servers[state.currentServerName];
 				if (!currentServer) {
 					return;
@@ -189,20 +175,24 @@ const store = new Vuex.Store<StoreState>({
 				}
 				// paraArray 由 service 算出后回填本地
 				let result = ffboxService.setParameter(needToUpdateIds, state.globalParams);
-				for (const indexNid of Object.entries(needToUpdateIds)) {
-					let task = currentServer.tasks[parseInt(indexNid[0])];
-					task.paraArray = result[indexNid[1]];
+				for (const indexNid of Object.values(needToUpdateIds)) {
+					let task = currentServer.tasks[indexNid];
+					task.paraArray = result[indexNid];
 				}
 			})
 
 			// 存盘
+
 			clearTimeout((window as any).saveAllParaTimer);
 			(window as any).saveAllParaTimer = setTimeout(() => {
-				electronStore.set('input', state.globalParams.input);
-				electronStore.set('video', state.globalParams.video);
-				electronStore.set('audio', state.globalParams.audio);
-				electronStore.set('output', state.globalParams.output);
-				console.log("参数已保存");
+				let electronStore = nodeBridge.electronStore;
+				if (nodeBridge.isElectron && electronStore) {
+					electronStore.set('input', state.globalParams.input);
+					electronStore.set('video', state.globalParams.video);
+					electronStore.set('audio', state.globalParams.audio);
+					electronStore.set('output', state.globalParams.output);
+					console.log("参数已保存");
+				}
 			}, 700);
 		},
 		// 使用任务的参数替换参数盒，after 不传值为重置为默认
@@ -218,7 +208,6 @@ const store = new Vuex.Store<StoreState>({
 		 * @param args name, path, callback（传回添加后的 id）
 		 */
 		addTask (state, args) {
-			console.log('addtask');
 			let currentServer = state.servers[state.currentServerName];
 			if (!currentServer) {
 				return;
@@ -229,7 +218,6 @@ const store = new Vuex.Store<StoreState>({
 			}
 		},
 		selectedTask_update (state, set) {
-			console.log('selectedTask updated at ' + new Date().getTime(), [...(set as Set<any>)]);
 			state.selectedTask = set;
 			if (set.size > 0) {
 				let currentServer = state.servers[state.currentServerName];
@@ -248,10 +236,10 @@ const store = new Vuex.Store<StoreState>({
 				ipc.send('exitConfirm');
 				ipc.send('close');
 			}
-			if (this.getters.queueTaskCount > 0) {
+			if (ffboxService.getQueueTaskCount() > 0) {
 				mainVue.$confirm({
 					title: '要退出咩？',
-					content: `您还有 ${this.getters.queueTaskCount} 个任务未完成，要退出🐴？`,
+					content: `您还有 ${ffboxService.getQueueTaskCount()} 个任务未完成，要退出🐴？`,
 				}).then(readyToClose);
 			} else {
 				readyToClose();
@@ -304,18 +292,18 @@ export default Vue.extend({
 			if (currentServer.workingStatus === WorkingStatus.running && !this.$store.state.overallProgressTimerID) {
 				let timerID = setInterval(overallProgressTimer, 80, this.$store.state.workingStatus, currentServer);
 				this.$store.commit('setOverallProgressTimer', timerID);
-				overallProgressTimer(this.$store.state.workingStatus, currentServer);
+				overallProgressTimer(currentServer.workingStatus, currentServer);
 			} else if (currentServer.workingStatus === WorkingStatus.stopped && this.$store.state.overallProgressTimerID) {
 				clearInterval(this.$store.state.overallProgressTimerID);
 				this.$store.commit('setOverallProgressTimer', NaN);
-				overallProgressTimer(this.$store.state.workingStatus, currentServer);
-				if (!currentWindow.isVisible()) {
-					currentWindow.flashFrame(true);
+				overallProgressTimer(currentServer.workingStatus, currentServer);
+				if (nodeBridge.remote && nodeBridge.remote.getCurrentWindow().isFocused()) {
+					nodeBridge.remote.getCurrentWindow().flashFrame(true);
 				}
 			} else if (currentServer.workingStatus === WorkingStatus.paused && this.$store.state.overallProgressTimerID) {
 				clearInterval(this.$store.state.overallProgressTimerID);
 				this.$store.commit('setOverallProgressTimer', NaN);
-				overallProgressTimer(this.$store.state.workingStatus, currentServer);
+				overallProgressTimer(currentServer.workingStatus, currentServer);
 			}
 		},
 		handleTasklistUpdate(content: Array<number>) {
@@ -415,7 +403,9 @@ export default Vue.extend({
 			currentServer.tasks[id].notifications.push({ content, level, time: new Date().getTime() });
 
 		},
-		// 读取 service 中 task id 为 -1 的 globalTask
+		/**
+		 * 读取 service 中 task id 为 -1 的 globalTask
+		 */
 		updateGlobalTask () {
 			let currentServer: Server = this.$store.state.servers[this.$store.state.currentServerName];
 			if (!currentServer) {
@@ -433,61 +423,59 @@ export default Vue.extend({
 		mainVue = this;
 		(window as any).mainVue = mainVue;
 
-		console.warn('正在启动 helper');
-		let helper = spawn("FFBoxHelper.exe", undefined, {
-			detached: false,
-			shell: true,
-			encoding: 'utf8'
-		});
-		helper.stdout.on('data', (data) => {
-			console.warn(data.toString());
-		})
 		setTimeout(() => {
-			// 保持最上层
-			var hwnd
-			ipc.on('hwnd', (event, data) => {
-				hwnd = data[0] + data[1] * 2**8 + data[2] * 2**16 + data[3] * 2**24
-				console.log(`本窗口 hwnd：` + hwnd)
-				helper.stdin.write(`2p${hwnd.toString().padStart(7, '0')}`);
+			let val = new Date().getSeconds() % 2 === 1 || true;
+			this.$popup({
+				message: `设置${val ? '毛玻璃' : '光滑玻璃'}`,
+				level: 0,
 			})
-			ipc.send('getHwnd')
-		}, 500);
-
-		// 更新全局参数输出
-		// this.$set(this.$store.state.globalParams, 'paraArray', getFFmpegParaArray('[输入文件名]', this.$store.state.globalParams.input, this.$store.state.globalParams.video, this.$store.state.globalParams.audio, this.$store.state.globalParams.output))
+			console.log(`设置${val ? '毛玻璃' : '光滑玻璃'}`);
+			osBridge.setBlurBehindWindow(val);
+		}, 2500);
 
 		console.log(
-			'exe 路径　　　　　：' + remote.app.getPath('exe') + '\n' +
-			'electron 执行路径：' + remote.app.getAppPath() + '\n' +
-			'node 路径　　　　 ：' + process.execPath + '\n' +
-			'命令执行根路径　　 ：' + process.cwd() + '\n' +
+			(nodeBridge.remote ? ('exe 路径　　　　　：' + nodeBridge.remote.app.getPath('exe') + '\n') : '') +
+			(nodeBridge.remote ? ('electron 执行路径：' + nodeBridge.remote.app.getAppPath() + '\n') : '') +
+			(process ? ('node 路径　　　　 ：' + process.execPath + '\n') : '') +
+			(process ? ('命令执行根路径　　 ：' + process.cwd() + '\n') : '') +
 		// 	'命令执行根路径（resolve）：' + resolve('./') + '\n' +
 			'页面 js 文件路径　：' + __dirname + '\n'
 		);
-		// 初始化 FFmpeg
+
+		// 初始化参数项
 		setTimeout(() => {
-			if (!electronStore.has('ffbox.buildNumber') || electronStore.get('ffbox.buildNumber') != buildNumber) {
-				this.$store.commit('pushMsg', {
-					msg: '欢迎使用 FFBox v' + version + '！',
-					level: 0
-				});
-				electronStore.set('ffbox.buildNumber', buildNumber)
-				electronStore.set('input', this.$store.state.globalParams.input)
-				electronStore.set('video', this.$store.state.globalParams.video)
-				electronStore.set('audio', this.$store.state.globalParams.audio)
-				electronStore.set('output', this.$store.state.globalParams.output)
+			let electronStore = nodeBridge.electronStore;
+			if (nodeBridge.isElectron && electronStore) {
+				if (!electronStore.has('ffbox.buildNumber') || electronStore.get('ffbox.buildNumber') != buildNumber) {
+					// 读取默认值
+					this.$store.commit('pushMsg', {
+						msg: '欢迎使用 FFBox v' + version + '！',
+						level: 0
+					});
+					electronStore.set('ffbox.buildNumber', buildNumber)
+					electronStore.set('input', this.$store.state.globalParams.input)
+					electronStore.set('video', this.$store.state.globalParams.video)
+					electronStore.set('audio', this.$store.state.globalParams.audio)
+					electronStore.set('output', this.$store.state.globalParams.output)
+				} else {
+					// 读取存储值
+					this.$store.commit('replacePara', {
+						input: electronStore.get('input'),
+						video: electronStore.get('video'),
+						audio: electronStore.get('audio'),
+						output: electronStore.get('output'),
+					});
+				}
 			} else {
-				this.$store.commit('replacePara', {
-					input: electronStore.get('input'),
-					video: electronStore.get('video'),
-					audio: electronStore.get('audio'),
-					output: electronStore.get('output'),
+				this.$store.commit('pushMsg', {
+					msg: '欢迎使用 FFBox v' + version + ' 网页版！',
+					level: 0
 				});
 			}
 		}, 0);
 
 		// 挂载退出确认
-		ipc.on("exitConfirm", () => this.$store.commit('closeConfirm'));
+		nodeBridge.ipcRenderer?.on("exitConfirm", () => this.$store.commit('closeConfirm'));
 
 		// 捐助提示
 		setTimeout(() => {
@@ -533,12 +521,10 @@ export default Vue.extend({
 			this.handleTaskUpdate(data.id, data.content);
 		});
 		ffboxService.on('cmdUpdate', (data) => {
-			// console.log('event: cmdUpdate', data);
-			// this.$store.commit('pushMsg',{
-			// 	message: 'event: cmdUpdate',
-			// 	level: Math.floor(Math.random() * 4),
-			// })
 			this.handleCmdUpdate(data.id, data.content);
+		});
+		ffboxService.on('progressUpdate', (data) => {
+			this.handleProgressUpdate(data.id, data.content);
 		});
 		ffboxService.on('taskNotification', (data) => {
 			console.log('event: taskNotification', data);
@@ -563,7 +549,6 @@ export default Vue.extend({
  * 计算单个任务的 timer 函数，根据计算结果原地修改 progress 和 progress_smooth
  */
 function dashboardTimer(task: UITask) {
-	console.log('dashboardTimer');
 	{
 		let prog = task.taskProgress.normal;
 		let index = prog.length - 1;
@@ -648,7 +633,6 @@ function dashboardTimer(task: UITask) {
  * 计算整体进度的 timer，根据计算结果修改 currentServer.progress 和 progressBar
  */
 function overallProgressTimer(workingStatus: WorkingStatus, currentServer: Server) {
-	console.log('overall');
 	let tasks = currentServer.tasks;
 	let totalTime = 0.000001;
 	let totalProcessedTime = 0;
@@ -661,19 +645,19 @@ function overallProgressTimer(workingStatus: WorkingStatus, currentServer: Serve
 	}
 	let progress = totalProcessedTime / totalTime;
 	currentServer.progress = progress;
-	let mode = '';
+	let mode: 'indeterminate' | 'normal' | 'paused' | 'none' | 'error' = 'indeterminate';
 	switch (workingStatus) {
 		case WorkingStatus.running:
-			mode = 'normal'
+			mode = 'normal';
 			break;
 		case WorkingStatus.paused:
-			mode = 'paused'
+			mode = 'paused';
 			break;
 		case WorkingStatus.stopped:
-			mode = 'none'
+			mode = 'none';
 			break;
 	}
-	currentWindow.setProgressBar(progress * 0.99 + 0.01, {mode});
+	nodeBridge.remote?.getCurrentWindow().setProgressBar(progress * 0.99 + 0.01, {mode});
 }
 
 </script>

@@ -1,6 +1,7 @@
 # FFBox Changelog
 
-`2021-08-10` 修复由于浅拷贝造成的调节参数时的联动问题  
+`2021-08-11` 进行 nodeBridge、osBridge 制作；FFBoxHelper OP_BUFFER 长度增加到 8 位；FFBoxService 修复任务安排 bug；打赏中心新增 Gitee 链接  
+`2021-08-10` 修复由于浅拷贝造成的调节参数时的联动问题；优化任务项的文件名显示、时间（进度）显示  
 `2021-08-09` 大致完成任务运行状态更新、dashboardTimer 和 overallProgressTimer 的改造  
 `2021-08-08` FFBoxServiceEvent 改造；全局任务改为 id 为 -1 的任务；完成 Service 与 UI 的包括任务列表变更、任务信息变更、调参、通知信息、命令行的信息通讯  
 `2021-08-07` 修正 store state 中的 servers 类型  
@@ -10,6 +11,9 @@
 `2021-07-22` combobox 操作逻辑优化完成；部分组件代码规范性优化；去除 getWindowOffsetLeft/Top；去除 store 的全局键鼠事件机制  
 `2021-07-19` 完成 Windows 端 FFBoxHelper 基本功能，优化 combobox 操作逻辑  
 `2021-07-07` 进行 Windows 端 FFBoxHelper 制作  
+`2021-07-05` 试验在 Windows 实现窗口毛玻璃特效  
+`2021-07-04` 试验在 Windows 实现窗口毛玻璃特效  
+`2021-07-03` 试验在 Windows 实现窗口毛玻璃特效  
 `2021-06-14` 更新了一些 TypeScript 定义  
 `2021-03-23` 优化气泡组件缓动动画逻辑；Tooltip 组件改造完成  
 `2021-03-21` 优化气泡组件动画；弹窗组件改造完成  
