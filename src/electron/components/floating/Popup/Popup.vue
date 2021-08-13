@@ -197,6 +197,7 @@ export default Vue.extend({
 				font-size: 16px;
 				line-height: 1.3em;
 				text-align: center;
+				word-break: break-word;
 			}
 			.popup-progress {
 				display: inline-block;

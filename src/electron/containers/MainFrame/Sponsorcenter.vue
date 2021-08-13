@@ -5,7 +5,7 @@
 			<h1 id="Sponsorcenter-title">支持作者</h1>
 			<div id="Sponsorcenter-crossline"></div>
 			<div id="Sponsorcenter-box">
-				<p>觉得好用的话，来 GitHub 点个星嘛～（当然也能提交 issues）</p>
+				<p>觉得好用的话，来 GitHub / Gitee 点个星嘛～（当然也能提交 issues）</p>
 				<div class="QRscreens">
 					<buttonbox text="GitHub" imgsrc="/images/github.svg" @click="jumpToGithub"></buttonbox>
 					<buttonbox text="Gitee" imgsrc="/images/gitee.svg" @click="jumpToGitee"></buttonbox>
@@ -57,6 +57,7 @@
 					</div>
 				</div>
 				<p>您的捐赠记录将会保留在开发者的账户中，建议留下昵称作为备注。</p>
+				<p>机器码：{{ $store.state.machineCode }}</p>
 			</div>
 		</div>
 	</div>

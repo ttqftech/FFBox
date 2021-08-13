@@ -68,7 +68,7 @@ export interface Task {
 	after: OutputParams;
 	paraArray: Array<string>;
 	status: TaskStatus;
-	taskProgress: {
+	progressHistory: {
 		normal: Array<{
 			realTime: number;
 			mediaTime: number;
@@ -78,10 +78,13 @@ export interface Task {
 			realTime: number;
 			size: number;
 		}>
+		// 涉及到的时间单位均为 s
+		lastStarted: number;
+		elapsed: number;		// 暂停才更新一次，因此记录的并不是实时的任务时间
+		lastPaused: number;		// 既用于暂停后恢复时计算速度，也用于统计任务耗时
 	};
 	cmdData: string;
 	errorInfo: Array<string>;
-	lastPaused: number;		// 用于暂停后恢复时计算速度
 	notifications: Array<Notification>;
 }
 
@@ -129,11 +132,14 @@ export interface StoreState {
 	draggerPos: number;
 	// 非界面类
 	notifications: Array<Notification>;
+	unreadNotificationCount: number;
 	servers: {[key: string]: Server};
 	currentServerName: string;
 	selectedTask: Set<string>;
 	globalParams: OutputParams;
 	overallProgressTimerID: any;
+	machineCode: string;
+	functionLevel: number;
 }
 
 export interface BaseComboItem {

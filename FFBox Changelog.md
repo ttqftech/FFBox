@@ -1,5 +1,7 @@
 # FFBox Changelog
 
+`2021-08-13` 通知中心改造；激活机制完善  
+`2021-08-12` 新增激活机制  
 `2021-08-11` 进行 nodeBridge、osBridge 制作；FFBoxHelper OP_BUFFER 长度增加到 8 位；FFBoxService 修复任务安排 bug；打赏中心新增 Gitee 链接  
 `2021-08-10` 修复由于浅拷贝造成的调节参数时的联动问题；优化任务项的文件名显示、时间（进度）显示  
 `2021-08-09` 大致完成任务运行状态更新、dashboardTimer 和 overallProgressTimer 的改造  

@@ -8,10 +8,9 @@ export function convertAnyTaskToTask(task: ServiceTask | UITask): Task {
         after: task.after,
         paraArray: task.paraArray,
         status: task.status,
-        taskProgress: task.taskProgress,
+        progressHistory: task.progressHistory,
         cmdData: task.cmdData,
         errorInfo: task.errorInfo,
-        lastPaused: task.lastPaused,
         notifications: task.notifications,
     }
 }

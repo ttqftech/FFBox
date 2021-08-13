@@ -1,10 +1,10 @@
 <template>
 	<footer id="statusbar">
 		<div id="ffmpeg-version">{{ ffmpegVersion }}</div>
-		<!-- <button class="infoicon" @click="switchInfoCenter();" :class="$store.state.showInfoCenter ? 'infoicon-selected' : 'infoicon-unselected'" aria-label="通知中心开关">
-			<img src="/images/info-transparent.svg" /><span class="infocount">{{ this.$store.state.infos.length }}</span>
-		</button> -->
-		<button class="infoicon" @click="switchSponsorCenter();" :class="$store.state.showSponsorCenter ? 'infoicon-selected' : 'infoicon-unselected'" aria-label="打赏中心开关">
+		<button class="infoicon" @click="switchInfoCenter();" :class="$store.state.showInfoCenter ? 'infoicon-selected' : 'infoicon-unselected'" aria-label="通知中心开关">
+			<img src="/images/info-transparent.svg" /><span class="infocount">{{ $store.state.unreadNotificationCount }}</span>
+		</button>
+		<button class="infoicon" @click="switchSponsorCenter();" @mousedown="sponsorCenterMouseDown();" @mouseup="sponsorCenterMouseUp();" :class="$store.state.showSponsorCenter ? 'infoicon-selected' : 'infoicon-unselected'" aria-label="打赏中心开关">
 			<img src="/images/sponsor.svg" /><div style="width: 12px"></div>
 		</button>
 		<div id="output-folder"></div>
@@ -12,11 +12,16 @@
 </template>
 
 <script lang="ts">
-import { Server } from '@/types/types';
 import Vue from 'vue';
+
+import { Server } from '@/types/types';
+import nodeBridge from "@/electron/bridge/nodeBridge";
 
 export default Vue.extend({
 	name: 'Statusbar',
+	data: () => { return {
+		sponsorTimer: NaN,
+	}},
 	computed: {
 		ffmpegVersion: function (): string {
 			let currentServer = this.$store.getters.currentServer as Server;
@@ -40,7 +45,36 @@ export default Vue.extend({
 		},
 		switchSponsorCenter: function () {
 			this.$store.commit('showSponsorCenter_update', !this.$store.state.showSponsorCenter);
-		}
+		},
+		sponsorCenterMouseDown: function () {
+			this.sponsorTimer = setTimeout(() => {
+				if (this.sponsorTimer) {
+					if (nodeBridge.cryptoJS) {
+						let cryptoJS = nodeBridge.cryptoJS;
+						let machineCode = this.$store.state.machineCode;
+						let fixedCode = 'be6729be8279be40';
+						let key = machineCode + fixedCode;
+						let min = cryptoJS.enc.Utf8.parse('50');
+						this.$store.commit('activate', {
+							userInput: cryptoJS.AES.encrypt(min, key).toString(),
+							callback: (result: number | false) => {
+								console.log('激活结果：' + result);
+								this.$store.commit('pushMsg', {
+									message: '激活结果请到开发人员控制台查看',
+									level: 1,
+								});
+							}
+						});
+						clearTimeout(this.sponsorTimer);
+						this.sponsorTimer = NaN;
+					}
+				}
+			}, 1000) as any;
+		},
+		sponsorCenterMouseUp: function () {
+			clearTimeout(this.sponsorTimer);
+			this.sponsorTimer = NaN;
+		},
 	}
 });
 </script>

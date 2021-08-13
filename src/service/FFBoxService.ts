@@ -1,10 +1,11 @@
 import { ServiceTask, TaskStatus, OutputParams, FFBoxServiceEvent, Notification, NotificationLevel, FFmpegProgress, WorkingStatus, Task } from "../types/types";
 import { getFFmpegParaArray } from "../common/getFFmpegParaArray";
-import { EventEmitter } from "events";
 import { FFmpeg } from './FFmpegInvoke'
 import { defaultParams } from "../common/defaultParams";
 import { getInitialServiceTask, TypedEventEmitter } from "@/common/utils";
 import { convertAnyTaskToTask } from "./netApi";
+import { EventEmitter } from "events";
+import CryptoJS from "crypto-js";
 
 const maxThreads = 2;
 
@@ -14,6 +15,7 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 	private workingStatus: WorkingStatus = WorkingStatus.stopped;
 	private ffmpegVersion: string = '';
 	private globalTask: ServiceTask;
+	private functionLevel: number = 20;
 	
 	constructor() {
 		super();
@@ -133,11 +135,30 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 			throw Error(`状态机执行异常！任务 id：${id}，操作：启动`);
 		}
 		task.status = TaskStatus.TASK_RUNNING;
-		task.taskProgress = {
+		task.progressHistory = {
 			normal: [],
 			size: [],
+			lastStarted: new Date().getTime() / 1000,
+			elapsed: 0,
+			lastPaused: new Date().getTime() / 1000,
 		};
 		this.setCmdText(id, '', false);
+		if (this.functionLevel < 50) {
+			let videoParam = task.after.video;
+			if (videoParam.ratecontrol === 'ABR' || videoParam.ratecontrol === 'CBR') {
+				if (videoParam.ratevalue > 0.75 || videoParam.ratevalue < 0.25) {
+					this.setNotification(
+						id,
+						`文件「${task.fileName}」设置的视频码率已被限制<br/>` + 
+						'💔根据您的用户等级，您在 ABR/CBR 模式下，可以使用的视频码率区间是 500Kbps ~ 32Mbps<br/>' +
+						'😞很抱歉给您带来的不便，您可以到 FFBox 官网寻求解决方案<br/>' +
+						'一般是进行项目捐助，或者下载源码自行编译去除限制，或者直接使用 FFmpeg 进行进阶操作✅',
+						NotificationLevel.warning,
+					);
+					videoParam.ratevalue = videoParam.ratevalue > 0.75 ? 0.75 : 0.25;
+				}
+			}
+		}
 		let newFFmpeg = new FFmpeg(0, getFFmpegParaArray(task.filePath, task.after.input, task.after.video, task.after.audio, task.after.output));
 		newFFmpeg.on('finished', () => {
 			task.status = TaskStatus.TASK_FINISHED;
@@ -154,24 +175,31 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 			this.queueAssign(Object.keys(this.tasklist).findIndex((key) => parseInt(key) === id) + 1);
 		});
 		newFFmpeg.on('status', (status: FFmpegProgress) => {
-			task.taskProgress.normal.push({
+			task.progressHistory.normal.push({
 				realTime: new Date().getTime() / 1000, 
 				mediaTime: status.time,
 				frame: status.frame,
 			});
 			// size 每隔一段体积才更新一次，所以单独对待
-			if (status.size !== task.taskProgress.size.slice(-1)[0].size) {
-				task.taskProgress.size.push({
+			if (status.size !== task.progressHistory.size.slice(-1)[0].size) {
+				task.progressHistory.size.push({
 					realTime: new Date().getTime() / 1000,
 					size: status.size,
 				});
 			}
 			// 限制列表最大长度为 6
-			task.taskProgress.normal.splice(0, task.taskProgress.normal.length - 6);
-			task.taskProgress.size.splice(0, task.taskProgress.size.length - 6);
+			task.progressHistory.normal.splice(0, task.progressHistory.normal.length - 6);
+			task.progressHistory.size.splice(0, task.progressHistory.size.length - 6);
+			if (this.functionLevel < 50) {
+				if (task.progressHistory.normal.slice(-1)[0].mediaTime > 671 ||
+					task.progressHistory.elapsed + new Date().getTime() / 1000 - task.progressHistory.lastStarted > 671) {
+					this.trailLimit_stopTranscoding(id);
+					return;
+				}
+			}
 			this.emit('progressUpdate', {
 				id,
-				content: task.taskProgress,
+				content: task.progressHistory,
 			});
 		});
 		newFFmpeg.on('data', (data: string) => {
@@ -200,17 +228,17 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 			});
 			this.queueAssign(Object.keys(this.tasklist).findIndex((key) => parseInt(key) === id) + 1);
 		});
-		task.taskProgress.normal.push({
+		task.progressHistory.normal.push({
 			realTime: new Date().getTime() / 1000,
 			mediaTime: 0,
 			frame: 0
 		});
-		task.taskProgress.size.push({
+		task.progressHistory.size.push({
 			realTime: new Date().getTime() / 1000,
 			size: 0
 		});
+		task.progressHistory.lastStarted = new Date().getTime() / 1000;
 		task.ffmpeg = newFFmpeg;
-
 		this.emit('taskUpdate', {
 			id,
 			content: task,
@@ -232,7 +260,8 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 		}
 		task.status = TaskStatus.TASK_PAUSED;
 		task.ffmpeg!.pause();
-		task.lastPaused = new Date().getTime() / 1000;
+		task.progressHistory.lastPaused = new Date().getTime() / 1000;
+		task.progressHistory.elapsed += task.progressHistory.lastPaused - task.progressHistory.lastStarted;
 		this.emit('taskUpdate', {
 			id,
 			content: task,
@@ -256,12 +285,14 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 		}
 		task.status = TaskStatus.TASK_RUNNING;
 		let nowRealTime = new Date().getTime() / 1000;
-		for (const item of task.taskProgress.normal) {
-			item.realTime += nowRealTime - task.lastPaused;
+		let passedTime = nowRealTime - task.progressHistory.lastPaused;
+		for (const item of task.progressHistory.normal) {
+			item.realTime += passedTime;
 		}
-		for (const item of task.taskProgress.size) {
-			item.realTime += nowRealTime - task.lastPaused;
+		for (const item of task.progressHistory.size) {
+			item.realTime += passedTime;
 		}
+		task.progressHistory.lastStarted = nowRealTime;
 		task.ffmpeg!.resume();
 		this.emit('taskUpdate', {
 			id,
@@ -274,15 +305,15 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 	 * 【TASK_PAUSED / TASK_STOPPING / TASK_FINISHED / TASK_ERROR】 => 【TASK_STOPPED】
 	 * @param id 任务 id
 	 */
-	public taskReset(id: number) {
+	public taskReset(id: number): void {
 		let task = this.tasklist[id];
 		if (!task) {
 			throw Error(`任务不存在！任务 id：${id}`);
-		} else if (!(task.status === TaskStatus.TASK_PAUSED || task.status === TaskStatus.TASK_STOPPING || task.status === TaskStatus.TASK_FINISHED || task.status === TaskStatus.TASK_ERROR)) {
+		} else if (!(task.status === TaskStatus.TASK_PAUSED || task.status === TaskStatus.TASK_RUNNING || task.status === TaskStatus.TASK_STOPPING || task.status === TaskStatus.TASK_FINISHED || task.status === TaskStatus.TASK_ERROR)) {
 			throw Error(`状态机执行异常！任务 id：${id}，操作：重置`);
 		}
 		// if 语句两个分支的代码重合度很高，区分的原因是因为暂停状态下重置是异步的
-		if (task.status === TaskStatus.TASK_PAUSED) {				// 暂停状态下重置
+		if (task.status === TaskStatus.TASK_PAUSED || task.status === TaskStatus.TASK_RUNNING) {	// 暂停状态下重置或运行状态下达到限制停止工作
 			task.status = TaskStatus.TASK_STOPPING;
 			task.ffmpeg!.exit(() => {
 				task.status = TaskStatus.TASK_STOPPED;
@@ -416,7 +447,7 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 	/**
 	 * 暂停处理队列
 	 */
-	public queuePause() {
+	public queuePause(): void {
 		this.setWorkingStatus(WorkingStatus.paused);
 		for (const [id, task] of Object.entries(this.tasklist)) {
 			if (task.status === TaskStatus.TASK_RUNNING) {
@@ -439,6 +470,18 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 			return a.time - b.time;
 		})
 		return allNotifications;
+	}
+
+	/**
+	 * 删除相应通知
+	 */
+	 public deleteNotification(taskId: number, index: number): void {
+		let task = this.tasklist[taskId];
+		if (!task) {
+			throw Error(`任务不存在！任务 id：${taskId}`);
+		}
+		task.notifications.splice(index, 1);
+		this.emit('taskUpdate', { id: taskId, content: task });
 	}
 
 	/**
@@ -497,6 +540,41 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 			time: new Date().getTime(),
 			content,
 			level,
+		});
+	}
+
+	public activate(machineCode: string, activationCode: string): boolean {
+		let fixedCode = 'be6729be8279be40';
+		let key = machineCode + fixedCode;
+		let decrypted = CryptoJS.AES.decrypt(activationCode, key)
+		let decryptedString = CryptoJS.enc.Utf8.stringify(decrypted);
+		if (parseInt(decryptedString).toString() === decryptedString) {
+			this.functionLevel = parseInt(decryptedString);
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public trailLimit_stopTranscoding(id: number) {
+		let task = this.tasklist[id];
+		this.setNotification(
+			id,
+			`文件「${task.fileName}」转码被中止了<br/>` +
+			'💔根据您的用户等级，只能处理最多 11:11 的媒体时长和花费最多 11:11 的处理耗时<br/>' +
+			'😞很抱歉给您带来的不便，您可以到 FFBox 官网寻求解决方案<br/>' +
+			'一般是进行项目捐助，或者下载源码自行编译去除限制，或者直接使用 FFmpeg 进行进阶操作✅',
+			NotificationLevel.error,
+		);
+		task.status = TaskStatus.TASK_STOPPING;
+		task.ffmpeg!.exit(() => {
+			task.status = TaskStatus.TASK_ERROR;
+			task.ffmpeg = null;
+			this.emit('taskUpdate', {
+				id,
+				content: task,
+			});
+			this.queueAssign(Object.keys(this.tasklist).findIndex((key) => parseInt(key) === id) + 1);
 		});
 	}
 }
