@@ -48,7 +48,6 @@ export default Vue.extend({
 				tasklistWrapper.scrollTop = tasklistWrapper.scrollHeight - tasklistWrapper.getBoundingClientRect().height;
 			}
 			this.lastTaskListLength = ret.length;
-			console.log('taskList updated at ' + new Date().getTime(), ret);
 			return ret;
 		},
 		taskSelected: function (): (id: number) => boolean {
@@ -188,15 +187,6 @@ export default Vue.extend({
 			}
 		}
 	},
-	watch: {
-		/*	仅供数据刷新测试，经试验在使用 Vue.set 时不需 deep 也能监听
-		'$store.state.tasks': {
-			handler: function(newValue, oldValue) {
-				console.log('task: ', newValue, oldValue)
-			},
-		}
-		*/
-	}
 });
 
 </script>

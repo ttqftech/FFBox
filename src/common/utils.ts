@@ -270,13 +270,15 @@ export function getInitialTask(fileName: string, filePath: string, outputParams?
 		},
 		paraArray: [],
 		status: TaskStatus.TASK_STOPPED,
-		taskProgress: {
+		progressHistory: {
 			normal: [],
 			size: [],
+			lastStarted: new Date().getTime() / 1000,
+			elapsed: 0,
+			lastPaused: new Date().getTime() / 1000,	// 用于暂停后恢复时计算速度
 		},
 		cmdData: '',
 		errorInfo: [],
-		lastPaused: new Date().getTime() / 1000,	// 用于暂停后恢复时计算速度
 		notifications: [],
 	}
 	if (outputParams) {

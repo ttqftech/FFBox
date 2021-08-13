@@ -5,43 +5,101 @@
 			<h1 id="infocenter-title">消息中心</h1>
 			<div id="infocenter-crossline"></div>
 			<ul id="infocenter-box">
-				<li v-for="(value, index) in $store.state.infos" :key="index" class="infocenter-info">
-					<div v-if="value.level == 0" class="infocenter-info-img img-info"></div>
-					<div v-else-if="value.level == 1" class="infocenter-info-img img-tick"></div>
-					<div v-else-if="value.level == 2" class="infocenter-info-img img-warning"></div>
-					<div v-else-if="value.level == 3" class="infocenter-info-img img-error"></div>
-					<p>{{ value.msg }}</p>
-					<span>{{ value.time | hhmmss }}</span>
-					<button class="infocenter-info-delete" aria-label="删除此消息" @click="deleteMsg(index)">
-						<img src="/images/×.svg" alt="">
-					</button>
-				</li>
+				<div v-for="(notificationGroup, index) in notificationGroups" :key="index" class="infocenter-group">
+					<span class="infocenter-servername">{{ notificationGroup.name | serverDisplayName }}</span>
+					<li v-for="(notification, index) in notificationGroup.notifications" :key="index" class="infocenter-info">
+						<div v-if="notification.level == 0" class="infocenter-info-img img-info"></div>
+						<div v-else-if="notification.level == 1" class="infocenter-info-img img-tick"></div>
+						<div v-else-if="notification.level == 2" class="infocenter-info-img img-warning"></div>
+						<div v-else-if="notification.level == 3" class="infocenter-info-img img-error"></div>
+						<p>{{ notification.content }}</p>
+						<span>{{ notification.time | hhmmss }}</span>
+						<button class="infocenter-info-delete" aria-label="删除此消息" @click="deleteNotification(notificationGroup.name, notification.taskId, notification.index)">
+							<img src="/images/×.svg" alt="">
+						</button>
+					</li>
+					<li v-if="!notificationGroup.notifications.length" class="infocenter-noinfo">无消息</li>
+				</div>
 			</ul>
 		</div>
 	</div>
 </template>
 
-<script>
-export default {
+<script lang="ts">
+import Vue from 'vue';
+
+import { Notification, Server } from '@/types/types';
+
+interface NotificationGroup {
+	name: string,
+	notifications: Array<Notification & {
+		taskId: number,
+		index: number,
+	}>
+}
+
+export default Vue.extend({
 	name: 'Infocenter',
-	props: {
-		
-	},
-	data: () => { return {
-	}},
 	filters: {
-		hhmmss: function (value) {
+		hhmmss: function (value: number): string {
 			let objDate = new Date(value)
-			return ('0' + objDate.getHours()).slice(-2) + ':' + ('0' + objDate.getMinutes()).slice(-2) + ':' + ('0' + objDate.getSeconds()).slice(-2)
+			return ('0' + objDate.getHours()).slice(-2) + ':' + ('0' + objDate.getMinutes()).slice(-2) + ':' + ('0' + objDate.getSeconds()).slice(-2);
+		},
+		serverDisplayName: function (value: string) {
+			switch (value) {
+				case '':
+					return '本界面'
+				case 'local':
+					return '本地服务器'
+				default:
+					break;
+			}
+		}
+	},
+	computed: {
+		notificationGroups: function (): Array<NotificationGroup> {
+			let servers: {[key: string]: Server} = this.$store.state.servers;
+			let local: NotificationGroup = {
+				name: '',
+				notifications: (this.$store.state.notifications as Array<Notification>).map((notification, index) => {
+					return {
+						...notification,
+						taskId: NaN,
+						index,
+					}
+				}),
+			};
+			let remotes: Array<NotificationGroup> = [];
+			for (const [key, server] of Object.entries(servers)) {
+				let allNotifications: NotificationGroup['notifications'] = [];
+				Object.entries(server.tasks).forEach(([id, task]) => {
+					task.notifications.forEach((notification, index) => {
+						allNotifications.push({
+							taskId: parseInt(id), 
+							...notification,
+							index,
+						});
+					})
+				});
+				allNotifications.sort((a, b) => {
+					return a.time - b.time;
+				})
+				remotes = remotes.concat({
+					name: key,
+					notifications: allNotifications,
+				});
+			}
+			let ret = [local, ...remotes];
+			return ret;
 		}
 	},
 	methods: {
 		// 删除消息
-		deleteMsg: function (index) {
-			this.$store.commit('deleteMsg', index)
+		deleteNotification: function (serverName: string, taskId: number, index: number) {
+			this.$store.commit('deleteNotification', { serverName, taskId, index });
 		}
 	}
-}
+});
 </script>
 
 <style scoped>
@@ -113,76 +171,96 @@ export default {
 			margin: 0;
 			padding: 0;
 		}
-			.infocenter-info {
+			.infocenter-group {
 				position: relative;
 				width: 100%;
-				padding: 4px 0px;
-				list-style-type: none;
-				border-bottom: #DDD 1px solid;
 			}
-				.infocenter-info-img {
-					position: absolute;
-					left: 8px;
-					top: 50%;
-					transform: translateY(-50%);
-					height: 16px;
-					width: 16px;
-					background-position: center;
-					background-size: contain;
-					background-repeat: no-repeat;
+				.infocenter-servername {
+					display: block;
+					height: 22px;
+					margin: 10px 0 6px;
+					line-height: 22px;
+					font-size: 16px;
+					font-weight: 700;
+					list-style-type: none;
 				}
-				.img-info {
-					background-image: url(/images/info.svg);
+				.infocenter-info {
+					position: relative;
+					padding: 4px 0px;
+					list-style-type: none;
+					border-bottom: #DDD 1px solid;
 				}
-				.img-tick {
-					background-image: url(/images/tick.svg);
-				}
-				.img-warning {
-					background-image: url(/images/warning.svg);
-				}
-				.img-error {
-					background-image: url(/images/error.svg);
-				}
-				.infocenter-info p {
-					font-size: 14px;
-					line-height: 1.4em;
-					color: #555;
-					margin: 0px calc(5em + 20px) 0px 32px;
-					text-align: left;
-				}
-				.infocenter-info span {
-					position: absolute;
-					right: 28px;
-					top: 50%;
-					transform: translateY(-50%);
-					font-size: 12px;
-					line-height: 1.4em;
-					color: #777;
-				}
-				.infocenter-info-delete {
-					position: absolute;
-					top: 4px;
-					right: 8px;
-					height: 20px;
-					width: 20px;
-					opacity: 0.5;
-					border: none;
-					outline: none;
-					background: none;
-					padding: 0;
-					display: flex;
-					justify-content: center;
-					align-items: center;
-				}
-				.infocenter-info-delete:hover {
-					opacity: 1;
-				}
-				.infocenter-info-delete:active {
-					opacity: 0.7;
-				}
-					.infocenter-info-delete img {
+					.infocenter-info-img {
+						position: absolute;
+						left: 8px;
+						top: 50%;
+						transform: translateY(-50%);
+						height: 16px;
 						width: 16px;
+						background-position: center;
+						background-size: contain;
+						background-repeat: no-repeat;
 					}
+					.img-info {
+						background-image: url(/images/info.svg);
+					}
+					.img-tick {
+						background-image: url(/images/tick.svg);
+					}
+					.img-warning {
+						background-image: url(/images/warning.svg);
+					}
+					.img-error {
+						background-image: url(/images/error.svg);
+					}
+					.infocenter-info p {
+						font-size: 14px;
+						line-height: 1.4em;
+						color: #555;
+						margin: 0px calc(5em + 20px) 0px 32px;
+						text-align: left;
+					}
+					.infocenter-info span {
+						position: absolute;
+						right: 28px;
+						top: 50%;
+						transform: translateY(-50%);
+						font-size: 12px;
+						line-height: 1.4em;
+						color: #777;
+					}
+					.infocenter-info-delete {
+						position: absolute;
+						top: 0;
+						right: 8px;
+						height: 100%;
+						width: 20px;
+						opacity: 0.5;
+						border: none;
+						outline: none;
+						background: none;
+						padding: 0;
+						display: flex;
+						justify-content: center;
+						align-items: center;
+					}
+					.infocenter-info-delete:hover {
+						opacity: 1;
+					}
+					.infocenter-info-delete:active {
+						opacity: 0.7;
+					}
+						.infocenter-info-delete img {
+							width: 16px;
+						}
+				.infocenter-noinfo {
+					position: relative;
+					padding: 10px 0px;
+					font-size: 14px;
+					color: #777;
+					list-style-type: none;
+					border-bottom: #DDD 1px solid;
+				}
 		#infocenter-box::-webkit-scrollbar {
 			width: 10px;
 			background: transparent;

@@ -1,13 +1,14 @@
-import ElectronStore from "electron-store";
+import _ElectronStore from "electron-store";
 import { IpcRenderer , Remote } from 'electron';
 import { ChildProcess } from "child_process";
+import CryptoJS from "crypto-js";
 
-let electronStore: ElectronStore;
+let ElectronStore: typeof _ElectronStore, electronStore: _ElectronStore;
 let ipcRenderer: IpcRenderer, remote: Remote;
 let spawn: (...args: any) => ChildProcess, exec: (...args: any) => ChildProcess;
 
 if (process.env.IS_ELECTRON) {
-	electronStore = window.require('electron-store');
+	ElectronStore = window.require('electron-store');
 	ipcRenderer = window.require('electron').ipcRenderer;
 	remote = window.require('electron').remote;
 	spawn = window.require('child_process').spawn;
@@ -23,8 +24,13 @@ export default {
 		return (process.env.IS_ELECTRON as any) ? true : false;
 	},
 
-	get electronStore(): ElectronStore | undefined {
-		return electronStore;
+	get electronStore(): _ElectronStore | undefined {
+		if (ElectronStore) {
+			if (!electronStore) {
+				electronStore = new ElectronStore();
+			}
+			return electronStore;
+		}
 	},
 
 	get ipcRenderer(): IpcRenderer | undefined {
@@ -41,6 +47,10 @@ export default {
 
 	get exec(): (...args: any) => ChildProcess | undefined {
 		return exec;
+	},
+
+	get cryptoJS(): typeof CryptoJS {
+		return CryptoJS;
 	},
 
 	get os(): 'Windows' | 'Linux' | 'MacOS' | 'Unix' | 'Android' | 'iPadOS' | 'iOS' | 'unknown' {
