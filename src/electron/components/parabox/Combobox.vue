@@ -5,27 +5,39 @@
 			<input type="text" v-model="inputText" @blur="onBlur" @focus="onFocus" @input="onInput" @keydown="onKeydown">
 			<div class="combobox-selector-img"></div>
 		</div>
-		<transition name="comboanimate">
-			<div class="combomenu" v-if="comboOpened" ref="menu">
-				<menu class="combomenu-list" :style="comboPosition">
+		<div class="combomenu" ref="menu">
+			<transition name="comboanimate">
+				<menu class="combomenu-list" v-if="comboOpened" :style="comboPosition">
 					<div v-for="(listitem, index) in list" :key="listitem.sName" class="combomenu-item" :class="{ combomenuItemSelected: index === currentIndex }" :tabindex="index" @click="onMenuClick(index)" @mouseenter="onMenuMouseEnter($event, index)" @mouseleave="onMenuMouseLeave()">
 						<!-- <div style="background-image: url(image/star.png);"></div> -->
 						{{ listitem.lName }}
 					</div>
 				</menu>
-			</div>
-		</transition>
+			</transition>
+		</div>
 	</div>
 </template>
 
 <script lang="ts">
-import { BaseComboItem } from '@/types/types';
 import Vue from 'vue'
 
-export default Vue.extend({
+import { BaseComboItem } from '@/types/types';
+
+interface Props {
+	title: string;
+	text: string;
+	list: Array<BaseComboItem>;
+}
+interface Data {
+	focused: boolean;
+	comboOpened: boolean;
+	inputText: string;
+	currentIndex: number;
+	comboPosition: any;
+}
+
+export default Vue.extend<Data, any, any, Props>({
 	name: 'Combobox',
-	components: {		
-	},
 	data: () => { return {
 		focused: false,
 		comboOpened: false,
@@ -43,60 +55,30 @@ export default Vue.extend({
 	},
 	methods: {
 		// 处理输入框
-		onClick: function (event: MouseEvent) {
-			// 暂时写死的高度
-			const titlebarHeight = 28;
-			const menuItemHeight = 40;
-			const statusbarHeight = 24;
-
-			let ScreenWidth = document.documentElement.clientWidth;			// 使用 window.innerWidth 也行
-			let ScreenHeight = document.documentElement.clientHeight;
-			let finalPosition = {};
-			let target = this.$refs.selector as Element;
-
-			let listHeight = menuItemHeight * this.list.length;
-			let selectorUpperTop = target.getBoundingClientRect().top;
-			let selectorLowerTop = selectorUpperTop + target.getBoundingClientRect().height;
-			let upperSpace = selectorUpperTop - titlebarHeight;
-			let lowerSpace = ScreenHeight - selectorLowerTop;
-			
-			// 计算水平位置
-			finalPosition = { left: `${target.getBoundingClientRect().left - 39}px` };
-			
-			// 计算垂直位置
-			if (upperSpace >= lowerSpace) {
-				// 上方空间更大，往上弹出
-				if (listHeight <= upperSpace) {
-					finalPosition = { ...finalPosition, height: `${listHeight}px`, bottom: `${ScreenHeight - upperSpace}px` };
-				} else {
-					finalPosition = { ...finalPosition, height: `${upperSpace - titlebarHeight}px`, top: `${titlebarHeight}px` };
-				}
-			} else {
-				// 下方空间更大，往下弹出
-				if (listHeight <= lowerSpace) {
-					finalPosition = { ...finalPosition, height: `${listHeight}px`, top: `${lowerSpace}px` };
-				} else {
-					finalPosition = { ...finalPosition, top: `${lowerSpace}px`, bottom: `${statusbarHeight}px` };
-				}
-			}
-
-			// 确定位置
-			this.comboPosition = finalPosition;
+		onClick: function () {
+			this.calcComboPosition();
 
 			// 计算默认项
-			this.currentIndex = this.list.findIndex((value, index) => {
+			this.currentIndex = (this.list as Array<BaseComboItem>).findIndex((value, index) => {
 				if ((value as BaseComboItem).sName === this.text) {
-					return index;
+					return true;
 				}
 			});
 
+			(this.$refs.selector as HTMLElement).firstElementChild!.focus();
 			this.comboOpened = true;
+			Vue.nextTick(() => {
+				(this.$refs.menu as HTMLElement).firstElementChild!.children[this.currentIndex].scrollIntoView({
+					behavior: "auto", block: "nearest", inline: "nearest"
+				});
+			});
+
 		},
 		onBlur: function (event: FocusEvent) {
 			// 鼠标按下菜单中的元素时，首先触发输入框的 onBlur，然后才触发菜单的 onMouseDown
 			// onBlur 发生时，activeElement 是 body，需要在 nextTick 读取才能读到正确的被激活的元素
 			// 只要这个元素是菜单元素中的任意一项，就忽略这次失焦行为，避免影响菜单的 onClick 事件
-			setTimeout(() => {
+			Vue.nextTick(() => {
 				let allowedActiveElement = flattenElement(this.$refs.menu as Element);
 				let findResult = allowedActiveElement.find((element) => {
 					return element === document.activeElement;
@@ -107,14 +89,14 @@ export default Vue.extend({
 				} else {
 					(this.$refs.selector as HTMLElement).firstElementChild!.focus();
 				}
-			}, 0);
+			});
 		},
 		onFocus: function (event: FocusEvent) {
 			this.focused = true;
 		},
 		onInput: function (event: InputEvent) {
 			let newValue = (event.target as HTMLInputElement).value
-			this.currentIndex = this.list.findIndex((value, index) => {
+			this.currentIndex = (this.list as Array<BaseComboItem>).findIndex((value, index) => {
 				return (value as BaseComboItem).sName == newValue;
 			});
 			this.$emit('change', newValue);
@@ -155,10 +137,14 @@ export default Vue.extend({
 				this.$emit('change', this.inputText);
 				if (!this.comboOpened) {
 					this.comboOpened = true;
+					this.calcComboPosition();
 				}
-				(this.$refs.menu as HTMLElement).firstElementChild!.children[this.currentIndex].scrollIntoView({
-					behavior: "auto", block: "nearest", inline: "nearest"
-				});
+				Vue.nextTick(() => {
+					// 若 !comboOpened，此处没有 child，所以等 nextTick 处理
+					(this.$refs.menu as HTMLElement).firstElementChild!.children[this.currentIndex].scrollIntoView({
+						behavior: "auto", block: "nearest", inline: "nearest"
+					});
+				})
 			}
 		},
 		// 处理菜单
@@ -167,6 +153,7 @@ export default Vue.extend({
 			this.inputText = newValue;
 			this.$emit('change', newValue);
 			this.comboOpened = false;
+			this.$tooltip.hide();
 		},
 		onMenuMouseEnter: function (event: MouseEvent, index: number) {
 			let position = {};
@@ -203,6 +190,46 @@ export default Vue.extend({
 		},
 		onMenuMouseLeave: function () {
 			this.$tooltip.hide();
+		},
+		calcComboPosition: function () {
+			// 暂时写死的高度
+			const titlebarHeight = 28;
+			const menuItemHeight = 40;
+			const statusbarHeight = 24;
+
+			let ScreenWidth = document.documentElement.clientWidth;			// 使用 window.innerWidth 也行
+			let ScreenHeight = document.documentElement.clientHeight;
+			let finalPosition = {};
+			let target = this.$refs.selector as Element;
+
+			let listHeight = menuItemHeight * this.list.length;
+			let selectorUpperTop = target.getBoundingClientRect().top;
+			let selectorLowerTop = selectorUpperTop + target.offsetHeight;
+			let upperSpace = selectorUpperTop - titlebarHeight;
+			let lowerSpace = ScreenHeight - selectorLowerTop - statusbarHeight;
+			
+			// 计算水平位置
+			finalPosition = { left: `${target.getBoundingClientRect().left - 39}px` };
+			
+			// 计算垂直位置
+			if (upperSpace >= lowerSpace) {
+				// 上方空间更大，往上弹出
+				if (listHeight <= upperSpace) {
+					finalPosition = { ...finalPosition, height: `${listHeight}px`, bottom: `${ScreenHeight - upperSpace}px` };
+				} else {
+					finalPosition = { ...finalPosition, height: `${upperSpace - titlebarHeight}px`, top: `${titlebarHeight}px` };
+				}
+			} else {
+				// 下方空间更大，往下弹出
+				if (listHeight <= lowerSpace) {
+					finalPosition = { ...finalPosition, height: `${listHeight}px`, top: `${ScreenHeight - lowerSpace}px` };
+				} else {
+					finalPosition = { ...finalPosition, height: `${lowerSpace - statusbarHeight}px`, bottom: `${statusbarHeight}px` };
+				}
+			}
+
+			// 确定位置
+			this.comboPosition = finalPosition;
 		}
 	},
 	watch: {
@@ -288,7 +315,7 @@ function flattenElement(element: Element) {
 			width: 100%;
 			height: 100%;
 			pointer-events: none;
-			z-index: 10;
+			z-index: 100;
 		}
 			.combomenu * {
 				pointer-events: auto;
@@ -305,13 +332,18 @@ function flattenElement(element: Element) {
 				padding-inline-start: 0;
 			}
 			.comboanimate-enter, .comboanimate-leave-to {
-				transform: scaleY(0) translateY(100%)
+				transform: scale(0.95);
+				opacity: 0;
 			}
-			.comboanimate-enter-active, .comboanimate-leave-active {
-				transition: all 0.25s;
+			.comboanimate-enter-active {
+				transition: transform cubic-bezier(0.33, 1, 1, 1) 0.15s, opacity linear 0.1s;
 			}
 			.comboanimate-enter-to, .comboanimate-leave {
-				transform: scaleY(1) translateY(0%);
+				transform: scale(1);
+				opacity: 1;
+			}
+			.comboanimate-leave-active {
+				transition: all linear 0.1s;
 			}
 			.combomenu-list::-webkit-scrollbar {
 				position: relative;

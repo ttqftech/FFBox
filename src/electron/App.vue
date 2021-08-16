@@ -138,7 +138,7 @@ const store = new Vuex.Store<StoreState>({
 					return;
 				}
 				for (const id of set) {
-					this.commit('replacePara', currentServer.tasks[id].after);
+					state.globalParams = JSON.parse(JSON.stringify(currentServer.tasks[id].after));	// replacePara
 					break;
 				}
 			}
@@ -260,13 +260,13 @@ const store = new Vuex.Store<StoreState>({
 		// 关闭窗口事件触发时调用
 		closeConfirm (state) {
 			function readyToClose () {
-				ipc.send('exitConfirm');
-				ipc.send('close');
+				nodeBridge.ipcRenderer?.send('exitConfirm');
+				nodeBridge.ipcRenderer?.send('close');
 			}
 			if (ffboxService.getQueueTaskCount() > 0) {
 				mainVue.$confirm({
 					title: '要退出咩？',
-					content: `您还有 ${ffboxService.getQueueTaskCount()} 个任务未完成，要退出🐴？`,
+					content: `本地服务器还有 ${ffboxService.getQueueTaskCount()} 个任务未完成，要退出🐴？`,
 				}).then(readyToClose);
 			} else {
 				readyToClose();
@@ -361,8 +361,8 @@ export default Vue.extend({
 				} else if (remoteI >= remoteKeys.length) {
 					// 远端下标越界，说明远端删除了最后面的若干个任务
 					break;
-				} else if (localKey > remoteKey) {
-					// 本地跳号了，说明远端删除了中间的任务
+				} else if (localKey < remoteKey) {
+					// 远端跳号了，说明远端删除了中间的任务
 					localI++;
 				} else if (localKey === remoteKey) {
 					// 从 local 处直接复制
@@ -460,7 +460,7 @@ export default Vue.extend({
 		},
 	},
 	beforeCreate: function () {
-		document.querySelector('body')!.className = "body";
+		document.body.className = "body";
 	},
 	mounted: function () {
 		document.title = 'FFBox v' + version + (process.env.NODE_ENV != 'production' ? 'd' : '');

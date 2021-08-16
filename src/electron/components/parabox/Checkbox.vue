@@ -13,8 +13,6 @@ import Vue from 'vue';
 
 export default Vue.extend({
 	name: 'Combobox',
-	components: {		
-	},
 	data: () => { return {
 		beforeChecked: false		// 鼠标点下时赋值，用于确认是否更改了值
 	}},
@@ -26,21 +24,21 @@ export default Vue.extend({
 	computed: {
 	},
 	methods: {
-		dragStart: function (event: MouseEvent) {
+		dragStart: function (event: MouseEvent | TouchEvent) {
 			event.preventDefault();
-			let mouseDownX = event.pageX || event.touches[0].pageX;			// 鼠标在页面（窗口）内的坐标
+			let mouseDownX = (event as MouseEvent).pageX || (event as TouchEvent).touches[0].pageX;	// 鼠标在页面（窗口）内的坐标
 			let sliderLeft: number, sliderWidth: number;
 			if (event.target!.className == "checkbox-slipper") {
-				sliderLeft = event.target!.parentElement.getBoundingClientRect().left;
-				sliderWidth = event.target!.parentElement.offsetWidth;
+				sliderLeft = event.target!.parentElement!.offsetLeft;
+				sliderWidth = event.target!.parentElement!.offsetWidth;
 			} else {
 				sliderLeft = event.target!.getBoundingClientRect().left;
 				sliderWidth = event.target!.offsetWidth;
 			}
 			this.beforeChecked = this.checked;
 			// 添加鼠标事件捕获，将其独立为一个函数，以便于 mouseDown 直接触发 mouseMove
-			let handleMouseMove = (event: Partial<MouseEvent>) => {
-				let valueX: any = parseInt(event.pageX || event.touches[0].pageX) - sliderLeft;
+			let handleMouseMove = (event: Partial<MouseEvent | TouchEvent>) => {
+				let valueX: any = Math.floor((event as MouseEvent).pageX || (event as TouchEvent).touches[0].pageX) - sliderLeft;
 				if (valueX < sliderWidth / 2) {;
 					valueX = false;
 				} else {
@@ -51,9 +49,9 @@ export default Vue.extend({
 					lastValue = valueX;
 				}
 			}
-			let handleMouseUp = (event: MouseEvent) => {
+			let handleMouseUp = (event: MouseEvent | TouchEvent) => {
 				// 处理只点一下没有动的情况
-				if (Math.abs(mouseDownX - parseInt(event.pageX || event.touches[0].pageX)) <= 3) {
+				if (Math.abs(mouseDownX - Math.floor((event as MouseEvent).pageX || (event as TouchEvent).touches[0].pageX)) <= 3) {
 					if (this.checked && this.beforeChecked) {
 						this.$emit('change', false);
 					} else if (!this.checked && !this.beforeChecked) {
@@ -66,7 +64,7 @@ export default Vue.extend({
 	    	document.addEventListener('mousemove', handleMouseMove);
 	    	document.addEventListener('mouseup', handleMouseUp);
 			var lastValue = NaN;
-			handleMouseMove({ pageX: event.pageX });	// mouseDown 直接触发 mouseMove
+			handleMouseMove({ pageX: mouseDownX });	// mouseDown 直接触发 mouseMove
 		},
 		onKeydown: function (event: KeyboardEvent) {
 			if (event.key == 'ArrowLeft') {
@@ -82,7 +80,7 @@ export default Vue.extend({
 		}
 	},
 	mounted: function () {
-		this.beforeChecked = this.checked
+		this.beforeChecked = this.checked;
 	}
 });
 

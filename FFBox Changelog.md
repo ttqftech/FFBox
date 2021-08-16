@@ -1,5 +1,7 @@
 # FFBox Changelog
 
+`2021-08-17` 优化 combobox 体验  
+`2021-08-16` 清理 TypeScript 错误；清理工程文件（含去除 storybook）  
 `2021-08-13` 通知中心改造；激活机制完善  
 `2021-08-12` 新增激活机制  
 `2021-08-11` 进行 nodeBridge、osBridge 制作；FFBoxHelper OP_BUFFER 长度增加到 8 位；FFBoxService 修复任务安排 bug；打赏中心新增 Gitee 链接  

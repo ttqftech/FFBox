@@ -15,7 +15,7 @@ module.exports = {
                 appId: 'ttqftech.ffbox',
                 productName: 'FFBox',
                 electronDownload: {
-                    mirror: 'https://npm.taobao.org/mirrors/electron'
+                    mirror: 'https://npm.taobao.org/mirrors/electron/'
                 },
                 mac: {
                     icon: '512.ico',

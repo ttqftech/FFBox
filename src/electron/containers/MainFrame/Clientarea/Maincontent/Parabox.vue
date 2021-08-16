@@ -44,7 +44,7 @@ export default Vue.extend({
 		ShortcutsView, InputView, VcodecView, AcodecView, EffectView, OutputView
 	},
 	methods: {
-		dragStart: function (event: DragEvent) {
+		dragStart: function (event: DragEvent | TouchEvent) {
 			/*
 				笔记：普通函数与箭头函数的区别
 				普通函数，this 作用域为调用者作用域——
@@ -56,12 +56,12 @@ export default Vue.extend({
 			*/
 			// TODO：在 vue-cli 的开发中，不应直接操作 DOM
 			event.preventDefault();
-			let mouseDownY = event.pageY || event.touches[0].pageY;
+			let mouseDownY = (event as MouseEvent).pageY || (event as TouchEvent).touches[0].pageY;
 			let topHeight = document.getElementById("listview")!.offsetHeight					// topHeight: 列表视图顶部的高度
 			let fullHeight = document.getElementById("maincontent")!.offsetHeight;				// fullHeight: maincontent 的总高度
 			// 添加鼠标事件捕获
 			let handleMouseMove = (event: Partial<MouseEvent>) => {
-				let offsetY = parseInt(event.pageY || event.touches[0].pageY) - mouseDownY;		// offsetY: 鼠标相比按下时移动的高度
+				let offsetY = Math.floor((event as MouseEvent).pageY || (event as TouchEvent).touches[0].pageY) - mouseDownY;		// offsetY: 鼠标相比按下时移动的高度
 				let finalHeight = topHeight - (-offsetY);										// finalHeight: 最终等效的高度。这里要减负，否则 js 会当作字符串连接处理
 				let listPercent = finalHeight / fullHeight;
 				// console.log(offsetY, listPercent)

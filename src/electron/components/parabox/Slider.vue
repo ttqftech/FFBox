@@ -30,15 +30,15 @@ export default Vue.extend({
 	computed: {
 	},
 	methods: {
-		dragStart: function (event: DragEvent) {
+		dragStart: function (event: DragEvent | TouchEvent) {
 			event.preventDefault();
-			let mouseDownX = event.pageX || event.touches[0].pageX;				// 鼠标在页面（窗口）内的坐标
+			let mouseDownX = (event as MouseEvent).pageX || (event as TouchEvent).touches[0].pageX;	// 鼠标在页面（窗口）内的坐标
 			let slipper = event.target!.className == 'slider-module-slipper' ? true : false;
 			let sliderLeft: number, sliderWidth: number, slipperOffsetX: number;
 			if (slipper) {
-				sliderLeft = event.target!.parentElement.getBoundingClientRect().left;
-				sliderWidth = event.target!.parentElement.offsetWidth;
-				slipperOffsetX = event.offsetX - event.target!.offsetWidth / 2;
+				sliderLeft = event.target!.parentElement!.offsetLeft;
+				sliderWidth = event.target!.parentElement!.offsetWidth;
+				slipperOffsetX = (event as MouseEvent).offsetX - event.target!.offsetWidth / 2;
 				event.target!.focus();
 			} else {
 				sliderLeft = event.target!.getBoundingClientRect().left;
@@ -46,8 +46,8 @@ export default Vue.extend({
 				slipperOffsetX = 0;
 			}
 			// 添加鼠标事件捕获，将其独立为一个函数，以便于 mouseDown 直接触发 mouseMove
-			let handleMouseMove = (event: Partial<MouseEvent>) => {
-				let value = (parseInt(event.pageX || event.touches[0].pageX) - sliderLeft - slipperOffsetX) / sliderWidth;	// event.pageX == 0 时短路逻辑失效，会报错，不影响使用
+			let handleMouseMove = (event: Partial<MouseEvent | TouchEvent>) => {
+				let value = (Math.floor((event as MouseEvent).pageX || (event as TouchEvent).touches[0].pageX) - sliderLeft - slipperOffsetX) / sliderWidth;	// event.pageX == 0 时短路逻辑失效，会报错，不影响使用
 				if (value > 1) {
 					value = 1;
 				} else if (value < 0) {
@@ -59,7 +59,7 @@ export default Vue.extend({
 					lastValue = value;
 				}
 			}
-			let handleMouseUp = (event: MouseEvent) => {
+			let handleMouseUp = () => {
 				document.removeEventListener('mousemove', handleMouseMove);
 	    		document.removeEventListener('mouseup', handleMouseUp);
 			};
@@ -68,7 +68,7 @@ export default Vue.extend({
 
 			// lastValue 用于减少频繁提交参数更改的次数
 			let lastValue = NaN;
-			handleMouseMove({ pageX: event.pageX });	// mouseDown 直接触发 mouseMove
+			handleMouseMove({ pageX: mouseDownX });	// mouseDown 直接触发 mouseMove
 		},
 		onKeypress: function (event: KeyboardEvent) {
 			if (event.key == 'ArrowLeft' || event.key == 'ArrowRight') {
