@@ -1,8 +1,9 @@
 {
   "name": "FFBox",
-  "version": "3.0.0",
+  "version": "3.0.0-alpha",
   "private": true,
   "description": "An user-friendly ffmpeg GUI",
+  "main": "background.js",
   "author": {
     "name": "ttqf",
     "email": "ttqf.tech@qq.com"
@@ -13,9 +14,7 @@
     "electron:build": "vue-cli-service electron:build",
     "electron:serve": "vue-cli-service electron:serve",
     "postinstall": "electron-builder install-app-deps",
-    "postuninstall": "electron-builder install-app-deps",
-    "storybook": "start-storybook -p 6006",
-    "build-storybook": "build-storybook"
+    "postuninstall": "electron-builder install-app-deps"
   },
   "dependencies": {
     "@types/events": "^3.0.0",
@@ -30,10 +29,6 @@
   },
   "devDependencies": {
     "@babel/core": "^7.12.10",
-    "@storybook/addon-actions": "^6.1.16",
-    "@storybook/addon-essentials": "^6.1.16",
-    "@storybook/addon-links": "^6.1.16",
-    "@storybook/vue": "^6.1.16",
     "@types/crypto-js": "^4.0.2",
     "@vue/cli-plugin-babel": "~4.4.0",
     "@vue/cli-plugin-typescript": "~4.5.0",
@@ -42,7 +37,6 @@
     "babel-loader": "^8.2.2",
     "electron": "^8.0.0",
     "electron-devtools-installer": "^3.1.0",
-    "npmlog": "^4.1.2",
     "vue-cli-plugin-electron-builder": "~2.0.0-rc.4",
     "vue-template-compiler": "^2.6.11"
   }

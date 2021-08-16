@@ -57,29 +57,30 @@ export default Vue.extend<Data, any, any, any>({
 			};
 		},
 		progressOpacity: function () {	// 暂停、运行状态下输出 1，否则 0
-			return this.workingStatusNProgress.workingStatus ? 1 : 0
+			return this.workingStatusNProgress.workingStatus ? 1 : 0;
 		},
 		progressColor: function () {	// 暂停状态下为黄色，否则绿色
-			return this.workingStatusNProgress.workingStatus == -1 ? 'titlebar-background-yellow' : 'titlebar-background-green'
+			return this.workingStatusNProgress.workingStatus == -1 ? 'titlebar-background-yellow' : 'titlebar-background-green';
 		},
 		progressWidth: function () {	// 暂停、运行状态下输出宽度，否则 0
-			return this.workingStatusNProgress.workingStatus ? this.workingStatusNProgress.progress * 100 + '%' : 0
+			return this.workingStatusNProgress.workingStatus ? this.workingStatusNProgress.progress * 100 + '%' : 0;
 		},
 		titleLeft: function () {		// 暂停、运行状态下输出左侧，否则中间
-			return this.workingStatusNProgress.workingStatus ? '88px' : '50%'
+			return this.workingStatusNProgress.workingStatus ? '88px' : '50%';
 		},
 		iconsLeft: function () {		// 暂停、运行状态下输出左侧，否则中间
-			return this.workingStatusNProgress.workingStatus ? '24px' : 'calc(50% - 64px)'
+			return this.workingStatusNProgress.workingStatus ? '24px' : 'calc(50% - 64px)';
 		},
 		newVersionLeft: function () {
-			return this.workingStatusNProgress.workingStatus ? '320px' : 'calc(50% + 88px)'
+			let extraRight = (version + (process.env.NODE_ENV !== 'production' ? ' (dev)' : '')).length * 8;
+			return this.workingStatusNProgress.workingStatus ? `${300 + extraRight}px` : `calc(50% + ${72 + extraRight}px)`;
 		},
 		titlebarText: function () {		// 暂停、运行状态下输出进度，否则没有
-			return (this.workingStatusNProgress.workingStatus ? '进度：' + (this.workingStatusNProgress.progress * 100).toFixed(3) + ' % - ' : '') + '丹参盒 v' + version + (process.env.NODE_ENV != 'production' ? 'd' : '')
+			return (this.workingStatusNProgress.workingStatus ? '进度：' + (this.workingStatusNProgress.progress * 100).toFixed(3) + ' % - ' : '') + '丹参盒 v' + version + (process.env.NODE_ENV !== 'production' ? ' (dev)' : '');
 		},
 		newVersionText: function () {
 			if (this.newVersion) {
-				return `发现新版本：${this.newVersion!.version}<br />点击跳转到官网下载`
+				return `发现新版本：${this.newVersion!.version}<br />点击跳转到官网下载`;
 			}
 		}
 	},
@@ -146,7 +147,7 @@ export default Vue.extend<Data, any, any, any>({
 		top: 0;
 		width: 100%;
 		height: 28px;
-		z-index: 100;
+		z-index: 50;
 		background: linear-gradient(180deg, hsl(0deg, 0%, 100%), hsl(0, 0%, 92.5%));
 		box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1 ),
 					0  4px  8px -3px rgba(0, 0, 0, 0.1 );
@@ -188,7 +189,7 @@ export default Vue.extend<Data, any, any, any>({
 		#title {
 			position: absolute;
 			top: 3px;
-			width: 240px;
+			width: 320px;
 			font-size: 16px;
 			text-align: left;
 			transition: left 0.3s;

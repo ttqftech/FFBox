@@ -95,11 +95,12 @@ export default Vue.extend({
 			return function () {
 				clickSpeedCounter += 20;
 				if (clickSpeedCounter > 100) {
+					// @ts-ignore
 					this.$popup({
 						message: '打开开发者工具',
 						level: NotificationLevel.info
 					});
-					nodeBridge.remote?.getCurrentWindow().openDevTools();
+					(nodeBridge.remote?.getCurrentWindow() as any).openDevTools();
 					clickSpeedCounter = 0;
 					clearInterval(clickSpeedTimer);
 					clickSpeedTimerStatus = false;
@@ -112,7 +113,7 @@ export default Vue.extend({
 							clickSpeedTimerStatus = false;
 						}
 						clickSpeedCounter -= 1;
-					}, 70)
+					}, 70) as any as number;
 				}
 			}
 		})(),
