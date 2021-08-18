@@ -1,6 +1,7 @@
 # FFBox Changelog
 
-`2021-08-17` 优化 combobox 体验  
+`2021-08-17` 更新 FFBox 官网；更新 readme.md  
+`2021-08-17` 优化 combobox 体验；更新 FFBox 官网  
 `2021-08-16` 清理 TypeScript 错误；清理工程文件（含去除 storybook）  
 `2021-08-13` 通知中心改造；激活机制完善  
 `2021-08-12` 新增激活机制  
