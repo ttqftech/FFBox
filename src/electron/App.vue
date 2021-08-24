@@ -385,7 +385,7 @@ export default Vue.extend({
 			currentServer.tasks[id] = task;
 			// timer 相关处理
 			if (task.status === TaskStatus.TASK_RUNNING && !task.dashboardTimer) {
-				task.dashboardTimer = setInterval(dashboardTimer, 50, task);
+				task.dashboardTimer = setInterval(dashboardTimer, 50, task) as any;
 			} else if (task.dashboardTimer) {
 				clearInterval(task.dashboardTimer);
 				task.dashboardTimer = NaN;
