@@ -15,16 +15,18 @@ import Tooltip from '@/electron/components/floating/Tooltip/index.js'
 
 const maxThreads = 2;
 
-import { StoreState, NotificationLevel, ServiceTask, WorkingStatus, TaskStatus, Server, UITask, Task, OutputParams } from '@/types/types'
+import { StoreState, NotificationLevel, ServiceTask, WorkingStatus, TaskStatus, Server, UITask, Task, OutputParams, FFBoxServiceInterface } from '@/types/types'
 import { version, buildNumber } from "@/types/constants";
 import { getInitialUITask, randomString } from '@/common/utils'
 import { defaultParams } from "../common/defaultParams";
-import { FFBoxService } from "@/service/FFBoxService";
+// import { FFBoxService } from "@/service/FFBoxService";
 import { mergeTaskFromService } from '@/service/netApi'
+import { ServiceBridge } from './bridge/serviceBridge'
 import nodeBridge from "./bridge/nodeBridge";
 import osBridge from "./bridge/osBridge";
+import { FFBoxService } from '@/service/FFBoxService'
 
-let ffboxService: FFBoxService;
+// let ffboxService: FFBoxService;
 let mainVue: Vue;
 
 Vue.use(Vuex)
@@ -46,6 +48,9 @@ const store = new Vuex.Store<StoreState>({
 		servers: {
 			'local': { tasks: [], ffmpegVersion: '', workingStatus: WorkingStatus.stopped, progress: 0 }
 		},
+		serviceBridges: {
+			'local': new ServiceBridge('localhost', 33269)
+		},
 		currentServerName: 'local',
 		selectedTask: new Set(),
 		globalParams: JSON.parse(JSON.stringify(defaultParams)),
@@ -56,7 +61,10 @@ const store = new Vuex.Store<StoreState>({
 	getters: {
 		currentServer (state) {
 			return state.servers[state.currentServerName];
-		}
+		},
+		currentBridge (state) {
+			return state.serviceBridges[state.currentServerName];
+		},
 	},
 	mutations: {
 		// #region 纯 UI
@@ -93,27 +101,29 @@ const store = new Vuex.Store<StoreState>({
 		// #region 任务处理
 		startNpause (state) {
 			let currentServer = state.servers[state.currentServerName];
-			if (!currentServer) {
+			let currentBridge = state.serviceBridges[state.currentServerName];
+			if (!currentServer || !currentBridge) {
 				return;
 			}
 			if (currentServer.workingStatus === WorkingStatus.stopped || currentServer.workingStatus === WorkingStatus.paused) {		// 开始任务
-				ffboxService.queueAssign();
+				currentBridge.queueAssign();
 			} else {
-				ffboxService.queuePause();
+				currentBridge.queuePause();
 			}
 		},
 		pauseNremove (state, id: number) {
 			let currentServer = state.servers[state.currentServerName];
-			if (!currentServer) {
+			let currentBridge = state.serviceBridges[state.currentServerName];
+			if (!currentServer || !currentBridge) {
 				return;
 			}
 			let task = currentServer.tasks[id];
 			if (task.status === TaskStatus.TASK_RUNNING) {
-				ffboxService.taskPause(id);
+				currentBridge.taskPause(id);
 			} else if (task.status === TaskStatus.TASK_PAUSED || task.status === TaskStatus.TASK_STOPPING || task.status === TaskStatus.TASK_FINISHED || task.status === TaskStatus.TASK_ERROR) {
-				ffboxService.taskReset(id);
+				currentBridge.taskReset(id);
 			} else if (task.status === TaskStatus.TASK_STOPPED) {
-				ffboxService.taskDelete(id);
+				currentBridge.taskDelete(id);
 			}
 		},
 		/**
@@ -121,13 +131,13 @@ const store = new Vuex.Store<StoreState>({
 		 * @param args name, path, callback（传回添加后的 id）
 		 */
 		addTask (state, args) {
-			let currentServer = state.servers[state.currentServerName];
-			if (!currentServer) {
+			let currentBridge = state.serviceBridges[state.currentServerName];
+			if (!currentBridge) {
 				return;
 			}
-			let id = ffboxService.taskAdd(args.path, args.name, JSON.parse(JSON.stringify(state.globalParams)));
+			currentBridge.taskAdd(args.path, args.name, JSON.parse(JSON.stringify(state.globalParams)));
 			if (typeof args.callback == 'function') {
-				args.callback(id);
+				args.callback();
 			}
 		},
 		selectedTask_update (state, set) {
@@ -142,6 +152,13 @@ const store = new Vuex.Store<StoreState>({
 					break;
 				}
 			}
+		},
+		selectedTask_getNewlyAddedTaskIds (state) {
+			let currentBridge = state.serviceBridges[state.currentServerName];
+			if (!currentBridge) {
+				return;
+			}
+			currentBridge.getNewlyAddedTaskIds();
 		},
 		setOverallProgressTimer (state, timerID) {
 			state.overallProgressTimerID = timerID;
@@ -176,6 +193,7 @@ const store = new Vuex.Store<StoreState>({
 			}
 			// 更改到一些不匹配的值后会导致 getFFmpegParaArray 出错，但是修正代码就在后面，因此仅需忽略它，让它继续运行下去，不要急着更新
 			let currentServer = state.servers[state.currentServerName];
+			let currentBridge = state.serviceBridges[state.currentServerName];
 			if (currentServer) {
 				// 收集需要批量更新的输出参数，交给 service
 				let needToUpdateIds: Array<number> = [];
@@ -185,11 +203,12 @@ const store = new Vuex.Store<StoreState>({
 					needToUpdateIds.push(parseInt(id));
 				}
 				// paraArray 由 service 算出后回填本地
-				let result = ffboxService.setParameter(needToUpdateIds, state.globalParams);
-				for (const indexNid of Object.values(needToUpdateIds)) {
-					let task = currentServer.tasks[indexNid];
-					task.paraArray = result[indexNid];
-				}	
+				// 更新方式是 taskUpdate
+				currentBridge.setParameter(needToUpdateIds, state.globalParams);
+				// for (const indexNid of Object.values(needToUpdateIds)) {
+				// 	let task = currentServer.tasks[indexNid];
+				// 	task.paraArray = result[indexNid];
+				// }	
 			}
 
 			// 存盘
@@ -237,9 +256,10 @@ const store = new Vuex.Store<StoreState>({
 		 */
 		deleteNotification (state, args: { serverName: string, taskId: number, index: number }) {			
 			if (args.serverName) {
-				let server: Server = state.servers[args.serverName];
+				let server = state.servers[args.serverName];
+				let bridge = state.serviceBridges[args.serverName];
 				if (true) {
-					ffboxService.deleteNotification(args.taskId, args.index);
+					bridge.deleteNotification(args.taskId, args.index);
 				}
 			} else {
 				state.notifications.splice(args.index, 1);
@@ -263,19 +283,36 @@ const store = new Vuex.Store<StoreState>({
 				nodeBridge.ipcRenderer?.send('exitConfirm');
 				nodeBridge.ipcRenderer?.send('close');
 			}
-			if (ffboxService.getQueueTaskCount() > 0) {
-				mainVue.$confirm({
-					title: '要退出咩？',
-					content: `本地服务器还有 ${ffboxService.getQueueTaskCount()} 个任务未完成，要退出🐴？`,
-				}).then(readyToClose);
-			} else {
-				readyToClose();
+			// getQueueTaskCount 拷贝自 FFBoxService
+			function getQueueTaskCount(server: Server) {
+				let count: number = 0;
+				for (const task of Object.values(server.tasks)) {
+					if (task.status === TaskStatus.TASK_RUNNING || task.status === TaskStatus.TASK_PAUSED || task.status === TaskStatus.TASK_STOPPING || task.status === TaskStatus.TASK_FINISHING) {
+						count++;
+					}
+				}
+				return count;
 			}
+			let currentServer = state.servers[state.currentServerName];
+			if (!currentServer) {
+				readyToClose();
+			} else {
+				let queueTaskCount = getQueueTaskCount(currentServer);
+				if (queueTaskCount > 0) {
+					mainVue.$confirm({
+						title: '要退出咩？',
+						content: `本地服务器还有 ${queueTaskCount} 个任务未完成，要退出🐴？`,
+					}).then(readyToClose);
+				} else {
+					readyToClose();
+				}
+			} 
 		},
 		activate (state, args: { userInput: string, callback: (result: number | false) => any }) {
 			let electronStore = nodeBridge.electronStore;
 			let cryptoJS = nodeBridge.cryptoJS;
-			if (nodeBridge.isElectron && electronStore) {
+			let currentBridge = state.serviceBridges[state.currentServerName];
+			if (nodeBridge.isElectron && electronStore && currentBridge) {
 				/**
 				 * 客户端和管理端均使用机器码 + 固定码共 32 位作为 key
 				 * 管理端使用这个 key 对 functionLevel 加密，得到的加密字符串由用户输入到 userInput 中去
@@ -288,7 +325,7 @@ const store = new Vuex.Store<StoreState>({
 				let decryptedString = cryptoJS.enc.Utf8.stringify(decrypted);
 				if (parseInt(decryptedString).toString() === decryptedString) {
 					state.functionLevel = parseInt(decryptedString);
-					ffboxService.activate(machineCode, args.userInput);
+					currentBridge.activate(machineCode, args.userInput);
 					args.callback(parseInt(decryptedString))
 				} else {
 					args.callback(false);
@@ -308,46 +345,38 @@ export default Vue.extend({
 		MainFrame
 	},
 	methods: {
-		handleFFmpegVersion(content: string) {
-			let currentServer: Server = this.$store.getters.currentServer;
-			if (!currentServer) {
-				return;
-			}
-			currentServer.ffmpegVersion = content || '-';
+		handleFFmpegVersion(server: Server, bridge: FFBoxServiceInterface, content: string) {
+			server.ffmpegVersion = content || '-';
 		},
-		handleWorkingStatusUpdate(workingStatus: WorkingStatus) {
-			let currentServer: Server = this.$store.state.servers[this.$store.state.currentServerName];
-			if (!currentServer) {
-				return;
-			}
-			currentServer.workingStatus = workingStatus;
+		handleNewlyAddedTaskIds(server: Server, bridge: FFBoxServiceInterface, content: Array<number>) {
+			this.$store.commit('selectedTask_update', new Set(content));
+		},
+		handleWorkingStatusUpdate(server: Server, bridge: FFBoxServiceInterface, workingStatus: WorkingStatus) {
+			server.workingStatus = workingStatus;
+			// 处理 overallProgressTimer
 			if (workingStatus === WorkingStatus.running && !this.$store.state.overallProgressTimerID) {
-				let timerID = setInterval(overallProgressTimer, 80, workingStatus, currentServer);
+				let timerID = setInterval(overallProgressTimer, 80, workingStatus, server);
 				this.$store.commit('setOverallProgressTimer', timerID);
-				overallProgressTimer(workingStatus, currentServer);
+				overallProgressTimer(workingStatus, server);
 			} else if (workingStatus === WorkingStatus.stopped && this.$store.state.overallProgressTimerID) {
 				clearInterval(this.$store.state.overallProgressTimerID);
 				this.$store.commit('setOverallProgressTimer', NaN);
-				overallProgressTimer(workingStatus, currentServer);
+				overallProgressTimer(workingStatus, server);
 				if (nodeBridge.remote && nodeBridge.remote.getCurrentWindow().isFocused()) {
 					nodeBridge.remote.getCurrentWindow().flashFrame(true);
 				}
 			} else if (workingStatus === WorkingStatus.paused && this.$store.state.overallProgressTimerID) {
 				clearInterval(this.$store.state.overallProgressTimerID);
 				this.$store.commit('setOverallProgressTimer', NaN);
-				overallProgressTimer(workingStatus, currentServer);
+				overallProgressTimer(workingStatus, server);
 			}
 		},
-		handleTasklistUpdate(content: Array<number>) {
-			let currentServer: Server = this.$store.getters.currentServer;
-			if (!currentServer) {
-				return;
-			}
-
+		handleTasklistUpdate(server: Server, bridge: FFBoxServiceInterface, content: Array<number>) {
 			let localI = 0;
 			let remoteI = 0;
-			let localKeys = Object.keys(currentServer.tasks).map(Number).filter((value) => value >= 0);	// [1,3,4,5]
+			let localKeys = Object.keys(server.tasks).map(Number).filter((value) => value >= 0);	// [1,3,4,5]
 			let remoteKeys = content.filter((value) => value >= 0);										// [1,3,5,6,7]
+			let newTaskIds: Array<number> = [];
 			let newTaskList: Array<UITask> = [];
 			while (localI < localKeys.length || remoteI < remoteKeys.length) {
 				let localKey = localKeys[localI];
@@ -355,7 +384,9 @@ export default Vue.extend({
 				if (localI >= localKeys.length) {
 					// 本地下标越界，说明远端添加任务了
 					let newTask = getInitialUITask('', '');
-					newTask = mergeTaskFromService(newTask, ffboxService.getTask(remoteKey) as Task);
+					// newTask = mergeTaskFromService(newTask, ffboxService.getTask(remoteKey) as Task);
+					// 先用一个 InitialUITask 放在新位置，完成列表合并后再统一 getTask() 获取任务信息
+					newTaskIds.push(remoteKey);
 					newTaskList[remoteKey] = newTask;
 					remoteI++;
 				} else if (remoteI >= remoteKeys.length) {
@@ -366,26 +397,26 @@ export default Vue.extend({
 					localI++;
 				} else if (localKey === remoteKey) {
 					// 从 local 处直接复制
-					newTaskList[localKey] = currentServer.tasks[localKey];
+					newTaskList[localKey] = server.tasks[localKey];
 					localI++;
 					remoteI++;
 				}
 			}
-			currentServer.tasks = Object.assign(newTaskList, {'-1': currentServer.tasks[-1]});
+			server.tasks = Object.assign(newTaskList, {'-1': server.tasks[-1]});
+			// 依次获取所有新增任务的信息
+			for (const newTaskId of newTaskIds) {
+				bridge.getTask(newTaskId);
+			}
 		},
 		/**
 		 * 更新整个 task
 		 */
-		handleTaskUpdate(id: number, content: ServiceTask) {
-			let currentServer: Server = this.$store.state.servers[this.$store.state.currentServerName];
-			if (!currentServer) {
-				return;
-			}
-			let task = mergeTaskFromService(currentServer.tasks[id], content);
-			currentServer.tasks[id] = task;
+		handleTaskUpdate(server: Server, bridge: FFBoxServiceInterface, id: number, content: Task) {
+			let task = mergeTaskFromService(server.tasks[id], content);
+			server.tasks[id] = task;
 			// timer 相关处理
 			if (task.status === TaskStatus.TASK_RUNNING && !task.dashboardTimer) {
-				task.dashboardTimer = setInterval(dashboardTimer, 50, task);
+				task.dashboardTimer = setInterval(dashboardTimer, 50, task) as any;
 			} else if (task.dashboardTimer) {
 				clearInterval(task.dashboardTimer);
 				task.dashboardTimer = NaN;
@@ -398,17 +429,13 @@ export default Vue.extend({
 				task.progress.progress = 0;
 				task.progress_smooth.progress = 0;
 			}
-			// currentServer.tasks = Object.assign({}, currentServer.tasks);
+			// server.tasks = Object.assign({}, server.tasks);
 		},
 		/**
 		 * 增量更新 cmdData
 		 */
-		handleCmdUpdate(id: number, content: string) {
-			let currentServer: Server = this.$store.state.servers[this.$store.state.currentServerName];
-			if (!currentServer) {
-				return;
-			}
-			let task = currentServer.tasks[id];
+		handleCmdUpdate(server: Server, bridge: FFBoxServiceInterface, id: number, content: string) {
+			let task = server.tasks[id];
 			if (task.cmdData.slice(-1) !== '\n' && task.cmdData.length) {
 				task.cmdData += '\n';
 			}
@@ -417,16 +444,12 @@ export default Vue.extend({
 		/**
 		 * 整个更新 progressHistory
 		 */
-		handleProgressUpdate(id: number, progressHistory: Task['progressHistory']) {
-			let currentServer: Server = this.$store.state.servers[this.$store.state.currentServerName];
-			if (!currentServer) {
-				return;
-			}
-			currentServer.tasks[id].progressHistory = progressHistory;
+		handleProgressUpdate(server: Server, bridge: FFBoxServiceInterface, id: number, progressHistory: Task['progressHistory']) {
+			server.tasks[id].progressHistory = progressHistory;
 			if (this.$store.state.functionLevel < 50) {
 				if (progressHistory.normal.slice(-1)[0].mediaTime > 671 ||
 					progressHistory.elapsed + new Date().getTime() / 1000 - progressHistory.lastStarted > 671) {
-					ffboxService.trailLimit_stopTranscoding(id);
+					bridge.trailLimit_stopTranscoding(id);
 					return;
 				}
 			}
@@ -435,12 +458,8 @@ export default Vue.extend({
 		/**
 		 * 增量更新 notifications
 		 */
-		handleTaskNotification(id: number, content: string, level: NotificationLevel) {
-			let currentServer: Server = this.$store.state.servers[this.$store.state.currentServerName];
-			if (!currentServer) {
-				return;
-			}
-			currentServer.tasks[id].notifications.push({ content, level, time: new Date().getTime() });
+		handleTaskNotification(server: Server, bridge: FFBoxServiceInterface, id: number, content: string, level: NotificationLevel) {
+			server.tasks[id].notifications.push({ content, level, time: new Date().getTime() });
 			this.$popup({
 				message: content,
 				level: level,
@@ -450,13 +469,10 @@ export default Vue.extend({
 		/**
 		 * 读取 service 中 task id 为 -1 的 globalTask
 		 */
-		updateGlobalTask () {
-			let currentServer: Server = this.$store.state.servers[this.$store.state.currentServerName];
-			if (!currentServer) {
-				return;
-			}
+		updateGlobalTask (server: Server, bridge: FFBoxServiceInterface) {
 			let newTask = getInitialUITask('', '');
-			currentServer.tasks[-1] = mergeTaskFromService(newTask, ffboxService.getTask(-1) as Task);
+			server.tasks[-1] = newTask;
+			bridge.getTask(-1);
 		},
 	},
 	beforeCreate: function () {
@@ -540,57 +556,73 @@ export default Vue.extend({
 			})
 		}, 120000);
 
-		// 挂载 ffboxService 各种更新事件
+		// 启动一个 ffboxService，这个 ffboxService 目前钦定监听 localhost: 33269，而 serviceBridge 会连接此 service
 		window.ffboxService = new FFBoxService();
-		ffboxService = window.ffboxService;
-		ffboxService.on('ffmpegVersion', (data) => {
-			console.log('event: ffmpegVersion', data);
-			this.$store.commit('pushMsg',{
-				message: 'event: ffmpegVersion',
-				level: 0,
-			})
-			this.handleFFmpegVersion(data.content);
-		});
-		ffboxService.on('workingStatusUpdate', (data) => {
-			console.log('event: workingStatusUpdate', data);
-			this.$store.commit('pushMsg',{
-				message: 'event: workingStatusUpdate',
-				level: 0,
-			})
-			this.handleWorkingStatusUpdate(data.value);
-		});
-		ffboxService.on('tasklistUpdate', (data) => {
-			console.log('event: tasklistUpdate', data);
-			this.$store.commit('pushMsg',{
-				message: 'event: tasklistUpdate',
-				level: 0,
-			})
-			this.handleTasklistUpdate(data.content);
-		});
-		ffboxService.on('taskUpdate', (data) => {
-			console.log('event: taskUpdate', data);
-			this.$store.commit('pushMsg',{
-				message: 'event: taskUpdate',
-				level: 0,
-			})
-			this.handleTaskUpdate(data.id, data.content);
-		});
-		ffboxService.on('cmdUpdate', (data) => {
-			this.handleCmdUpdate(data.id, data.content);
-		});
-		ffboxService.on('progressUpdate', (data) => {
-			this.handleProgressUpdate(data.id, data.content);
-		});
-		ffboxService.on('taskNotification', (data) => {
-			console.log('event: taskNotification', data);
-			this.$store.commit('pushMsg',{
-				message: 'event: taskNotification',
-				level: 0,
-			})
-			this.handleTaskNotification(data.id, data.content, data.level);
-		});
-		this.updateGlobalTask();
-		this.handleTasklistUpdate(ffboxService.getTaskList());
+
+		// 挂载 serviceBridge 各种更新事件
+		let availableServerNames = Object.keys(this.$store.state.servers);
+		for (const serverName of availableServerNames) {
+			let server: Server = this.$store.state.servers[serverName];
+			let bridge: ServiceBridge = this.$store.state.serviceBridges[serverName];
+
+			bridge.on('ffmpegVersion', (data) => {
+				console.log('event: ffmpegVersion', data);
+				this.$store.commit('pushMsg',{
+					message: 'event: ffmpegVersion',
+					level: 0,
+				})
+				this.handleFFmpegVersion(server, bridge, data.content);
+			});
+			bridge.on('newlyAddedTaskIds', (data) => {
+				console.log('event: newlyAddedTaskIds', data);
+				this.$store.commit('pushMsg',{
+					message: 'event: newlyAddedTaskIds',
+					level: 0,
+				})
+				this.handleNewlyAddedTaskIds(server, bridge, data.content);
+			});
+			bridge.on('workingStatusUpdate', (data) => {
+				console.log('event: workingStatusUpdate', data);
+				this.$store.commit('pushMsg',{
+					message: 'event: workingStatusUpdate',
+					level: 0,
+				})
+				this.handleWorkingStatusUpdate(server, bridge, data.value);
+			});
+			bridge.on('tasklistUpdate', (data) => {
+				console.log('event: tasklistUpdate', data);
+				this.$store.commit('pushMsg',{
+					message: 'event: tasklistUpdate',
+					level: 0,
+				})
+				this.handleTasklistUpdate(server, bridge, data.content);
+			});
+			bridge.on('taskUpdate', (data) => {
+				console.log('event: taskUpdate', data);
+				this.$store.commit('pushMsg',{
+					message: 'event: taskUpdate',
+					level: 0,
+				})
+				this.handleTaskUpdate(server, bridge, data.id, data.content);
+			});
+			bridge.on('cmdUpdate', (data) => {
+				this.handleCmdUpdate(server, bridge, data.id, data.content);
+			});
+			bridge.on('progressUpdate', (data) => {
+				this.handleProgressUpdate(server, bridge, data.id, data.content);
+			});
+			bridge.on('taskNotification', (data) => {
+				console.log('event: taskNotification', data);
+				this.$store.commit('pushMsg',{
+					message: 'event: taskNotification',
+					level: 0,
+				})
+				this.handleTaskNotification(server, bridge, data.id, data.content, data.level);
+			});
+			this.updateGlobalTask(server, bridge);
+			bridge.getTaskList();
+		}
+
 		console.log('App 加载完成');
 	},
 	store,

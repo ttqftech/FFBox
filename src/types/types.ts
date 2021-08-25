@@ -1,13 +1,49 @@
+import { ServiceBridge } from '@/electron/bridge/serviceBridge'
 import { FFmpeg } from '../service/FFmpegInvoke'
 
-export interface FFBoxServiceEvent {
-	ffmpegVersion: (arg: {content: string}) => void;
-	workingStatusUpdate: (arg: {value: WorkingStatus}) => void;
-	tasklistUpdate: (arg: {content: Array<number>}) => void;
-	taskUpdate: (arg: {id: number; content: ServiceTask}) => void;
-	cmdUpdate: (arg: {id: number, content: string, append: boolean}) => void;
-	progressUpdate: (arg: {id: number, content: any}) => void;
-	taskNotification: (arg: {id: number, content: string, level: NotificationLevel}) => void;
+export interface FFBoxServiceInterface {
+	initFFmpeg(): void;
+	getFFmpegVersion(): void;
+	taskAdd(filePath: string, fileName: string, outputParams?: OutputParams): void;
+	getNewlyAddedTaskIds(): void;
+	taskDelete(id: number): void;
+	taskStart(id: number): void;
+	taskPause(id: number, startFromBehind?: boolean): void;
+	taskResume(id: number): void;
+	taskReset(id: number): void;
+	getTaskList(): void;
+	getTask(id: number): void;
+	queueAssign(startFrom?: number): void;
+	queuePause(): void;
+	deleteNotification(taskId: number, index: number): void;
+	setParameter(ids: Array<number>, param: OutputParams): void;
+	activate(machineCode: string, activationCode: string): boolean | void;
+	trailLimit_stopTranscoding(id: number): void;
+}
+
+export interface FFBoxServiceEventParam {
+	ffmpegVersion: { content: string };
+	newlyAddedTaskIds: { content: Array<number> };
+	workingStatusUpdate: { value: WorkingStatus };
+	tasklistUpdate: { content: Array<number> };
+	taskUpdate: { id: number; content: Task };
+	cmdUpdate: { id: number, content: string, append: boolean };
+	progressUpdate: { id: number, content: any };
+	taskNotification: { id: number, content: string, level: NotificationLevel };
+}
+
+export type FFBoxServiceEvent = {
+	[K in keyof FFBoxServiceEventParam]: (arg: FFBoxServiceEventParam[K]) => void;
+}
+
+export type FFBoxServiceEventApi = {
+	event: keyof FFBoxServiceEventParam,
+	payload: FFBoxServiceEventParam[keyof FFBoxServiceEventParam],
+}
+
+export interface FFBoxServiceFunctionApi {
+	function: keyof FFBoxServiceInterface;
+	args: Parameters<FFBoxServiceInterface[keyof FFBoxServiceInterface]>;	// 数组形式，按顺序传入参数
 }
 
 export interface OutputParams {
@@ -134,6 +170,7 @@ export interface StoreState {
 	notifications: Array<Notification>;
 	unreadNotificationCount: number;
 	servers: {[key: string]: Server};
+	serviceBridges: {[key: string]: ServiceBridge};
 	currentServerName: string;
 	selectedTask: Set<string>;
 	globalParams: OutputParams;
