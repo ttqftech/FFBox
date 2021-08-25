@@ -172,14 +172,12 @@ export default Vue.extend({
 			let dropDelayCount = 0;
 			let files = (event.dataTransfer && event.dataTransfer.files) || [];
 			let fileCount = files.length
-			let newIDs: Array<number> = [];
 			for (const file of files) {
 				setTimeout(() => {	// v2.4 版本开始完全可以不要延时，但是太生硬，所以加个动画
 					console.log(file.path);
-					this.$store.commit('addTask', { name: file.name, path: file.path, callback: (id: number) => {
-						newIDs.push(id);
+					this.$store.commit('addTask', { name: file.name, path: file.path, callback: () => {
 						if (--fileCount == 0) {
-							this.$store.commit('selectedTask_update', new Set(newIDs));
+							this.$store.commit('selectedTask_getNewlyAddedTaskIds');
 						}
 					}})
 				}, dropDelayCount);

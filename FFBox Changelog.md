@@ -1,5 +1,7 @@
 # FFBox Changelog
 
+`2021-08-24` 改造并接入 serviceBridge 和 uiBridge  
+`2021-08-23` 学习并引入 webSocket（新增 serviceBridge 和 uiBridge）  
 `2021-08-17` 更新 FFBox 官网；更新 readme.md  
 `2021-08-17` 优化 combobox 体验；更新 FFBox 官网  
 `2021-08-16` 清理 TypeScript 错误；清理工程文件（含去除 storybook）  
