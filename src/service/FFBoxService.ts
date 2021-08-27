@@ -2,7 +2,7 @@ import { ServiceTask, TaskStatus, OutputParams, FFBoxServiceEvent, Notification,
 import { getFFmpegParaArray } from "../common/getFFmpegParaArray";
 import { FFmpeg } from './FFmpegInvoke'
 import { defaultParams } from "../common/defaultParams";
-import { getInitialServiceTask, TypedEventEmitter } from "@/common/utils";
+import { getInitialServiceTask, getTimeString, TypedEventEmitter } from "@/common/utils";
 import { convertAnyTaskToTask } from "./netApi";
 import { EventEmitter } from "events";
 import UIBridge from "./uiBridge";
@@ -21,13 +21,13 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 	
 	constructor() {
 		super();
+		console.log(getTimeString(new Date()), '正在初始化 FFbox 服务。');
 		this.globalTask = getInitialServiceTask('', '');
 		this.tasklist[-1] = this.globalTask;
-		console.log('Welcome, FFbox.');
 		setTimeout(() => {
 			this.initSettings();
 			this.initUIBridge();
-			this.initFFmpeg();			
+			this.initFFmpeg();
 		}, 0);
 	}
 
@@ -51,6 +51,7 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 	 * @emits ffmpegVersion
 	 */
 	public initFFmpeg(): void {
+		console.log(getTimeString(new Date()), '检查 FFmpeg 版本。');
 		let ffmpeg = new FFmpeg(1);
 		ffmpeg.on('data', (data: string) => {
 			this.setCmdText(-1, data);
@@ -81,7 +82,7 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 	 */
 	public taskAdd(filePath: string, fileName: string, outputParams?: OutputParams): void {
 		let id = this.taskId++;
-
+		console.log(getTimeString(new Date()), `新增任务：${fileName}。id：${id}。`);
 		let task = getInitialServiceTask(fileName, filePath, outputParams);
 
 		// 更新命令行参数
@@ -146,6 +147,7 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 	 */
 	public taskDelete(id: number): void {
 		let task = this.tasklist[id];
+		console.log(getTimeString(new Date()), `删除任务：${task.fileName}。id：${id}。`);
 		if (!task) {
 			throw Error(`任务不存在！任务 id：${id}`);
 		} else if (!task || !(task.status === TaskStatus.TASK_STOPPED || task.status === TaskStatus.TASK_FINISHED || task.status === TaskStatus.TASK_ERROR)) {
@@ -164,6 +166,7 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 	 */
 	public taskStart(id: number): void {
 		let task = this.tasklist[id];
+		console.log(getTimeString(new Date()), `启动任务：${task.fileName}。id：${id}。`);
 		if (!task) {
 			throw Error(`任务不存在！任务 id：${id}`);
 		} else if (!(task.status === TaskStatus.TASK_STOPPED || task.status === TaskStatus.TASK_ERROR)) {
@@ -196,6 +199,7 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 		}
 		let newFFmpeg = new FFmpeg(0, getFFmpegParaArray(task.filePath, task.after.input, task.after.video, task.after.audio, task.after.output));
 		newFFmpeg.on('finished', () => {
+			console.log(getTimeString(new Date()), `任务完成：${task.fileName}。id：${id}。`);
 			task.status = TaskStatus.TASK_FINISHED;
 			this.setNotification(
 				id,
@@ -251,6 +255,7 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 			);
 		});
 		newFFmpeg.on('critical', (errors: Array<string>) => {
+			console.log(getTimeString(new Date()), `任务出错：${task.fileName}。id：${id}。`);
 			task.status = TaskStatus.TASK_ERROR;
 			this.setNotification(
 				id,
@@ -289,6 +294,7 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 	 */
 	public taskPause(id: number, startFromBehind: boolean = true): void {
 		let task = this.tasklist[id];
+		console.log(getTimeString(new Date()), `暂停任务：${task.fileName}。id：${id}。`);
 		if (!task) {
 			throw Error(`任务不存在！任务 id：${id}`);
 		} else if (!(task.status === TaskStatus.TASK_RUNNING || !task.ffmpeg)) {
@@ -315,6 +321,7 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 	 */
 	public taskResume(id: number): void {
 		let task = this.tasklist[id];
+		console.log(getTimeString(new Date()), `继续任务：${task.fileName}。id：${id}。`);
 		if (!task) {
 			throw Error(`任务不存在！任务 id：${id}`);
 		} else if (!(task.status === TaskStatus.TASK_PAUSED || !task.ffmpeg)) {
@@ -352,6 +359,7 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 		}
 		// if 语句两个分支的代码重合度很高，区分的原因是因为暂停状态下重置是异步的
 		if (task.status === TaskStatus.TASK_PAUSED || task.status === TaskStatus.TASK_RUNNING) {	// 暂停状态下重置或运行状态下达到限制停止工作
+			console.log(getTimeString(new Date()), `停止任务：${task.fileName}。id：${id}。`);
 			task.status = TaskStatus.TASK_STOPPING;
 			task.ffmpeg!.exit(() => {
 				task.status = TaskStatus.TASK_STOPPED;
@@ -363,7 +371,8 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 				this.queueCheck();
 			});
 		} else if (task.status === TaskStatus.TASK_STOPPING) {		// 正在停止状态下强制重置
-			task.status = TaskStatus.TASK_STOPPED;
+		console.log(getTimeString(new Date()), `强制停止任务：${task.fileName}。id：${id}。`);
+		task.status = TaskStatus.TASK_STOPPED;
 			task.ffmpeg!.forceKill(() => {
 				task.ffmpeg = null;
 				this.emit('taskUpdate', {
@@ -373,6 +382,7 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 				this.queueCheck();
 			});
 		} else if (task.status === TaskStatus.TASK_FINISHED || task.status === TaskStatus.TASK_ERROR) {		// 完成状态下重置
+			console.log(getTimeString(new Date()), `重置任务：${task.fileName}。id：${id}。`);
 			task.status = TaskStatus.TASK_STOPPED;
 		}
 		this.queueCheck();

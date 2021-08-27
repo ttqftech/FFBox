@@ -1,5 +1,6 @@
 # FFBox Changelog
 
+`2021-08-27` FFBoxService 改由主进程托管（解决因生产环境无法启动 WebSocket 服务器导致的白屏问题）；主进程改用 TypeScript  
 `2021-08-26` 实现服务器接入  
 `2021-08-25` combobox 增加只读、可删除功能；微调 buttonbox 外观；msgbox 新增 inputbox 功能；实现服务器接入  
 `2021-08-24` 改造并接入 serviceBridge 和 uiBridge  

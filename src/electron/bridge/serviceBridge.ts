@@ -22,7 +22,7 @@ export class ServiceBridge extends (EventEmitter as new () => TypedEventEmitter<
 		this.ws = null;
 		setTimeout(() => {
 			this.connect();
-		}, 100);
+		}, 0);
 	}
 
 	public connect() {

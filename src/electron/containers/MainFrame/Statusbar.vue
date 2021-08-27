@@ -26,9 +26,9 @@ export default Vue.extend({
 		ffmpegVersion: function (): string {
 			let currentServer = this.$store.getters.currentServer as Server;
 			if (!currentServer) {
-				return 'FFBox 服务连接失败，请重新打开应用！';
+				return 'FFBox 服务连接失败，请检查防火墙或重新打开应用！';
 			}
-			let ret = `当前服务器：${this.$store.state.currentServerName}，`;
+			let ret = ``;
 			if (currentServer.ffmpegVersion === ''){
 				ret += 'FFmpeg 版本：检测中';
 			} else if (currentServer.ffmpegVersion === '-'){

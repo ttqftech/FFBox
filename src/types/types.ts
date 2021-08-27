@@ -157,6 +157,7 @@ export interface Server {
 	ffmpegVersion: string;
 	workingStatus: WorkingStatus;
 	progress: number;	// 由每个任务更新时计算出来
+	overallProgressTimerID: any;
 }
 
 export interface StoreState {
@@ -174,7 +175,6 @@ export interface StoreState {
 	currentServerName: string;
 	selectedTask: Set<string>;
 	globalParams: OutputParams;
-	overallProgressTimerID: any;
 	machineCode: string;
 	functionLevel: number;
 }

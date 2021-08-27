@@ -1,14 +1,17 @@
 import WebSocket from "ws";
 import { FFBoxServiceEventApi, FFBoxServiceEventParam, FFBoxServiceFunctionApi } from "@/types/types";
 import { FFBoxService } from "./FFBoxService";
+import { getTimeString } from "@/common/utils";
 
 let webSocket: typeof WebSocket | null;
 
 let wss: WebSocket.Server | null;
 let ffboxService: FFBoxService | null;
 
-if (process.env.IS_ELECTRON) {
+if (typeof window !== 'undefined') {
 	webSocket = window.require('ws');
+} else {
+	webSocket = require('ws');
 }
 
 export default {
@@ -23,9 +26,9 @@ export default {
 		}
 		const 这 = this;
 		wss = new webSocket.Server({ port: 33269 });
-		console.log('uiBridge: 开始监听')
+		console.log(getTimeString(new Date()), '开始监听端口 33269。')
 		wss.on('connection', function (ws: WebSocket) {
-			console.log('uiBridge: 新客户端接入');
+			console.log(getTimeString(new Date()), `新客户端接入：${ws.url}。`);
 
 			ws.on('message', function (message) {
 				// console.log('uiBridge: 收到来自客户端的消息', message);
@@ -33,22 +36,22 @@ export default {
 			});
 
 			ws.on('close', function (code: number, reason: string) {
-				console.log('uiBridge: 连接关闭', code, reason);
+				console.log(getTimeString(new Date()), `客户端连接关闭：${ws.url}。`, code, reason);
 			});
 
 			ws.on('error', function (err: Error) {
-				console.log('uiBridge: 连接出错', err);
+				console.log(getTimeString(new Date()), `客户端连接出错：${ws.url}。`, err);
 			});
 
 			ws.on('open', function () {
-				console.log('并不知道这东西是拿来干嘛的');
+				console.log(getTimeString(new Date()), `客户端连接打开：${ws.url}。`);
 			})
 		});
 		wss.on('error', function (error: Error) {
-			console.log('uiBridge: 服务器出错', error);
+			console.log(getTimeString(new Date()), `服务器出错，建议检查防火墙。`, error);
 		});
 		wss.on('close', function () {
-			console.log('uiBridge: 服务器关闭');
+			console.log(getTimeString(new Date()), `服务器关闭。`);
 		});
 		this.mountEventFromService();
 	},
