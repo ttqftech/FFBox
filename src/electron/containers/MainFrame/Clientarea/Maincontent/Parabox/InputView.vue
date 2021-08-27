@@ -1,8 +1,8 @@
 <template>
 	<div id="input-view">
 		<combobox title="硬件解码" :text="$store.state.globalParams.input.hwaccel" :list="hwaccelsList" @change="onChange('combo', 'hwaccel', $event)"></combobox>
-		<inputbox title="剪辑起点" :text="$store.state.globalParams.input.begin" @change="onChange('input', 'begin', $event)" type="duration"></inputbox>
-		<inputbox title="剪辑终点" :text="$store.state.globalParams.input.end" @change="onChange('input', 'end', $event)" type="duration"></inputbox>
+		<inputbox title="剪辑起点" :value="$store.state.globalParams.input.begin" @change="onChange('input', 'begin', $event)" type="duration"></inputbox>
+		<inputbox title="剪辑终点" :value="$store.state.globalParams.input.end" @change="onChange('input', 'end', $event)" type="duration"></inputbox>
 	</div>
 </template>
 

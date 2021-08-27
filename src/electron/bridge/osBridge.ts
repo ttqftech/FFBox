@@ -48,7 +48,7 @@ function callHelper<T>(func: (helper: ChildProcess) => Promise<T> | T): Promise<
 			}) as ChildProcess;
 			helper.on('close', (code, signal) => {
 				// 'close' 事件将始终在 'exit' 或 'error'（如果子进程衍生失败）已经触发之后触发
-				console.log('close', code, signal);
+				console.log('FFBoxHelper 退出！', code, signal);
 				switch (code) {
 					case -4058:
 						// 找不到文件，启动失败

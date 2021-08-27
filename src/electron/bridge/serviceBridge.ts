@@ -22,36 +22,41 @@ export class ServiceBridge extends (EventEmitter as new () => TypedEventEmitter<
 		this.ws = null;
 		setTimeout(() => {
 			this.connect();
-		}, 3500);
+		}, 100);
 	}
 
 	public connect() {
-		console.log('serviceBridge: 正在连接 ws 服务器');
+		console.log(`serviceBridge: 正在连接服务器 ws://${this.ip}:${this.port}/`);
 		let ws = new WebSocket(`ws://${this.ip}:${this.port}/`);
 		this.ws = ws;
 		let 这 = this;
 		ws.onopen = function (event) {
-			console.log('serviceBridge: ws 服务器连接成功', event);
+			console.log(`serviceBridge: ws://${这.ip}:${这.port}/ 服务器连接成功`, event);
 			这.wsReady = true;
 			这.emit('connected');
-			// setTimeout(() => {
-			// 	ws.send(`Hello, I'm UI`);
-			// }, 3000);
+			这.getFFmpegVersion();
 		}
 		ws.onclose = function (event) {
 			这.wsReady = false;
 			这.emit('disconnected');
 		}
 		ws.onerror = function (event) {
-			console.log('serviceBridge: ws 服务器连接失败', event);
+			console.log(`serviceBridge: ws://${这.ip}:${这.port}/ 服务器连接失败`, event);
 			这.wsReady = false;
 			这.emit('error', event);
 		}
 		ws.onmessage = function (event) {
-			console.log('serviceBridge: 收到来自服务器的消息', event);
+			// console.log(`serviceBridge: ws://${这.ip}:${这.port}/ 服务器发来消息`, event);
 			// 这.emit('message', event);
 			这.handleWsEvents(event);
 		}
+	}
+
+	public disconnect() {
+		console.log(`serviceBridge: 正在断开服务器 ws://${this.ip}:${this.port}/`);
+		this.wsReady = false;
+		this.ws?.close();
+		this.ws = null;
 	}
 
 	private handleWsEvents(event: MessageEvent<any>) {

@@ -10,13 +10,9 @@ import Vue from 'vue';
 
 export default Vue.extend({
 	name: 'Buttonbox',
-	components: {
-	},
 	props: {
 		text: String,
 		imgsrc: String,
-	},
-	computed: {
 	},
 	methods: {
 		onClick: function (event: MouseEvent) {
@@ -29,7 +25,7 @@ export default Vue.extend({
 <style scoped>
 	.buttonbox {
 		position: relative;
-		height: 40px;
+		height: 36px;
 		width: 120px;
 		border-radius: 10px;
 		background: linear-gradient(180deg, #fefefe, #f0f0f0);
@@ -65,11 +61,11 @@ export default Vue.extend({
 	.buttonbox span {
 		position: absolute;
 		top: 0;
-		/* left: 40px; */ /* 由 v-style 控制 */
 		right: 10px;
-		line-height: 40px;
+		line-height: 36px;
 		text-align: center;
-		color: hsl(0, 0, 20%);
+		font-size: 15px;
+		color: hsl(0, 0%, 20%);
 	}
 
 </style>

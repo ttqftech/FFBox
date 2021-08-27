@@ -2,15 +2,18 @@
 	<div class="combobox">
 		<div class="combobox-title">{{ title }}</div>
 		<div class="combobox-selector" ref="selector" :style="{ background: focused || comboOpened ? 'white' : '' }" @click="onClick">
-			<input type="text" v-model="inputText" @blur="onBlur" @focus="onFocus" @input="onInput" @keydown="onKeydown">
+			<input type="text" v-model="inputText" :readonly="readonly" @blur="onBlur" @focus="onFocus" @input="onInput" @keydown="onKeydown">
 			<div class="combobox-selector-img"></div>
 		</div>
 		<div class="combomenu" ref="menu">
 			<transition name="comboanimate">
 				<menu class="combomenu-list" v-if="comboOpened" :style="comboPosition">
 					<div v-for="(listitem, index) in list" :key="listitem.sName" class="combomenu-item" :class="{ combomenuItemSelected: index === currentIndex }" :tabindex="index" @click="onMenuClick(index)" @mouseenter="onMenuMouseEnter($event, index)" @mouseleave="onMenuMouseLeave()">
-						<!-- <div style="background-image: url(image/star.png);"></div> -->
+						<!-- <div class="combomenu-item-img" style="background-image: url(image/star.png);"></div> -->
 						{{ listitem.lName }}
+						<button v-if="deletable" class="combomenu-item-delete" aria-label="删除此项" @click="$event.stopPropagation(); onMenuDeleteClick(index);">
+							<img src="/images/×.svg" alt="">
+						</button>
 					</div>
 				</menu>
 			</transition>
@@ -27,6 +30,8 @@ interface Props {
 	title: string;
 	text: string;
 	list: Array<BaseComboItem>;
+	readonly: boolean | string;
+	deletable: boolean;
 }
 interface Data {
 	focused: boolean;
@@ -50,8 +55,8 @@ export default Vue.extend<Data, any, any, Props>({
 		title: String,
 		text: String,
 		list: Array,
-	},
-	computed: {
+		readonly: [Boolean, String],
+		deletable: Boolean,
 	},
 	methods: {
 		// 处理输入框
@@ -78,7 +83,7 @@ export default Vue.extend<Data, any, any, Props>({
 			// 鼠标按下菜单中的元素时，首先触发输入框的 onBlur，然后才触发菜单的 onMouseDown
 			// onBlur 发生时，activeElement 是 body，需要在 nextTick 读取才能读到正确的被激活的元素
 			// 只要这个元素是菜单元素中的任意一项，就忽略这次失焦行为，避免影响菜单的 onClick 事件
-			Vue.nextTick(() => {
+			setTimeout(() => {
 				let allowedActiveElement = flattenElement(this.$refs.menu as Element);
 				let findResult = allowedActiveElement.find((element) => {
 					return element === document.activeElement;
@@ -89,7 +94,7 @@ export default Vue.extend<Data, any, any, Props>({
 				} else {
 					(this.$refs.selector as HTMLElement).firstElementChild!.focus();
 				}
-			});
+			}, 0);
 		},
 		onFocus: function (event: FocusEvent) {
 			this.focused = true;
@@ -156,6 +161,9 @@ export default Vue.extend<Data, any, any, Props>({
 			this.$tooltip.hide();
 		},
 		onMenuMouseEnter: function (event: MouseEvent, index: number) {
+			if (!this.list[index].description) {
+				return;
+			}
 			let position = {};
 			let target = event.target as HTMLElement;
 			let targetRect = target.getBoundingClientRect();
@@ -190,6 +198,9 @@ export default Vue.extend<Data, any, any, Props>({
 		},
 		onMenuMouseLeave: function () {
 			this.$tooltip.hide();
+		},
+		onMenuDeleteClick: function (index: number) {
+			this.$emit('delete', index);
 		},
 		calcComboPosition: function () {
 			// 暂时写死的高度
@@ -370,13 +381,16 @@ function flattenElement(element: Element) {
 					line-height: 40px;
 					outline: none;
 				}
-					.combomenu-item:hover, .combomenu-item:focus {
-						background: hsl(210, 95%, 90%);
-					}
-					.combomenuItemSelected, .combomenuItemSelected:focus {
-						background: hsl(210, 95%, 80%);
-					}
-					.combomenu-item div {
+				.combomenu-item:nth-last-child(1) {
+					border-bottom: none;
+				}
+				.combomenu-item:hover, .combomenu-item:focus {
+					background: hsl(210, 95%, 90%);
+				}
+				.combomenuItemSelected, .combomenuItemSelected:focus {
+					background: hsl(210, 95%, 80%);
+				}
+					.combomenu-item-img {
 						position: absolute;
 						left: 10px;
 						top: 10px;
@@ -384,6 +398,33 @@ function flattenElement(element: Element) {
 						height: 20px;
 						background-size: cover;
 					}
+					.combomenu-item-delete {
+						position: absolute;
+						top: 0;
+						right: 0;
+						height: 100%;
+						width: 32px;
+						opacity: 0.5;
+						border: none;
+						outline: none;
+						background: none;
+						padding: 0;
+						display: flex;
+						justify-content: center;
+						align-items: center;
+					}
+					.combomenu-item-delete:hover {
+						background: hsl(210, 100%, 95%);
+						opacity: 1;
+					}
+					.combomenu-item-delete:active {
+						background: hsl(210, 100%, 95%);
+						opacity: 0.7;
+					}
+						.combomenu-item-delete>img {
+							width: 16px;
+						}
+
 					
 			.combomenu-description {
 				display: inline-block;

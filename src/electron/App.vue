@@ -46,12 +46,12 @@ const store = new Vuex.Store<StoreState>({
 		notifications: [],
 		unreadNotificationCount: 0,
 		servers: {
-			'local': { tasks: [], ffmpegVersion: '', workingStatus: WorkingStatus.stopped, progress: 0 }
+			'localhost': { tasks: [], ffmpegVersion: '', workingStatus: WorkingStatus.stopped, progress: 0 }
 		},
 		serviceBridges: {
-			'local': new ServiceBridge('localhost', 33269)
+			'localhost': new ServiceBridge('localhost', 33269)
 		},
-		currentServerName: 'local',
+		currentServerName: 'localhost',
 		selectedTask: new Set(),
 		globalParams: JSON.parse(JSON.stringify(defaultParams)),
 		overallProgressTimerID: NaN,
@@ -128,7 +128,7 @@ const store = new Vuex.Store<StoreState>({
 		},
 		/**
 		 * 添加任务
-		 * @param args name, path, callback（传回添加后的 id）
+		 * @param args name, path, callback
 		 */
 		addTask (state, args) {
 			let currentBridge = state.serviceBridges[state.currentServerName];
@@ -237,7 +237,7 @@ const store = new Vuex.Store<StoreState>({
 		// #endregion
 		// #region 通知处理
 		/**
-		 * 发布本界面消息（存在 store 中，非 local service 的 globalTask）
+		 * 发布本界面消息（存在 store 中，不在服务器上）
 		 */
 		pushMsg (state, args: { message: string, level: NotificationLevel }) {
 			mainVue.$popup({
@@ -274,6 +274,96 @@ const store = new Vuex.Store<StoreState>({
 			} else {
 				state.unreadNotificationCount++;
 			}
+		},
+		// #endregion
+		// #region 服务器处理
+		addServer (state, args: { ip: string, port: number} ) {
+			if (!args.ip) {
+				mainVue.$popup({
+					message: '请输入服务器 IP 或域名以添加服务器',
+					level: NotificationLevel.error,
+				})
+				return;
+			}
+			if (!args.port) {
+				args.port = 33269;
+			}
+			state.servers[args.ip] = {
+				tasks: [],
+				ffmpegVersion: '',
+				workingStatus: WorkingStatus.stopped,
+				progress: 0,
+			}
+			state.serviceBridges[args.ip] = new ServiceBridge(args.ip, args.port);
+			state.servers = Object.assign({}, state.servers);	// 用于刷新 TasksView 的 serverList
+			mainVue.$store.commit('initializeServer', { serverName: args.ip });
+		},
+		initializeServer (state, args: { serverName: string }) {
+			let server: Server = state.servers[args.serverName];
+			let bridge: ServiceBridge = state.serviceBridges[args.serverName];
+
+			bridge.on('connected', () => {
+				mainVue.$store.commit('pushMsg',{
+					message: `成功连接到服务器 ${args.serverName}`,
+					level: NotificationLevel.ok,
+				})
+				mainVue.$store.commit('switchServer', { serverName: args.serverName });
+			});
+			bridge.on('disconnected', () => {
+				mainVue.$store.commit('pushMsg',{
+					message: `已断开服务器 ${args.serverName} 的连接`,
+					level: NotificationLevel.warning,
+				})
+			});
+			bridge.on('error', () => {
+				mainVue.$store.commit('pushMsg',{
+					message: `服务器 ${args.serverName} 连接出错，建议检查网络连接或防火墙`,
+					level: NotificationLevel.error,
+				})
+			});
+
+			bridge.on('ffmpegVersion', (data) => {
+				console.log('event: ffmpegVersion', data);
+				(mainVue as any).handleFFmpegVersion(server, bridge, data.content);
+			});
+			bridge.on('newlyAddedTaskIds', (data) => {
+				console.log('event: newlyAddedTaskIds', data);
+				(mainVue as any).handleNewlyAddedTaskIds(server, bridge, data.content);
+			});
+			bridge.on('workingStatusUpdate', (data) => {
+				console.log('event: workingStatusUpdate', data);
+				(mainVue as any).handleWorkingStatusUpdate(server, bridge, data.value);
+			});
+			bridge.on('tasklistUpdate', (data) => {
+				console.log('event: tasklistUpdate', data);
+				(mainVue as any).handleTasklistUpdate(server, bridge, data.content);
+			});
+			bridge.on('taskUpdate', (data) => {
+				console.log('event: taskUpdate', data);
+				(mainVue as any).handleTaskUpdate(server, bridge, data.id, data.content);
+			});
+			bridge.on('cmdUpdate', (data) => {
+				(mainVue as any).handleCmdUpdate(server, bridge, data.id, data.content);
+			});
+			bridge.on('progressUpdate', (data) => {
+				(mainVue as any).handleProgressUpdate(server, bridge, data.id, data.content);
+			});
+			bridge.on('taskNotification', (data) => {
+				console.log('event: taskNotification', data);
+				(mainVue as any).handleTaskNotification(server, bridge, data.id, data.content, data.level);
+			});
+			(mainVue as any).updateGlobalTask(server, bridge);
+			bridge.getTaskList();
+		},
+		switchServer (state, args: { serverName: string }) {
+			state.currentServerName = args.serverName;
+		},
+		removeServer (state, args: { serverName: string }) {
+			state.currentServerName = 'localhost';
+			state.serviceBridges[args.serverName].disconnect();
+			delete state.serviceBridges[args.serverName];
+			delete state.servers[args.serverName];
+			state.servers = Object.assign({}, state.servers);	// 用于刷新 TasksView 的 serverList
 		},
 		// #endregion
 		// #region 其他
@@ -483,15 +573,7 @@ export default Vue.extend({
 		mainVue = this;
 		(window as any).mainVue = mainVue;
 
-		setTimeout(() => {
-			let val = new Date().getSeconds() % 2 === 1 || true;
-			this.$popup({
-				message: `设置${val ? '毛玻璃' : '光滑玻璃'}`,
-				level: 0,
-			})
-			console.log(`设置${val ? '毛玻璃' : '光滑玻璃'}`);
-			osBridge.setBlurBehindWindow(val);
-		}, 2500);
+		osBridge.setBlurBehindWindow(true);
 
 		console.log(
 			(nodeBridge.remote ? ('exe 路径　　　　　：' + nodeBridge.remote.app.getPath('exe') + '\n') : '') +
@@ -556,71 +638,13 @@ export default Vue.extend({
 			})
 		}, 120000);
 
-		// 启动一个 ffboxService，这个 ffboxService 目前钦定监听 localhost: 33269，而 serviceBridge 会连接此 service
+		// 启动一个 ffboxService，这个 ffboxService 目前钦定监听 localhost:33269，而 serviceBridge 会连接此 service
 		window.ffboxService = new FFBoxService();
 
 		// 挂载 serviceBridge 各种更新事件
 		let availableServerNames = Object.keys(this.$store.state.servers);
 		for (const serverName of availableServerNames) {
-			let server: Server = this.$store.state.servers[serverName];
-			let bridge: ServiceBridge = this.$store.state.serviceBridges[serverName];
-
-			bridge.on('ffmpegVersion', (data) => {
-				console.log('event: ffmpegVersion', data);
-				this.$store.commit('pushMsg',{
-					message: 'event: ffmpegVersion',
-					level: 0,
-				})
-				this.handleFFmpegVersion(server, bridge, data.content);
-			});
-			bridge.on('newlyAddedTaskIds', (data) => {
-				console.log('event: newlyAddedTaskIds', data);
-				this.$store.commit('pushMsg',{
-					message: 'event: newlyAddedTaskIds',
-					level: 0,
-				})
-				this.handleNewlyAddedTaskIds(server, bridge, data.content);
-			});
-			bridge.on('workingStatusUpdate', (data) => {
-				console.log('event: workingStatusUpdate', data);
-				this.$store.commit('pushMsg',{
-					message: 'event: workingStatusUpdate',
-					level: 0,
-				})
-				this.handleWorkingStatusUpdate(server, bridge, data.value);
-			});
-			bridge.on('tasklistUpdate', (data) => {
-				console.log('event: tasklistUpdate', data);
-				this.$store.commit('pushMsg',{
-					message: 'event: tasklistUpdate',
-					level: 0,
-				})
-				this.handleTasklistUpdate(server, bridge, data.content);
-			});
-			bridge.on('taskUpdate', (data) => {
-				console.log('event: taskUpdate', data);
-				this.$store.commit('pushMsg',{
-					message: 'event: taskUpdate',
-					level: 0,
-				})
-				this.handleTaskUpdate(server, bridge, data.id, data.content);
-			});
-			bridge.on('cmdUpdate', (data) => {
-				this.handleCmdUpdate(server, bridge, data.id, data.content);
-			});
-			bridge.on('progressUpdate', (data) => {
-				this.handleProgressUpdate(server, bridge, data.id, data.content);
-			});
-			bridge.on('taskNotification', (data) => {
-				console.log('event: taskNotification', data);
-				this.$store.commit('pushMsg',{
-					message: 'event: taskNotification',
-					level: 0,
-				})
-				this.handleTaskNotification(server, bridge, data.id, data.content, data.level);
-			});
-			this.updateGlobalTask(server, bridge);
-			bridge.getTaskList();
+			this.$store.commit('initializeServer', { serverName });
 		}
 
 		console.log('App 加载完成');

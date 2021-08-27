@@ -5,8 +5,15 @@ let MsgboxConstructor = Vue.extend(MsgboxUI);
 
 export interface MsgboxOptions {
 	title: String,
-	content: String,
 	buttons: Buttons,
+	content?: String,
+	inputs?: Array<{
+		title: string,
+		default?: string,
+		type?: 'duration' | 'number',
+		placeholder?: string,
+		notNull?: boolean,
+	}>
 }
 
 export type Buttons = Array<{
@@ -58,9 +65,10 @@ Msgbox.install = function (Vue: any, options: any) {
 	Vue.prototype.$msgbox = Msgbox;
 	Vue.prototype.$alert = Msgbox.alert;
 	Vue.prototype.$confirm = Msgbox.confirm;
+	Vue.prototype.$inputbox = Msgbox.inputbox;
 }
 
-Msgbox.alert = function (options: Partial<MsgboxOptions>) {
+Msgbox.alert = function (options: MsgboxOptions) {
 	return new Promise((resolve) => {
 		options = {
 			title: options.title || '',
@@ -82,6 +90,28 @@ Msgbox.confirm = function (options: Partial<MsgboxOptions>) {
 		options = {
 			title: options.title || '',
 			content: options.content || '',
+			buttons: [
+				{
+					text: '确认',
+					callback: resolve,
+					role: ButtonRole.Confirm
+				},
+				{
+					text: '取消',
+					callback: reject,
+					role: ButtonRole.Cancel
+				},
+			]
+		}
+		Msgbox(options as MsgboxOptions);
+	})
+}
+
+Msgbox.inputbox = function (options: Partial<MsgboxOptions>) {
+	return new Promise((resolve, reject) => {
+		options = {
+			title: options.title || '',
+			inputs: options.inputs || [],
 			buttons: [
 				{
 					text: '确认',

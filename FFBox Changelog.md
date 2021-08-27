@@ -1,5 +1,7 @@
 # FFBox Changelog
 
+`2021-08-26` 实现服务器接入  
+`2021-08-25` combobox 增加只读、可删除功能；微调 buttonbox 外观；msgbox 新增 inputbox 功能；实现服务器接入  
 `2021-08-24` 改造并接入 serviceBridge 和 uiBridge  
 `2021-08-23` 学习并引入 webSocket（新增 serviceBridge 和 uiBridge）  
 `2021-08-17` 更新 FFBox 官网；更新 readme.md  

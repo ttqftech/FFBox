@@ -28,7 +28,7 @@ export default {
 			console.log('uiBridge: 新客户端接入');
 
 			ws.on('message', function (message) {
-				console.log('uiBridge: 收到来自客户端的消息', message);
+				// console.log('uiBridge: 收到来自客户端的消息', message);
 				这.handleMessageFromClient(message as string);
 			});
 
@@ -43,10 +43,6 @@ export default {
 			ws.on('open', function () {
 				console.log('并不知道这东西是拿来干嘛的');
 			})
-
-			// setTimeout(() => {
-			// 	ws.send(`Hello, I'm Server`);
-			// }, 2000);
 		});
 		wss.on('error', function (error: Error) {
 			console.log('uiBridge: 服务器出错', error);
@@ -63,6 +59,7 @@ export default {
 		}
 		let data: FFBoxServiceFunctionApi = JSON.parse(message);
 		let args = data.args;
+		// @ts-ignore
 		ffboxService[data.function](...args);
 	},
 
