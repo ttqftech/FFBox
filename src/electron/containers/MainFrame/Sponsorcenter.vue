@@ -67,7 +67,7 @@
 import Vue from 'vue';
 
 import Buttonbox from "@/electron/components/parabox/Buttonbox.vue";
-import { jumpToUrl } from '@/common/utils';
+import nodeBridge from '@/electron/bridge/nodeBridge';
 
 export default Vue.extend({
 	name: 'Sponsorcenter',
@@ -76,11 +76,11 @@ export default Vue.extend({
 	},
 	methods: {
 		jumpToGithub: function () {
-			jumpToUrl('https://github.com/ttqftech/FFBox/');
+			nodeBridge.jumpToUrl('https://github.com/ttqftech/FFBox/');
 
 		},
 		jumpToGitee: function () {
-			jumpToUrl('https://gitee.com/ttqf/FFBox');
+			nodeBridge.jumpToUrl('https://gitee.com/ttqf/FFBox');
 
 		},
 		paintAllQRcode: function () {

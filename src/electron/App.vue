@@ -13,20 +13,15 @@ import Popup from '@/electron/components/floating/Popup/index'
 import Msgbox from '@/electron/components/floating/Msgbox/index.js'
 import Tooltip from '@/electron/components/floating/Tooltip/index.js'
 
-const maxThreads = 2;
-
-import { StoreState, NotificationLevel, ServiceTask, WorkingStatus, TaskStatus, Server, UITask, Task, OutputParams, FFBoxServiceInterface } from '@/types/types'
+import { StoreState, NotificationLevel, WorkingStatus, TaskStatus, Server, UITask, Task, OutputParams, FFBoxServiceInterface } from '@/types/types'
 import { version, buildNumber } from "@/types/constants";
 import { getInitialUITask, randomString } from '@/common/utils'
 import { defaultParams } from "../common/defaultParams";
-// import { FFBoxService } from "@/service/FFBoxService";
 import { mergeTaskFromService } from '@/service/netApi'
 import { ServiceBridge } from './bridge/serviceBridge'
 import nodeBridge from "./bridge/nodeBridge";
 import osBridge from "./bridge/osBridge";
-import { FFBoxService } from '@/service/FFBoxService'
 
-// let ffboxService: FFBoxService;
 let mainVue: Vue;
 
 Vue.use(Vuex)
@@ -46,7 +41,7 @@ const store = new Vuex.Store<StoreState>({
 		notifications: [],
 		unreadNotificationCount: 0,
 		servers: {
-			'localhost': { tasks: [], ffmpegVersion: '', workingStatus: WorkingStatus.stopped, progress: 0 }
+			'localhost': { tasks: [], ffmpegVersion: '', workingStatus: WorkingStatus.stopped, progress: 0, overallProgressTimerID: NaN }
 		},
 		serviceBridges: {
 			'localhost': new ServiceBridge('localhost', 33269)
@@ -54,7 +49,6 @@ const store = new Vuex.Store<StoreState>({
 		currentServerName: 'localhost',
 		selectedTask: new Set(),
 		globalParams: JSON.parse(JSON.stringify(defaultParams)),
-		overallProgressTimerID: NaN,
 		machineCode: '',
 		functionLevel: 20,
 	},
@@ -159,9 +153,6 @@ const store = new Vuex.Store<StoreState>({
 				return;
 			}
 			currentBridge.getNewlyAddedTaskIds();
-		},
-		setOverallProgressTimer (state, timerID) {
-			state.overallProgressTimerID = timerID;
 		},
 		// #endregion
 		// #region 参数处理
@@ -293,12 +284,15 @@ const store = new Vuex.Store<StoreState>({
 				ffmpegVersion: '',
 				workingStatus: WorkingStatus.stopped,
 				progress: 0,
+				overallProgressTimerID: NaN,
 			}
 			state.serviceBridges[args.ip] = new ServiceBridge(args.ip, args.port);
 			state.servers = Object.assign({}, state.servers);	// 用于刷新 TasksView 的 serverList
 			mainVue.$store.commit('initializeServer', { serverName: args.ip });
 		},
 		initializeServer (state, args: { serverName: string }) {
+			console.log('initializeServer', args.serverName);
+
 			let server: Server = state.servers[args.serverName];
 			let bridge: ServiceBridge = state.serviceBridges[args.serverName];
 
@@ -306,20 +300,22 @@ const store = new Vuex.Store<StoreState>({
 				mainVue.$store.commit('pushMsg',{
 					message: `成功连接到服务器 ${args.serverName}`,
 					level: NotificationLevel.ok,
-				})
+				});
+				(mainVue as any).updateGlobalTask(server, bridge);
+				bridge.getTaskList();
 				mainVue.$store.commit('switchServer', { serverName: args.serverName });
 			});
 			bridge.on('disconnected', () => {
 				mainVue.$store.commit('pushMsg',{
 					message: `已断开服务器 ${args.serverName} 的连接`,
 					level: NotificationLevel.warning,
-				})
+				});
 			});
 			bridge.on('error', () => {
 				mainVue.$store.commit('pushMsg',{
 					message: `服务器 ${args.serverName} 连接出错，建议检查网络连接或防火墙`,
 					level: NotificationLevel.error,
-				})
+				});
 			});
 
 			bridge.on('ffmpegVersion', (data) => {
@@ -352,8 +348,6 @@ const store = new Vuex.Store<StoreState>({
 				console.log('event: taskNotification', data);
 				(mainVue as any).handleTaskNotification(server, bridge, data.id, data.content, data.level);
 			});
-			(mainVue as any).updateGlobalTask(server, bridge);
-			bridge.getTaskList();
 		},
 		switchServer (state, args: { serverName: string }) {
 			state.currentServerName = args.serverName;
@@ -444,20 +438,20 @@ export default Vue.extend({
 		handleWorkingStatusUpdate(server: Server, bridge: FFBoxServiceInterface, workingStatus: WorkingStatus) {
 			server.workingStatus = workingStatus;
 			// 处理 overallProgressTimer
-			if (workingStatus === WorkingStatus.running && !this.$store.state.overallProgressTimerID) {
+			if (workingStatus === WorkingStatus.running && !server.overallProgressTimerID) {
 				let timerID = setInterval(overallProgressTimer, 80, workingStatus, server);
-				this.$store.commit('setOverallProgressTimer', timerID);
+				server.overallProgressTimerID = timerID;
 				overallProgressTimer(workingStatus, server);
-			} else if (workingStatus === WorkingStatus.stopped && this.$store.state.overallProgressTimerID) {
-				clearInterval(this.$store.state.overallProgressTimerID);
-				this.$store.commit('setOverallProgressTimer', NaN);
+			} else if (workingStatus === WorkingStatus.stopped && server.overallProgressTimerID) {
+				clearInterval(server.overallProgressTimerID);
+				server.overallProgressTimerID = NaN;
 				overallProgressTimer(workingStatus, server);
 				if (nodeBridge.remote && nodeBridge.remote.getCurrentWindow().isFocused()) {
 					nodeBridge.remote.getCurrentWindow().flashFrame(true);
 				}
-			} else if (workingStatus === WorkingStatus.paused && this.$store.state.overallProgressTimerID) {
-				clearInterval(this.$store.state.overallProgressTimerID);
-				this.$store.commit('setOverallProgressTimer', NaN);
+			} else if (workingStatus === WorkingStatus.paused && server.overallProgressTimerID) {
+				clearInterval(server.overallProgressTimerID);
+				server.overallProgressTimerID = NaN;
 				overallProgressTimer(workingStatus, server);
 			}
 		},
@@ -569,7 +563,7 @@ export default Vue.extend({
 		document.body.className = "body";
 	},
 	mounted: function () {
-		document.title = 'FFBox v' + version + (process.env.NODE_ENV != 'production' ? 'd' : '');
+		document.title = 'FFBox v' + version;
 		mainVue = this;
 		(window as any).mainVue = mainVue;
 
@@ -613,11 +607,6 @@ export default Vue.extend({
 					});
 					let machineCode = electronStore.get('userinfo.machineCode');
 					this.$store.commit('setMachineCode', machineCode);
-					this.$store.commit('activate', {
-						userInput: '',
-						callback: (result: number | false) => {}
-					});
-
 				}
 			} else {
 				this.$store.commit('pushMsg', {
@@ -637,9 +626,6 @@ export default Vue.extend({
 				level: 0
 			})
 		}, 120000);
-
-		// 启动一个 ffboxService，这个 ffboxService 目前钦定监听 localhost:33269，而 serviceBridge 会连接此 service
-		window.ffboxService = new FFBoxService();
 
 		// 挂载 serviceBridge 各种更新事件
 		let availableServerNames = Object.keys(this.$store.state.servers);
@@ -752,19 +738,6 @@ function overallProgressTimer(workingStatus: WorkingStatus, currentServer: Serve
 	}
 	let progress = totalProcessedTime / totalTime;
 	currentServer.progress = progress;
-	let mode: 'indeterminate' | 'normal' | 'paused' | 'none' | 'error' = 'indeterminate';
-	switch (workingStatus) {
-		case WorkingStatus.running:
-			mode = 'normal';
-			break;
-		case WorkingStatus.paused:
-			mode = 'paused';
-			break;
-		case WorkingStatus.stopped:
-			mode = 'none';
-			break;
-	}
-	nodeBridge.remote?.getCurrentWindow().setProgressBar(progress * 0.99 + 0.01, {mode});
 }
 
 </script>
@@ -779,7 +752,7 @@ function overallProgressTimer(workingStatus: WorkingStatus, currentServer: Serve
 	}
 	#app {
 		font-weight: 400;
-		-webkit-font-smoothing: antialiased;
+		-webkit-font-smoothing: grayscale;
 		-moz-osx-font-smoothing: grayscale;
 		text-align: center;
 		color: hsl(0, 0%, 20%);

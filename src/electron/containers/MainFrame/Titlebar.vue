@@ -29,7 +29,6 @@ import Vue from 'vue';
 import { version, buildNumber } from "@/types/constants";
 import { FFBoxVersion, NormalApiWrapper, Server, WorkingStatus } from '@/types/types';
 import nodeBridge from "@/electron/bridge/nodeBridge";
-import { jumpToUrl } from '@/common/utils';
 
 interface Data {
 	isMaximized: boolean;
@@ -63,6 +62,19 @@ export default Vue.extend<Data, any, any, any>({
 			return this.workingStatusNProgress.workingStatus == -1 ? 'titlebar-background-yellow' : 'titlebar-background-green';
 		},
 		progressWidth: function () {	// 暂停、运行状态下输出宽度，否则 0
+			let mode: 'indeterminate' | 'normal' | 'paused' | 'none' | 'error' = 'indeterminate';
+			switch (this.workingStatusNProgress.workingStatus) {
+				case WorkingStatus.running:
+					mode = 'normal';
+					break;
+				case WorkingStatus.paused:
+					mode = 'paused';
+					break;
+				case WorkingStatus.stopped:
+					mode = 'none';
+					break;
+			}
+			nodeBridge.remote?.getCurrentWindow().setProgressBar(this.workingStatusNProgress.progress * 0.99 + 0.01, {mode});
 			return this.workingStatusNProgress.workingStatus ? this.workingStatusNProgress.progress * 100 + '%' : 0;
 		},
 		titleLeft: function () {		// 暂停、运行状态下输出左侧，否则中间
@@ -76,7 +88,7 @@ export default Vue.extend<Data, any, any, any>({
 			return this.workingStatusNProgress.workingStatus ? `${300 + extraRight}px` : `calc(50% + ${72 + extraRight}px)`;
 		},
 		titlebarText: function () {		// 暂停、运行状态下输出进度，否则没有
-			return (this.workingStatusNProgress.workingStatus ? '进度：' + (this.workingStatusNProgress.progress * 100).toFixed(3) + ' % - ' : '') + '丹参盒 v' + version + (process.env.NODE_ENV !== 'production' ? ' (dev)' : '');
+			return (this.workingStatusNProgress.workingStatus ? '进度：' + (this.workingStatusNProgress.progress * 100).toFixed(3) + ' % - ' : '') + '丹参盒 v' + version;
 		},
 		newVersionText: function () {
 			if (this.newVersion) {
@@ -121,7 +133,7 @@ export default Vue.extend<Data, any, any, any>({
 			this.$tooltip.hide();
 		},
 		gotoWebsite: function () {
-			jumpToUrl('http://FFBox.ttqf.tech/');
+			nodeBridge.jumpToUrl('http://FFBox.ttqf.tech/');
 		}
 	},
 	mounted: function () {

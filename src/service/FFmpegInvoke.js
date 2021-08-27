@@ -5,10 +5,11 @@
 // const scanf = utils.scanf;
 import { selectString, replaceString, scanf }  from '../common/utils'
 
-let spawn, remote
-if (process.env.IS_ELECTRON) {
+let spawn
+if (typeof window !== 'undefined') {
 	spawn = window.require('child_process').spawn;
-	remote = window.require('electron').remote
+} else {
+	spawn = require('child_process').spawn;
 }
 
 class FFmpeg {
@@ -286,7 +287,7 @@ class FFmpeg {
 	kill (callback) {
 		this.cmd.kill();
 		this.cmd.on("close", function () {
-			console.log("ffmpeg killed = " + this.cmd.killed);
+			// console.log("ffmpeg killed = " + this.cmd.killed);
 			this.status = -1;
 			callback();
 		});
@@ -297,7 +298,7 @@ class FFmpeg {
 			detached: false,
 			shell: false
 		});
-		console.log("ffmpeg killed.");
+		// console.log("ffmpeg killed.");
 		this.status = -1;
 		callback();
 	}
@@ -309,7 +310,7 @@ class FFmpeg {
 		// this.cmd.off("close", () => {});
 		this.cmd.on("close", () => {
 			if (this.status != -1) {			// 强制退出也会触发 close 事件，所以先判断，避免触发动作
-				console.log("ffmpeg exited.");
+				// console.log("ffmpeg exited.");
 				this.status = -1;
 				callback();	
 			}
@@ -317,7 +318,7 @@ class FFmpeg {
 		this.cmd.stdin.write("q");
 	}
 	pause () {
-		switch (remote.process.platform) {
+		switch (process.platform) {
 			case "win32":
 				spawn("PauseAndResumeProcess.exe", ["0", this.cmd.pid], {
 					detached: false,
@@ -341,7 +342,7 @@ class FFmpeg {
 		this.status = 0;
 	}
 	resume () {
-		switch (remote.process.platform) {
+		switch (process.platform) {
 			case "win32":
 				spawn("PauseAndResumeProcess.exe", ["1", this.cmd.pid], {
 					detached: false,

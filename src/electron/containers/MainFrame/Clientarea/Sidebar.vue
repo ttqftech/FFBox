@@ -56,7 +56,7 @@ export default Vue.extend({
 		width: 139px;
 		height: 100%;
 		min-height: 432px;
-		background: hsla(210, 40%, 35%, 0.7);
+		background: hsla(210, 40%, 35%, 0.8);
 		overflow-x: hidden;
 	}
 		#sidebar-background {

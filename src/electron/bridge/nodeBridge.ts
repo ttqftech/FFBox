@@ -92,6 +92,26 @@ export default {
 			}
 			return 'unknown';
 		}
-	}
+	},
 
+	jumpToUrl(url: string): void {
+		if (this.isElectron) {
+			switch (this.os) {
+				case 'MacOS':
+					this.exec('open ' + url);
+					break;
+				case 'Windows':
+					this.exec('start ' + url);
+					break;
+				case 'Linux':
+					this.exec('xdg-open', [url]);
+					break;
+				default:
+					window.open(url);
+					break;
+			}
+		} else {
+			window.open(url);
+		}
+	}
 }

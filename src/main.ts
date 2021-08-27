@@ -3,11 +3,12 @@
 import { app, protocol, BrowserWindow, ipcMain } from 'electron'
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer'
+import { FFBoxService } from './service/FFBoxService'
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
-let win
+let win: BrowserWindow | null;
 
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([
@@ -86,10 +87,10 @@ app.on('ready', async () => {
 	}
 	createWindow()
 	// 窗口产生关闭信号
-	win.on('close', (e) => {
+	win!.on('close', (e) => {
 		if (!exitConfirm) {
 			e.preventDefault();
-			win.webContents.send('exitConfirm');  
+			win!.webContents.send('exitConfirm');  
 		}
     })
 	// 窗口主动发送的确认关闭通知
@@ -99,13 +100,16 @@ app.on('ready', async () => {
 	})
 	// 窗口主动发送的关闭通知
     ipcMain.on('close', () => {
-		win.close();
+		win!.close();
 		console.log('close')
 	});
 	// 获取主窗口 Hwnd
 	ipcMain.on('getHwnd', (event, hwnd) => {
-		win.webContents.send('hwnd', win.getNativeWindowHandle())
+		win!.webContents.send('hwnd', win!.getNativeWindowHandle())
 	})
+
+	// 启动一个 ffboxService，这个 ffboxService 目前钦定监听 localhost:33269，而 serviceBridge 会连接此 service
+	new FFBoxService();
 })
 
 // Exit cleanly on request from parent process in development mode.
@@ -113,13 +117,13 @@ if (isDevelopment) {
 	if (process.platform === 'win32') {
 		process.on('message', (data) => {
 			if (data === 'graceful-exit') {
-				win.close();
+				win!.close();
 				// app.quit()
 			}
 		})
 	} else {
 		process.on('SIGTERM', () => {
-			win.close();
+			win!.close();
 			// app.quit()
 		})
 	}
