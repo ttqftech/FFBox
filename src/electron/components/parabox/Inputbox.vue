@@ -12,8 +12,6 @@ import Vue from 'vue';
 
 export default Vue.extend({
 	name: 'Inputbox',
-	components: {		
-	},
 	data: () => { return {
 		focused: false,
 		inputText: '-',
@@ -21,7 +19,7 @@ export default Vue.extend({
 	}},
 	props: {
 		title: String,
-		text: String,
+		value: String,
 		long: [Boolean, String],
 		type: String,
 		placeholder: String,
@@ -51,11 +49,12 @@ export default Vue.extend({
 			this.focused = false;
 		},
 		onFocus: function (event: FocusEvent) {
-			event.target!.selectionEnd = event.target!.selectionStart
-			this.focused = true
+			event.target!.selectionEnd = event.target!.selectionStart;
+			this.focused = true;
 		},
 		onInput: function (event: KeyboardEvent) {
-			this.$emit('change', event.target!.value)
+			this.$emit('change', event.target!.value);
+			this.$emit('input', event.target!.value);
 		}
 	},
 	watch: {
@@ -70,11 +69,10 @@ export default Vue.extend({
 				}
 				switch (this.type) {
 					case 'duration':
-						if (newValue.match(/^\d+(.\d+){0,1}$/) || newValue.match(/^\d+:\d{2}(.\d+){0,1}$/) || newValue.match(/^\d+:\d{2}:\d{2}(.\d+){0,1}$/)) {
-							this.typeCheckOK = true;
-						} else {
-							this.typeCheckOK = false;
-						}
+						this.typeCheckOK = newValue.match(/^\d+(.\d+)?$/) || newValue.match(/^\d+:[0-5]?[0-9](.\d+)?$/) || newValue.match(/^\d+:[0-5]?[0-9]:[0-5]?[0-9](.\d+){0,1}$/)
+						break;
+					case 'number':
+						this.typeCheckOK = newValue.match(/^\d+(.\d+)?$/);
 						break;
 					default:
 						this.typeCheckOK = true;
@@ -85,7 +83,7 @@ export default Vue.extend({
 		}
 	},
 	mounted: function () {
-		this.inputText = this.text;
+		this.inputText = this.value;
 	}
 });
 

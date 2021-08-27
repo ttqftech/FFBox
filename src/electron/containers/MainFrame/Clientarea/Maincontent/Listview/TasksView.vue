@@ -1,5 +1,9 @@
 <template>
 	<div id="tasks-view" @dragenter="onDragenter($event)" @dragover="onDragenter($event)" @dragleave="onDragleave($event)" @drop="onDrop($event)">
+		<div class="server">
+			<combobox title="服务器" readonly="true" :deletable="true" :text="$store.state.currentServerName" :list="serverList" @change="onServerChange($event)" @delete="onServerDelete($event)"></combobox>
+			<buttonbox text="添加服务器" @click="addServer"></buttonbox>
+		</div>
 		<button id="startbutton" class="startbutton " :class="startbuttonClass" @click="$store.commit('startNpause')">{{ startbuttonText }}</button>
 		<div id="tasklist-wrapper" ref="tasklist_wrapper">
 			<div id="tasklist">
@@ -16,13 +20,15 @@
 import Vue from 'vue';
 
 import Taskitem from '@/electron/components/Taskitem.vue'
-import { NotificationLevel, Server, UITask } from '@/types/types';
+import { BaseComboItem, NotificationLevel, Server, UITask } from '@/types/types';
 import nodeBridge from "@/electron/bridge/nodeBridge";
+import Combobox from '@/electron/components/parabox/Combobox.vue';
+import Buttonbox from '@/electron/components/parabox/Buttonbox.vue';
 
 export default Vue.extend({
 	name: 'TasksView',
 	components: {
-		Taskitem
+		Taskitem, Combobox, Buttonbox
 	},
 	data: () => { return {
 		selectedTask_last: -1,
@@ -30,6 +36,16 @@ export default Vue.extend({
 		lastTaskListLength: 0		// 记录上一次计算 taskList 的长度，如变大了说明拖进来文件，就要滚动到底
 	}},
 	computed: {
+		serverList: function (): Array<BaseComboItem> {
+			let ret: Array<BaseComboItem> = [];
+			for (const key of Object.keys(this.$store.state.servers)) {
+				ret.push({
+					sName: key,
+					lName: key,
+				})
+			}
+			return ret;
+		},
 		taskList: function (): Array<UITask & {id: number}> {
 			let currentServer: Server = this.$store.getters.currentServer;
 			if (!currentServer) {
@@ -117,6 +133,34 @@ export default Vue.extend({
 				}
 			}
 		})(),
+		onServerChange: function (value: string) {
+			this.$store.commit('switchServer', { serverName: value });
+		},
+		onServerDelete: function (index: number) {
+			let serverName = this.serverList[index].sName;
+			if (serverName === 'localhost') {
+				this.$popup({
+					message: '不支持断开本地服务器的连接',
+					level: NotificationLevel.error,
+				})
+			} else {
+				this.$store.commit('removeServer', { serverName });
+			}
+		},
+		addServer: function () {
+			this.$inputbox({
+				title: '添加服务器',
+				inputs: [
+					{ title: 'IP', default: '127.0.0.1', notNull: true },
+					{ title: '端口', default: '33269', type: 'number' },
+				],
+			}).then((inputsValue: Array<string>) => {
+				this.$store.commit('addServer', {
+					ip: inputsValue[0],
+					port: inputsValue[1],
+				})
+			})
+		},
 		onItemClicked: function (event: MouseEvent, id: number, index: number) {
 			let currentSelection = new Set(this.$store.state.selectedTask);
 			if (event.shiftKey) {
@@ -197,6 +241,15 @@ export default Vue.extend({
 		height: 100%;
 		/* background: #EEE; */
 	}
+		.server {
+			text-align: left;
+		}
+			.server>* {
+				display: inline-block;
+				vertical-align: middle;
+				margin-top: 2px;
+				margin-bottom: 2px;
+			}
 		.startbutton-green {
 			background: linear-gradient(180deg, hsl(120, 80%, 65%), hsl(120, 60%, 50%));
 			box-shadow: 0px -1px 1px 0px rgba(255, 255, 255, 0.3),
@@ -238,7 +291,7 @@ export default Vue.extend({
 		}
 		.startbutton {
 			position: absolute;
-			top: 10px;
+			top: 12px;
 			right: 16px;
 			width: 120px;
 			height: 36px;

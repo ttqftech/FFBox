@@ -48,11 +48,11 @@ export default Vue.extend({
 		serverDisplayName: function (value: string) {
 			switch (value) {
 				case '':
-					return '本界面'
-				case 'local':
-					return '本地服务器'
+					return '本界面';
+				case 'localhost':
+					return '本地服务器';
 				default:
-					break;
+					return value;
 			}
 		}
 	},

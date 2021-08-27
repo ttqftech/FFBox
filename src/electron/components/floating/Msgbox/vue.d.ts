@@ -10,5 +10,6 @@ declare module "vue/types/vue" {
 		$msgbox: Msgbox;
 		$alert: Msgbox.alert;
 		$confirm: Msgbox.confirm;
+		$inputbox: Msgbox.inputbox;
 	}
 }

@@ -9,7 +9,10 @@
 					<span class="messagebox-titletext">{{ title }}</span>
 				</div>
 				<div class="messagebox-content">
-					<span class="messagebox-contenttext">{{ content }}</span>
+					<span class="messagebox-contenttext">
+						<div v-if="content">{{ content }}</div>
+						<inputbox v-for="(input, index) in inputs" :key="index" :title="input.title" :placeholder="input.placeholder" :type="input.type" :notNull="input.notNull" v-model="inputsValue[index]" long="true"></inputbox>
+					</span>
 					<div class="messagebox-buttons">
 						<button v-for="(button, index) in buttons" :key="index" :class="buttonClass(index)" @click="close(index)">{{ button.text }}</button>
 					</div>
@@ -21,25 +24,35 @@
 
 <script lang="ts">
 import Vue from 'vue';
+import Inputbox from '../../parabox/Inputbox.vue';
 import { ButtonRole, Buttons } from './Msgbox'
 
 export default Vue.extend({
+	components: { Inputbox },
 	name: 'Msgbox',
 	props: {
 		title: String,
 		content: String,
+		inputs: Array,
 		buttons: Array,
 		onClose: Function,
 	},
 	data: () => {
 		return {
-			show: false
+			show: false,
+			inputsValue: [],
 		}
 	},
 	mounted: function () {
 		// 设置动画并自动退出
-		this.show = true
+		this.show = true;
     	document.addEventListener('keydown', this.onKeydown);
+		// 设置输入框的默认值（如果有）
+		for (let i = 0; i < this.inputs.length; i++) {
+			if ((this.inputs[i] as any).default) {
+				(this.inputsValue[i] as any) = (this.inputs[i] as any).default;
+			}
+		}
 	},
 	computed: {
 		buttonClass: function () {
@@ -61,18 +74,17 @@ export default Vue.extend({
 		close: function (index: number) {
 			let func = (this.buttons as Buttons)[index].callback;
 			if (func) {
-				func();
+				func(this.inputsValue);
 			}
 			this.show = false;
 			this.onClose();
 		},
 		afterLeave() {
-      		document.removeEventListener('keydown', this.onKeydown);
-    	    this.$destroy();
-        	this.$el.parentNode!.removeChild(this.$el);
+			document.removeEventListener('keydown', this.onKeydown);
+			this.$destroy();
+			this.$el.parentNode!.removeChild(this.$el);
 		},
 		onKeydown(e: KeyboardEvent) {
-			console.log(e);
 			if (e.key === 'Escape') {
 				let index = (this.buttons as Buttons).findIndex((button) => {
 					return button.role === ButtonRole.Cancel;
@@ -134,7 +146,7 @@ export default Vue.extend({
 			will-change: transform, opacity;
 			transition: transform cubic-bezier(0.33, 1, 1, 1) 0.3s, opacity linear 0.2s;
 			width: 400px;
-			height: 200px;
+			/* height: 200px; */
 			background: #EEE;
 			border-radius: 16px;
 			overflow: hidden;
@@ -166,27 +178,28 @@ export default Vue.extend({
 				box-shadow: 0px 10px 20px -5px rgba(0, 0, 0, 0.1),
 							0px  4px  8px -3px rgba(0, 0, 0, 0.1);
 			}
-			.messagebox-titletext {
-				position: relative;
-				display: inline-block;
-				top: 3px;
-				width: 100%;
-				font-size: 16px;
-				text-align: center;			
-			}
-			.messagebox-contenttext {
-				position: relative;
-				display: block;
-				top: 48px;
-				left: 50%;
-				transform: translateX(-50%);
-				width: 85%;
-				text-align: center;
-			}
+				.messagebox-titletext {
+					position: relative;
+					display: inline-block;
+					top: 3px;
+					width: 100%;
+					font-size: 16px;
+					text-align: center;			
+				}
+			.messagebox-content {}
+				.messagebox-contenttext {
+					display: flex;
+					flex-wrap: wrap;
+					justify-content: center;
+					align-items: center;
+					position: relative;
+					padding: 16px;
+					min-height: 100px;
+					text-align: center;
+				}
 			.messagebox-buttons {
-				position: absolute;
-				top: 130px;
-				width: 100%;
+				position: relative;
+				margin-bottom: 36px;
 				display: flex;
 				justify-content: center;
 			}

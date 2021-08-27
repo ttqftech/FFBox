@@ -27,10 +27,8 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 		setTimeout(() => {
 			this.initSettings();
 			this.initUIBridge();
-		}, 1000);
-		setTimeout(() => {
 			this.initFFmpeg();			
-		}, 5000);
+		}, 0);
 	}
 
 	/**
