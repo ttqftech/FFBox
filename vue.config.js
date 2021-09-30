@@ -34,6 +34,7 @@ module.exports = {
     pages: {
         index: {
             entry: 'src/electron/entry.js',
+            template: 'public/electron.html',
             filename: 'electron.html'
         }
     }

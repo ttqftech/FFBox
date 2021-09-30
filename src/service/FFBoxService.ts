@@ -10,7 +10,13 @@ import CryptoJS from "crypto-js";
 
 const maxThreads = 2;
 
-export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<FFBoxServiceEvent>) implements FFBoxServiceInterface {
+export interface FFBoxServerEvent {
+	serverReady: () => void;
+	serverError: (arg: { error: Error }) => void;
+	serverClose: () => void;
+}
+
+export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<FFBoxServiceEvent & FFBoxServerEvent>) implements FFBoxServiceInterface {
 	private tasklist: Array<ServiceTask> = [];
 	private taskId: number = 0;
 	private newlyAddedTaskIds: Array<number> = [];

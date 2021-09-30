@@ -6,12 +6,111 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <link rel="icon" href="<%= BASE_URL %>icon.ico">
     <title><%= htmlWebpackPlugin.options.title %></title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: transparent;
+        user-select: none;
+        font-family: "PingFang SC", 苹方, 微软雅黑, "Segoe UI", Consolas, Avenir, Arial, Helvetica, sans-serif, 黑体;
+        overflow: hidden;
+      }
+      #FFBoxSplashScreen {
+        position: fixed;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        margin: auto;
+        width: 480px;
+        height: 180px;
+        z-index: 100;
+    		-webkit-perspective: 300;
+      }
+        #SplashScreenLogo {
+          position: absolute;
+          top: 0;
+          left: 172px;
+          width: 128px;
+          height: 128px;
+          box-shadow: 0px 8px 16px hsla(0deg, 0%, 0%, 0.2);
+          border-radius: 24px;
+          animation: logostart 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+        @keyframes logostart {
+          0%, 20% {
+            opacity: 0;
+            transform: rotateX(30deg) translate3d(0px, 0px, -80px) scale(0.9);
+          }
+          100% {
+            opacity: 1;
+            transform: rotateX(0deg) translate3d(0px, 10px, 0px);
+          }
+        }
+        #SplashScreenText {
+          position: absolute;
+          top: 160px;
+          left: 0;
+          width: 100%;
+          font-size: 16px;
+          text-align: center;
+          color: white;
+          text-shadow: 0 1px 2px hsla(0deg, 0%, 0%, 0.8);
+          animation: textstart 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+		      font-family: "PingFang SC", 苹方, 微软雅黑, "Segoe UI", Consolas, Avenir, Arial, Helvetica, sans-serif, 黑体;
+        }
+        @keyframes textstart {
+          0%, 20% {
+            opacity: 0;
+          }
+          100% {
+            opacity: 1;
+          }          
+        }
+        .disappear {
+          transition: all 0.3s ease-out;
+          transform: scale(1.05);
+          opacity: 0;
+        }
+    </style>
   </head>
   <body>
-    <noscript>
-      <strong>We're sorry but <%= htmlWebpackPlugin.options.title %> doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
-    </noscript>
-    <div id="app">FFBox loading...</div>
+    <div id="FFBoxSplashScreen">
+      <img id="SplashScreenLogo" src="images/256.png">
+      <span id="SplashScreenText">FFBox 正在加载</span>
+    </div>
+    <script>
+      let ipcRenderer = window.require('electron').ipcRenderer;
+      let sst = document.getElementById('SplashScreenText');
+      sst.innerHTML = `正在启动 FFBox 服务，将创建服务器<br />请确保防火墙允许通过`
+      ipcRenderer.send('startService');
+      ipcRenderer.on('serverReady', () => {
+        sst.innerText = `欢迎使用`;
+        setTimeout(() => {
+          window.initVueApp();          
+        }, 600);
+        setTimeout(() => {
+          leaveSplashScreen();
+        }, 1600);
+      });
+      ipcRenderer.on('serverError', (event, data) => {
+        sst.innerHTML = `FFBox 服务创建失败<br />` + data;
+        setTimeout(() => {
+          window.initVueApp();          
+        }, 600);
+        setTimeout(() => {
+          leaveSplashScreen();
+        }, 7000);
+      });
+      function leaveSplashScreen() {
+        let fss = document.getElementById('FFBoxSplashScreen');
+        fss.classList.add('disappear');
+        setTimeout(() => {
+          fss.remove();
+        }, 300);
+      }
+    </script>
+    <div id="app"></div>
     <!-- built files will be auto injected -->
   </body>
 </html>

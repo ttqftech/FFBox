@@ -1,6 +1,6 @@
 <template>
-	<div id="app">
-		<main-frame></main-frame>
+	<div id="app" :style="showUIstyle">
+		<main-frame v-show="showUI"></main-frame>
 	</div>
 </template>
 
@@ -15,7 +15,7 @@ import Tooltip from '@/electron/components/floating/Tooltip/index.js'
 
 import { StoreState, NotificationLevel, WorkingStatus, TaskStatus, Server, UITask, Task, OutputParams, FFBoxServiceInterface } from '@/types/types'
 import { version, buildNumber } from "@/types/constants";
-import { getInitialUITask, randomString } from '@/common/utils'
+import { getInitialUITask, getTimeString, randomString } from '@/common/utils'
 import { defaultParams } from "../common/defaultParams";
 import { mergeTaskFromService } from '@/service/netApi'
 import { ServiceBridge } from './bridge/serviceBridge'
@@ -40,12 +40,8 @@ const store = new Vuex.Store<StoreState>({
 		// 非界面类
 		notifications: [],
 		unreadNotificationCount: 0,
-		servers: {
-			'localhost': { tasks: [], ffmpegVersion: '', workingStatus: WorkingStatus.stopped, progress: 0, overallProgressTimerID: NaN }
-		},
-		serviceBridges: {
-			'localhost': new ServiceBridge('localhost', 33269)
-		},
+		servers: {},
+		serviceBridges: {},
 		currentServerName: 'localhost',
 		selectedTask: new Set(),
 		globalParams: JSON.parse(JSON.stringify(defaultParams)),
@@ -425,8 +421,19 @@ const store = new Vuex.Store<StoreState>({
 
 export default Vue.extend({
 	name: 'App',
+	data: () => { return {
+		showUI: false
+	}},
 	components: {
 		MainFrame
+	},
+	computed: {
+		showUIstyle: function () {
+			return {
+				visibility: this.showUI,
+				animation: this.showUI ? `showMainUIanimation 1.2s cubic-bezier(0.3, 0.6, 0, 1) forwards` : '',
+			};
+		}
 	},
 	methods: {
 		handleFFmpegVersion(server: Server, bridge: FFBoxServiceInterface, content: string) {
@@ -559,9 +566,6 @@ export default Vue.extend({
 			bridge.getTask(-1);
 		},
 	},
-	beforeCreate: function () {
-		document.body.className = "body";
-	},
 	mounted: function () {
 		document.title = 'FFBox v' + version;
 		mainVue = this;
@@ -579,42 +583,40 @@ export default Vue.extend({
 		);
 
 		// 初始化参数项
-		setTimeout(() => {
-			let electronStore = nodeBridge.electronStore;
-			if (nodeBridge.isElectron && electronStore) {
-				if (!electronStore.has('version.buildNumber') || electronStore.get('version.buildNumber') != buildNumber) {
-					// 读取默认值
-					this.$store.commit('pushMsg', {
-						message: '欢迎使用 FFBox v' + version + '！',
-						level: 0
-					});
-					electronStore.set('version.buildNumber', buildNumber);
-					electronStore.set('input', this.$store.state.globalParams.input);
-					electronStore.set('video', this.$store.state.globalParams.video);
-					electronStore.set('audio', this.$store.state.globalParams.audio);
-					electronStore.set('output', this.$store.state.globalParams.output);
-					// 生成随机机器码
-					let machineCode = randomString(16, '0123456789abcdef');
-					electronStore.set('userinfo.machineCode', machineCode);
-					this.$store.commit('setMachineCode', machineCode);
-				} else {
-					// 读取存储值
-					this.$store.commit('replacePara', {
-						input: electronStore.get('input'),
-						video: electronStore.get('video'),
-						audio: electronStore.get('audio'),
-						output: electronStore.get('output'),
-					});
-					let machineCode = electronStore.get('userinfo.machineCode');
-					this.$store.commit('setMachineCode', machineCode);
-				}
-			} else {
+		let electronStore = nodeBridge.electronStore;
+		if (nodeBridge.isElectron && electronStore) {
+			if (!electronStore.has('version.buildNumber') || electronStore.get('version.buildNumber') != buildNumber) {
+				// 读取默认值
 				this.$store.commit('pushMsg', {
-					message: '欢迎使用 FFBox v' + version + ' 网页版！',
-					level: 0,
+					message: '欢迎使用 FFBox v' + version + '！',
+					level: 0
 				});
+				electronStore.set('version.buildNumber', buildNumber);
+				electronStore.set('input', this.$store.state.globalParams.input);
+				electronStore.set('video', this.$store.state.globalParams.video);
+				electronStore.set('audio', this.$store.state.globalParams.audio);
+				electronStore.set('output', this.$store.state.globalParams.output);
+				// 生成随机机器码
+				let machineCode = randomString(16, '0123456789abcdef');
+				electronStore.set('userinfo.machineCode', machineCode);
+				this.$store.commit('setMachineCode', machineCode);
+			} else {
+				// 读取存储值
+				this.$store.commit('replacePara', {
+					input: electronStore.get('input'),
+					video: electronStore.get('video'),
+					audio: electronStore.get('audio'),
+					output: electronStore.get('output'),
+				});
+				let machineCode = electronStore.get('userinfo.machineCode');
+				this.$store.commit('setMachineCode', machineCode);
 			}
-		}, 0);
+		} else {
+			this.$store.commit('pushMsg', {
+				message: '欢迎使用 FFBox v' + version + ' 网页版！',
+				level: 0,
+			});
+		}
 
 		// 挂载退出确认
 		nodeBridge.ipcRenderer?.on("exitConfirm", () => this.$store.commit('closeConfirm'));
@@ -627,12 +629,15 @@ export default Vue.extend({
 			})
 		}, 120000);
 
-		// 挂载 serviceBridge 各种更新事件
-		let availableServerNames = Object.keys(this.$store.state.servers);
-		for (const serverName of availableServerNames) {
-			this.$store.commit('initializeServer', { serverName });
-		}
+		// 连接服务器
+		this.$store.commit('addServer', { 
+			ip: 'localhost',
+			port: 33269
+		});
 
+		setTimeout(() => {
+			this.showUI = true;
+		}, 300);
 		console.log('App 加载完成');
 	},
 	store,
@@ -743,13 +748,6 @@ function overallProgressTimer(workingStatus: WorkingStatus, currentServer: Serve
 </script>
 
 <style>
-	.body {
-		margin: 0;
-		padding: 0;
-		background-color: transparent;
-		user-select: none;
-		font-family: "PingFang SC", 苹方, 微软雅黑, "Segoe UI", Consolas, Avenir, Arial, Helvetica, sans-serif, 黑体;
-	}
 	#app {
 		font-weight: 400;
 		-webkit-font-smoothing: grayscale;
@@ -760,5 +758,11 @@ function overallProgressTimer(workingStatus: WorkingStatus, currentServer: Serve
 		width: 100vw;
 		height: 100vh;
 		overflow: hidden;
+	}
+	@keyframes showMainUIanimation {
+		0%, 20% {
+			opacity: 0;
+			filter: brightness(3);
+		}
 	}
 </style>
