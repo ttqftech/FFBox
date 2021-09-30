@@ -27,8 +27,9 @@ export default {
 		const 这 = this;
 		wss = new webSocket.Server({ port: 33269 });
 		console.log(getTimeString(new Date()), '开始监听端口 33269。')
-		wss.on('connection', function (ws: WebSocket) {
-			console.log(getTimeString(new Date()), `新客户端接入：${ws.url}。`);
+		wss.on('connection', function (ws, request) {
+			let address = request.socket.remoteAddress;
+			console.log(getTimeString(new Date()), `新客户端接入：${address}。`);
 
 			ws.on('message', function (message) {
 				// console.log('uiBridge: 收到来自客户端的消息', message);
@@ -36,24 +37,33 @@ export default {
 			});
 
 			ws.on('close', function (code: number, reason: string) {
-				console.log(getTimeString(new Date()), `客户端连接关闭：${ws.url}。`, code, reason);
+				console.log(getTimeString(new Date()), `客户端连接关闭：${address}。`, code, reason);
 			});
 
 			ws.on('error', function (err: Error) {
-				console.log(getTimeString(new Date()), `客户端连接出错：${ws.url}。`, err);
+				console.log(getTimeString(new Date()), `客户端连接出错：${address}。`, err);
 			});
 
 			ws.on('open', function () {
-				console.log(getTimeString(new Date()), `客户端连接打开：${ws.url}。`);
+				console.log(getTimeString(new Date()), `客户端连接打开：${address}。`);
 			})
 		});
 		wss.on('error', function (error: Error) {
 			console.log(getTimeString(new Date()), `服务器出错，建议检查防火墙。`, error);
+			ffboxService!.emit('serverError', { error });
+			wss = null;
 		});
 		wss.on('close', function () {
+			ffboxService!.emit('serverClose');
 			console.log(getTimeString(new Date()), `服务器关闭。`);
+			wss = null;
 		});
-		this.mountEventFromService();
+		setTimeout(() => {
+			if (wss) {
+				this.mountEventFromService();
+				ffboxService!.emit('serverReady');
+			}
+		}, 0);
 	},
 
 	handleMessageFromClient(message: string) {

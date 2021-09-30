@@ -6,9 +6,9 @@ import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer'
 import { FFBoxService } from './service/FFBoxService'
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
-// Keep a global reference of the window object, if you don't, the window will
-// be closed automatically when the JavaScript object is garbage collected.
 let win: BrowserWindow | null;
+let exitConfirm = false;
+let service: FFBoxService | null;
 
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([
@@ -30,9 +30,6 @@ function createWindow() {
 		show: true,
 		hasShadow: true,
 		webPreferences: {
-			// Use pluginOptions.nodeIntegration, leave this alone
-			// See nklayman.github.io/vue-cli-plugin-electron-builder/guide/security.html#node-integration for more info
-			// nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION
 			nodeIntegration: true
 		}
 	})
@@ -53,29 +50,48 @@ function createWindow() {
 	})
 }
 
-// Quit when all windows are closed.
-/*
+function mountIpcEvents() {
+	// 窗口主动发送的确认关闭通知
+    ipcMain.on('exitConfirm', () => {
+		exitConfirm = true;
+		console.log('exitConfirm', exitConfirm);
+	});
+
+	// 窗口主动发送的关闭通知
+    ipcMain.on('close', () => {
+		win!.close();
+		console.log('close');
+	});
+
+	// 获取主窗口 Hwnd
+	ipcMain.on('getHwnd', (event, hwnd) => {
+		win!.webContents.send('hwnd', win!.getNativeWindowHandle());
+	});
+
+	// 启动一个 ffboxService，这个 ffboxService 目前钦定监听 localhost:33269，而 serviceBridge 会连接此 service
+	ipcMain.on('startService', () => {
+		if (service) {
+			// 开发时使用重载，只重载网页（或热重载 Vue 相关内容），不重载服务
+			setTimeout(() => {
+				win!.webContents.send('serverReady');
+			}, 0);
+			return;
+		}
+		service = new FFBoxService();
+		service.on('serverReady', () => {
+			win!.webContents.send('serverReady');
+		});
+		service.on('serverError', (error) => {
+			win!.webContents.send('serverError', error.error.message);
+		})
+	});
+}
+
 app.on('window-all-closed', () => {
-	// On macOS it is common for applications and their menu bar
-	// to stay active until the user quits explicitly with Cmd + Q
-	if (process.platform !== 'darwin') {
-		app.quit()
-	}
-})
-*/
-
-app.on('activate', () => {
-	// On macOS it's common to re-create a window in the app when the
-	// dock icon is clicked and there are no other windows open.
-	if (win === null) {
-		createWindow()
-	}
+	app.quit();
 })
 
-var exitConfirm = false
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
+// This method will be called when Electron has finished initialization and is ready to create browser windows. Some APIs can only be used after this event occurs.
 app.on('ready', async () => {
 	if (isDevelopment && !process.env.IS_TEST) {
 		// Install Vue Devtools
@@ -85,31 +101,16 @@ app.on('ready', async () => {
 			console.error('Vue Devtools failed to install:', e.toString())
 		}
 	}
-	createWindow()
+	createWindow();
+
 	// 窗口产生关闭信号
 	win!.on('close', (e) => {
 		if (!exitConfirm) {
 			e.preventDefault();
 			win!.webContents.send('exitConfirm');  
 		}
-    })
-	// 窗口主动发送的确认关闭通知
-    ipcMain.on('exitConfirm', () => {
-		exitConfirm = true;
-		console.log('exitConfirm')
-	})
-	// 窗口主动发送的关闭通知
-    ipcMain.on('close', () => {
-		win!.close();
-		console.log('close')
-	});
-	// 获取主窗口 Hwnd
-	ipcMain.on('getHwnd', (event, hwnd) => {
-		win!.webContents.send('hwnd', win!.getNativeWindowHandle())
-	})
-
-	// 启动一个 ffboxService，这个 ffboxService 目前钦定监听 localhost:33269，而 serviceBridge 会连接此 service
-	new FFBoxService();
+    });
+	mountIpcEvents();
 })
 
 // Exit cleanly on request from parent process in development mode.
