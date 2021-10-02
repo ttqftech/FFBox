@@ -1,8 +1,5 @@
-import nodeBridge from "./nodeBridge";
-import { ChildProcess } from "child_process";
-
-let spawn = nodeBridge.spawn;
-let ipcRenderer = nodeBridge.ipcRenderer;
+import { getTimeString } from "@/common/utils";
+import { ChildProcess, spawn } from "child_process";
 
 let helper: ChildProcess | undefined = undefined;
 
@@ -31,20 +28,15 @@ function callHelper<T>(func: (helper: ChildProcess) => Promise<T> | T): Promise<
 			}
 		}
 
-		// 检查 nodeBridge
-		if (!spawn) {
-			reject('非 electron 环境');
-			return;
-		}
 		// 检查 helper 是否存活
 		if (helper) {
 			callCorrespondingFunction(helper);
 		} else {
-			console.warn('正在启动 helper');
-			helper = spawn("FFBoxHelper.exe", undefined, {
+			console.log(getTimeString(new Date()), '正在启动 helper');
+			helper = spawn("FFBoxHelper.exe", [], {
 				detached: false,
 				shell: false,
-				encoding: 'utf8'
+				// encoding: 'utf8'
 			}) as ChildProcess;
 			helper.on('close', (code, signal) => {
 				// 'close' 事件将始终在 'exit' 或 'error'（如果子进程衍生失败）已经触发之后触发
@@ -68,7 +60,7 @@ function callHelper<T>(func: (helper: ChildProcess) => Promise<T> | T): Promise<
 			// 	console.log('exit', code, signal);
 			// });
 			helper.stdout!.on('data', (data) => {
-				console.warn(data.toString());
+				// console.warn(data.toString());
 			});
 			setTimeout((helper) => {
 				callCorrespondingFunction(helper);
@@ -78,25 +70,16 @@ function callHelper<T>(func: (helper: ChildProcess) => Promise<T> | T): Promise<
 }
 
 export default {
-	setBlurBehindWindow(turnON: boolean = true): Promise<void> {
+	pauseNresumeProcess(turnON: boolean, pid: number): Promise<void> {
+        // turnON 状态为暂停
 		return new Promise<void>((resolve, reject) => {
-			if (!ipcRenderer) {
-				return reject();
-			}
-			let hwnd: number;
-			ipcRenderer.on('hwnd', (event, data: Buffer) => {
-				hwnd = data[0] + data[1] * 2**8 + data[2] * 2**16 + data[3] * 2**24;
-				console.log(`本窗口 hwnd：` + hwnd);
-				callHelper((helper) => {
-					console.log('helper', helper);
-					helper.stdin!.write(`2${turnON ? '1' : '0'}${hwnd.toString().padStart(8, '0')}`);
-				}).then(() => {
-					resolve();
-				}).catch((err) => {
-					reject(err);
-				})
-			})
-			ipcRenderer.send('getHwnd');			
-		})
+            callHelper((helper) => {
+                helper.stdin!.write(`1${turnON ? '1' : '0'}${pid.toString().padStart(8, '0')}`);
+            }).then(() => {
+                resolve();
+            }).catch(() => {
+                reject();
+            })
+		});
 	}
 }
