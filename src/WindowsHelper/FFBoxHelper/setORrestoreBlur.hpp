@@ -76,14 +76,15 @@ bool setORrestoreBlur(int hWnd, bool turnON) {
 
 	// 检查 API 可用性
 	HMODULE hUser = LoadLibrary(L"user32.dll");
-	HMODULE hDwm = LoadLibrary(L"dwmapi.dll");
+	// HMODULE hDwm = LoadLibrary(L"dwmapi.dll");
 	pfnSetWindowCompositionAttribute setWindowCompositionAttribute = (pfnSetWindowCompositionAttribute)GetProcAddress(hUser, "SetWindowCompositionAttribute");
 	// pfnDwmExtendFrameIntoClientArea dwmExtendFrameIntoClientArea = (pfnDwmExtendFrameIntoClientArea)GetProcAddress(hDwm, "DwmExtendFrameIntoClientArea");
 	// pfnSetWindowLong setWindowLong = (pfnSetWindowLong)GetProcAddress(hUser, "SetWindowLongA");
 	// pfnGetWindowLong getWindowLong = (pfnGetWindowLong)GetProcAddress(hUser, "GetWindowLongA");
 	// pfnSetLayeredWindowAttributes setLayeredWindowAttributes = (pfnSetLayeredWindowAttributes)GetProcAddress(hUser, "SetLayeredWindowAttributes");
-	printf("setWindowCompositionAttribute: %d\n", setWindowCompositionAttribute);
+	// printf("setWindowCompositionAttribute: %d\n", setWindowCompositionAttribute);
 	if (!setWindowCompositionAttribute) {
+		std::cout << "操作系统不支持 setWindowCompositionAttribute API! " << std::endl;
 		return false;
 	}
 	
@@ -100,8 +101,10 @@ bool setORrestoreBlur(int hWnd, bool turnON) {
 	int result;
 	result = setWindowCompositionAttribute((HWND)hWnd, &data);
 	if (result == 1) {
+		std::cout << "执行成功" << std::endl;
 		return true;
+	} else {
+		std::cout << "执行失败" << std::endl;
+		return false;
 	}
-
-	return false;
 }

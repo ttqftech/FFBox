@@ -3,14 +3,9 @@
 // const selectString  = utils.selectString;
 // const replaceString = utils.replaceString;
 // const scanf = utils.scanf;
+import { spawn } from "child_process";
 import { selectString, replaceString, scanf }  from '../common/utils'
-
-let spawn
-if (typeof window !== 'undefined') {
-	spawn = window.require('child_process').spawn;
-} else {
-	spawn = require('child_process').spawn;
-}
+import osBridge from "./osBridge";
 
 class FFmpeg {
 	constructor (func, params) {		// 构造器，传入 func: 0: 直接执行 ffmpeg　1: 检测 ffmpeg 版本　２：多媒体文件信息读取
@@ -320,10 +315,7 @@ class FFmpeg {
 	pause () {
 		switch (process.platform) {
 			case "win32":
-				spawn("PauseAndResumeProcess.exe", ["0", this.cmd.pid], {
-					detached: false,
-					shell: false
-				});
+				osBridge.pauseNresumeProcess(true, this.cmd.pid);
 				break;
 			case "linux":
 				spawn("kill", ["-STOP", this.cmd.pid], {
@@ -344,10 +336,7 @@ class FFmpeg {
 	resume () {
 		switch (process.platform) {
 			case "win32":
-				spawn("PauseAndResumeProcess.exe", ["1", this.cmd.pid], {
-					detached: false,
-					shell: false
-				});
+				osBridge.pauseNresumeProcess(false, this.cmd.pid);
 				break;
 			case "linux":
 				spawn("kill", ["-CONT", this.cmd.pid], {

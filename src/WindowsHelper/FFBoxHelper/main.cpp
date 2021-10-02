@@ -59,7 +59,8 @@ int main() {
 			return 999;
 			break;
 		}
-		cout << "status: " << status << "  opBuffer: " << opBuffer << endl;
+		// 使用 cout 输出的信息可在渲染器进程和主进程看到，但使用 printf 输出的信息似乎不能在渲染器进程看到，目前猜测是换行符不能正确识别或其他问题，导致 spawn 认为还没输出完，不触发 console.log 事件
+		// cout << "status: " << status << "  opBuffer: " << opBuffer << endl;
 		chr = getchar();
 	}
 	// system("pause");

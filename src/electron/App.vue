@@ -15,7 +15,7 @@ import Tooltip from '@/electron/components/floating/Tooltip/index.js'
 
 import { StoreState, NotificationLevel, WorkingStatus, TaskStatus, Server, UITask, Task, OutputParams, FFBoxServiceInterface } from '@/types/types'
 import { version, buildNumber } from "@/types/constants";
-import { getInitialUITask, getTimeString, randomString } from '@/common/utils'
+import { getInitialUITask, randomString } from '@/common/utils'
 import { defaultParams } from "../common/defaultParams";
 import { mergeTaskFromService } from '@/service/netApi'
 import { ServiceBridge } from './bridge/serviceBridge'
@@ -360,8 +360,12 @@ const store = new Vuex.Store<StoreState>({
 		// 关闭窗口事件触发时调用
 		closeConfirm (state) {
 			function readyToClose () {
+				osBridge.setBlurBehindWindow(false);
+				mainVue.$data.closing = true;
 				nodeBridge.ipcRenderer?.send('exitConfirm');
-				nodeBridge.ipcRenderer?.send('close');
+				setTimeout(() => {
+					nodeBridge.ipcRenderer?.send('close');
+				}, 500);
 			}
 			// getQueueTaskCount 拷贝自 FFBoxService
 			function getQueueTaskCount(server: Server) {
@@ -422,7 +426,8 @@ const store = new Vuex.Store<StoreState>({
 export default Vue.extend({
 	name: 'App',
 	data: () => { return {
-		showUI: false
+		showUI: false,
+		closing: false,
 	}},
 	components: {
 		MainFrame
@@ -431,7 +436,7 @@ export default Vue.extend({
 		showUIstyle: function () {
 			return {
 				visibility: this.showUI,
-				animation: this.showUI ? `showMainUIanimation 1.2s cubic-bezier(0.3, 0.6, 0, 1) forwards` : '',
+				animation: this.showUI ? (this.closing ? 'closeMainUIanimation 0.5s cubic-bezier(0.3, 0.6, 0, 1) forwards' : `showMainUIanimation 1.2s cubic-bezier(0.3, 0.6, 0, 1) forwards`) : '',
 			};
 		}
 	},
@@ -571,8 +576,6 @@ export default Vue.extend({
 		mainVue = this;
 		(window as any).mainVue = mainVue;
 
-		osBridge.setBlurBehindWindow(true);
-
 		console.log(
 			(nodeBridge.remote ? ('exe 路径　　　　　：' + nodeBridge.remote.app.getPath('exe') + '\n') : '') +
 			(nodeBridge.remote ? ('electron 执行路径：' + nodeBridge.remote.app.getAppPath() + '\n') : '') +
@@ -624,7 +627,7 @@ export default Vue.extend({
 		// 捐助提示
 		setTimeout(() => {
 			this.$store.commit('pushMsg', {
-				message: '觉得好用的话，可以点击下方状态栏的“支持作者”给本项目点一个⭐哦～',
+				message: '作者希望您能点击下方状态栏的“支持作者”给本 repo 点个⭐哦～',
 				level: 0
 			})
 		}, 120000);
@@ -638,6 +641,9 @@ export default Vue.extend({
 		setTimeout(() => {
 			this.showUI = true;
 		}, 300);
+		setTimeout(() => {
+			osBridge.setBlurBehindWindow(true);
+		}, 1000);
 		console.log('App 加载完成');
 	},
 	store,
@@ -763,6 +769,15 @@ function overallProgressTimer(workingStatus: WorkingStatus, currentServer: Serve
 		0%, 20% {
 			opacity: 0;
 			filter: brightness(3);
+		}
+	}
+	@keyframes closeMainUIanimation {
+		0% {
+			filter: saturate(1);
+		}
+		100% {
+			opacity: 0;
+			filter: saturate(0);
 		}
 	}
 </style>

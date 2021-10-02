@@ -5,12 +5,16 @@
 			<h1 id="Sponsorcenter-title">支持作者</h1>
 			<div id="Sponsorcenter-crossline"></div>
 			<div id="Sponsorcenter-box">
-				<p>觉得好用的话，来 GitHub / Gitee 点个星嘛～（当然也能提交 issues）</p>
+				<p>开发者想要你来 GitHub / Gitee 点个星～</p>
 				<div class="QRscreens">
 					<buttonbox text="GitHub" imgsrc="/images/github.svg" @click="jumpToGithub"></buttonbox>
 					<buttonbox text="Gitee" imgsrc="/images/gitee.svg" @click="jumpToGitee"></buttonbox>
 				</div>
-				<p>每日一分</p>
+				<p>下面这个按钮就不是免费的，除非你真的想点 _(:з」∠)_</p>
+				<div class="QRscreens">
+					<buttonbox text="Ko-Fi" imgsrc="/images/ko-fi.svg" @click="jumpToKoFi"></buttonbox>
+				</div>
+				<p>你可以扫下面这个🐴每天拿一分钱</p>
 				<div class="QRscreens">
 					<div class="QRscreen QRscreen-alipayredenvelop">
 						<div class="QRuppertext"><strong>扫码领红包</strong></div>
@@ -23,7 +27,7 @@
 						</div>
 					</div>
 				</div>
-				<p>您的打赏是我更新软件的动力！如果喜欢的话，留下您的祝福！</p>
+				<p>如果嫌不过瘾，扫下面几个🐴也行 _(:з」∠)_（只要你喜欢</p>
 				<div class="QRscreens">
 					<div class="QRscreen QRscreen-alipay">
 						<div class="QRuppertext">推荐使用<strong>支付宝</strong></div>
@@ -56,7 +60,6 @@
 						</div>
 					</div>
 				</div>
-				<p>您的捐赠记录将会保留在开发者的账户中，建议留下昵称作为备注。</p>
 				<p>机器码：{{ $store.state.machineCode }}</p>
 			</div>
 		</div>
@@ -81,6 +84,10 @@ export default Vue.extend({
 		},
 		jumpToGitee: function () {
 			nodeBridge.jumpToUrl('https://gitee.com/ttqf/FFBox');
+
+		},
+		jumpToKoFi: function () {
+			nodeBridge.jumpToUrl('https://ko-fi.com/N4N26F2WR');
 
 		},
 		paintAllQRcode: function () {
