@@ -1,4 +1,4 @@
-import { TypedEventEmitter } from "@/common/utils";
+import { getTimeString, TypedEventEmitter } from "@/common/utils";
 import { FFBoxServiceEvent, FFBoxServiceEventApi, FFBoxServiceFunctionApi, FFBoxServiceInterface, OutputParams } from "@/types/types";
 import EventEmitter from "events";
 
@@ -11,8 +11,8 @@ export interface ServeiceBridgeEvent {
 
 export class ServiceBridge extends (EventEmitter as new () => TypedEventEmitter<FFBoxServiceEvent & ServeiceBridgeEvent>) implements FFBoxServiceInterface {
 	private ws: WebSocket | null;
-	private ip: string;
-	private port: number;
+	public ip: string;
+	public port: number;
 	private wsReady: boolean = false;
 
 	constructor(ip: string, port: number) {
@@ -35,6 +35,10 @@ export class ServiceBridge extends (EventEmitter as new () => TypedEventEmitter<
 			这.wsReady = true;
 			这.emit('connected');
 			这.getFFmpegVersion();
+
+			setTimeout(() => {
+				// 这.testSendBigPackage();	// test
+			}, 4000);
 		}
 		ws.onclose = function (event) {
 			这.wsReady = false;
@@ -59,13 +63,31 @@ export class ServiceBridge extends (EventEmitter as new () => TypedEventEmitter<
 		this.ws = null;
 	}
 
+	/**
+	 * 接受 service 事件入口（来自 ws.onmessage）
+	 */
 	private handleWsEvents(event: MessageEvent<any>) {
 		let data: FFBoxServiceEventApi = JSON.parse(event.data);
 		this.emit(data.event, data.payload as any);
 	}
 
+	/**
+	 * UI 调用 service 网络出口
+	 */
 	private sendWs(data: FFBoxServiceFunctionApi) {
 		this.wsReady && this.ws?.send(JSON.stringify(data));
+	}
+
+	private testSendBigPackage() {
+		console.log(getTimeString(new Date()), '发送大包');
+		const array = new Float32Array(512);
+
+		for (var i = 0; i < array.length; ++i) {
+			array[i] = i;
+		}
+	  
+		this.ws?.send(array);
+
 	}
 
 	public initFFmpeg() {
@@ -84,18 +106,29 @@ export class ServiceBridge extends (EventEmitter as new () => TypedEventEmitter<
 		this.sendWs(data);
 	}
 
-	public taskAdd(filePath: string, fileName: string, outputParams?: OutputParams) {
-		let data: FFBoxServiceFunctionApi = {
-			function: 'taskAdd',
-			args: [filePath, fileName, outputParams],
-		}
-		this.sendWs(data);
+	public taskAdd(fileBaseName: string, outputParams?: OutputParams): Promise<number> {
+		return new Promise((resolve, reject) => {
+			fetch(`http://${this.ip}:${this.port}/task/add`, {
+				method: 'post',
+				body: JSON.stringify({ fileBaseName, outputParams }),
+				headers: new Headers({
+					'Content-Type': 'application/json'
+				}),
+			}).then((response) => {
+				response.text().then((text) => {
+					let id = parseInt(text);
+					resolve(id);
+				})
+			}).catch((err) => {
+				reject(err);
+			})
+		})
 	}
 
-	public getNewlyAddedTaskIds() {
+	public mergeUploaded(id: number, hashs: Array<string>) {
 		let data: FFBoxServiceFunctionApi = {
-			function: 'getNewlyAddedTaskIds',
-			args: [],
+			function: 'mergeUploaded',
+			args: [id, hashs],
 		}
 		this.sendWs(data);
 	}

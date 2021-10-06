@@ -7,7 +7,7 @@
 		<button id="startbutton" class="startbutton " :class="startbuttonClass" @click="$store.commit('startNpause')">{{ startbuttonText }}</button>
 		<div id="tasklist-wrapper" ref="tasklist_wrapper">
 			<div id="tasklist">
-				<taskitem v-for="(task, index) in taskList" :key="parseInt(task.id)" :id='task.id' :duration="task.duration" :file_name="task.fileName" :before="task.before" :after="task.after" :progress_smooth="task.progress_smooth" :status="task.status" :selected="taskSelected(task.id)" @itemClicked="onItemClicked($event, task.id, index)" @pauseNremove="onItemPauseNdelete(task.id)"></taskitem>
+				<taskitem v-for="(task, index) in taskList" :key="parseInt(task.id)" :id='task.id' :duration="task.duration" :file_name="task.fileBaseName" :before="task.before" :after="task.after" :progress_smooth="task.progress_smooth" :status="task.status" :selected="taskSelected(task.id)" @itemClicked="onItemClicked($event, task.id, index)" @pauseNremove="onItemPauseNdelete(task.id)"></taskitem>
 			</div>
 			<div id="dropfilesdiv" @click="itemUnselect">
 				<div id="dropfilesimage" @click="debugLauncher" :style="{ 'backgroundImage': `url(${dropfilesimage})` }"></div>
@@ -19,8 +19,8 @@
 <script lang="ts">
 import Vue from 'vue';
 
-import Taskitem from '@/electron/components/Taskitem.vue'
 import { BaseComboItem, NotificationLevel, Server, UITask } from '@/types/types';
+import Taskitem from '@/electron/components/Taskitem.vue'
 import nodeBridge from "@/electron/bridge/nodeBridge";
 import Combobox from '@/electron/components/parabox/Combobox.vue';
 import Buttonbox from '@/electron/components/parabox/Buttonbox.vue';
@@ -213,22 +213,8 @@ export default Vue.extend({
 		onDrop: function (event: DragEvent) {	// 此函数触发四次 taskList update，分别为加入任务、ffmpeg data、ffmpeg metadata、selectedTask update
 			event.stopPropagation();
 			this.draggingFiles = false;
-			let dropDelayCount = 0;
-			let files = (event.dataTransfer && event.dataTransfer.files) || [];
-			let fileCount = files.length
-			for (const file of files) {
-				setTimeout(() => {	// v2.4 版本开始完全可以不要延时，但是太生硬，所以加个动画
-					console.log(file.path);
-					this.$store.commit('addTask', { name: file.name, path: file.path, callback: () => {
-						if (--fileCount == 0) {
-							this.$store.commit('selectedTask_getNewlyAddedTaskIds');
-						}
-					}})
-				}, dropDelayCount);
-				// console.log(dropDelayCount)
-				dropDelayCount += 33.33;
-			}
-		}
+			this.$store.commit('addTasks', (event.dataTransfer && event.dataTransfer.files) || []);
+		},
 	},
 });
 

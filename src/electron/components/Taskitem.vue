@@ -60,6 +60,13 @@
 						<span class="taskitem-graph-description">帧</span>
 					</div>
 				</div>
+				<div class="taskitem-networkgraphs">
+					<div class="taskitem-graph">
+						<div class="taskitem-graph-ring" :style="dashboard_frame"></div>
+						<span class="taskitem-graph-data">{{ 0 }}</span>
+						<span class="taskitem-graph-description">传输速度</span>
+					</div>
+				</div>
 				<button class="taskitem-button" @click="$event.stopPropagation(); $emit('pauseNremove')" :aria-label="deleteButtonAriaLabel">
 					<div class="taskitem-delete" :style="{ 'background-position-x': deleteButtonBackgroundPositionX }"></div>
 				</button>
@@ -102,21 +109,29 @@ export default Vue.extend<{}, any, any, Props>({
 	computed: {
 		// 样式部分
 		taskItemStyle: function (): string {
+			let uploading = this.status === TaskStatus.TASK_INITIALIZING;
 			let running = this.status === TaskStatus.TASK_RUNNING || this.status === TaskStatus.TASK_PAUSED || this.status === TaskStatus.TASK_STOPPING || this.status === TaskStatus.TASK_FINISHING;
 			let selected = this.selected;
-			if (!running && !selected) {
-				return 'taskitem-small';
-			} else if (!running && selected) {
-				return 'taskitem-large';
-			} else if (running && !selected) {
+			console
+			if (running && !selected) {
 				return 'taskitem-small-run';
 			} else if (running && selected) {
 				return 'taskitem-large-run';
+			} else if (uploading && !selected) {
+				return 'taskitem-small-transfer';
+			} else if (uploading && selected) {
+				return 'taskitem-large-transfer';
+			} else if (!selected) {
+				return 'taskitem-small';
+			} else if (selected) {
+				return 'taskitem-large';
 			}
 			return '';
 		},
 		backgroundStyle: function (): string {
 			switch (this.status) {
+				case TaskStatus.TASK_INITIALIZING:
+					return 'progress-blue';
 				case TaskStatus.TASK_RUNNING: case TaskStatus.TASK_FINISHING:
 					return 'progress-green';
 				case TaskStatus.TASK_PAUSED: case TaskStatus.TASK_STOPPING:
@@ -259,6 +274,7 @@ export default Vue.extend<{}, any, any, Props>({
 		transform: translate3d(0, 0, 0);
 	}
 		.taskitem-background {
+			position: relative;
 			transition: height 0.5s;
 			pointer-events: none;
 		}
@@ -283,23 +299,28 @@ export default Vue.extend<{}, any, any, Props>({
 				height: 100%;
 				border-radius: 2px;
 			}
+			.progress-blue {
+				background: linear-gradient(180deg, hsla(225, 100%, 90%, 0.7), hsla(225, 100%, 80%, 0.7));
+				box-shadow: 0px 4px 12px 0px hsl(225, 100%, 78%),
+							0px 2px 4px 0px rgba(0, 0, 0, 0.25);
+			}
 			.progress-green {
-				background: linear-gradient(180deg, rgba(204, 255, 204, 0.7), rgba(153, 255, 153, 0.7));
-				box-shadow: 0px 4px 12px 0px rgba(143, 255, 143, 1),
+				background: linear-gradient(180deg, hsla(120, 100%, 90%, 0.7), hsla(120, 100%, 80%, 0.7));
+				box-shadow: 0px 4px 12px 0px hsl(120, 100%, 78%),
 							0px 2px 4px 0px rgba(0, 0, 0, 0.25);
 			}
 			.progress-yellow {
-				background: linear-gradient(180deg, rgba(255, 238, 187, 0.7), rgba(255, 238, 136, 0.7));
-				box-shadow: 0px 4px 12px 0px rgba(255, 229, 103, 1),
+				background: linear-gradient(180deg, hsla(50, 100%, 87%, 0.7), hsla(50, 100%, 77%, 0.7));
+				box-shadow: 0px 4px 12px 0px hsl(50, 100%, 70%),
 							0px 2px 4px 0px rgba(0, 0, 0, 0.25);
 			}
 			.progress-red {
-				background: linear-gradient(180deg, rgba(255, 187, 187, 0.7), rgba(255, 136, 136, 0.7));
-				box-shadow: 0px 4px 12px 0px rgba(255, 103, 103, 0.8),
+				background: linear-gradient(180deg, hsla(0, 100%, 87%, 0.7), hsla(0, 100%, 77%, 0.7));
+				box-shadow: 0px 4px 12px 0px hsla(0, 100%, 70%, 0.8),
 							0px 2px 4px 0px rgba(0, 0, 0, 0.25);
 			}
 			.progress-gray {
-				background: linear-gradient(180deg, rgba(238, 238, 238, 0.7), rgba(221, 221, 221, 0.7));
+				background: linear-gradient(180deg, hsla(0, 0%, 93%, 0.7), hsla(0, 0%, 87%, 0.7));
 				box-shadow: 0px 4px 12px 0px rgba(204, 204, 204, 1),
 							0px 2px 4px 0px rgba(0, 0, 0, 0.25);
 			}
@@ -413,6 +434,10 @@ export default Vue.extend<{}, any, any, Props>({
 						.taskitem-graph-description {
 							transition: font-size 0.5s;
 						}
+				.taskitem-networkgraphs {
+					transition: width 0.5s, right 0.5s, top 0.5s;
+					overflow: hidden;
+				}
 			.taskitem-button {
 				position: absolute;
 				right: 1px;
@@ -460,7 +485,6 @@ export default Vue.extend<{}, any, any, Props>({
 	.taskitem-large .taskitem-background-wrapper {
 	}
 		.taskitem-large .taskitem-background {
-			position: relative;
 			height: 80px;
 		}
 			.taskitem-large .taskitem-background-white {
@@ -516,7 +540,7 @@ export default Vue.extend<{}, any, any, Props>({
 				right: 48px;
 			}
 			.taskitem-large .taskitem-rightarrow {
-				opacity: 1;
+				opacity: 0;
 			}
 				.taskitem-large .taskitem-img-format {
 					top: 0px;
@@ -618,6 +642,14 @@ export default Vue.extend<{}, any, any, Props>({
 						text-align: center;
 						font-size: 12px;
 					}
+			.taskitem-large .taskitem-networkgraphs {
+				position: absolute;
+				right: 48px;
+				top: 8px;
+				width: 0;
+				display: flex;
+				justify-content: space-around;
+			}
 
 			@media screen and (min-width: 0px) and (max-width: 1199px) {
 				.taskitem-large .taskitem-infobefore {
@@ -645,7 +677,6 @@ export default Vue.extend<{}, any, any, Props>({
 	.taskitem-large-run .taskitem-background-wrapper {
 	}
 		.taskitem-large-run .taskitem-background {
-			position: relative;
 			height: 80px;
 		}
 			.taskitem-large-run .taskitem-background-white {
@@ -804,6 +835,14 @@ export default Vue.extend<{}, any, any, Props>({
 						text-align: center;
 						font-size: 12px;
 					}
+			.taskitem-large-run .taskitem-networkgraphs {
+				position: absolute;
+				right: 48px;
+				top: 8px;
+				width: 0;
+				display: flex;
+				justify-content: space-around;
+			}
 			
 			@media screen and (min-width: 0px) and (max-width: 1199px) {
 				.taskitem-large-run .taskitem-infobefore, .taskitem-large-run .taskitem-graphs {
@@ -823,6 +862,193 @@ export default Vue.extend<{}, any, any, Props>({
 			.taskitem-large-run .taskitem-delete:active {
 			}
 
+/* ================================ 大号传输中列表项 ================================ */
+
+.taskitem-large-transfer {
+}
+	.taskitem-large-transfer .taskitem-background-wrapper {
+	}
+		.taskitem-large-transfer .taskitem-background {
+			height: 80px;
+		}
+			.taskitem-large-transfer .taskitem-background-white {
+				background: hsl(210, 100%, 90%);
+				border: hsl(210, 100%, 80%) 1px solid;
+			}
+			.taskitem-large-transfer .taskitem-background-progress {
+			}
+			.taskitem-large-transfer .taskitem-previewbox {
+				position: absolute;
+				left: 8px;
+				top: 20px;
+				width: 96px;
+				height: 54px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				border: #DDD 1px dashed;
+			}
+			.taskitem-large-transfer .taskitem-previewbox img {
+			}
+			.taskitem-large-transfer .taskitem-timing {
+				position: absolute;
+				left: 8px;
+				top: 4px;
+				width: 96px;
+				font-size: 12px;
+			}
+			.taskitem-large-transfer .taskitem-filename {
+				display: -webkit-box;
+				position: absolute;
+				left: 112px;
+				top: 8px;
+				width: calc(100% - 252px);
+				height: 66px;
+				font-size: 23.5px;
+				font-weight: bold;
+				-webkit-line-clamp: 2;
+				-webkit-box-orient: vertical;
+			}
+			.taskitem-large-transfer .taskitem-info {
+				height: 68px;
+				width: 336px;
+			}
+			.taskitem-large-transfer .taskitem-infobefore {
+				position: absolute;
+				top: 8px;
+				right: 448px;
+				width: 0;
+			}
+			.taskitem-large-transfer .taskitem-infoafter {
+				position: absolute;
+				top: 8px;
+				right: 48px;
+				width: 0;
+			}
+			.taskitem-large-transfer .taskitem-rightarrow {
+				opacity: 0;
+			}
+				.taskitem-large-transfer .taskitem-img-format {
+					top: 0px;
+					left: 0px;
+				}
+				.taskitem-large-transfer .taskitem-img-vcodec {
+					top: 0px;
+					left: 112px;					
+				}
+				.taskitem-large-transfer .taskitem-img-acodec {
+					top: 0px;
+					left: 224px;
+				}
+				.taskitem-large-transfer .taskitem-span-format {
+					top: 5px;
+					left: 40px;
+				}
+				.taskitem-large-transfer .taskitem-span-vcodec {
+					top: 5px;
+					left: 152px;					
+				}
+				.taskitem-large-transfer .taskitem-span-acodec {
+					top: 5px;
+					left: 264px;
+				}
+				.taskitem-large-transfer .taskitem-img-size {
+					top: 36px;
+					left: 0px;
+				}
+				.taskitem-large-transfer .taskitem-img-vratecontrol {
+					top: 36px;
+					left: 112px;
+				}
+				.taskitem-large-transfer .taskitem-img-aratecontrol {
+					top: 36px;
+					left: 224px;
+				}
+				.taskitem-large-transfer .taskitem-span-size {
+					top: 41px;
+					left: 40px;
+				}
+				.taskitem-large-transfer .taskitem-span-vratecontrol {
+					top: 41px;
+					left: 152px;					
+				}
+				.taskitem-large-transfer .taskitem-span-aratecontrol {
+					top: 41px;
+					left: 264px;
+				}
+				.taskitem-large-transfer .taskitem-info div {
+					position: absolute;
+					width: 32px;
+					height: 32px;
+					background-size: cover;
+					/*border: #DDD 1px dashed;*/
+				}
+				.taskitem-large-transfer .taskitem-info span {
+					position: absolute;
+					display: block;
+					width: 0px;
+					font-size: 14px;
+					/*border: #DDD 1px dashed;*/
+				}
+				.taskitem-large-transfer .taskitem-size-compact {
+					line-height: 12px;
+					font-size: 11px !important;
+				}
+
+			.taskitem-large-transfer .taskitem-graphs {
+				position: absolute;
+				right: 48px;
+				top: 8px;
+				width: 0;
+				display: flex;
+				justify-content: space-around;
+			}
+				.taskitem-large-transfer .taskitem-graph {
+					position: relative;
+					display: inline-block;
+					width: 64px;
+					height: 64px;
+				}
+					.taskitem-large-transfer .taskitem-graph-ring {
+					}
+					.taskitem-large-transfer .taskitem-graph-data {
+						position: absolute;
+						top: 50%;
+						width: 100%;
+						text-align: center;
+						font-weight: 600;
+						transform: translateY(-51%);
+						font-size: 15px;
+						font-family: Bahnschrift,Calibri,"SF Electrotome",Avenir,苹方-简,苹方,微软雅黑,"Segoe UI",Consolas,Roboto,黑体;
+					}
+					.taskitem-large-transfer .taskitem-graph-description {
+						position: absolute;
+						bottom: -2px;
+						width: 100%;
+						text-align: center;
+						font-size: 12px;
+					}
+			.taskitem-large-transfer .taskitem-networkgraphs {
+				position: absolute;
+				right: 48px;
+				top: 8px;
+				width: 84px;
+				display: flex;
+				justify-content: space-around;
+			}
+			
+			@media screen and (min-width: 0px) and (max-width: 1199px) {
+				.taskitem-large-transfer .taskitem-filename {
+					width: calc(100% - 256px);
+				}
+			}
+			.taskitem-large-transfer .taskitem-delete {
+			}
+			.taskitem-large-transfer .taskitem-delete:hover {
+			}
+			.taskitem-large-transfer .taskitem-delete:active {
+			}
+
 
 /* ================================ 小号列表项 ================================ */
 
@@ -831,7 +1057,6 @@ export default Vue.extend<{}, any, any, Props>({
 	.taskitem-small .taskitem-background-wrapper {
 	}
 		.taskitem-small .taskitem-background {
-			position: relative;
 			height: 60px;
 		}
 			.taskitem-small .taskitem-background-white {
@@ -989,6 +1214,14 @@ export default Vue.extend<{}, any, any, Props>({
 						text-align: center;
 						font-size: 9px;
 					}
+			.taskitem-small .taskitem-networkgraphs {
+				position: absolute;
+				right: 48px;
+				top: 8px;
+				width: 0;
+				display: flex;
+				justify-content: space-around;
+			}
 
 			@media screen and (min-width: 0px) and (max-width: 1199px) {
 			}
@@ -1007,7 +1240,6 @@ export default Vue.extend<{}, any, any, Props>({
 	.taskitem-small-run .taskitem-background-wrapper {
 	}
 		.taskitem-small-run .taskitem-background {
-			position: relative;
 			height: 60px;
 		}
 			.taskitem-small-run .taskitem-background-white {
@@ -1165,6 +1397,14 @@ export default Vue.extend<{}, any, any, Props>({
 						text-align: center;
 						font-size: 9px;
 					}
+			.taskitem-small-run .taskitem-networkgraphs {
+				position: absolute;
+				right: 48px;
+				top: 8px;
+				width: 0;
+				display: flex;
+				justify-content: space-around;
+			}
 				
 			@media screen and (min-width: 0px) and (max-width: 1199px) {
 				.taskitem-small-run .taskitem-infoafter {
@@ -1184,6 +1424,190 @@ export default Vue.extend<{}, any, any, Props>({
 			.taskitem-small-run .taskitem-delete:hover {
 			}
 			.taskitem-small-run .taskitem-delete:active {
+			}
+
+
+/* ================================ 小号传输中列表项 ================================ */
+
+.taskitem-small-transfer {
+}
+	.taskitem-small-transfer .taskitem-background-wrapper {
+	}
+		.taskitem-small-transfer .taskitem-background {
+			height: 60px;
+		}
+			.taskitem-small-transfer .taskitem-background-white {
+			}
+			.taskitem-small-transfer .taskitem-background-progress {
+			}
+			.taskitem-small-transfer .taskitem-previewbox {
+				position: absolute;
+				left: 8px;
+				top: 8px;
+				width: 96px;
+				height: 46px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				border: #DDD 1px dashed;
+			}
+			.taskitem-small-transfer .taskitem-previewbox img {
+			}
+			.taskitem-small-transfer .taskitem-timing {
+				position: absolute;
+				left: 112px;
+				top: 38px;
+				width: 0;
+				font-size: 14px;
+			}
+			.taskitem-small-transfer .taskitem-filename {
+				position: absolute;
+				left: 112px;
+				top: 8px;
+				width: calc(100% - 240px);
+				height: 28px;
+				font-size: 20px;
+				font-weight: bold;
+				white-space: nowrap;
+				text-overflow: ellipsis;
+			}
+			.taskitem-small-transfer .taskitem-info {
+				height: 48px;
+				width: 336px;
+			}
+			.taskitem-small-transfer .taskitem-infobefore {
+				position: absolute;
+				top: 6px;
+				right: 448px;
+				width: 0;
+			}
+			.taskitem-small-transfer .taskitem-infoafter {
+				position: absolute;
+				top: 6px;
+				right: 48px;
+				width: 0;
+			}
+			.taskitem-small-transfer .taskitem-rightarrow {
+				opacity: 0;
+			}
+				.taskitem-small-transfer .taskitem-img-format {
+					top: 0px;
+					left: 11px;
+				}
+				.taskitem-small-transfer .taskitem-img-vcodec {
+					top: 0px;
+					left: 123px;					
+				}
+				.taskitem-small-transfer .taskitem-img-acodec {
+					top: 0px;
+					left: 235px;
+				}
+				.taskitem-small-transfer .taskitem-span-format {
+					top: 34px;
+					left: 0px;
+				}
+				.taskitem-small-transfer .taskitem-span-vcodec {
+					top: 34px;
+					left: 112px;					
+				}
+				.taskitem-small-transfer .taskitem-span-acodec {
+					top: 34px;
+					left: 224px;
+				}
+				.taskitem-small-transfer .taskitem-img-size {
+					top: 0px;
+					left: 67px;
+				}
+				.taskitem-small-transfer .taskitem-img-vratecontrol {
+					top: 0px;
+					left: 179px;
+				}
+				.taskitem-small-transfer .taskitem-img-aratecontrol {
+					top: 0px;
+					left: 291px;
+				}
+				.taskitem-small-transfer .taskitem-span-size {
+					top: 34px;
+					left: 56px;
+				}
+				.taskitem-small-transfer .taskitem-span-vratecontrol {
+					top: 34px;
+					left: 168px;					
+				}
+				.taskitem-small-transfer .taskitem-span-aratecontrol {
+					top: 34px;
+					left: 280px;
+				}
+				.taskitem-small-transfer .taskitem-info div {
+					position: absolute;
+					width: 32px;
+					height: 32px;
+					background-size: cover;
+					/*border: #DDD 1px dashed;*/
+				}
+				.taskitem-small-transfer .taskitem-info span {
+					position: absolute;
+					display: block;
+					width: 54px;
+					line-height: 16.5px;
+					font-size: 10px;
+					/*border: #DDD 1px dashed;*/
+				}
+				
+				.taskitem-small-transfer .taskitem-size-compact {
+					line-height: 16.8px;
+					height: 16.8px;
+				}
+
+			.taskitem-small-transfer .taskitem-graphs {
+				position: absolute;
+				right: 48px;
+				top: 8px;
+				width: 0;
+				display: flex;
+				justify-content: space-around;
+			}
+				.taskitem-small-transfer .taskitem-graph {
+					position: relative;
+					display: inline-block;
+					width: 48px;
+					height: 48px;
+				}
+					.taskitem-small-transfer .taskitem-graph-ring {
+					}
+					.taskitem-small-transfer .taskitem-graph-data {
+						position: absolute;
+						top: 50%;
+						width: 100%;
+						text-align: center;
+						font-weight: 600;
+						transform: translateY(-51%);
+						font-size: 12px;
+						font-family: Bahnschrift,Calibri,"SF Electrotome",Avenir,苹方-简,苹方,微软雅黑,"Segoe UI",Consolas,Roboto,黑体;
+					}
+					.taskitem-small-transfer .taskitem-graph-description {
+						position: absolute;
+						bottom: -2px;
+						width: 100%;
+						text-align: center;
+						font-size: 9px;
+					}
+			.taskitem-small-transfer .taskitem-networkgraphs {
+				position: absolute;
+				right: 48px;
+				top: 8px;
+				width: 64px;
+				display: flex;
+				justify-content: space-around;
+			}
+				
+			@media screen and (min-width: 0px) and (max-width: 1199px) {
+			}
+			.taskitem-small-transfer .taskitem-delete {
+			}
+			.taskitem-small-transfer .taskitem-delete:hover {
+			}
+			.taskitem-small-transfer .taskitem-delete:active {
 			}
 
 </style>

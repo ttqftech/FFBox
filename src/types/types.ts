@@ -4,8 +4,8 @@ import { FFmpeg } from '../service/FFmpegInvoke'
 export interface FFBoxServiceInterface {
 	initFFmpeg(): void;
 	getFFmpegVersion(): void;
-	taskAdd(filePath: string, fileName: string, outputParams?: OutputParams): void;
-	getNewlyAddedTaskIds(): void;
+	taskAdd(fileBaseName: string, outputParams?: OutputParams): Promise<number>;
+	mergeUploaded(id: number, hashs: Array<string>): void;
 	taskDelete(id: number): void;
 	taskStart(id: number): void;
 	taskPause(id: number, startFromBehind?: boolean): void;
@@ -23,7 +23,6 @@ export interface FFBoxServiceInterface {
 
 export interface FFBoxServiceEventParam {
 	ffmpegVersion: { content: string };
-	newlyAddedTaskIds: { content: Array<number> };
 	workingStatusUpdate: { value: WorkingStatus };
 	tasklistUpdate: { content: Array<number> };
 	taskUpdate: { id: number; content: Task };
@@ -47,15 +46,54 @@ export interface FFBoxServiceFunctionApi {
 }
 
 export interface OutputParams {
-	input: any;
-	video: any;
-	audio: any;
-	output: any;
+	input: OutputParams_input;
+	video: OutputParams_video;
+	audio: OutputParams_audio;
+	output: OutputParams_output;
+}
+
+export type OutputParams_input = {
+	mode: 'standalone',
+	// 暂定 begin end 仅支持在独立模式下切割时长
+	begin?: string,
+	end?: string,
+} & {
+	files: Array<InputFile>,
+	hwaccel: string,
+}
+
+export type OutputParams_video = {
+	vcodec: string,
+	vencoder: string,
+	resolution: string,
+	framerate: string,
+	ratecontrol: string,
+	ratevalue: number,
+	detail: Object,
+}
+
+export type OutputParams_audio = {
+	acodec: string,
+	aencoder: string,
+	ratecontrol: string,
+	ratevalue: number,
+	vol: number,
+	detail: Object,
+}
+
+export type OutputParams_output = {
+	format: string,
+	moveflags: boolean,
+	filename: string,
+}
+
+export interface InputFile {
+	filePath?: string;		// 本地模式下直接是文件全路径，网络模式下 merge 之后获得的文件名填充到此处
 }
 
 export enum TaskStatus {
 	TASK_DELETED = -2,
-	TASK_PENDING = -1,
+	TASK_INITIALIZING = -1,
 	TASK_STOPPED = 0,
 	TASK_RUNNING = 1,
 	TASK_PAUSED = 2,
@@ -89,8 +127,7 @@ export interface Notification {
 }
 
 export interface Task {
-	fileName: string;
-	filePath: string;
+	fileBaseName: string;
 	before: {
 		format: string;
 		duration: number;

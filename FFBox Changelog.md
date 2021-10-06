@@ -1,5 +1,9 @@
 # FFBox Changelog
 
+`2021-10-06` 文件上传功能实现  
+`2021-10-05` 文件上传功能开发（实现文件 hash 校验；改造 Task 类型；更改 taskAdd 接口，废除 newlyAddedTasks 设计）  
+`2021-10-04` 文件上传功能开发  
+`2021-10-03` 试验使用 Koa 实现文件上传  
 `2021-10-02` FFmpegInvoke 改用新增的 osBridge 实现 Windows 端任务暂停和恢复（移除 PauseAndResumeProcess.exe）；新增退出动画  
 `2021-10-01` 修复 UI 载入时接入服务器时序不对的问题；更新打赏中心的内容  
 `2021-09-30` 优化载入流程，新增载入动画  

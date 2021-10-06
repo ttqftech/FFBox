@@ -7,17 +7,17 @@
 <script lang="ts">
 import Vue from 'vue'
 import Vuex from 'vuex'
+import upath from 'upath';
 
 import MainFrame from '@/electron/containers/MainFrame.vue'
 import Popup from '@/electron/components/floating/Popup/index'
 import Msgbox from '@/electron/components/floating/Msgbox/index.js'
 import Tooltip from '@/electron/components/floating/Tooltip/index.js'
 
-import { StoreState, NotificationLevel, WorkingStatus, TaskStatus, Server, UITask, Task, OutputParams, FFBoxServiceInterface } from '@/types/types'
+import { StoreState, NotificationLevel, WorkingStatus, TaskStatus, Server, UITask, Task, OutputParams, FFBoxServiceInterface, OutputParams_input, OutputParams_video, OutputParams_audio, OutputParams_output } from '@/types/types'
 import { version, buildNumber } from "@/types/constants";
-import { getInitialUITask, randomString } from '@/common/utils'
+import { getInitialUITask, mergeTaskFromService, randomString, replaceOutputParams } from '@/common/utils'
 import { defaultParams } from "../common/defaultParams";
-import { mergeTaskFromService } from '@/service/netApi'
 import { ServiceBridge } from './bridge/serviceBridge'
 import nodeBridge from "./bridge/nodeBridge";
 import osBridge from "./bridge/osBridge";
@@ -112,23 +112,42 @@ const store = new Vuex.Store<StoreState>({
 				currentBridge.taskPause(id);
 			} else if (task.status === TaskStatus.TASK_PAUSED || task.status === TaskStatus.TASK_STOPPING || task.status === TaskStatus.TASK_FINISHED || task.status === TaskStatus.TASK_ERROR) {
 				currentBridge.taskReset(id);
-			} else if (task.status === TaskStatus.TASK_STOPPED) {
+			} else if (task.status === TaskStatus.TASK_STOPPED || task.status === TaskStatus.TASK_INITIALIZING) {
 				currentBridge.taskDelete(id);
 			}
 		},
 		/**
-		 * 添加任务
-		 * @param args name, path, callback
+		 * 添加一系列任务，来自 TaskView.onDrop
 		 */
-		addTask (state, args) {
+		addTasks (state, files: FileList) {
+			let fileCount = files.length;
 			let currentBridge = state.serviceBridges[state.currentServerName];
-			if (!currentBridge) {
-				return;
+			let newlyAddedTaskIds: Array<Promise<number>> = [];
+			let dropDelayCount = 0;
+			for (const file of files) {
+				setTimeout(() => {	// v2.4 版本开始完全可以不要延时，但是太生硬，所以加个动画
+					console.log(file.path);
+					let isRemote = currentBridge.ip !== 'localhost';
+					let promise: Promise<number> = (mainVue as any).addTask(upath.trimExt(file.name), undefined, isRemote ? '' : file.path);
+					if (isRemote) {
+						promise.then((id) => {
+							(mainVue as any).uploadFile(file, currentBridge, id);
+						});
+					}
+					newlyAddedTaskIds.push(promise);
+					if (newlyAddedTaskIds.length === fileCount) {
+						Promise.all(newlyAddedTaskIds).then((ids) => {
+							(mainVue as any).$store.commit('selectedTask_update', new Set(ids));
+						})
+					}
+				}, dropDelayCount);
+				// console.log(dropDelayCount)
+				dropDelayCount += 33.33;
 			}
-			currentBridge.taskAdd(args.path, args.name, JSON.parse(JSON.stringify(state.globalParams)));
-			if (typeof args.callback == 'function') {
-				args.callback();
-			}
+		},
+		mergeUploaded (state, args: { id: number, hash: string }) {
+			let currentBridge = state.serviceBridges[state.currentServerName];
+			currentBridge.mergeUploaded(args.id, [args.hash]);
 		},
 		selectedTask_update (state, set) {
 			state.selectedTask = set;
@@ -138,17 +157,10 @@ const store = new Vuex.Store<StoreState>({
 					return;
 				}
 				for (const id of set) {
-					state.globalParams = JSON.parse(JSON.stringify(currentServer.tasks[id].after));	// replacePara
+					state.globalParams = replaceOutputParams(currentServer.tasks[id].after, state.globalParams);
 					break;
 				}
 			}
-		},
-		selectedTask_getNewlyAddedTaskIds (state) {
-			let currentBridge = state.serviceBridges[state.currentServerName];
-			if (!currentBridge) {
-				return;
-			}
-			currentBridge.getNewlyAddedTaskIds();
 		},
 		// #endregion
 		// #region 参数处理
@@ -159,22 +171,26 @@ const store = new Vuex.Store<StoreState>({
 			if (args) {
 				switch (args.type) {
 					case 'input':
-						state.globalParams.input[args.key] = args.value
+						state.globalParams.input[args.key as keyof OutputParams_input] = args.value;
 						break;
 					case 'video':
-						state.globalParams.video[args.key] = args.value
+						// @ts-ignore
+						state.globalParams.video[args.key as keyof OutputParams_video] = args.value;
 						break;
 					case 'videoDetail':
-						state.globalParams.video.detail[args.key] = args.value
+						state.globalParams.video.detail[args.key as keyof OutputParams_video['detail']] = args.value;
 						break;
 					case 'audio':
-						state.globalParams.audio[args.key] = args.value
+						// @ts-ignore
+						state.globalParams.audio[args.key as keyof OutputParams_audio] = args.value;
 						break;
 					case 'audioDetail':
-						state.globalParams.audio.detail[args.key] = args.value
+						// @ts-ignore
+						state.globalParams.audio.detail[args.key as keyof OutputParams_audio['deatail']] = args.value;
 						break;
 					case 'output':
-						state.globalParams.output[args.key] = args.value
+						// @ts-ignore
+						state.globalParams.output[args.key as keyof OutputParams_output] = args.value;
 						break;
 				}
 			}
@@ -186,7 +202,7 @@ const store = new Vuex.Store<StoreState>({
 				let needToUpdateIds: Array<number> = [];
 				for (const id of state.selectedTask) {
 					let task = currentServer.tasks[parseInt(id)];
-					task.after = JSON.parse(JSON.stringify(state.globalParams));
+					task.after = replaceOutputParams(state.globalParams, task.after);
 					needToUpdateIds.push(parseInt(id));
 				}
 				// paraArray 由 service 算出后回填本地
@@ -216,9 +232,9 @@ const store = new Vuex.Store<StoreState>({
 		 */
 		replacePara (state, after: OutputParams) {
 			if (after) {
-				state.globalParams = JSON.parse(JSON.stringify(after));
+				state.globalParams = replaceOutputParams(after, state.globalParams);
 			} else {
-				state.globalParams = JSON.parse(JSON.stringify(defaultParams));
+				state.globalParams = replaceOutputParams(defaultParams, state.globalParams);
 			}
 		},
 		// #endregion
@@ -317,10 +333,6 @@ const store = new Vuex.Store<StoreState>({
 			bridge.on('ffmpegVersion', (data) => {
 				console.log('event: ffmpegVersion', data);
 				(mainVue as any).handleFFmpegVersion(server, bridge, data.content);
-			});
-			bridge.on('newlyAddedTaskIds', (data) => {
-				console.log('event: newlyAddedTaskIds', data);
-				(mainVue as any).handleNewlyAddedTaskIds(server, bridge, data.content);
 			});
 			bridge.on('workingStatusUpdate', (data) => {
 				console.log('event: workingStatusUpdate', data);
@@ -444,9 +456,6 @@ export default Vue.extend({
 		handleFFmpegVersion(server: Server, bridge: FFBoxServiceInterface, content: string) {
 			server.ffmpegVersion = content || '-';
 		},
-		handleNewlyAddedTaskIds(server: Server, bridge: FFBoxServiceInterface, content: Array<number>) {
-			this.$store.commit('selectedTask_update', new Set(content));
-		},
 		handleWorkingStatusUpdate(server: Server, bridge: FFBoxServiceInterface, workingStatus: WorkingStatus) {
 			server.workingStatus = workingStatus;
 			// 处理 overallProgressTimer
@@ -479,7 +488,7 @@ export default Vue.extend({
 				let remoteKey = remoteKeys[remoteI];
 				if (localI >= localKeys.length) {
 					// 本地下标越界，说明远端添加任务了
-					let newTask = getInitialUITask('', '');
+					let newTask = getInitialUITask('');
 					// newTask = mergeTaskFromService(newTask, ffboxService.getTask(remoteKey) as Task);
 					// 先用一个 InitialUITask 放在新位置，完成列表合并后再统一 getTask() 获取任务信息
 					newTaskIds.push(remoteKey);
@@ -566,10 +575,103 @@ export default Vue.extend({
 		 * 读取 service 中 task id 为 -1 的 globalTask
 		 */
 		updateGlobalTask (server: Server, bridge: FFBoxServiceInterface) {
-			let newTask = getInitialUITask('', '');
+			let newTask = getInitialUITask('');
 			server.tasks[-1] = newTask;
 			bridge.getTask(-1);
 		},
+		/**
+		 * 不带分片功能的文件上传，由 store.addTasks 调用（这样做只是为了拿到 thisVue。这样做确实不好，未来有重构计划）
+		 * id 用于取到 task，此处认为先发送 addTask 指令再 uploadFile，任务就已存在于 tasklist 中，尽管无法保证此顺序
+		 */
+		uploadFile: function (file: File, currentBridge: ServiceBridge, id: number) {
+			let CryptoJS = nodeBridge.cryptoJS;
+			let reader = new FileReader();
+			let thisVue = this;
+			reader.readAsBinaryString(file);
+			reader.addEventListener('loadend', () => {
+				console.log(file.name, '开始计算文件校验码');
+				let contentBuffer = reader.result as string;
+				let toEncode = CryptoJS.enc.Latin1.parse(contentBuffer);
+				let hash = CryptoJS.SHA1(toEncode).toString();
+				console.log(file.name, '校验码：' + hash);
+				fetch(`http://${currentBridge.ip}:${currentBridge.port}/upload/check/`, {
+					method: 'post',
+					body: JSON.stringify({
+						hashs: [hash]
+					}),
+					headers: new Headers({
+						'Content-Type': 'application/json'
+					}),
+				}).then((response) => {
+					response.text().then((text) => {
+						let content = JSON.parse(text) as Array<number>;
+						if (content[0] % 2) {
+							console.log(file.name, '已缓存');
+							thisVue.$store.commit('mergeUploaded', { id, hash });
+						} else {
+							console.log(file.name, '未缓存');
+							let currentServer = this.$store.state.servers[this.$store.state.currentServerName] as Server;
+							let task = currentServer.tasks[id];
+							let form = new FormData();
+							form.append('name', hash);
+							form.append('file', file);
+							let xhr = new XMLHttpRequest;
+							xhr.upload.addEventListener('progress', (event) => {
+								let progress = event.loaded / event.total;
+								// 非常糟糕的设计，无法保证 task 必存在，progress 的计算也不规范，以后改进
+								task.progress_smooth.progress = progress < 1 ? progress : 0;
+							}, false);
+							xhr.onreadystatechange = function (e) {
+								if (xhr.readyState !== 0) {
+									if (xhr.status >= 400 && xhr.status < 500) {
+										thisVue.$popup({
+											message: `【${file.name}】网络请求故障，上传失败`,
+											level: NotificationLevel.error
+										})
+									} else if (xhr.status >= 500 && xhr.status < 600) {
+										thisVue.$popup({
+											message: `【${file.name}】服务器故障，上传失败`,
+											level: NotificationLevel.error
+										})
+									}
+								}
+							}
+							xhr.onload = function () {
+								console.log(file.name, `发送完成`);
+								thisVue.$store.commit('mergeUploaded', { id, hash });
+							}
+							xhr.open('post', `http://${currentBridge.ip}:${currentBridge.port}/upload/file/`, true);
+							// xhr.setRequestHeader('Content-Type', 'multipart/form-data');
+							xhr.send(form);
+						}
+					})
+				}).catch((err) => {
+					console.error('网络请求出错', err);
+				})
+			})
+		},
+		/**
+		 * 添加任务
+		 * path 将自动添加到 params 中去
+		 * 对于远程任务，path 留空
+		 * @param args baseName, path, callback
+		 */
+		addTask (baseName: string, callback: Function, path?: string) {
+			let currentBridge = this.$store.state.serviceBridges[this.$store.state.currentServerName] as ServiceBridge;
+			if (!currentBridge) {
+				return;
+			}
+			let params: OutputParams = JSON.parse(JSON.stringify(this.$store.state.globalParams));
+			params.input.files.push({
+				filePath: path
+			});
+			let result = currentBridge.taskAdd(baseName, params);
+			if (typeof callback == 'function') {
+				callback(result);
+			}
+			return result;
+		},
+
 	},
 	mounted: function () {
 		document.title = 'FFBox v' + version;
