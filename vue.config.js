@@ -1,16 +1,33 @@
+// var webpack = require('webpack');
+
 module.exports = {
+    // configureWebpack: (config) => {
+    //     config.plugins.push(new webpack.DefinePlugin({ "global.GENTLY": false }));
+    //     config.node.__dirname = true;
+    //     console.log(config);
+    //     // plugins: [
+    //     //     new webpack.DefinePlugin({ "global.GENTLY": false })
+    //     // ]
+    // },
+    // chainWebpack: (config) => {
+    //     // console.log(config);
+    // },
     pluginOptions: {
         electronBuilder: {
+            // chainWebpackMainProcess: (config) => {
+            //     // Chain webpack config for electron main process only
+            //     console.log(config);
+            // },
             /*
-            chainWebpackMainProcess: (config) => {
-                // Chain webpack config for electron main process only
-            },
             chainWebpackRendererProcess: (config) => {
                 // Chain webpack config for electron renderer process only (won't be applied to web builds)
                 console.log(config);
                 config.target = 'electron-renderer';
             },
             */
+            externals: [
+                'formidable', 'koa-body'
+            ],
             builderOptions: {
                 appId: 'ttqftech.ffbox',
                 productName: 'FFBox',

@@ -10,11 +10,11 @@
 					<buttonbox text="GitHub" imgsrc="/images/github.svg" @click="jumpToGithub"></buttonbox>
 					<buttonbox text="Gitee" imgsrc="/images/gitee.svg" @click="jumpToGitee"></buttonbox>
 				</div>
-				<p>下面这个按钮就不是免费的，除非你真的想点 _(:з」∠)_</p>
+				<p>下面这个按钮就不是免费的，除非你想请我喝奶茶🧋</p>
 				<div class="QRscreens">
 					<buttonbox text="Ko-Fi" imgsrc="/images/ko-fi.svg" @click="jumpToKoFi"></buttonbox>
 				</div>
-				<p>你可以扫下面这个🐴每天拿一分钱</p>
+				<p>你可以扫下面这个🐴每天拿几分钱</p>
 				<div class="QRscreens">
 					<div class="QRscreen QRscreen-alipayredenvelop">
 						<div class="QRuppertext"><strong>扫码领红包</strong></div>
@@ -27,7 +27,7 @@
 						</div>
 					</div>
 				</div>
-				<p>如果嫌不过瘾，扫下面几个🐴也行 _(:з」∠)_（只要你喜欢</p>
+				<p>如果还想把我喂胖，扫下面几个🐴也行 _(:з」∠)_（只要你喜欢</p>
 				<div class="QRscreens">
 					<div class="QRscreen QRscreen-alipay">
 						<div class="QRuppertext">推荐使用<strong>支付宝</strong></div>

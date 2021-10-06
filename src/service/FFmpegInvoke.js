@@ -310,7 +310,11 @@ class FFmpeg {
 				callback();	
 			}
 		});
-		this.cmd.stdin.write("q");
+		try {
+			this.cmd.stdin.write("q");			
+		} catch (error) {
+			console.error('FFmpeg 似乎已意外退出', error);
+		}
 	}
 	pause () {
 		switch (process.platform) {

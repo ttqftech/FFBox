@@ -2,7 +2,9 @@ import { OutputParams } from "@/types/types";
 
 export const defaultParams: OutputParams = {
     input: {
-		hwaccel: '不使用'
+		mode: 'standalone',
+		hwaccel: '不使用',
+		files: [],
 	},
 	video: {
 		vcodec: 'HEVC',
@@ -21,7 +23,6 @@ export const defaultParams: OutputParams = {
 		}
 	},
 	audio: {
-		enable: 1,
 		acodec: '不重新编码',
 		aencoder: '默认',
 		ratecontrol: 'CBR/ABR',

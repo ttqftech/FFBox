@@ -180,24 +180,30 @@ const generator = {
 		}
 		return ret
 	},
-	getInputParam: function (inputParams) {
-		var ret = []
+	getInputParam: function (inputParams, withQuotes = false) {
+		let ret = [];
 		if (inputParams.hwaccel != '不使用') {
-			ret.push('-hwaccel')
-			var hwaccel = hwaccels.find((value) => {
+			ret.push('-hwaccel');
+			let hwaccel = hwaccels.find((value) => {
 				return value.sName == inputParams.hwaccel
-			}).hwaccel
-			ret.push(hwaccel)
+			}).hwaccel;
+			ret.push(hwaccel);
 		}
-		if (inputParams.begin) {
-			ret.push('-ss')
-			ret.push(inputParams.begin)
+		if (inputParams.mode === 'standalone') {
+			if (inputParams.begin) {
+				ret.push('-ss');
+				ret.push(inputParams.begin);
+			}
+			if (inputParams.end) {
+				ret.push('-to');
+				ret.push(inputParams.end);
+			}
+			ret.push('-i');
+			let quoteStr = withQuotes ? `"` : '';
+			let filePath = inputParams.files.length && inputParams.files[0].filePath || '[输入文件路径]';
+			ret.push(quoteStr + filePath + quoteStr);
 		}
-		if (inputParams.end) {
-			ret.push('-to')
-			ret.push(inputParams.end)
-		}
-	return ret
+		return ret;
 	}
 }
 export { formats, hwaccels, generator }

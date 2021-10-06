@@ -245,12 +245,11 @@ export function randomString (length = 6, dictionary = 'abcdefghijklmnopqrstuvwx
 
 // #endregion
 
-// #region 初始值区
+// #region 任务转换区
 
-export function getInitialTask(fileName: string, filePath: string, outputParams?: OutputParams): Task {
+export function getInitialTask(fileBaseName: string, outputParams?: OutputParams): Task {
 	let ret: Task = {
-		fileName: fileName,
-		filePath: filePath,
+		fileBaseName: fileBaseName,
 		before: {
 			format: '读取中',
 			duration: NaN,
@@ -262,10 +261,33 @@ export function getInitialTask(fileName: string, filePath: string, outputParams?
 			abitrate: NaN,
 		},
 		after: {
-			input: {},
-			video: {},
-			audio: {},
-			output: {},		
+			input: {
+				mode: 'standalone',
+				hwaccel: '',
+				files: [],
+			},
+			video: {
+				vcodec: '',
+				vencoder: '',
+				resolution: '',
+				framerate: '',
+				ratecontrol: '',
+				ratevalue: NaN,
+				detail: {}
+			},
+			audio: {
+				acodec: '',
+				aencoder: '',
+				ratecontrol: '',
+				ratevalue: NaN,
+				vol: NaN,
+				detail: {}
+			},
+			output: {
+				format: '',
+				moveflags: false,
+				filename: '',
+			},
 		},
 		paraArray: [],
 		status: TaskStatus.TASK_STOPPED,
@@ -286,9 +308,9 @@ export function getInitialTask(fileName: string, filePath: string, outputParams?
 	return ret;
 }
 
-export function getInitialServiceTask(fileName: string, filePath: string, outputParams?: OutputParams): ServiceTask {
+export function getInitialServiceTask(fileName: string, outputParams?: OutputParams): ServiceTask {
 	let ret: ServiceTask = {
-		...getInitialTask(fileName, filePath, outputParams),
+		...getInitialTask(fileName, outputParams),
 		...{
 			ffmpeg: null
 		}
@@ -296,9 +318,9 @@ export function getInitialServiceTask(fileName: string, filePath: string, output
 	return ret;
 }
 
-export function getInitialUITask(fileName: string, filePath: string, outputParams?: OutputParams): UITask {
+export function getInitialUITask(fileName: string, outputParams?: OutputParams): UITask {
 	let ret: UITask = {
-		...getInitialTask(fileName, filePath, outputParams),
+		...getInitialTask(fileName, outputParams),
 		...{
 			progress: {
 				progress: 0,
@@ -318,6 +340,53 @@ export function getInitialUITask(fileName: string, filePath: string, outputParam
 		}
 	}
 	return ret;	
+}
+
+/**
+ * 任务信息在进行网络传送前调用此函数，过滤掉仅存在于 ServiceTask | UITask 的属性
+ */
+export function convertAnyTaskToTask(task: ServiceTask | UITask): Task {
+    return {
+        fileBaseName: task.fileBaseName,
+        before: task.before,
+        after: task.after,
+        paraArray: task.paraArray,
+        status: task.status,
+        progressHistory: task.progressHistory,
+        cmdData: task.cmdData,
+        errorInfo: task.errorInfo,
+        notifications: task.notifications,
+    }
+}
+
+/**
+ * 来自 FFBoxService 的任务信息自网络接收后与现存的 UITask 进行合并
+ */
+export function mergeTaskFromService(self: UITask, remote: Task): UITask {
+    let ret = self;
+    Object.assign(ret, JSON.parse(JSON.stringify(remote)));
+    return ret;
+}
+
+/**
+ * 在不影响原有任务特有参数（如文件列表）的情况下替换 OutputParams，用于取代 JSON.parse(JSON.stringify())
+ * @param from 新的参数列表
+ * @param to 任务原有的参数列表
+ */
+export function replaceOutputParams(from: OutputParams, to: OutputParams) {
+	let ret: OutputParams;
+	ret = {
+		input: JSON.parse(JSON.stringify(from.input)),
+		video: JSON.parse(JSON.stringify(from.video)),
+		audio: JSON.parse(JSON.stringify(from.audio)),
+		output: JSON.parse(JSON.stringify(from.output)),
+	}
+	// 以下参数更改为任务原有的参数
+	ret.input.mode = to.input.mode;
+	ret.input.begin = to.input.begin;
+	ret.input.end = to.input.end;
+	ret.input.files = to.input.files;
+	return ret;
 }
 
 // #endregion

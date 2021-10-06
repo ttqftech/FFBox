@@ -2,13 +2,13 @@
 	<div id="command-view">
 		<div id="commandwin" class="commandwin-small">
 			<div id="outputCommand">
-				<div class="commandwin-title" v-html="`FFmpeg 输出（${selectedTask == null ? '全局' : selectedTask.filePath}）`"></div>
+				<div class="commandwin-title" v-html="`FFmpeg 输出（${selectedTask == null ? '全局' : selectedTask.fileBaseName}）`"></div>
 				<div class="commandwin-box">
 					<textarea id="commandwin-output" ref="commandwin_output" readonly v-html="textareaOutput"></textarea>
 				</div>
 			</div>
 			<div id="currentCommand">
-				<div class="commandwin-title" id="commandwin-current-title" v-html="`当前文件指令（${selectedTask == null ? '未选择文件' : selectedTask.filePath}）`"></div>
+				<div class="commandwin-title" id="commandwin-current-title" v-html="`当前文件指令（${selectedTask == null ? '未选择文件' : selectedTask.fileBaseName}）`"></div>
 				<div class="commandwin-box">
 					<textarea id="commandwin-current" ref="commandwin_current" readonly v-model="textareaCurrent"></textarea>
 				</div>
@@ -81,7 +81,7 @@ export default Vue.extend({
 		},
 		textareaGlobal: function (): string {
 			let globalParams = this.$store.state.globalParams;
-			let globalParaArray = getFFmpegParaArray('[输入目录]/[输入文件名].[输入扩展名]', globalParams.input, globalParams.video, globalParams.audio, globalParams.output);
+			let globalParaArray = getFFmpegParaArray(globalParams);
 			if (globalParaArray) {
 				return ['ffmpeg', ...globalParaArray].join(' ');
 			} else {
