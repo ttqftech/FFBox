@@ -462,18 +462,18 @@ export default Vue.extend({
 			if (workingStatus === WorkingStatus.running && !server.overallProgressTimerID) {
 				let timerID = setInterval(overallProgressTimer, 80, workingStatus, server);
 				server.overallProgressTimerID = timerID;
-				overallProgressTimer(workingStatus, server);
+				overallProgressTimer(server);
 			} else if (workingStatus === WorkingStatus.stopped && server.overallProgressTimerID) {
 				clearInterval(server.overallProgressTimerID);
 				server.overallProgressTimerID = NaN;
-				overallProgressTimer(workingStatus, server);
+				overallProgressTimer(server);
 				if (nodeBridge.remote && nodeBridge.remote.getCurrentWindow().isFocused()) {
 					nodeBridge.remote.getCurrentWindow().flashFrame(true);
 				}
 			} else if (workingStatus === WorkingStatus.paused && server.overallProgressTimerID) {
 				clearInterval(server.overallProgressTimerID);
 				server.overallProgressTimerID = NaN;
-				overallProgressTimer(workingStatus, server);
+				overallProgressTimer(server);
 			}
 		},
 		handleTasklistUpdate(server: Server, bridge: FFBoxServiceInterface, content: Array<number>) {
@@ -591,6 +591,7 @@ export default Vue.extend({
 			reader.addEventListener('loadend', () => {
 				console.log(file.name, '开始计算文件校验码');
 				let contentBuffer = reader.result as string;
+				// 为什么用 Latin1：https://www.icode9.com/content-1-193333.html
 				let toEncode = CryptoJS.enc.Latin1.parse(contentBuffer);
 				let hash = CryptoJS.SHA1(toEncode).toString();
 				console.log(file.name, '校验码：' + hash);
@@ -752,43 +753,46 @@ export default Vue.extend({
 });
 
 /**
+ * 用于 dashboardTimer
+ * 通过线性加权移动平均获取数值变化的速率（k 值）
+ */
+function getKbyLWMA(sampleCount: number, xFactorName: string, yFactorsName: Array<string>, data: Array<any>): Array<number> {
+	let deltaXFactorSum = 0;
+	let deltaYFactorsSum = Array(yFactorsName.length).fill(0);
+	// 对于数据，在区间 [data.length - sampleCount, data.length - 1] 内，其权重在 [1, sampleCount] 之间递增
+	// 因为采样数可能大于总样本数，所以倒序遍历，先计算最大的权重（index 最大），直到无法继续计算
+	for (let weight = sampleCount, index = data.length - 1; index > 0 && weight > 0; weight--, index--) {
+		deltaXFactorSum += weight * (data[index][xFactorName] - data[index - 1][xFactorName]);
+		yFactorsName.forEach((factorName, i) => {
+			deltaYFactorsSum[i] += weight * (data[index][factorName] - data[index - 1][factorName]);
+		});
+	}
+	// 分子分母都有 totalWeight，所以消了，因此算式里就没有 totalWeight 出现
+	return yFactorsName.map((factorName, i) => {
+		return deltaYFactorsSum[i] / deltaXFactorSum;
+	})
+}
+
+/**
  * 计算单个任务的 timer 函数，根据计算结果原地修改 progress 和 progress_smooth
  */
 function dashboardTimer(task: UITask) {
-	{
-		let prog = task.progressHistory.normal;
-		let index = prog.length - 1;
-		let avgTotal = 6, avgCount = 0;						// avgTotal 为权重值，每循环一次 - 1；avgCount 每循环一次加一次权重
-		let deltaRealTime = 0, deltaFrame = 0, deltaTime = 0;
-		while (index > 1 && prog.length - index < 6) {												// 数据量按最大 6 条算，忽略第 1 条
-			deltaRealTime += (prog[index].realTime - prog[index - 1].realTime) * avgTotal;			// x 轴
-			deltaFrame += (prog[index].frame - prog[index - 1].frame) * avgTotal;					// y 轴
-			deltaTime += (prog[index].mediaTime - prog[index - 1].mediaTime) * avgTotal;			// y 轴
-			avgCount += avgTotal;
-			avgTotal--;
-			index--;
-		}
-		deltaRealTime /= avgCount; deltaFrame /= avgCount; deltaTime /= avgCount;							// 取平均
-		index = prog.length - 1;
-		var frameK = (deltaFrame / deltaRealTime); var frameB = prog[index].frame - frameK * prog[index].realTime;		// b = y1 - x1 * k;
-		var timeK = (deltaTime / deltaRealTime); var timeB = prog[index].mediaTime - timeK * prog[index].realTime;
+	if (task.progressHistory.normal.length <= 2) {
+		// 任务刚开始时显示的数据不准确
+		return;
 	}
-	{
-		var prog = task.progressHistory.size;
-		var index = prog.length - 1;
-		var avgTotal = 3, avgCount = 0;					// avgTotal 为权重值，每循环一次 - 1；avgCount 每循环一次加一次权重
-		var deltaSysTime = 0, deltaSize = 0;
-		while (index > 0 && prog.length - index < 3) {												// 数据量按最大 3 条算，无需忽略第 1 条
-			deltaSysTime += (prog[index].realTime - prog[index - 1].realTime) * avgTotal;		// x 轴
-			deltaSize += (prog[index].size - prog[index - 1].size) * avgTotal;		// y 轴
-			avgCount += avgTotal;
-			avgTotal--;
-			index--;
-		}
-		deltaSysTime /= avgCount; deltaSize /= avgCount;	// 取平均
-		index = prog.length - 1;
-		var sizeK = (deltaSize / deltaSysTime); var sizeB = prog[index].size - sizeK * prog[index].realTime;
-	}
+	let progressNormal = task.progressHistory.normal;
+	let [frameK, timeK] = getKbyLWMA(5, 'realTime', ['frame', 'mediaTime'], task.progressHistory.normal);	// 单位时间（1s）内 frame 和 mediaTime 的增速
+	let [frameB, timeB] = [
+		progressNormal[progressNormal.length - 1].frame - frameK * progressNormal[progressNormal.length - 1].realTime,
+		progressNormal[progressNormal.length - 1].mediaTime - timeK * progressNormal[progressNormal.length - 1].realTime,
+	];
+
+	let progressSize = task.progressHistory.size;
+	let [sizeK] = getKbyLWMA(5, 'realTime', ['size'], task.progressHistory.size);	// 单位时间（1s）内 size 的增速
+	let [sizeB] = [
+		progressSize[progressSize.length - 1].size - sizeK * progressSize[progressSize.length - 1].realTime,
+	];
 
 	let sysTime = new Date().getTime() / 1000;
 	let currentFrame = frameK * sysTime + frameB;
@@ -797,25 +801,22 @@ function dashboardTimer(task: UITask) {
 	// console.log("frameK: " + frameK + ", timeK: " + timeK + ", sizeK: " + sizeK);
 	// console.log("currentFrame: " + currentFrame + ", currentTime: " + currentTime + ", currentSize: " + currentSize);
 
-	// 界面显示内容：码率、速度、时间、帧
-	// 计算方法：码率：Δ大小/Δ时间　速度：（带视频：Δ帧/视频帧速/Δ系统时间　纯音频：Δ时间/Δ系统时间（秒））　时间、帧：平滑
+	// 任务进度计算
 	if (task.before.duration !== -1) {
-		var progress = currentTime / task.before.duration
+		let progress = currentTime / task.before.duration;
 		if (isNaN(progress) || progress == Infinity) {
-			task.progress.progress = 0
+			task.progress.progress = 0;
 		} else {
-			task.progress.progress = progress
+			task.progress.progress = progress;
 		}
 	} else {
 		task.progress.progress = 0.5;
 	}
-	if (task.progress.progress < 0.995) {				// 进度满了就别更新了
+
+	// 进度细节计算
+	if (task.progress.progress < 0.995) {
 		task.progress.bitrate = (sizeK / timeK) * 8;
-		if (!isNaN(task.before.vframerate)) {				// 可以读出帧速，用帧速算更准确
-			task.progress.speed = frameK / task.before.vframerate;
-		} else {
-			task.progress.speed = 0;
-		}
+		task.progress.speed = frameK / task.before.vframerate || timeK;	// 如果可以读出帧速，或者输出的是视频，用帧速算 speed 更准确；否则用时间算 speed
 		task.progress.time = currentTime;
 		task.progress.frame = currentFrame;
 
@@ -830,15 +831,17 @@ function dashboardTimer(task: UITask) {
 		if (isNaN(task.progress_smooth.time)) {task.progress_smooth.time = 0;} 
 		if (isNaN(task.progress_smooth.frame)) {task.progress_smooth.frame = 0;} 
 	} else {
+		// 进度满了就别更新了
 		task.progress.progress = 1;
 	}
 	// task.progress_smooth = Object.assign({}, task.progress_smooth); 
 }
 
 /**
- * 计算整体进度的 timer，根据计算结果修改 currentServer.progress 和 progressBar
+ * 计算整体进度的 timer，根据计算结果修改 currentServer.progress
+ * （progressBar 的修改由 titlebar.vue 负责）
  */
-function overallProgressTimer(workingStatus: WorkingStatus, currentServer: Server) {
+function overallProgressTimer(currentServer: Server) {
 	let tasks = currentServer.tasks;
 	let totalTime = 0.000001;
 	let totalProcessedTime = 0;
