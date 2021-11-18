@@ -509,7 +509,7 @@ var acodecs = [
 				...默认编码器,
 				parameters: [
 					{
-						mode: "combo", parameter: "sample_fmt", display: "采样频率",
+						mode: "combo", parameter: "ar", display: "采样频率",
 						items: [ 自动, sr_48000 ]
 					},
 					{
@@ -537,7 +537,7 @@ var acodecs = [
 				codecName: 'opus',
 				parameters: [
 					{
-						mode: "combo", parameter: "sample_fmt", display: "采样频率",
+						mode: "combo", parameter: "ar", display: "采样频率",
 						items: [ 自动, sr_48000 ]
 					},
 					{
@@ -565,7 +565,7 @@ var acodecs = [
 				codecName: 'libopus',
 				parameters: [
 					{
-						mode: "combo", parameter: "sample_fmt", display: "采样频率",
+						mode: "combo", parameter: "ar", display: "采样频率",
 						items: [ 自动, sr_48000, sr_24000, sr_16000, sr_12000, sr_8000 ]
 					},
 				],
@@ -595,7 +595,7 @@ var acodecs = [
 				...默认编码器,
 				parameters: [
 					{
-						mode: "combo", parameter: "sample_fmt", display: "采样频率",
+						mode: "combo", parameter: "ar", display: "采样频率",
 						items: [ 自动, sr_96000, sr_88200, sr_64000, sr_48000, sr_44100, sr_32000, sr_24000, sr_22050, sr_16000, sr_12000, sr_11025, sr_8000, sr_7350 ]
 					},
 					{
@@ -734,7 +734,7 @@ var acodecs = [
 				codecName: 'libmp3lame',
 				parameters: [
 					{
-						mode: "combo", parameter: "sample_fmt", display: "采样频率",
+						mode: "combo", parameter: "ar", display: "采样频率",
 						items: [ 自动, sr_48000, sr_44100, sr_32000, sr_24000, sr_22050, sr_16000, sr_12000, sr_11025, sr_8000 ]
 					},
 					{
@@ -762,7 +762,7 @@ var acodecs = [
 				codecName: 'libshine',
 				parameters: [
 					{
-						mode: "combo", parameter: "sample_fmt", display: "采样频率",
+						mode: "combo", parameter: "ar", display: "采样频率",
 						items: [ 自动, sr_48000, sr_44100, sr_32000 ]
 					},
 					{
@@ -795,7 +795,7 @@ var acodecs = [
 				...默认编码器,
 				parameters: [
 					{
-						mode: "combo", parameter: "sample_fmt", display: "采样频率",
+						mode: "combo", parameter: "ar", display: "采样频率",
 						items: [ 自动, sr_48000, sr_44100, sr_32000, sr_24000, sr_22050, sr_16000 ]
 					},
 					{
@@ -823,7 +823,7 @@ var acodecs = [
 				codecName: 'mp2',
 				parameters: [
 					{
-						mode: "combo", parameter: "sample_fmt", display: "采样频率",
+						mode: "combo", parameter: "ar", display: "采样频率",
 						items: [ 自动, sr_48000, sr_44100, sr_32000, sr_24000, sr_22050, sr_16000 ]
 					},
 					{
@@ -851,7 +851,7 @@ var acodecs = [
 				codecName: 'mp2fixed',
 				parameters: [
 					{
-						mode: "combo", parameter: "sample_fmt", display: "采样频率",
+						mode: "combo", parameter: "ar", display: "采样频率",
 						items: [ 自动, sr_48000, sr_44100, sr_32000, sr_24000, sr_22050, sr_16000 ]
 					},
 					{
@@ -879,7 +879,7 @@ var acodecs = [
 				codecName: 'libtwolame',
 				parameters: [
 					{
-						mode: "combo", parameter: "sample_fmt", display: "采样频率",
+						mode: "combo", parameter: "ar", display: "采样频率",
 						items: [ 自动, sr_48000, sr_44100, sr_32000, sr_24000, sr_22050, sr_16000 ]
 					},
 					{
@@ -1217,7 +1217,7 @@ var acodecs = [
 				...默认编码器,
 				parameters: [
 					{
-						mode: "combo", parameter: "sample_fmt", display: "采样频率",
+						mode: "combo", parameter: "ar", display: "采样频率",
 						items: [ 自动, sr_48000, sr_44100, sr_32000, sr_24000, sr_22050, sr_16000, sr_12000, sr_11025, sr_8000 ]
 					},
 							{
@@ -1245,7 +1245,7 @@ var acodecs = [
 				codecName: 'dca',
 				parameters: [
 					{
-						mode: "combo", parameter: "sample_fmt", display: "采样频率",
+						mode: "combo", parameter: "ar", display: "采样频率",
 						items: [ 自动, sr_48000, sr_44100, sr_32000, sr_24000, sr_22050, sr_16000, sr_12000, sr_11025, sr_8000 ]
 					},
 							{

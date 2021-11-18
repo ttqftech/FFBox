@@ -1,6 +1,6 @@
 {
   "name": "FFBox",
-  "version": "3.0.0-beta-1",
+  "version": "3.0.0-gamma",
   "private": true,
   "description": "An user-friendly ffmpeg GUI",
   "main": "background.js",

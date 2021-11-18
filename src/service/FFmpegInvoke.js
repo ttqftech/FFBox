@@ -63,9 +63,9 @@ class FFmpeg {
 		 */
 		switch (this.sm) {
 			case 0:
-				if (thisLine.includes(`frame=`) && !thisLine.includes(`Lsize`)) {		// 🔵 status
+				if (thisLine.includes(`frame=`) && !thisLine.includes(`Lsize`)) {		// 🔵 status（有视频）
 					// var l_status = scanf(thisLine, `frame=%d fps=%f q=%f size=%dkB time=%d:%d:%d.%d bitrate=%dkbits/s speed=%dx`);
-					var l_status = thisLine.match(/(\d+([.|:]*\d*)*)|N\/A/g);
+					var l_status = thisLine.match(/(\d+([.|:]?\d*)*)|(N\/A)/g);
 					var time = l_status[4].match(/\d+/g);
 					this.emit(`status`, {
 						frame: parseInt(l_status[0]),
@@ -75,6 +75,19 @@ class FFmpeg {
 						time: time[0] * 3600 + time[1] * 60 + parseInt(time[2]) + time[3] * 0.01,
 						bitrate: parseFloat(l_status[5]),
 						speed: parseFloat(l_status[6])
+					});
+				} else if (thisLine.includes(`size=`)) {								// 🔵 status（无视频）
+					// var l_status = scanf(thisLine, `size=%dkB time=%d:%d:%d.%d bitrate=%dkbits/s speed=%dx`);
+					var l_status = thisLine.match(/(\d+([.|:]?\d*)*)|(N\/A)/g);
+					var time = l_status[1].match(/\d+/g);
+					this.emit(`status`, {
+						frame: NaN,
+						fps: NaN,
+						q: NaN,
+						size: parseInt(l_status[0]),
+						time: time[0] * 3600 + time[1] * 60 + parseInt(time[2]) + time[3] * 0.01,
+						bitrate: parseFloat(l_status[2]),
+						speed: parseFloat(l_status[3])
 					});
 				} else if (thisLine.includes(`Input #`)) {								// ⚪ metadata：获得媒体信息
 					var format = selectString(thisLine, `, `, `, from`, 0).text;
