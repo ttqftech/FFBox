@@ -230,8 +230,9 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 			throw Error(`状态机执行异常！任务 id：${id}，操作：启动`);
 		}
 		task.status = TaskStatus.TASK_RUNNING;
-		task.progressHistory = {
-			normal: [],
+		task.progressLog = {
+			time: [],
+			frame: [],
 			size: [],
 			lastStarted: new Date().getTime() / 1000,
 			elapsed: 0,
@@ -272,31 +273,21 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 			this.queueAssign(Object.keys(this.tasklist).findIndex((key) => parseInt(key) === id) + 1);
 		});
 		newFFmpeg.on('status', (status: FFmpegProgress) => {
-			task.progressHistory.normal.push({
-				realTime: new Date().getTime() / 1000, 
-				mediaTime: status.time,
-				frame: status.frame,
-			});
-			// size 每隔一段体积才更新一次，所以单独对待
-			if (status.size !== task.progressHistory.size.slice(-1)[0].size) {
-				task.progressHistory.size.push({
-					realTime: new Date().getTime() / 1000,
-					size: status.size,
-				});
+			for (const parameter of ['time', 'frame', 'size']) {
+				const _parameter = parameter as 'time' | 'frame' | 'size';
+				task.progressLog[_parameter].push([new Date().getTime() / 1000, status[_parameter]]);
+				task.progressLog[_parameter].splice(0, task.progressLog[_parameter].length - 6);	// 限制列表最大长度为 6
 			}
-			// 限制列表最大长度为 6
-			task.progressHistory.normal.splice(0, task.progressHistory.normal.length - 6);
-			task.progressHistory.size.splice(0, task.progressHistory.size.length - 6);
 			if (this.functionLevel < 50) {
-				if (task.progressHistory.normal.slice(-1)[0].mediaTime > 671 ||
-					task.progressHistory.elapsed + new Date().getTime() / 1000 - task.progressHistory.lastStarted > 671) {
+				if (task.progressLog.time[task.progressLog.time.length - 1][1] > 671 ||
+					task.progressLog.elapsed + new Date().getTime() / 1000 - task.progressLog.lastStarted > 671) {
 					this.trailLimit_stopTranscoding(id);
 					return;
 				}
 			}
 			this.emit('progressUpdate', {
 				id,
-				content: task.progressHistory,
+				content: task.progressLog,
 			});
 		});
 		newFFmpeg.on('data', (data: string) => {
@@ -326,16 +317,11 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 			});
 			this.queueAssign(Object.keys(this.tasklist).findIndex((key) => parseInt(key) === id) + 1);
 		});
-		task.progressHistory.normal.push({
-			realTime: new Date().getTime() / 1000,
-			mediaTime: 0,
-			frame: 0
-		});
-		task.progressHistory.size.push({
-			realTime: new Date().getTime() / 1000,
-			size: 0
-		});
-		task.progressHistory.lastStarted = new Date().getTime() / 1000;
+		for (const parameter of ['time', 'frame', 'size']) {
+			const _parameter = parameter as 'time' | 'frame' | 'size';
+			task.progressLog[_parameter].push([new Date().getTime() / 1000, 0]);
+		}
+		task.progressLog.lastStarted = new Date().getTime() / 1000;
 		task.ffmpeg = newFFmpeg;
 		this.emit('taskUpdate', {
 			id,
@@ -360,8 +346,8 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 		}
 		task.status = TaskStatus.TASK_PAUSED;
 		task.ffmpeg!.pause();
-		task.progressHistory.lastPaused = new Date().getTime() / 1000;
-		task.progressHistory.elapsed += task.progressHistory.lastPaused - task.progressHistory.lastStarted;
+		task.progressLog.lastPaused = new Date().getTime() / 1000;
+		task.progressLog.elapsed += task.progressLog.lastPaused - task.progressLog.lastStarted;
 		this.emit('taskUpdate', {
 			id,
 			content: convertAnyTaskToTask(task),
@@ -387,14 +373,14 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 		}
 		task.status = TaskStatus.TASK_RUNNING;
 		let nowRealTime = new Date().getTime() / 1000;
-		let passedTime = nowRealTime - task.progressHistory.lastPaused;
-		for (const item of task.progressHistory.normal) {
-			item.realTime += passedTime;
+		let passedTime = nowRealTime - task.progressLog.lastPaused;
+		for (const parameter of ['time', 'frame', 'size']) {
+			const _parameter = parameter as 'time' | 'frame' | 'size';
+			for (const logLine of task.progressLog[_parameter]) {
+				logLine[0] += passedTime;
+			}
 		}
-		for (const item of task.progressHistory.size) {
-			item.realTime += passedTime;
-		}
-		task.progressHistory.lastStarted = nowRealTime;
+		task.progressLog.lastStarted = nowRealTime;
 		task.ffmpeg!.resume();
 		this.emit('taskUpdate', {
 			id,
@@ -593,7 +579,7 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 			task.after = replaceOutputParams(param, task.after);
 			let filePath = task.after.input.files[0].filePath;
 			task.paraArray = getFFmpegParaArray(task.after, true);
-			console.log('新的 paraArray', task.paraArray);
+			console.log('新的 paraArray：', task.paraArray.join(', '));
 			this.getTask(id);
 		}
 	}

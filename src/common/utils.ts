@@ -1,6 +1,6 @@
 // #region 格式转换区
 
-import { OutputParams, ServiceTask, Task, TaskStatus, UITask } from "@/types/types";
+import { OutputParams, ServiceTask, Task, TaskStatus, TransferStatus, UITask } from "@/types/types";
 
 /** 
  * 传入 "xxx kbps"，返回比特率（Kbps）
@@ -248,7 +248,7 @@ export function randomString (length = 6, dictionary = 'abcdefghijklmnopqrstuvwx
 // #region 任务转换区
 
 export function getInitialTask(fileBaseName: string, outputParams?: OutputParams): Task {
-	let ret: Task = {
+	const task: Task = {
 		fileBaseName: fileBaseName,
 		before: {
 			format: '读取中',
@@ -291,8 +291,9 @@ export function getInitialTask(fileBaseName: string, outputParams?: OutputParams
 		},
 		paraArray: [],
 		status: TaskStatus.TASK_STOPPED,
-		progressHistory: {
-			normal: [],
+		progressLog: {
+			time: [],
+			frame: [],
 			size: [],
 			lastStarted: new Date().getTime() / 1000,
 			elapsed: 0,
@@ -303,43 +304,50 @@ export function getInitialTask(fileBaseName: string, outputParams?: OutputParams
 		notifications: [],
 	}
 	if (outputParams) {
-		Object.assign(ret, { after: outputParams });
+		Object.assign(task, { after: outputParams });
 	}
-	return ret;
+	return task;
 }
 
 export function getInitialServiceTask(fileName: string, outputParams?: OutputParams): ServiceTask {
-	let ret: ServiceTask = {
+	let task: ServiceTask = {
 		...getInitialTask(fileName, outputParams),
 		...{
 			ffmpeg: null
 		}
 	}
-	return ret;
+	return task;
 }
 
 export function getInitialUITask(fileName: string, outputParams?: OutputParams): UITask {
-	let ret: UITask = {
+	let task: UITask = {
 		...getInitialTask(fileName, outputParams),
 		...{
-			progress: {
+			dashboard: {
 				progress: 0,
 				bitrate: 0,
 				speed: 0,
 				time: 0,
 				frame: 0,
+				transferred: 0,
 			},
-			progress_smooth: {
+			dashboard_smooth: {
 				progress: 0,
 				bitrate: 0,
 				speed: 0,
 				time: 0,
 				frame: 0,
+				transferred: 0,
 			},
 			dashboardTimer: NaN,
+			transferStatus: TransferStatus.normal,
+			transferProgressLog: {
+				transferred: [],
+				total: NaN,
+			}
 		}
 	}
-	return ret;	
+	return task;	
 }
 
 /**
@@ -352,7 +360,7 @@ export function convertAnyTaskToTask(task: ServiceTask | UITask): Task {
         after: task.after,
         paraArray: task.paraArray,
         status: task.status,
-        progressHistory: task.progressHistory,
+        progressLog: task.progressLog,
         cmdData: task.cmdData,
         errorInfo: task.errorInfo,
         notifications: task.notifications,

@@ -14,7 +14,7 @@ import Popup from '@/electron/components/floating/Popup/index'
 import Msgbox from '@/electron/components/floating/Msgbox/index.js'
 import Tooltip from '@/electron/components/floating/Tooltip/index.js'
 
-import { StoreState, NotificationLevel, WorkingStatus, TaskStatus, Server, UITask, Task, OutputParams, FFBoxServiceInterface, OutputParams_input, OutputParams_video, OutputParams_audio, OutputParams_output } from '@/types/types'
+import { StoreState, NotificationLevel, WorkingStatus, TaskStatus, Server, UITask, Task, OutputParams, FFBoxServiceInterface, OutputParams_input, OutputParams_video, OutputParams_audio, OutputParams_output, SingleProgressLog, TransferStatus } from '@/types/types'
 import { version, buildNumber } from "@/types/constants";
 import { getInitialUITask, mergeTaskFromService, randomString, replaceOutputParams } from '@/common/utils'
 import { defaultParams } from "../common/defaultParams";
@@ -131,7 +131,7 @@ const store = new Vuex.Store<StoreState>({
 					let promise: Promise<number> = (mainVue as any).addTask(upath.trimExt(file.name), undefined, isRemote ? '' : file.path);
 					if (isRemote) {
 						promise.then((id) => {
-							(mainVue as any).uploadFile(file, currentBridge, id);
+							(mainVue as any).checkAndUploadFile(file, currentBridge, id);
 						});
 					}
 					newlyAddedTaskIds.push(promise);
@@ -460,7 +460,7 @@ export default Vue.extend({
 			server.workingStatus = workingStatus;
 			// 处理 overallProgressTimer
 			if (workingStatus === WorkingStatus.running && !server.overallProgressTimerID) {
-				let timerID = setInterval(overallProgressTimer, 80, workingStatus, server);
+				let timerID = setInterval(overallProgressTimer, 80, server);
 				server.overallProgressTimerID = timerID;
 				overallProgressTimer(server);
 			} else if (workingStatus === WorkingStatus.stopped && server.overallProgressTimerID) {
@@ -528,11 +528,11 @@ export default Vue.extend({
 			}
 			// 进度条相关处理
 			if (task.status === TaskStatus.TASK_FINISHED || task.status === TaskStatus.TASK_ERROR) {
-				task.progress.progress = 1;
-				task.progress_smooth.progress = 1;
+				task.dashboard.progress = 1;
+				task.dashboard_smooth.progress = 1;
 			} else if (task.status === TaskStatus.TASK_STOPPED) {
-				task.progress.progress = 0;
-				task.progress_smooth.progress = 0;
+				task.dashboard.progress = 0;
+				task.dashboard_smooth.progress = 0;
 			}
 			// server.tasks = Object.assign({}, server.tasks);
 		},
@@ -547,13 +547,13 @@ export default Vue.extend({
 			task.cmdData += content;
 		},
 		/**
-		 * 整个更新 progressHistory
+		 * 整个更新 progressLog
 		 */
-		handleProgressUpdate(server: Server, bridge: FFBoxServiceInterface, id: number, progressHistory: Task['progressHistory']) {
-			server.tasks[id].progressHistory = progressHistory;
+		handleProgressUpdate(server: Server, bridge: FFBoxServiceInterface, id: number, progressLog: Task['progressLog']) {
+			server.tasks[id].progressLog = progressLog;
 			if (this.$store.state.functionLevel < 50) {
-				if (progressHistory.normal.slice(-1)[0].mediaTime > 671 ||
-					progressHistory.elapsed + new Date().getTime() / 1000 - progressHistory.lastStarted > 671) {
+				if (progressLog.time.slice(-1)[0][1] > 671 ||
+					progressLog.elapsed + new Date().getTime() / 1000 - progressLog.lastStarted > 671) {
 					bridge.trailLimit_stopTranscoding(id);
 					return;
 				}
@@ -581,12 +581,12 @@ export default Vue.extend({
 		},
 		/**
 		 * 不带分片功能的文件上传，由 store.addTasks 调用（这样做只是为了拿到 thisVue。这样做确实不好，未来有重构计划）
-		 * id 用于取到 task，此处认为先发送 addTask 指令再 uploadFile，任务就已存在于 tasklist 中，尽管无法保证此顺序
+		 * id 用于取到 task，此处认为先发送 addTask 指令再 checkAndUploadFile，任务就已存在于 tasklist 中，尽管无法保证此顺序
 		 */
-		uploadFile: function (file: File, currentBridge: ServiceBridge, id: number) {
-			let CryptoJS = nodeBridge.cryptoJS;
-			let reader = new FileReader();
-			let thisVue = this;
+		checkAndUploadFile: function (file: File, currentBridge: ServiceBridge, id: number) {
+			const CryptoJS = nodeBridge.cryptoJS;
+			const reader = new FileReader();
+			const thisVue = this;
 			reader.readAsBinaryString(file);
 			reader.addEventListener('loadend', () => {
 				console.log(file.name, '开始计算文件校验码');
@@ -611,39 +611,7 @@ export default Vue.extend({
 							thisVue.$store.commit('mergeUploaded', { id, hash });
 						} else {
 							console.log(file.name, '未缓存');
-							let currentServer = this.$store.state.servers[this.$store.state.currentServerName] as Server;
-							let task = currentServer.tasks[id];
-							let form = new FormData();
-							form.append('name', hash);
-							form.append('file', file);
-							let xhr = new XMLHttpRequest;
-							xhr.upload.addEventListener('progress', (event) => {
-								let progress = event.loaded / event.total;
-								// 非常糟糕的设计，无法保证 task 必存在，progress 的计算也不规范，以后改进
-								task.progress_smooth.progress = progress < 1 ? progress : 0;
-							}, false);
-							xhr.onreadystatechange = function (e) {
-								if (xhr.readyState !== 0) {
-									if (xhr.status >= 400 && xhr.status < 500) {
-										thisVue.$popup({
-											message: `【${file.name}】网络请求故障，上传失败`,
-											level: NotificationLevel.error
-										})
-									} else if (xhr.status >= 500 && xhr.status < 600) {
-										thisVue.$popup({
-											message: `【${file.name}】服务器故障，上传失败`,
-											level: NotificationLevel.error
-										})
-									}
-								}
-							}
-							xhr.onload = function () {
-								console.log(file.name, `发送完成`);
-								thisVue.$store.commit('mergeUploaded', { id, hash });
-							}
-							xhr.open('post', `http://${currentBridge.ip}:${currentBridge.port}/upload/file/`, true);
-							// xhr.setRequestHeader('Content-Type', 'multipart/form-data');
-							xhr.send(form);
+							(thisVue as any).uploadFile(id, hash, file, currentBridge);
 						}
 					})
 				}).catch((err) => {
@@ -658,19 +626,65 @@ export default Vue.extend({
 		 * @param args baseName, path, callback
 		 */
 		addTask (baseName: string, callback: Function, path?: string) {
-			let currentBridge = this.$store.state.serviceBridges[this.$store.state.currentServerName] as ServiceBridge;
+			const currentBridge = this.$store.state.serviceBridges[this.$store.state.currentServerName] as ServiceBridge;
 			if (!currentBridge) {
 				return;
 			}
-			let params: OutputParams = JSON.parse(JSON.stringify(this.$store.state.globalParams));
+			const params: OutputParams = JSON.parse(JSON.stringify(this.$store.state.globalParams));
 			params.input.files.push({
 				filePath: path
 			});
-			let result = currentBridge.taskAdd(baseName, params);
+			const result = currentBridge.taskAdd(baseName, params);
 			if (typeof callback == 'function') {
 				callback(result);
 			}
 			return result;
+		},
+		/**
+		 * 直接上传文件
+		 */
+		uploadFile (id: number, hash: string, file: File, currentBridge: ServiceBridge) {
+			const thisVue = this;
+			const currentServer = this.$store.state.servers[this.$store.state.currentServerName] as Server;
+			const task = currentServer.tasks[id];
+			task.transferStatus = TransferStatus.uploading;
+			task.transferProgressLog.total = file.size;
+			const form = new FormData();
+			form.append('name', hash);
+			form.append('file', file);
+			const xhr = new XMLHttpRequest;
+			xhr.upload.addEventListener('progress', (event) => {
+				// let progress = event.loaded / event.total;
+				const transferred = task.transferProgressLog.transferred;
+				transferred.push([new Date().getTime() / 1000, event.loaded]);
+				transferred.splice(0, transferred.length - 6);	// 限制列表最大长度为 6
+			}, false);
+			xhr.onreadystatechange = function (e) {
+				if (xhr.readyState !== 0) {
+					if (xhr.status >= 400 && xhr.status < 500) {
+						thisVue.$popup({
+							message: `【${file.name}】网络请求故障，上传失败`,
+							level: NotificationLevel.error,
+						})
+					} else if (xhr.status >= 500 && xhr.status < 600) {
+						thisVue.$popup({
+							message: `【${file.name}】服务器故障，上传失败`,
+							level: NotificationLevel.error,
+						})
+					}
+				}
+			}
+			xhr.onload = function () {
+				console.log(file.name, `发送完成`);
+				thisVue.$store.commit('mergeUploaded', { id, hash });
+				task.transferStatus = TransferStatus.normal;
+				clearInterval(task.dashboardTimer);
+				task.dashboardTimer = NaN;
+			}
+			xhr.open('post', `http://${currentBridge.ip}:${currentBridge.port}/upload/file/`, true);
+			// xhr.setRequestHeader('Content-Type', 'multipart/form-data');
+			xhr.send(form);
+			task.dashboardTimer = setInterval(dashboardTimer, 50, task) as any;
 		},
 
 	},
@@ -756,7 +770,7 @@ export default Vue.extend({
  * 用于 dashboardTimer
  * 通过线性加权移动平均获取数值变化的速率（k 值）
  */
-function getKbyLWMA(sampleCount: number, xFactorName: string, yFactorsName: Array<string>, data: Array<any>): Array<number> {
+function getKbyLWMA_obj(sampleCount: number, xFactorName: string, yFactorsName: Array<string>, data: Array<any>): Array<number> {
 	let deltaXFactorSum = 0;
 	let deltaYFactorsSum = Array(yFactorsName.length).fill(0);
 	// 对于数据，在区间 [data.length - sampleCount, data.length - 1] 内，其权重在 [1, sampleCount] 之间递增
@@ -774,65 +788,117 @@ function getKbyLWMA(sampleCount: number, xFactorName: string, yFactorsName: Arra
 }
 
 /**
+ * 用于 dashboardTimer
+ * 通过线性加权移动平均获取数值变化的速率（k 值）
+ */
+function getKbyLWMA(sampleCount: number, data: SingleProgressLog): number {
+	// xFactor：时间　yFactor：参数值
+	let deltaXFactorSum = 0;
+	let deltaYFactorSum = 0;
+	// 对于数据，在区间 [data.length - sampleCount, data.length - 1] 内，其权重在 [1, sampleCount] 之间递增
+	// 因为采样数可能大于总样本数，所以倒序遍历，先计算最大的权重（index 最大），直到无法继续计算
+	for (let weight = sampleCount, index = data.length - 1; index > 0 && weight > 0; weight--, index--) {
+		deltaXFactorSum += weight * (data[index][0] - data[index - 1][0]);
+		deltaYFactorSum += weight * (data[index][1] - data[index - 1][1]);
+	}
+	// 分子分母都有 totalWeight，所以消了，因此算式里就没有 totalWeight 出现
+	return deltaYFactorSum / deltaXFactorSum;
+}
+
+/**
+ * 对单个数据计算数据变化速率（k）和初值（b），获得该数据在指定时间的预估值（current）
+ */
+function calcDashboard(progressLog: SingleProgressLog, time = new Date()) {
+	const K = getKbyLWMA(5, progressLog);
+	const B = progressLog[progressLog.length - 1][1] - K * progressLog[progressLog.length - 1][0];	// b = y - k * x
+	const systime = new Date().getTime() / 1000;
+	const currentValue = systime * K + B;
+	return { K, B, currentValue };
+}
+
+/**
  * 计算单个任务的 timer 函数，根据计算结果原地修改 progress 和 progress_smooth
  */
 function dashboardTimer(task: UITask) {
-	if (task.progressHistory.normal.length <= 2) {
-		// 任务刚开始时显示的数据不准确
-		return;
-	}
-	let progressNormal = task.progressHistory.normal;
-	let [frameK, timeK] = getKbyLWMA(5, 'realTime', ['frame', 'mediaTime'], task.progressHistory.normal);	// 单位时间（1s）内 frame 和 mediaTime 的增速
-	let [frameB, timeB] = [
-		progressNormal[progressNormal.length - 1].frame - frameK * progressNormal[progressNormal.length - 1].realTime,
-		progressNormal[progressNormal.length - 1].mediaTime - timeK * progressNormal[progressNormal.length - 1].realTime,
-	];
+	if (task.transferStatus === TransferStatus.normal) {
+		if (task.progressLog.time.length <= 2) {
+			// 任务刚开始时显示的数据不准确
+			return;
+		}
 
-	let progressSize = task.progressHistory.size;
-	let [sizeK] = getKbyLWMA(5, 'realTime', ['size'], task.progressHistory.size);	// 单位时间（1s）内 size 的增速
-	let [sizeB] = [
-		progressSize[progressSize.length - 1].size - sizeK * progressSize[progressSize.length - 1].realTime,
-	];
+		const { K: frameK, B: frameB, currentValue: currentFrame } = calcDashboard(task.progressLog.frame);
+		const { K: timeK, B: timeB, currentValue: currentTime } = calcDashboard(task.progressLog.time);
+		const { K: sizeK, B: sizeB, currentValue: currentSize } = calcDashboard(task.progressLog.size);
+		// console.log("frameK: " + frameK + ", timeK: " + timeK + ", sizeK: " + sizeK);
+		// console.log("currentFrame: " + currentFrame + ", currentTime: " + currentTime + ", currentSize: " + currentSize);
 
-	let sysTime = new Date().getTime() / 1000;
-	let currentFrame = frameK * sysTime + frameB;
-	let currentTime = timeK * sysTime + timeB;		// 单位：s
-	let currentSize = sizeK * sysTime + sizeB;		// 单位：kB
-	// console.log("frameK: " + frameK + ", timeK: " + timeK + ", sizeK: " + sizeK);
-	// console.log("currentFrame: " + currentFrame + ", currentTime: " + currentTime + ", currentSize: " + currentSize);
-
-	// 任务进度计算
-	if (task.before.duration !== -1) {
-		let progress = currentTime / task.before.duration;
-		if (isNaN(progress) || progress == Infinity) {
-			task.progress.progress = 0;
+		// 任务进度计算
+		let progress: number;
+		if (task.before.duration !== -1) {
+			progress = currentTime / task.before.duration;
+			progress = isNaN(progress) || progress === Infinity ? 0 : progress;
 		} else {
-			task.progress.progress = progress;
+			progress = 0.5;
+		}
+
+		// 进度细节计算
+		if (progress < 0.995) {
+			task.dashboard = {
+				...task.dashboard,
+				progress,
+				bitrate: (sizeK / timeK) * 8,
+				speed: frameK / task.before.vframerate || timeK,	// 如果可以读出帧速，或者输出的是视频，用帧速算 speed 更准确；否则用时间算 speed
+				time: currentTime,
+				frame: currentFrame,
+			};
+
+			// 平滑处理
+			let { bitrate, speed, time, frame } = task.dashboard_smooth;
+			progress = progress * 0.7 + task.dashboard.progress * 0.3;
+			bitrate  = bitrate * 0.9 + task.dashboard.bitrate * 0.1;
+			speed    = speed * 0.6 + task.dashboard.speed * 0.4;
+			time     = time * 0.7 + task.dashboard.time * 0.3;
+			frame    = frame * 0.7 + task.dashboard.frame * 0.3;
+			if (isNaN(bitrate) || bitrate == Infinity) { bitrate = 0 }
+			if (isNaN(speed)) { speed = 0 }
+			if (isNaN(time)) { time = 0 }
+			if (isNaN(frame)) { frame = 0 }
+			task.dashboard_smooth = { ...task.dashboard_smooth, progress, bitrate, speed, time, frame };
+		} else {
+			// 进度满了就别更新了
+			task.dashboard.progress = 1;
 		}
 	} else {
-		task.progress.progress = 0.5;
-	}
+		if (task.transferProgressLog.transferred.length <= 2) {
+			// 任务刚开始时显示的数据不准确
+			return;
+		}
 
-	// 进度细节计算
-	if (task.progress.progress < 0.995) {
-		task.progress.bitrate = (sizeK / timeK) * 8;
-		task.progress.speed = frameK / task.before.vframerate || timeK;	// 如果可以读出帧速，或者输出的是视频，用帧速算 speed 更准确；否则用时间算 speed
-		task.progress.time = currentTime;
-		task.progress.frame = currentFrame;
+		const { K: transferredK, B: transferredB, currentValue: currentTransferred } = calcDashboard(task.transferProgressLog.transferred);
+		console.log(`transferredK: ${transferredK}`);
+		console.log(`currentTransferred: ${currentTransferred}`);
 
-		// 平滑处理
-		task.progress_smooth.progress = task.progress_smooth.progress * 0.7 + task.progress.progress * 0.3;
-		task.progress_smooth.bitrate  = task.progress_smooth.bitrate * 0.9 + task.progress.bitrate * 0.1;
-		task.progress_smooth.speed    = task.progress_smooth.speed * 0.6 + task.progress.speed * 0.4;
-		task.progress_smooth.time     = task.progress_smooth.time * 0.7 + task.progress.time * 0.3;
-		task.progress_smooth.frame    = task.progress_smooth.frame * 0.7 + task.progress.frame * 0.3;
-		if (isNaN(task.progress_smooth.bitrate) || task.progress_smooth.bitrate == Infinity) {task.progress_smooth.bitrate = 0;} 
-		if (isNaN(task.progress_smooth.speed)) {task.progress_smooth.speed = 0;} 
-		if (isNaN(task.progress_smooth.time)) {task.progress_smooth.time = 0;} 
-		if (isNaN(task.progress_smooth.frame)) {task.progress_smooth.frame = 0;} 
-	} else {
-		// 进度满了就别更新了
-		task.progress.progress = 1;
+		// 任务进度计算
+		let progress: number;
+		const total = task.transferProgressLog.total;
+		progress = currentTransferred / total;
+		progress = progress === Infinity ? 0 : progress;
+
+		// 进度细节计算
+		if (progress < 0.995) {
+			task.dashboard = {
+				...task.dashboard,
+				transferred: currentTransferred,
+			};
+
+			// 平滑处理
+			let { transferred } = task.dashboard;
+			// transferred = transferred * 0.6 + task.dashboard.transferred * 0.4;
+			task.dashboard_smooth.transferred = transferred;
+		} else {
+			// 进度满了就别更新了
+			task.dashboard.transferred = 0.995 * total;
+		}
 	}
 	// task.progress_smooth = Object.assign({}, task.progress_smooth); 
 }
@@ -850,7 +916,7 @@ function overallProgressTimer(currentServer: Server) {
 			continue;
 		}
 		totalTime += task.before.duration;
-		totalProcessedTime += task.progress_smooth.progress * task.before.duration;
+		totalProcessedTime += task.dashboard_smooth.progress * task.before.duration;
 	}
 	let progress = totalProcessedTime / totalTime;
 	currentServer.progress = progress;

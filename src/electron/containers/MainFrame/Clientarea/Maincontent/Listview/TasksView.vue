@@ -7,7 +7,7 @@
 		<button id="startbutton" class="startbutton " :class="startbuttonClass" @click="$store.commit('startNpause')">{{ startbuttonText }}</button>
 		<div id="tasklist-wrapper" ref="tasklist_wrapper">
 			<div id="tasklist">
-				<taskitem v-for="(task, index) in taskList" :key="parseInt(task.id)" :id='task.id' :duration="task.duration" :file_name="task.fileBaseName" :before="task.before" :after="task.after" :progress_smooth="task.progress_smooth" :status="task.status" :selected="taskSelected(task.id)" @itemClicked="onItemClicked($event, task.id, index)" @pauseNremove="onItemPauseNdelete(task.id)"></taskitem>
+				<taskitem v-for="(task, index) in taskList" :key="parseInt(task.id)" :id='task.id' :duration="task.duration" :file_name="task.fileBaseName" :before="task.before" :after="task.after" :dashboard_smooth="task.dashboard_smooth" :size="task.transferProgressLog.total" :status="task.status" :transferStatus="task.transferStatus" :selected="taskSelected(task.id)" @itemClicked="onItemClicked($event, task.id, index)" @pauseNremove="onItemPauseNdelete(task.id)"></taskitem>
 			</div>
 			<div id="dropfilesdiv" @click="itemUnselect">
 				<div id="dropfilesimage" @click="debugLauncher" :style="{ 'backgroundImage': `url(${dropfilesimage})` }"></div>

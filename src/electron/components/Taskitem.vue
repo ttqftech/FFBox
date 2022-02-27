@@ -3,7 +3,7 @@
 		<div class="taskitem-background-wrapper">
 			<div class="taskitem-background">
 				<div class="taskitem-background-white"></div>
-				<div class="taskitem-background-progress" :style="{ width: progress_smooth.progress * 100 + '%' }" :class="backgroundStyle"></div>
+				<div class="taskitem-background-progress" :style="{ width: transferStatus === 'normal' ? dashboard_smooth.progress : dashboard_smooth.transferred / size * 100 + '%' }" :class="backgroundStyle"></div>
 				<div class="taskitem-previewbox">
 					<div class="taskitem-previewbox-img"></div>
 				</div>
@@ -41,22 +41,22 @@
 				<div class="taskitem-graphs">
 					<div class="taskitem-graph">
 						<div class="taskitem-graph-ring" :style="dashboard_bitrate"></div>
-						<span class="taskitem-graph-data">{{ progress_smooth.bitrate | bitrateFilter }}</span>
+						<span class="taskitem-graph-data">{{ dashboard_smooth.bitrate | bitrateFilter }}</span>
 						<span class="taskitem-graph-description">码率</span>
 					</div>
 					<div class="taskitem-graph">
 						<div class="taskitem-graph-ring" :style="dashboard_speed"></div>
-						<span class="taskitem-graph-data">{{ progress_smooth.speed | speedFilter }}</span>
+						<span class="taskitem-graph-data">{{ dashboard_smooth.speed | speedFilter }}</span>
 						<span class="taskitem-graph-description">速度</span>
 					</div>
 					<div class="taskitem-graph">
 						<div class="taskitem-graph-ring" :style="dashboard_time"></div>
-						<span class="taskitem-graph-data">{{ progress_smooth.time | timeFilter }}</span>
+						<span class="taskitem-graph-data">{{ dashboard_smooth.time | timeFilter }}</span>
 						<span class="taskitem-graph-description">时间</span>
 					</div>
 					<div class="taskitem-graph">
 						<div class="taskitem-graph-ring" :style="dashboard_frame"></div>
-						<span class="taskitem-graph-data">{{ (progress_smooth.frame).toFixed(0) }}</span>
+						<span class="taskitem-graph-data">{{ (dashboard_smooth.frame).toFixed(0) }}</span>
 						<span class="taskitem-graph-description">帧</span>
 					</div>
 				</div>
@@ -89,8 +89,10 @@ interface Props {
 	file_name: string;
 	before: Task['before'];
 	after: OutputParams;
-	progress_smooth: UITask['progress_smooth'];
+	dashboard_smooth: UITask['dashboard_smooth'];
+	size: number;
 	status: number;
+	transferStatus: string;
 	selected: boolean;
 }
 
@@ -102,8 +104,10 @@ export default Vue.extend<{}, any, any, Props>({
 		file_name: String,
 		before: Object,
 		after: Object,
-		progress_smooth: Object,
+		dashboard_smooth: Object,
+		size: Number,
 		status: Number,
+		transferStatus: String,
 		selected: Boolean,
 	},
 	computed: {
@@ -169,25 +173,25 @@ export default Vue.extend<{}, any, any, Props>({
 		// 计算方式：(log(数值) / log(底，即每增长多少倍数为一格) + 数值为 1 时偏移多少格) / 格数
 		// 　　　或：(log(数值 / 想要以多少作为最低值) / log(底，即每增长多少倍数为一格)) / 格数
 		dashboard_bitrate: function () {
-			var value = Math.log(this.progress_smooth.bitrate / 62.5) / Math.log(8) / 4;		// 0.0625M, 0.5M, 4M, 32M, 256M
+			var value = Math.log(this.dashboard_smooth.bitrate / 62.5) / Math.log(8) / 4;		// 0.0625M, 0.5M, 4M, 32M, 256M
 			if (value == Infinity) { value = 1; }
 			return "background: conic-gradient(#36D 0%, #36D " + value * 75 + "%, #DDD " + value * 75 + "%, #DDD 75%, transparent 75%);";
 		},
 		dashboard_speed: function () {
-			var value = Math.log(this.progress_smooth.speed / 0.04) / Math.log(5) / 6;			// 0.04, 0.2, 1, 5, 25, 125, 625
+			var value = Math.log(this.dashboard_smooth.speed / 0.04) / Math.log(5) / 6;			// 0.04, 0.2, 1, 5, 25, 125, 625
 			return "background: conic-gradient(#36D 0%, #36D " + value * 75 + "%, #DDD " + value * 75 + "%, #DDD 75%, transparent 75%);";
 		},
 		dashboard_time: function () {
-			var valueOdd = this.progress_smooth.time % 2;
+			var valueOdd = this.dashboard_smooth.time % 2;
 			if (valueOdd > 1) { valueOdd = 1; }
-			var valueEven = this.progress_smooth.time % 2 - 1;
+			var valueEven = this.dashboard_smooth.time % 2 - 1;
 			if (valueEven < 0) { valueEven = 0; }
 			return "background: conic-gradient(#DDD 0%, #DDD " + valueEven * 75 + "%, #36D " + valueEven * 75 + "%, #36D " + valueOdd * 75 + "%, #DDD " + valueOdd * 75 + "%, #DDD 75%, transparent 75%);";
 		},
 		dashboard_frame: function () {
-			var valueOdd = this.progress_smooth.frame % 2;
+			var valueOdd = this.dashboard_smooth.frame % 2;
 			if (valueOdd > 1) { valueOdd = 1; }
-			var valueEven = this.progress_smooth.frame % 2 - 1;
+			var valueEven = this.dashboard_smooth.frame % 2 - 1;
 			if (valueEven < 0) { valueEven = 0; }
 			return "background: conic-gradient(#DDD 0%, #DDD " + valueEven * 75 + "%, #36D " + valueEven * 75 + "%, #36D " + valueOdd * 75 + "%, #DDD " + valueOdd * 75 + "%, #DDD 75%, transparent 75%);";	
 		},
