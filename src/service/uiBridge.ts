@@ -127,7 +127,7 @@ function handleMessageFromClient(message: string) {
 	let data: FFBoxServiceFunctionApi = JSON.parse(message);
 	let args = data.args;
 	// @ts-ignore
-	ffboxService[data.function](...args);
+	ffboxService[data.function](...args.map((value) => value === null ? undefined : value));
 }
 
 /**

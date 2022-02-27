@@ -103,6 +103,12 @@ export enum TaskStatus {
 	TASK_ERROR = 6,
 }
 
+export enum TransferStatus {
+	normal = 'normal',
+	uploading = 'uploading',
+	downloading = 'downloading',
+}
+
 export interface FFmpegProgress {
 	frame: number;
 	fps: number;
@@ -126,6 +132,8 @@ export interface Notification {
 	level: NotificationLevel;
 }
 
+export type SingleProgressLog = Array<[number, number]>;
+
 export interface Task {
 	fileBaseName: string;
 	before: {
@@ -141,16 +149,10 @@ export interface Task {
 	after: OutputParams;
 	paraArray: Array<string>;
 	status: TaskStatus;
-	progressHistory: {
-		normal: Array<{
-			realTime: number;
-			mediaTime: number;
-			frame: number;
-		}>
-		size: Array<{
-			realTime: number;
-			size: number;
-		}>
+	progressLog: {
+		time: SingleProgressLog;
+		frame: SingleProgressLog;
+		size: SingleProgressLog;
 		// 涉及到的时间单位均为 s
 		lastStarted: number;
 		elapsed: number;		// 暂停才更新一次，因此记录的并不是实时的任务时间
@@ -166,21 +168,32 @@ export interface ServiceTask extends Task {
 }
 
 export interface UITask extends Task {
-	progress: {
+	dashboard: {
 		progress: number;
 		bitrate: number;
 		speed: number;
 		time: number;
 		frame: number;
+		transferred: number;
 	};
-	progress_smooth: {
+	dashboard_smooth: {
 		progress: number;
 		bitrate: number;
 		speed: number;
 		time: number;
 		frame: number;
+		transferred: number;
 	};
 	dashboardTimer: number;
+	transferStatus: TransferStatus;
+	transferProgressLog: {
+		transferred: SingleProgressLog;
+		total: number;
+		// 涉及到的时间单位均为 s
+		// lastStarted: number;
+		// elapsed: number;		// 暂停才更新一次，因此记录的并不是实时的任务时间
+		// lastPaused: number;		// 既用于暂停后恢复时计算速度，也用于统计任务耗时
+	};
 }
 
 export enum WorkingStatus {
