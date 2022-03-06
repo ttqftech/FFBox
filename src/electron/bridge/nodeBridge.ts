@@ -113,5 +113,25 @@ export default {
 		} else {
 			window.open(url);
 		}
+	},
+
+	openFile(url: string): void {
+		if (!this.isElectron) {
+			return;
+		}
+		switch (this.os) {
+			case 'MacOS':
+				this.exec(url);
+				break;
+			case 'Windows':
+				this.exec(url);
+				break;
+			case 'Linux':
+				this.exec(url);
+				break;
+			default:
+				window.open(url);
+				break;
+		}
 	}
 }

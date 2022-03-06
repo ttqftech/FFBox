@@ -2,11 +2,12 @@ import CryptoJS from "crypto-js";
 import { EventEmitter } from "events";
 import os from "os";
 import fs from "fs";
-import { ServiceTask, TaskStatus, OutputParams, FFBoxServiceEvent, NotificationLevel, FFmpegProgress, WorkingStatus, FFBoxServiceInterface } from "../types/types";
-import { getFFmpegParaArray } from "../common/getFFmpegParaArray";
+import { ServiceTask, TaskStatus, OutputParams, FFBoxServiceEvent, NotificationLevel, FFmpegProgress, WorkingStatus, FFBoxServiceInterface } from "@/types/types";
+import { getFFmpegParaArray, getFFmpegParaArrayOutputPath } from "@/common/getFFmpegParaArray";
+import { generator as fGenerator } from "@/common/formats";
+import { defaultParams } from "@/common/defaultParams";
+import { getInitialServiceTask, convertAnyTaskToTask, getTimeString, TypedEventEmitter, replaceOutputParams, randomString } from "@/common/utils";
 import { FFmpeg } from './FFmpegInvoke'
-import { defaultParams } from "../common/defaultParams";
-import { getInitialServiceTask, convertAnyTaskToTask, getTimeString, TypedEventEmitter, replaceOutputParams } from "@/common/utils";
 import UIBridge from "./uiBridge";
 
 const maxThreads = 2;
@@ -95,14 +96,17 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 		this.tasklist[id] = task;
 
 		// 更新命令行参数
-		task.paraArray = getFFmpegParaArray(task.after, true);
 
 		if (filePath && filePath.length) {
+			task.paraArray = getFFmpegParaArray(task.after, true);
 			// 本地文件直接获取媒体信息
 			this.getFileMetadata(id, task, filePath);
 		} else {
+			task.outputFile = fGenerator.concatFilePath(task.after.output, undefined, `${new Date().getTime()}${randomString(3)}`);
+			task.paraArray = getFFmpegParaArray(task.after, true, undefined, undefined, task.outputFile);
 			// 网络文件等待上传完成后再另行调用获取媒体信息
 			task.status = TaskStatus.TASK_INITIALIZING;
+			task.remoteTask = true;
 		}
 
 		this.emit('tasklistUpdate', { content: Object.keys(this.tasklist).map(Number) });
@@ -184,7 +188,7 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 		}
 		task.status = TaskStatus.TASK_STOPPED;
 		this.getFileMetadata(id, task, task.after.input.files[0].filePath || '');
-		task.paraArray = getFFmpegParaArray(task.after, true);	// 获得文件名后再获取一次 paraArray
+		task.paraArray = getFFmpegParaArray(task.after, true, undefined, undefined, task.outputFile);
 		this.setNotification(
 			id, 
 			`任务「${task.fileBaseName}」输入文件上传完成`,
@@ -256,7 +260,13 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 			}
 		}
 		let filePath = task.after.input.files[0].filePath!;	// 需要上传完成，状态为 TASK_STOPPED 时才能开始任务，因此 filePath 非空
-		let newFFmpeg = new FFmpeg(0, getFFmpegParaArray(task.after));
+		let newFFmpeg: FFmpeg;
+		if (task.remoteTask) {
+			newFFmpeg = new FFmpeg(0, getFFmpegParaArray(task.after, false, undefined, undefined, `${os.tmpdir()}/FFBoxDownloadCache/${task.outputFile}`));
+		} else {
+			task.outputFile = getFFmpegParaArrayOutputPath(task.after);
+			newFFmpeg = new FFmpeg(0, getFFmpegParaArray(task.after, false));
+		}
 		newFFmpeg.on('finished', () => {
 			console.log(getTimeString(new Date()), `任务完成：${task.fileBaseName}。id：${id}。`);
 			task.status = TaskStatus.TASK_FINISHED;
@@ -276,7 +286,7 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 			for (const parameter of ['time', 'frame', 'size']) {
 				const _parameter = parameter as 'time' | 'frame' | 'size';
 				task.progressLog[_parameter].push([new Date().getTime() / 1000, status[_parameter]]);
-				task.progressLog[_parameter].splice(0, task.progressLog[_parameter].length - 6);	// 限制列表最大长度为 6
+				task.progressLog[_parameter].splice(0, task.progressLog[_parameter].length - 5);	// 限制列表最大长度为 5
 			}
 			if (this.functionLevel < 50) {
 				if (task.progressLog.time[task.progressLog.time.length - 1][1] > 671 ||
@@ -578,8 +588,13 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 			let task = this.tasklist[id];
 			task.after = replaceOutputParams(param, task.after);
 			let filePath = task.after.input.files[0].filePath;
-			task.paraArray = getFFmpegParaArray(task.after, true);
-			console.log('新的 paraArray：', task.paraArray.join(', '));
+			if (task.remoteTask) {
+				// 如果修改了输出格式，需要重新计算 outputFile
+				task.outputFile = fGenerator.concatFilePath(task.after.output, undefined, `${new Date().getTime()}${randomString(3)}`);
+				task.paraArray = getFFmpegParaArray(task.after, true, undefined, undefined, task.outputFile);
+			} else {
+				task.paraArray = getFFmpegParaArray(task.after, true);
+			}
 			this.getTask(id);
 		}
 	}

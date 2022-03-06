@@ -141,16 +141,43 @@ const hwaccels = [
 ]
 
 const generator = {
-	getOutputParam: function (outputParams, filedir, filebasename, withQuotes = false) {
-		var ret = []
-		if (outputParams.format != '无') {
-			var format = formats.find((value) => {
-				return value.sName == outputParams.format
-			})
+	/**
+	 * 连接并补充扩展名的文件名（fileDir 为空则仅输出带扩展名的文件名）
+	 */
+	concatFilePath: function (outputParams, fileDir, fileBasename) {
+		let extension;
+		if (outputParams.format !== '无') {
+			let format = formats.find((value) => {
+				return value.sName === outputParams.format;
+			});
 			if (format) {
-				var extension = format.extension
+				extension = format.extension;
 			} else {	// 用户手动输入的格式
-				var extension = outputParams.format
+				extension = outputParams.format;
+			}
+		}
+		let filePath = '';
+		if (fileDir) {
+			filePath += `${fileDir}${fileDir.endsWith('/') ? '' : '/'}`;
+		}
+		filePath += fileBasename;
+		if (extension) {
+			filePath += `.${extension}`;
+		}
+		console.log('concat: ', outputParams, fileDir, fileBasename, extension);
+		return filePath;
+	},
+	getOutputParam: function (outputParams, filedir, filebasename, withQuotes = false, overrideFilePath) {
+		let ret = [];
+		if (outputParams.format !== '无') {
+			let format = formats.find((value) => {
+				return value.sName == outputParams.format;
+			});
+			let extension;
+			if (format) {
+				extension = format.extension;
+			} else {	// 用户手动输入的格式
+				extension = outputParams.format;
 			}
 			if (outputParams.moveflags) {
 				ret.push('-movflags')
@@ -164,21 +191,26 @@ const generator = {
 				ret.push('-to')
 				ret.push(outputParams.end)
 			}
-			var outputFileName = outputParams.filename
-			outputFileName = outputFileName.replace(/\[filedir\]/g, filedir)
-			outputFileName = outputFileName.replace(/\[filebasename\]/g, filebasename)
-			outputFileName = outputFileName.replace(/\[fileext\]/g, extension)
-			if (withQuotes) {
-				outputFileName = '"' + outputFileName + '"'
+			let outputFileName;
+			if (overrideFilePath) {
+				outputFileName = overrideFilePath;
+			} else {
+				outputFileName = outputParams.filename;
+				outputFileName = outputFileName.replace(/\[filedir\]/g, filedir);
+				outputFileName = outputFileName.replace(/\[filebasename\]/g, filebasename);
+				outputFileName = outputFileName.replace(/\[fileext\]/g, extension);
 			}
-			ret.push(outputFileName)
+			if (withQuotes) {
+				outputFileName = '"' + outputFileName + '"';
+			}
+			ret.push(outputFileName);
 		} else {
 			ret.push('-f')
 			ret.push('null')
 			ret.push('-')
 			// ret.push('-benchmark')   // 可有可无
 		}
-		return ret
+		return ret;
 	},
 	getInputParam: function (inputParams, withQuotes = false) {
 		let ret = [];

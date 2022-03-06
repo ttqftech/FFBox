@@ -1,38 +1,38 @@
 <template>
-	<div class="taskitem" :class="taskItemStyle" @click="$emit('itemClicked', $event)">
+	<div class="taskitem" :class="taskItemStyle" @click="$emit('itemClicked', $event)" @dblclick="handleDblClick">
 		<div class="taskitem-background-wrapper">
-			<div class="taskitem-background">
+			<div class="taskitem-background" @mouseenter="handleMouseEnter" @mouseout="handleMouseLeave">
 				<div class="taskitem-background-white"></div>
-				<div class="taskitem-background-progress" :style="{ width: transferStatus === 'normal' ? dashboard_smooth.progress : dashboard_smooth.transferred / size * 100 + '%' }" :class="backgroundStyle"></div>
+				<div class="taskitem-background-progress" :style="{ width: (task.transferStatus === 'normal' ? task.dashboard_smooth.progress : task.dashboard_smooth.transferred / task.transferProgressLog.total) * 100 + '%' }" :class="backgroundStyle"></div>
 				<div class="taskitem-previewbox">
 					<div class="taskitem-previewbox-img"></div>
 				</div>
-				<span class="taskitem-timing">{{ before.duration | getFormattedTime }}</span>
-				<span class="taskitem-filename">{{ file_name }}</span>
+				<span class="taskitem-timing">{{ task.before.duration | getFormattedTime }}</span>
+				<span class="taskitem-filename">{{ task.fileBaseName }}</span>
 				<div class="taskitem-info taskitem-infobefore">
 					<div class="taskitem-img-format"></div>
-					<span class="taskitem-span-format">{{ before.format }}</span>
+					<span class="taskitem-span-format">{{ task.before.format }}</span>
 					<div class="taskitem-img-vcodec"></div>
-					<span class="taskitem-span-vcodec">{{ before.vcodec }}</span>
+					<span class="taskitem-span-vcodec">{{ task.before.vcodec }}</span>
 					<div class="taskitem-img-acodec"></div>
-					<span class="taskitem-span-acodec">{{ before.acodec }}</span>
+					<span class="taskitem-span-acodec">{{ task.before.acodec }}</span>
 					<div class="taskitem-img-size"></div>
-					<span class="taskitem-span-size taskitem-size-compact" v-html="before.vresolution"></span>
+					<span class="taskitem-span-size taskitem-size-compact" v-html="task.before.vresolution"></span>
 					<div class="taskitem-img-vratecontrol"></div>
-					<span class="taskitem-span-vratecontrol">{{ before.vbitrate | beforeBitrateFilter }}</span>
+					<span class="taskitem-span-vratecontrol">{{ task.before.vbitrate | beforeBitrateFilter }}</span>
 					<div class="taskitem-img-aratecontrol"></div>
-					<span class="taskitem-span-aratecontrol">{{ before.abitrate | beforeBitrateFilter }}</span>
+					<span class="taskitem-span-aratecontrol">{{ task.before.abitrate | beforeBitrateFilter }}</span>
 				</div>
 				<div class="taskitem-rightarrow"></div>
 				<div class="taskitem-info taskitem-infoafter">
 					<div class="taskitem-img-format"></div>
-					<span class="taskitem-span-format">{{ after.output.format }}</span>
+					<span class="taskitem-span-format">{{ task.after.output.format }}</span>
 					<div class="taskitem-img-vcodec"></div>
-					<span class="taskitem-span-vcodec">{{ after.video.vcodec }}</span>
+					<span class="taskitem-span-vcodec">{{ task.after.video.vcodec }}</span>
 					<div class="taskitem-img-acodec"></div>
-					<span class="taskitem-span-acodec">{{ after.audio.acodec }}</span>
+					<span class="taskitem-span-acodec">{{ task.after.audio.acodec }}</span>
 					<div class="taskitem-img-size"></div>
-					<span class="taskitem-span-size" :class="{ 'taskitem-size-compact': after.video.resolution != '不改变' }" v-html="$options.filters.resolutionXtoBR(after.video.resolution)"></span>
+					<span class="taskitem-span-size" :class="{ 'taskitem-size-compact': task.after.video.resolution != '不改变' }" v-html="$options.filters.resolutionXtoBR(task.after.video.resolution)"></span>
 					<div class="taskitem-img-vratecontrol"></div>
 					<span class="taskitem-span-vratecontrol">{{ videoRateControl }}</span>
 					<div class="taskitem-img-aratecontrol"></div>
@@ -41,29 +41,29 @@
 				<div class="taskitem-graphs">
 					<div class="taskitem-graph">
 						<div class="taskitem-graph-ring" :style="dashboard_bitrate"></div>
-						<span class="taskitem-graph-data">{{ dashboard_smooth.bitrate | bitrateFilter }}</span>
+						<span class="taskitem-graph-data">{{ task.dashboard_smooth.bitrate | bitrateFilter }}</span>
 						<span class="taskitem-graph-description">码率</span>
 					</div>
 					<div class="taskitem-graph">
 						<div class="taskitem-graph-ring" :style="dashboard_speed"></div>
-						<span class="taskitem-graph-data">{{ dashboard_smooth.speed | speedFilter }}</span>
+						<span class="taskitem-graph-data">{{ task.dashboard_smooth.speed | speedFilter }}</span>
 						<span class="taskitem-graph-description">速度</span>
 					</div>
 					<div class="taskitem-graph">
 						<div class="taskitem-graph-ring" :style="dashboard_time"></div>
-						<span class="taskitem-graph-data">{{ dashboard_smooth.time | timeFilter }}</span>
+						<span class="taskitem-graph-data">{{ task.dashboard_smooth.time | timeFilter }}</span>
 						<span class="taskitem-graph-description">时间</span>
 					</div>
 					<div class="taskitem-graph">
 						<div class="taskitem-graph-ring" :style="dashboard_frame"></div>
-						<span class="taskitem-graph-data">{{ (dashboard_smooth.frame).toFixed(0) }}</span>
+						<span class="taskitem-graph-data">{{ (task.dashboard_smooth.frame).toFixed(0) }}</span>
 						<span class="taskitem-graph-description">帧</span>
 					</div>
 				</div>
 				<div class="taskitem-networkgraphs">
 					<div class="taskitem-graph">
-						<div class="taskitem-graph-ring" :style="dashboard_frame"></div>
-						<span class="taskitem-graph-data">{{ 0 }}</span>
+						<div class="taskitem-graph-ring" :style="dashboard_transfer"></div>
+						<span class="taskitem-graph-data">{{ task.dashboard_smooth.transferSpeed | transferSpeedFilter }}</span>
 						<span class="taskitem-graph-description">传输速度</span>
 					</div>
 				</div>
@@ -79,42 +79,28 @@
 import Vue from 'vue';
 
 import { getFormattedTime } from '@/common/utils'
-import { OutputParams, TaskStatus, Task, UITask } from "@/types/types";
+import { TaskStatus, UITask } from "@/types/types";
 import { generator as vGenerator } from '@/common/vcodecs'
 import { generator as aGenerator } from '@/common/acodecs'
+import nodeBridge from '../bridge/nodeBridge';
+import { Task } from 'electron';
 
 interface Props {
-	id: number;
-	duration: number;
-	file_name: string;
-	before: Task['before'];
-	after: OutputParams;
-	dashboard_smooth: UITask['dashboard_smooth'];
-	size: number;
-	status: number;
-	transferStatus: string;
+	task: UITask;
 	selected: boolean;
 }
 
 export default Vue.extend<{}, any, any, Props>({
 	name: 'TaskItem',
 	props: {
-		id: Number,
-		duration: Number,
-		file_name: String,
-		before: Object,
-		after: Object,
-		dashboard_smooth: Object,
-		size: Number,
-		status: Number,
-		transferStatus: String,
+		task: Object,
 		selected: Boolean,
 	},
 	computed: {
 		// 样式部分
 		taskItemStyle: function (): string {
-			let uploading = this.status === TaskStatus.TASK_INITIALIZING;
-			let running = this.status === TaskStatus.TASK_RUNNING || this.status === TaskStatus.TASK_PAUSED || this.status === TaskStatus.TASK_STOPPING || this.status === TaskStatus.TASK_FINISHING;
+			let uploading = this.task.status === TaskStatus.TASK_INITIALIZING;
+			let running = this.task.status === TaskStatus.TASK_RUNNING || this.task.status === TaskStatus.TASK_PAUSED || this.task.status === TaskStatus.TASK_STOPPING || this.task.status === TaskStatus.TASK_FINISHING;
 			let selected = this.selected;
 			console
 			if (running && !selected) {
@@ -133,7 +119,7 @@ export default Vue.extend<{}, any, any, Props>({
 			return '';
 		},
 		backgroundStyle: function (): string {
-			switch (this.status) {
+			switch (this.task.status) {
 				case TaskStatus.TASK_INITIALIZING:
 					return 'progress-blue';
 				case TaskStatus.TASK_RUNNING: case TaskStatus.TASK_FINISHING:
@@ -148,7 +134,7 @@ export default Vue.extend<{}, any, any, Props>({
 			return '';
 		},
 		deleteButtonBackgroundPositionX: function (): string {
-			switch (this.status) {
+			switch (this.task.status) {
 				case TaskStatus.TASK_STOPPED:
 					return '0px';	// 删除按钮
 				case TaskStatus.TASK_RUNNING:
@@ -159,13 +145,13 @@ export default Vue.extend<{}, any, any, Props>({
 			return '';
 		},
 		deleteButtonAriaLabel: function (): string {
-			switch (this.status) {
+			switch (this.task.status) {
 				case TaskStatus.TASK_STOPPED: case TaskStatus.TASK_FINISHED:
-					return '删除任务' + this.file_name
+					return '删除任务' + this.task.fileBaseName;
 				case TaskStatus.TASK_RUNNING:
-					return '暂停任务' + this.file_name
+					return '暂停任务' + this.task.fileBaseName;
 				case TaskStatus.TASK_PAUSED: case TaskStatus.TASK_STOPPING: case TaskStatus.TASK_FINISHING: case TaskStatus.TASK_FINISHED:
-					return '重置任务' + this.file_name
+					return '重置任务' + this.task.fileBaseName;
 			}
 			return '删除暂停重置按钮';
 		},
@@ -173,34 +159,36 @@ export default Vue.extend<{}, any, any, Props>({
 		// 计算方式：(log(数值) / log(底，即每增长多少倍数为一格) + 数值为 1 时偏移多少格) / 格数
 		// 　　　或：(log(数值 / 想要以多少作为最低值) / log(底，即每增长多少倍数为一格)) / 格数
 		dashboard_bitrate: function () {
-			var value = Math.log(this.dashboard_smooth.bitrate / 62.5) / Math.log(8) / 4;		// 0.0625M, 0.5M, 4M, 32M, 256M
-			if (value == Infinity) { value = 1; }
+			let value = Math.log(this.task.dashboard_smooth.bitrate / 62.5) / Math.log(8) / 4;		// 62.5K, 500K, 4M, 32M, 256M
+			value = Math.min(Math.max(value, 0), 1);
 			return "background: conic-gradient(#36D 0%, #36D " + value * 75 + "%, #DDD " + value * 75 + "%, #DDD 75%, transparent 75%);";
 		},
 		dashboard_speed: function () {
-			var value = Math.log(this.dashboard_smooth.speed / 0.04) / Math.log(5) / 6;			// 0.04, 0.2, 1, 5, 25, 125, 625
+			let value = Math.log(this.task.dashboard_smooth.speed / 0.04) / Math.log(5) / 6;			// 0.04, 0.2, 1, 5, 25, 125, 625
+			value = Math.min(Math.max(value, 0), 1);
 			return "background: conic-gradient(#36D 0%, #36D " + value * 75 + "%, #DDD " + value * 75 + "%, #DDD 75%, transparent 75%);";
 		},
 		dashboard_time: function () {
-			var valueOdd = this.dashboard_smooth.time % 2;
-			if (valueOdd > 1) { valueOdd = 1; }
-			var valueEven = this.dashboard_smooth.time % 2 - 1;
-			if (valueEven < 0) { valueEven = 0; }
+			const valueOdd = Math.min(this.task.dashboard_smooth.time % 2, 1);
+			const valueEven = Math.max(this.task.dashboard_smooth.time % 2 - 1, 0);
 			return "background: conic-gradient(#DDD 0%, #DDD " + valueEven * 75 + "%, #36D " + valueEven * 75 + "%, #36D " + valueOdd * 75 + "%, #DDD " + valueOdd * 75 + "%, #DDD 75%, transparent 75%);";
 		},
 		dashboard_frame: function () {
-			var valueOdd = this.dashboard_smooth.frame % 2;
-			if (valueOdd > 1) { valueOdd = 1; }
-			var valueEven = this.dashboard_smooth.frame % 2 - 1;
-			if (valueEven < 0) { valueEven = 0; }
+			const valueOdd = Math.min(this.task.dashboard_smooth.frame % 2, 1);
+			const valueEven = Math.max(this.task.dashboard_smooth.frame % 2 - 1, 0);
 			return "background: conic-gradient(#DDD 0%, #DDD " + valueEven * 75 + "%, #36D " + valueEven * 75 + "%, #36D " + valueOdd * 75 + "%, #DDD " + valueOdd * 75 + "%, #DDD 75%, transparent 75%);";	
+		},
+		dashboard_transfer: function () {
+			let value = Math.log(this.task.dashboard_smooth.transferSpeed / 125) / Math.log(8) / 4;		// 125K, 1M, 8M, 64M, 512M
+			value = Math.min(Math.max(value, 0), 1);
+			return "background: conic-gradient(#36D 0%, #36D " + value * 75 + "%, #DDD " + value * 75 + "%, #DDD 75%, transparent 75%);";
 		},
 		// 码率部分
 		videoRateControl: function (): string {
-			return vGenerator.getRateControlParam(this.after.video).value;
+			return vGenerator.getRateControlParam(this.task.after.video).value;
 		},
 		audioRateControl: function (): string {
-			return aGenerator.getRateControlParam(this.after.audio).value;
+			return aGenerator.getRateControlParam(this.task.after.audio).value;
 		},
 	},
 	filters: {
@@ -243,6 +231,17 @@ export default Vue.extend<{}, any, any, Props>({
 				return second.toFixed(2);
 			}
 		},
+		transferSpeedFilter: function (KBps: number) {
+			if (KBps >= 100000) {
+				return (KBps / 1000).toFixed(0) + ' MB';
+			} else if (KBps >= 10000) {
+				return (KBps / 1000).toFixed(1) + ' MB';
+			} else if (KBps >= 1000) {
+				return (KBps / 1000).toFixed(2) + ' MB';
+			} else {
+				return KBps.toFixed(0) + ' KB';
+			}
+		},
 		beforeBitrateFilter: function (kbps: number) {
 			if (isNaN(kbps)) {
 				return '读取中';
@@ -253,6 +252,30 @@ export default Vue.extend<{}, any, any, Props>({
 			}
 		},
 	},
+	methods: {
+		handleDblClick: function () {
+			if (this.$store.state.currentServerName === 'localhost') {
+				nodeBridge.openFile(`"${(this.task as UITask).outputFile}"`);
+			} else {
+				alert(`下载文件, ${(this.task as UITask).outputFile}`);
+			}
+		},
+		// 处理 tooltip
+		handleMouseEnter: function (event: MouseEvent, text: string) {
+			if ((this.task as UITask).status === TaskStatus.TASK_FINISHED) {
+				this.$tooltip.show({
+					text: `双击以${this.$store.state.currentServerName === 'localhost' ? '打开' : '下载'}输出文件`,
+					position: {
+						right: `calc(100vw - ${event.pageX}px)`,
+						top: `${event.pageY}px`,
+					},
+				});
+			}
+		},
+		handleMouseLeave: function () {
+			this.$tooltip.hide();
+		},
+	}
 });
 
 </script>
