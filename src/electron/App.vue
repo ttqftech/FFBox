@@ -657,7 +657,7 @@ export default Vue.extend({
 				// let progress = event.loaded / event.total;
 				const transferred = task.transferProgressLog.transferred;
 				transferred.push([new Date().getTime() / 1000, event.loaded]);
-				transferred.splice(0, transferred.length - 6);	// 限制列表最大长度为 6
+				transferred.splice(0, transferred.length - 3);	// 限制列表最大长度为 3
 			}, false);
 			xhr.onreadystatechange = function (e) {
 				if (xhr.readyState !== 0) {
@@ -790,6 +790,7 @@ function getKbyLWMA_obj(sampleCount: number, xFactorName: string, yFactorsName: 
 /**
  * 用于 dashboardTimer
  * 通过线性加权移动平均获取数值变化的速率（k 值）
+ * 如果采样数量少于 sampleCount，低权重的缺失值相当于填充 0
  */
 function getKbyLWMA(sampleCount: number, data: SingleProgressLog): number {
 	// xFactor：时间　yFactor：参数值
@@ -807,9 +808,10 @@ function getKbyLWMA(sampleCount: number, data: SingleProgressLog): number {
 
 /**
  * 对单个数据计算数据变化速率（k）和初值（b），获得该数据在指定时间的预估值（current）
+ * 将对整个数组进行采样。因此如果要限定采样长度，先对数组进行裁剪处理
  */
 function calcDashboard(progressLog: SingleProgressLog, time = new Date()) {
-	const K = getKbyLWMA(5, progressLog);
+	const K = getKbyLWMA(progressLog.length, progressLog);
 	const B = progressLog[progressLog.length - 1][1] - K * progressLog[progressLog.length - 1][0];	// b = y - k * x
 	const systime = new Date().getTime() / 1000;
 	const currentValue = systime * K + B;
@@ -889,12 +891,14 @@ function dashboardTimer(task: UITask) {
 			task.dashboard = {
 				...task.dashboard,
 				transferred: currentTransferred,
+				transferSpeed: transferredK / 1000,
 			};
 
 			// 平滑处理
-			let { transferred } = task.dashboard;
-			// transferred = transferred * 0.6 + task.dashboard.transferred * 0.4;
-			task.dashboard_smooth.transferred = transferred;
+			let { transferred, transferSpeed } = task.dashboard_smooth;
+			transferred = transferred * 0.7 + task.dashboard.transferred * 0.3;
+			transferSpeed = transferSpeed * 0.9 + task.dashboard.transferSpeed * 0.1;
+			task.dashboard_smooth = { ...task.dashboard_smooth, transferred, transferSpeed };
 		} else {
 			// 进度满了就别更新了
 			task.dashboard.transferred = 0.995 * total;

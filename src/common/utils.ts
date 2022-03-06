@@ -302,6 +302,7 @@ export function getInitialTask(fileBaseName: string, outputParams?: OutputParams
 		cmdData: '',
 		errorInfo: [],
 		notifications: [],
+		outputFile: '',
 	}
 	if (outputParams) {
 		Object.assign(task, { after: outputParams });
@@ -313,7 +314,8 @@ export function getInitialServiceTask(fileName: string, outputParams?: OutputPar
 	let task: ServiceTask = {
 		...getInitialTask(fileName, outputParams),
 		...{
-			ffmpeg: null
+			ffmpeg: null,
+			remoteTask: false,
 		}
 	}
 	return task;
@@ -330,6 +332,7 @@ export function getInitialUITask(fileName: string, outputParams?: OutputParams):
 				time: 0,
 				frame: 0,
 				transferred: 0,
+				transferSpeed: 0,
 			},
 			dashboard_smooth: {
 				progress: 0,
@@ -338,6 +341,7 @@ export function getInitialUITask(fileName: string, outputParams?: OutputParams):
 				time: 0,
 				frame: 0,
 				transferred: 0,
+				transferSpeed: 0,
 			},
 			dashboardTimer: NaN,
 			transferStatus: TransferStatus.normal,
@@ -364,6 +368,7 @@ export function convertAnyTaskToTask(task: ServiceTask | UITask): Task {
         cmdData: task.cmdData,
         errorInfo: task.errorInfo,
         notifications: task.notifications,
+		outputFile: task.outputFile,
     }
 }
 

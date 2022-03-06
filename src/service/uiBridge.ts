@@ -98,7 +98,7 @@ function mountWebSocketEvents(ws: WebSocket, request: Http.IncomingMessage) {
 	console.log(getTimeString(new Date()), `新客户端接入：${address}。`);
 
 	ws.on('message', function (message: string | Buffer) {
-		console.log('uiBridge: 收到来自客户端的消息', message);
+		// console.log('uiBridge: 收到来自客户端的消息', message);
 		if (typeof message === 'string') {
 			handleMessageFromClient(message as string);
 		}

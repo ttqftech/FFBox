@@ -161,10 +161,12 @@ export interface Task {
 	cmdData: string;
 	errorInfo: Array<string>;
 	notifications: Array<Notification>;
+	outputFile: string;		// 对于本地任务，表示生成文件的绝对路径；对于远程任务，省略文件夹名 mergeUploaded 后生成。如无则为 ''
 }
 
 export interface ServiceTask extends Task {
 	ffmpeg: FFmpeg | null;
+	remoteTask: boolean;	// 本地/远程任务对于 service 来说，对输出文件名的处理方式不同；对于 UI 来说，只需要判断 IP 是否为 localhost 即决定是下载还是直接打开了
 }
 
 export interface UITask extends Task {
@@ -175,6 +177,7 @@ export interface UITask extends Task {
 		time: number;
 		frame: number;
 		transferred: number;
+		transferSpeed: number;
 	};
 	dashboard_smooth: {
 		progress: number;
@@ -183,6 +186,7 @@ export interface UITask extends Task {
 		time: number;
 		frame: number;
 		transferred: number;
+		transferSpeed: number;
 	};
 	dashboardTimer: number;
 	transferStatus: TransferStatus;
