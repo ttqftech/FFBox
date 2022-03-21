@@ -67,8 +67,8 @@
 						<span class="taskitem-graph-description">传输速度</span>
 					</div>
 				</div>
-				<button class="taskitem-button" @click="$event.stopPropagation(); $emit('pauseNremove')" :aria-label="deleteButtonAriaLabel">
-					<div class="taskitem-delete" :style="{ 'background-position-x': deleteButtonBackgroundPositionX }"></div>
+				<button class="taskitem-button" @click="$event.stopPropagation(); $emit('pauseNremove')" :aria-label="deleteButtonAriaLabel" :style="{ visibility: task.transferStatus === 'normal' ? '' : 'hidden' }">
+					<div class="taskitem-delete" :style="{ backgroundPositionX: deleteButtonBackgroundPositionX }"></div>
 				</button>
 			</div>
 		</div>
@@ -79,14 +79,15 @@
 import Vue from 'vue';
 
 import { getFormattedTime } from '@/common/utils'
-import { TaskStatus, UITask } from "@/types/types";
+import { TaskStatus, TransferStatus, UITask } from "@/types/types";
 import { generator as vGenerator } from '@/common/vcodecs'
 import { generator as aGenerator } from '@/common/acodecs'
 import nodeBridge from '../bridge/nodeBridge';
-import { Task } from 'electron';
+import { ServiceBridge } from '../bridge/serviceBridge';
 
 interface Props {
 	task: UITask;
+	id: number;
 	selected: boolean;
 }
 
@@ -94,22 +95,22 @@ export default Vue.extend<{}, any, any, Props>({
 	name: 'TaskItem',
 	props: {
 		task: Object,
+		id: Number,
 		selected: Boolean,
 	},
 	computed: {
 		// 样式部分
 		taskItemStyle: function (): string {
-			let uploading = this.task.status === TaskStatus.TASK_INITIALIZING;
+			let transferring = this.task.status === TaskStatus.TASK_INITIALIZING || this.task.transferStatus !== TransferStatus.normal;
 			let running = this.task.status === TaskStatus.TASK_RUNNING || this.task.status === TaskStatus.TASK_PAUSED || this.task.status === TaskStatus.TASK_STOPPING || this.task.status === TaskStatus.TASK_FINISHING;
 			let selected = this.selected;
-			console
 			if (running && !selected) {
 				return 'taskitem-small-run';
 			} else if (running && selected) {
 				return 'taskitem-large-run';
-			} else if (uploading && !selected) {
+			} else if (transferring && !selected) {
 				return 'taskitem-small-transfer';
-			} else if (uploading && selected) {
+			} else if (transferring && selected) {
 				return 'taskitem-large-transfer';
 			} else if (!selected) {
 				return 'taskitem-small';
@@ -254,10 +255,17 @@ export default Vue.extend<{}, any, any, Props>({
 	},
 	methods: {
 		handleDblClick: function () {
-			if (this.$store.state.currentServerName === 'localhost') {
-				nodeBridge.openFile(`"${(this.task as UITask).outputFile}"`);
-			} else {
-				alert(`下载文件, ${(this.task as UITask).outputFile}`);
+			const serverName = this.$store.state.currentServerName;
+			const bridge = this.$store.getters.currentBridge as ServiceBridge;
+			const task = this.task as UITask;
+			if (task.status === TaskStatus.TASK_FINISHED && task.transferStatus === TransferStatus.normal) {
+				if (this.$store.state.currentServerName === 'localhost') {
+					nodeBridge.openFile(`"${(this.task as UITask).outputFile}"`);
+				} else {
+					const url = `http://${bridge.ip}:${bridge.port}/download/${task.outputFile}`;
+					nodeBridge.ipcRenderer?.send('downloadFile', { url, serverName, taskId: this.id });
+					this.$store.commit('setDownloadMap', { url, serverName, taskId: this.id })
+				}			
 			}
 		},
 		// 处理 tooltip

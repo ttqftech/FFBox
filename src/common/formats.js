@@ -164,7 +164,6 @@ const generator = {
 		if (extension) {
 			filePath += `.${extension}`;
 		}
-		console.log('concat: ', outputParams, fileDir, fileBasename, extension);
 		return filePath;
 	},
 	getOutputParam: function (outputParams, filedir, filebasename, withQuotes = false, overrideFilePath) {
