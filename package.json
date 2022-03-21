@@ -44,7 +44,7 @@
     "@vue/cli-plugin-vuex": "~4.4.0",
     "@vue/cli-service": "~4.4.0",
     "babel-loader": "^8.2.2",
-    "electron": "^8.0.0",
+    "electron": "^11.5.0",
     "electron-devtools-installer": "^3.1.0",
     "vue-cli-plugin-electron-builder": "2.0.0-rc.4",
     "vue-template-compiler": "^2.6.11"
