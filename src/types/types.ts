@@ -134,6 +134,15 @@ export interface Notification {
 
 export type SingleProgressLog = Array<[number, number]>;
 
+/**
+ * 文件路径处理规则：
+ * 添加任务时调用 mainVue 的 addTask，传入 baseName，并且把输入添加到 input.files 中。但此项中的 filePath 属性，本地任务直接添加绝对路径，远程任务则留空
+ * FFBoxService 收到指令后直接加入到任务列表。然后，本地任务直接 gen 一个 paraArray，远程任务需要马上 gen 一个 outputFile，然后才 gen paraArray
+ * 远程任务上传完成后调用 mergeUploaded，然后把刚才留空的路径用 hash 补上。
+ * 此时，任务均具有 fileBaseName 属性。对于本地任务，input.files 具有绝对路径，outputFile 暂时留空；对于远程任务，input.files 具有绝对路径（但文件名是 hash），outputFile 具有绝对路径（但文件名是 hash.[ext]）
+ * 任务开始时，本地任务根据输出参数 gen 一个 outputFile（不参与到 paraArray 中，只是为了后续打开文件），远程任务直接使用之前计算的 outputFile 对 paraArray 进行 override
+ * 任务结束后，双击任务时，本地任务直接打开 outputFile 的文件，远程任务则弹出文件保存窗口，然后通过 IPC 触发 webContents.downloadURL，继而触发 will-download 事件
+ */
 export interface Task {
 	fileBaseName: string;
 	before: {
@@ -229,6 +238,7 @@ export interface StoreState {
 	currentServerName: string;
 	selectedTask: Set<string>;
 	globalParams: OutputParams;
+	downloadMap: Map<string, { serverName: string, taskId: number }>;
 	machineCode: string;
 	functionLevel: number;
 }

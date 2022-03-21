@@ -4,6 +4,7 @@ import { app, protocol, BrowserWindow, ipcMain } from 'electron'
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer'
 import { FFBoxService } from './service/FFBoxService'
+import { TransferStatus } from './types/types'
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
 let win: BrowserWindow | null;
@@ -45,9 +46,10 @@ function createWindow() {
 		win.loadURL('app://./electron.html')
 	}
 
+	mountWindowEvents();
 	win.on('closed', () => {
 		win = null
-	})
+	});
 }
 
 function mountIpcEvents() {
@@ -66,6 +68,18 @@ function mountIpcEvents() {
 	// 获取主窗口 Hwnd
 	ipcMain.on('getHwnd', (event, hwnd) => {
 		win!.webContents.send('hwnd', win!.getNativeWindowHandle());
+	});
+
+	/**
+	 * 启动文件下载流程：
+	 * taskitem 双击，发出带有下载 url 的 downloadFile 信号
+	 * 主进程打开另存为对话框，记录该 url 对应的保存位置，然后发送 downloadStatusChange 信号，告知主窗口改变 UI
+	 * webContents.downloadURL()，mainWindow.webContents.session.on('will-download') 在此处 handle 下载进度，不断向主窗口发送 downloadProgress
+	 * 下载完成后再次发送 downloadStatusChange 信号，告知主窗口改变 UI
+	 */
+	ipcMain.on('downloadFile', (event, params: { url: string, serverName: string, taskId: number }) => {
+		win!.webContents.downloadURL(params.url);
+		console.log("发动下载请求：", params.url);
 	});
 
 	// 启动一个 ffboxService，这个 ffboxService 目前钦定监听 localhost:33269，而 serviceBridge 会连接此 service
@@ -87,6 +101,31 @@ function mountIpcEvents() {
 	});
 }
 
+function mountWindowEvents() {
+	win!.on('closed', () => {
+		win = null
+	});
+	win!.webContents.session.on('will-download', (event, item, webContents) => {
+		// item.setSavePath(folderpath + `\\${item.getFilename()}`);	// 设置文件存放位置
+		win!.webContents.send('downloadStatusChange', { url: item.getURL(), status: TransferStatus.downloading });
+		item.on('updated', (event, state) => {
+			if (state === 'interrupted') {
+				console.log(item.getURL(), '下载取消');
+			} else if (state === 'progressing') {
+				if (item.isPaused()) {
+					console.log(item.getURL(), '下载暂停');
+				} else {
+					win!.webContents.send('downloadProgress', { url: item.getURL(), loaded: item.getReceivedBytes(), total: item.getTotalBytes() });
+				}
+			}
+		})
+		item.once('done', (event, state) => {
+			console.log(item.getURL(), `下载${state === 'completed' ? '完成' : '失败'}`);
+			win!.webContents.send('downloadStatusChange', { url: item.getURL(), status: TransferStatus.normal });
+		})
+	});
+}
+
 app.on('window-all-closed', () => {
 	app.quit();
 })
@@ -97,8 +136,8 @@ app.on('ready', async () => {
 		// Install Vue Devtools
 		try {
 			await installExtension(VUEJS_DEVTOOLS)
-		} catch (e) {
-			console.error('Vue Devtools failed to install:', e.toString())
+		} catch (e: any) {
+			console.error('Vue Devtools failed to install: ', e.toString && e.toString());
 		}
 	}
 	createWindow();

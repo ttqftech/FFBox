@@ -45,6 +45,7 @@ const store = new Vuex.Store<StoreState>({
 		currentServerName: 'localhost',
 		selectedTask: new Set(),
 		globalParams: JSON.parse(JSON.stringify(defaultParams)),
+		downloadMap: new Map(),
 		machineCode: '',
 		functionLevel: 20,
 	},
@@ -367,6 +368,9 @@ const store = new Vuex.Store<StoreState>({
 			delete state.servers[args.serverName];
 			state.servers = Object.assign({}, state.servers);	// 用于刷新 TasksView 的 serverList
 		},
+		setDownloadMap (state, args: { url: string, serverName: string, taskId: number }) {
+			state.downloadMap.set(args.url, { serverName: args.serverName, taskId: args.taskId });
+		},
 		// #endregion
 		// #region 其他
 		// 关闭窗口事件触发时调用
@@ -583,7 +587,7 @@ export default Vue.extend({
 		 * 不带分片功能的文件上传，由 store.addTasks 调用（这样做只是为了拿到 thisVue。这样做确实不好，未来有重构计划）
 		 * id 用于取到 task，此处认为先发送 addTask 指令再 checkAndUploadFile，任务就已存在于 tasklist 中，尽管无法保证此顺序
 		 */
-		checkAndUploadFile: function (file: File, currentBridge: ServiceBridge, id: number) {
+		checkAndUploadFile: function (file: File, bridge: ServiceBridge, id: number) {
 			const CryptoJS = nodeBridge.cryptoJS;
 			const reader = new FileReader();
 			const thisVue = this;
@@ -595,7 +599,7 @@ export default Vue.extend({
 				let toEncode = CryptoJS.enc.Latin1.parse(contentBuffer);
 				let hash = CryptoJS.SHA1(toEncode).toString();
 				console.log(file.name, '校验码：' + hash);
-				fetch(`http://${currentBridge.ip}:${currentBridge.port}/upload/check/`, {
+				fetch(`http://${bridge.ip}:${bridge.port}/upload/check/`, {
 					method: 'post',
 					body: JSON.stringify({
 						hashs: [hash]
@@ -611,7 +615,7 @@ export default Vue.extend({
 							thisVue.$store.commit('mergeUploaded', { id, hash });
 						} else {
 							console.log(file.name, '未缓存');
-							(thisVue as any).uploadFile(id, hash, file, currentBridge);
+							(thisVue as any).uploadFile(id, hash, file, bridge);
 						}
 					})
 				}).catch((err) => {
@@ -643,7 +647,7 @@ export default Vue.extend({
 		/**
 		 * 直接上传文件
 		 */
-		uploadFile (id: number, hash: string, file: File, currentBridge: ServiceBridge) {
+		uploadFile (id: number, hash: string, file: File, bridge: ServiceBridge) {
 			const thisVue = this;
 			const currentServer = this.$store.state.servers[this.$store.state.currentServerName] as Server;
 			const task = currentServer.tasks[id];
@@ -681,12 +685,36 @@ export default Vue.extend({
 				clearInterval(task.dashboardTimer);
 				task.dashboardTimer = NaN;
 			}
-			xhr.open('post', `http://${currentBridge.ip}:${currentBridge.port}/upload/file/`, true);
+			xhr.open('post', `http://${bridge.ip}:${bridge.port}/upload/file/`, true);
 			// xhr.setRequestHeader('Content-Type', 'multipart/form-data');
 			xhr.send(form);
 			task.dashboardTimer = setInterval(dashboardTimer, 50, task) as any;
 		},
-
+		/**
+		 * 响应 IPC 的下载状态信息
+		 */
+		handleDownloadStatusChange (server: Server, taskId: number, status: TransferStatus) {
+			const task = server.tasks[taskId];
+			// timer 相关处理
+			if (task.transferStatus === TransferStatus.normal && status === TransferStatus.downloading) {
+				task.transferProgressLog.transferred = [];
+				task.dashboardTimer = setInterval(dashboardTimer, 50, task) as any;
+			} else {
+				clearInterval(task.dashboardTimer);
+				task.dashboardTimer = NaN;
+			}
+			task.transferStatus = status;			
+		},
+		/**
+		 * 响应 IPC 的下载进度信息
+		 */
+		handleDownloadProgress (server: Server, taskId: number, progress: { loaded: number, total: number }) {
+			const task = server.tasks[taskId];
+			task.transferProgressLog.total = progress.total;
+			const transferred = task.transferProgressLog.transferred;
+			transferred.push([new Date().getTime() / 1000, progress.loaded]);
+			transferred.splice(0, transferred.length - 3);	// 限制列表最大长度为 3
+		},
 	},
 	mounted: function () {
 		document.title = 'FFBox v' + version;
@@ -740,6 +768,19 @@ export default Vue.extend({
 
 		// 挂载退出确认
 		nodeBridge.ipcRenderer?.on("exitConfirm", () => this.$store.commit('closeConfirm'));
+
+		// 挂载下载进度指示
+		nodeBridge.ipcRenderer?.on("downloadStatusChange", (event, params: { url: string, status: TransferStatus }) => {
+			const { serverName, taskId } = this.$store.state.downloadMap.get(params.url);
+			const server = this.$store.state.servers[serverName];
+			console.log("downloadStatusChange", params);
+			(this as any).handleDownloadStatusChange(server, taskId, params.status);
+		});
+		nodeBridge.ipcRenderer?.on("downloadProgress", (event, params: { url: string, loaded: number, total: number }) => {
+			const { serverName, taskId } = this.$store.state.downloadMap.get(params.url);
+			const server = this.$store.state.servers[serverName];
+			(this as any).handleDownloadProgress(server, taskId, { loaded: params.loaded, total: params.total });
+		});
 
 		// 捐助提示
 		setTimeout(() => {
@@ -877,8 +918,8 @@ function dashboardTimer(task: UITask) {
 		}
 
 		const { K: transferredK, B: transferredB, currentValue: currentTransferred } = calcDashboard(task.transferProgressLog.transferred);
-		console.log(`transferredK: ${transferredK}`);
-		console.log(`currentTransferred: ${currentTransferred}`);
+		// console.log(`transferredK: ${transferredK}`);
+		// console.log(`currentTransferred: ${currentTransferred}`);
 
 		// 任务进度计算
 		let progress: number;

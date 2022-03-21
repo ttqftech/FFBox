@@ -9,7 +9,7 @@ import osBridge from "./osBridge";
 
 class FFmpeg {
 	constructor (func, params) {		// 构造器，传入 func: 0: 直接执行 ffmpeg　1: 检测 ffmpeg 版本　２：多媒体文件信息读取
-		console.log('params', params);
+		console.log('启动 ffmpeg：', (params || []).join(', '));
 		this.cmd = spawn("ffmpeg", params, {
 			detached: false,
 			shell: func == 1 ? true : false,	// 使用命令行以获得“'ffmpeg' 不是内部或外部命令，也不是可运行的程序”这样的提示

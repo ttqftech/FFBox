@@ -4,6 +4,7 @@ import Koa from "koa";
 import Router from "koa-router";
 import koaBody from "koa-body";
 import koaStatic from "koa-static";
+import koaMount from "koa-mount";
 import formidable from "formidable";
 import fs from "fs";
 import os from "os"
@@ -34,8 +35,10 @@ const uiBridge = {
 	
 	listen() {
 		koa = new Koa();
+
+		// 初始化响应头和响应码
 		koa.use(async (ctx, next) => {
-			console.log(ctx.request.url, new Date());
+			console.log(getTimeString(new Date()), '收到请求：', ctx.request.url);
 			ctx.response.set('Access-Control-Allow-Origin', '*');
 			ctx.response.set('Access-Control-Allow-Headers', 'Content-Type');
 			if (ctx.request.method === 'OPTIONS') {
@@ -48,6 +51,8 @@ const uiBridge = {
 				console.log(err);
 			}
 		});
+		
+		// 读取请求体，提取到 request.body 中
 		koa.use(koaBody({
 			multipart: true,
 			formidable: {
@@ -55,9 +60,14 @@ const uiBridge = {
 				uploadDir
 			}
 		}));
-		let router = getRouter();
+
+		// 下载资源响应
+		const staticServer = koaStatic(`${os.tmpdir()}/FFBoxDownloadCache`);
+		koa.use(koaMount('/download', staticServer));
+				
+		// 路由
+		const router = getRouter();
 		koa.use(router.routes());
-		koa.use(koaStatic(__dirname + '/static'));
 
 		server = Http.createServer(koa.callback());
 
