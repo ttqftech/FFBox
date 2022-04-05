@@ -438,4 +438,23 @@ export function getTimeString(date: Date, showMs: boolean = true): string {
 	return `${date.getFullYear()}-${(date.getMonth() + 1 + '').padStart(2, '0')}-${(date.getDate() + '').padStart(2, '0')} ${(date.getHours() + '').padStart(2, '0')}:${(date.getMinutes() + '').padStart(2, '0')}:${(date.getSeconds() + '').padStart(2, '0')}${showMs ? '.' + (date.getMilliseconds() + '').padStart(3, '0') : ''}`;
 }
 
+/**
+ * 获取当前运行环境
+ */
+export function getEnv(): 'browser' | 'node' | 'electron-renderer' | 'electron-main' {
+	if (process) {
+		if (process.env.IS_ELECTRON) {
+			if (typeof window !== 'undefined') {
+				return 'electron-renderer';
+			} else {
+				return 'electron-main';
+			}
+		} else {
+			return 'node';
+		}
+	} else {
+		return 'browser';
+	}
+}
+
 // #endregion

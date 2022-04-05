@@ -1,5 +1,6 @@
+import { spawnInvoker } from "@/common/spawnInvoker";
 import { getTimeString } from "@/common/utils";
-import { ChildProcess, spawn } from "child_process";
+import { ChildProcess } from "child_process";
 
 let helper: ChildProcess | undefined = undefined;
 
@@ -33,38 +34,37 @@ function callHelper<T>(func: (helper: ChildProcess) => Promise<T> | T): Promise<
 			callCorrespondingFunction(helper);
 		} else {
 			console.log(getTimeString(new Date()), '正在启动 helper');
-			helper = spawn("FFBoxHelper.exe", [], {
+			spawnInvoker('FFBoxHelper.exe', [], {
 				detached: false,
 				shell: false,
 				// encoding: 'utf8'
-			}) as ChildProcess;
-			helper.on('close', (code, signal) => {
-				// 'close' 事件将始终在 'exit' 或 'error'（如果子进程衍生失败）已经触发之后触发
-				console.log('FFBoxHelper 退出！', code, signal);
-				switch (code) {
-					case -4058:
-						// 找不到文件，启动失败
-						helper = undefined;
-						reject('FFBoxHelper 未找到');
-						break;
-					case -1:
-						// 进程退出
-						helper = undefined;
-						break;
-				}
+			}).then((_helper) => {
+				helper = _helper;
+				_helper.on('close', (code, signal) => {
+					// 'close' 事件将始终在 'exit' 或 'error'（如果子进程衍生失败）已经触发之后触发
+					console.log('FFBoxHelper 退出！', code, signal);
+					switch (code) {
+						case -4058:
+							// 找不到文件，启动失败
+							helper = undefined;
+							reject('FFBoxHelper 未找到');
+							break;
+						case -1:
+							// 进程退出
+							helper = undefined;
+							break;
+					}
+				});
+				// helper?.on('exit', (code, signal) => {
+				// 	console.log('exit', code, signal);
+				// });
+				// _helper.stdout!.on('data', (data) => {
+				// 	console.warn(data.toString());
+				// });
+				callCorrespondingFunction(_helper);
+			}).catch((reason) => {
+				console.error(reason);
 			});
-			helper.on('error', (e) => {
-				// console.log('error', e);
-			});
-			// helper?.on('exit', (code, signal) => {
-			// 	console.log('exit', code, signal);
-			// });
-			helper.stdout!.on('data', (data) => {
-				// console.warn(data.toString());
-			});
-			setTimeout((helper) => {
-				callCorrespondingFunction(helper);
-			}, 50, helper);
 		}
 	});
 }
