@@ -1,5 +1,8 @@
 # FFBox Changelog
 
+`2022-04-05` 完善 SpawnInvoker 的错误处理  
+`2022-04-04` 增加 SpawnInvoker 以解决 Windows 上 spawn 时出现 EPERM 的问题；新增 ffmpeg 异常终止事件监听  
+`2022-03-27` FFmpegInvoke 转换为 Typescript，并解决不识别 MKV 容器的问题  
 `2022-03-21` 实现文件下载功能  
 `2022-03-19` 整理文件路径处理规则并规划和开发文件下载功能  
 `2022-03-06` 修正远程文件文件名逻辑；改造 taskitem props；实现本地的完成任务双击打开功能  

@@ -60,12 +60,12 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 	public initFFmpeg(): void {
 		console.log(getTimeString(new Date()), '检查 FFmpeg 版本。');
 		let ffmpeg = new FFmpeg(1);
-		ffmpeg.on('data', (data: string) => {
-			this.setCmdText(-1, data);
+		ffmpeg.on('data', ({ content }) => {
+			this.setCmdText(-1, content);
 		});
-		ffmpeg.on('version', (data: string) => {
-			if (data[0]) {
-				this.ffmpegVersion = data;
+		ffmpeg.on('version', ({ content }) => {
+			if (content) {
+				this.ffmpegVersion = content;
 			} else {
 				this.ffmpegVersion = '';
 			}
@@ -120,25 +120,24 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 	private getFileMetadata(id: number, task: ServiceTask, filePath: string): void {
 		// FFmpeg 读取媒体信息
 		let ffmpeg = new FFmpeg(2, ['-hide_banner', '-i', filePath, '-f', 'null']);
-		ffmpeg.on('data', (data: string) => {
-			this.setCmdText(id, data);
+		ffmpeg.on('data', ({ content }) => {
+			this.setCmdText(id, content);
 		});
-		ffmpeg.on('metadata', (input: any) => {
-			task.before.format = input.format;
-			task.before.duration = input.duration;
-			task.before.vcodec = input.vcodec === undefined ? '-' : input.vcodec;
-			task.before.vresolution = input.vcodec === undefined ? '-' : input.vresolution.replace('x', '<br />');
-			task.before.vbitrate = input.vbitrate === undefined ? '-' : input.vbitrate;
-			task.before.vframerate = input.vframerate === undefined ? '-' : input.vframerate;
-			task.before.format = input.format;
-			task.before.acodec = input.acodec === undefined ? '-' : input.acodec;
-			task.before.abitrate = input.abitrate === undefined ? '-' : input.abitrate;
+		ffmpeg.on('metadata', ({ content: input }) => {
+			task.before.format = input.format || '-';
+			task.before.duration = parseInt(input.duration || '-1');
+			task.before.vcodec = input.vcodec || '-';
+			task.before.vresolution = input.vresolution && input.vresolution.replace('x', '<br />') || '-';
+			task.before.vbitrate = parseInt(input.vbitrate || '-1');
+			task.before.vframerate = parseInt(input.vframerate || '-1');
+			task.before.acodec = input.acodec || '-';
+			task.before.abitrate = parseInt(input.abitrate || '-1');
 			this.emit('taskUpdate', {
 				id,
 				content: convertAnyTaskToTask(task),
 			});
 		});
-		ffmpeg.on('critical', (errors: Array<string>) => {
+		ffmpeg.on('critical', ({ content: errors }) => {
 			let reason = '';
 			errors.forEach((value) => {
 				reason += value;
@@ -300,12 +299,12 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 				content: task.progressLog,
 			});
 		});
-		newFFmpeg.on('data', (data: string) => {
-			this.setCmdText(id, data);
+		newFFmpeg.on('data', ({ content }) => {
+			this.setCmdText(id, content);
 		});
-		newFFmpeg.on('error', (error: any) => {
-			task.errorInfo.push(error.description);
-		});
+		// newFFmpeg.on('error', ({ error }) => {
+		// 	task.errorInfo.push(error.description);
+		// });
 		newFFmpeg.on('warning', (warning: any) => {
 			this.setNotification(
 				id,
@@ -313,7 +312,7 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 				NotificationLevel.warning,
 			);
 		});
-		newFFmpeg.on('critical', (errors: Array<string>) => {
+		newFFmpeg.on('critical', ({ content: errors }) => {
 			console.log(getTimeString(new Date()), `任务出错：${task.fileBaseName}。id：${id}。`);
 			task.status = TaskStatus.TASK_ERROR;
 			this.setNotification(
@@ -327,6 +326,20 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 			});
 			this.queueAssign(Object.keys(this.tasklist).findIndex((key) => parseInt(key) === id) + 1);
 		});
+		newFFmpeg.on('escaped', () => {
+			console.log(getTimeString(new Date()), `任务异常终止：${task.fileBaseName}。id：${id}。`);
+			task.status = TaskStatus.TASK_ERROR;
+			this.setNotification(
+				id,
+				'任务「' + task.fileBaseName + '」异常终止。请到左侧的指令面板查看详细原因。',
+				NotificationLevel.error,
+			);
+			this.emit('taskUpdate', {
+				id,
+				content: convertAnyTaskToTask(task),
+			});
+			this.queueAssign(Object.keys(this.tasklist).findIndex((key) => parseInt(key) === id) + 1);
+		})
 		for (const parameter of ['time', 'frame', 'size']) {
 			const _parameter = parameter as 'time' | 'frame' | 'size';
 			task.progressLog[_parameter].push([new Date().getTime() / 1000, 0]);
