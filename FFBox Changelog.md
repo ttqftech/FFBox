@@ -1,5 +1,6 @@
 # FFBox Changelog
 
+`2022-06-01` 解决偶发性的无法打开软件主界面、转码成功但提示异常终止问题、修复 slider 和 checkbox 坐标  
 `2022-04-05` 完善 SpawnInvoker 的错误处理  
 `2022-04-04` 增加 SpawnInvoker 以解决 Windows 上 spawn 时出现 EPERM 的问题；新增 ffmpeg 异常终止事件监听  
 `2022-03-27` FFmpegInvoke 转换为 Typescript，并解决不识别 MKV 容器的问题  

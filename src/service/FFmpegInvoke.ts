@@ -102,7 +102,7 @@ export class FFmpeg extends (EventEmitter as new () => TypedEventEmitter<FFmpegI
 					this.status = -1;
 				}
 				this.status = -1;				
-			}, 50);
+			}, 100);
 		});
 	}
 	stdoutProcessing (data: string) {
