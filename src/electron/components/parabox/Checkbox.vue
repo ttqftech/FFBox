@@ -29,7 +29,7 @@ export default Vue.extend({
 			let mouseDownX = (event as MouseEvent).pageX || (event as TouchEvent).touches[0].pageX;	// 鼠标在页面（窗口）内的坐标
 			let sliderLeft: number, sliderWidth: number;
 			if (event.target!.className == "checkbox-slipper") {
-				sliderLeft = event.target!.parentElement!.offsetLeft;
+				sliderLeft = event.target!.parentElement!.getBoundingClientRect().left;
 				sliderWidth = event.target!.parentElement!.offsetWidth;
 			} else {
 				sliderLeft = event.target!.getBoundingClientRect().left;

@@ -418,7 +418,7 @@ const store = new Vuex.Store<StoreState>({
 				 * 管理端使用这个 key 对 functionLevel 加密，得到的加密字符串由用户输入到 userInput 中去
 				 * 客户端将 userInput 使用 key 解密，如果 userInput 不是瞎编的，那么就能解出正确的 functionLevel
 				 */
-				let machineCode = electronStore.get('userinfo.machineCode');
+				let machineCode = (electronStore.get('userinfo.machineCode') || '') as string;
 				let fixedCode = 'be6729be8279be40';
 				let key = machineCode + fixedCode;
 				let decrypted = cryptoJS.AES.decrypt(args.userInput, key)

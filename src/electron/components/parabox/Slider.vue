@@ -36,7 +36,7 @@ export default Vue.extend({
 			let slipper = event.target!.className == 'slider-module-slipper' ? true : false;
 			let sliderLeft: number, sliderWidth: number, slipperOffsetX: number;
 			if (slipper) {
-				sliderLeft = event.target!.parentElement!.offsetLeft;
+				sliderLeft = event.target!.parentElement!.getBoundingClientRect().left;
 				sliderWidth = event.target!.parentElement!.offsetWidth;
 				slipperOffsetX = (event as MouseEvent).offsetX - event.target!.offsetWidth / 2;
 				event.target!.focus();

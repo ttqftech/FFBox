@@ -2,10 +2,11 @@
 	<footer id="statusbar">
 		<div id="ffmpeg-version">{{ ffmpegVersion }}</div>
 		<button class="infoicon" @click="switchInfoCenter();" :class="$store.state.showInfoCenter ? 'infoicon-selected' : 'infoicon-unselected'" aria-label="通知中心开关">
-			<img src="/images/info-transparent.svg" /><span class="infocount">{{ $store.state.unreadNotificationCount }}</span>
+			<img src="/images/info-transparent.svg" :style="{ animationName: 'unset' }" /><span class="infocount">{{ $store.state.unreadNotificationCount }}</span>
 		</button>
 		<button class="infoicon" @click="switchSponsorCenter();" @mousedown="sponsorCenterMouseDown();" @mouseup="sponsorCenterMouseUp();" :class="$store.state.showSponsorCenter ? 'infoicon-selected' : 'infoicon-unselected'" aria-label="打赏中心开关">
-			<img src="/images/sponsor.svg" /><div style="width: 12px"></div>
+			<img src="/images/sponsor.svg" :style="{ animationName: $store.state.functionLevel < 50 ? '' : 'unset' }" />
+			<div style="width: 12px"></div>
 		</button>
 		<div id="output-folder"></div>
 	</footer>
@@ -113,21 +114,31 @@ export default Vue.extend({
 		.infoicon-unselected {
 			background: unset;
 		}
-		.infoicon img {
-			display: block;
-			position: absolute;
-			top: 0;
-			bottom: 0;
-			left: 8px;
-			height: 13px;
-			width: 13px;
-			margin: auto;
+		@keyframes sponsorFlash {
+			0%, 20%, 100% {
+				opacity: 1;
+			}
+			10% {
+				opacity: 0.2;
+			}
 		}
-		.infoicon .infocount {
-			margin-left: 20px;
-			line-height: 24px;
-			font-size: 13px;
-		}
+			.infoicon img {
+				display: block;
+				position: absolute;
+				top: 0;
+				bottom: 0;
+				left: 8px;
+				height: 13px;
+				width: 13px;
+				margin: auto;
+				-webkit-user-drag: none;
+				animation: sponsorFlash 5s linear 5s infinite normal;
+			}
+			.infoicon .infocount {
+				margin-left: 20px;
+				line-height: 24px;
+				font-size: 13px;
+			}
 		#output-folder {
 			float: right;
 			margin: 0px 16px 0px 8px;
