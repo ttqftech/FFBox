@@ -162,6 +162,7 @@ if (isDevelopment) {
 			}
 		})
 	} else {
+		app.disableHardwareAcceleration();
 		process.on('SIGTERM', () => {
 			win!.close();
 			// app.quit()

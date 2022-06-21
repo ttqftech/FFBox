@@ -20,15 +20,26 @@ let wss: WebSocket.Server | null;
 let ffboxService: FFBoxService | null;
 
 const uploadDir = os.tmpdir() + '/FFBoxUploadCache' // 文件上传目录
+const downloadDir = os.tmpdir() + '/FFBoxDownloadCache' // 文件下载目录
 
 const uiBridge = {
 	init(self: FFBoxService) {
 		ffboxService = self;
-		fs.access(uploadDir, fs.constants.F_OK, (err) => {
-			if (err) {
-				fs.mkdir(uploadDir, (err) => {
-					console.log(getTimeString(new Date()), `创建缓存文件夹`, err);
-				});
+		const uploadDirCheck = new Promise((resolve) => {
+			fs.access(uploadDir, fs.constants.F_OK, (err) => {
+				return resolve(err ? false : true);
+			});	
+		})
+		const downloadDirCheck = new Promise((resolve) => {
+			fs.access(downloadDir, fs.constants.F_OK, (err) => {
+				return resolve(err ? false : true);
+			});	
+		})
+		Promise.all([uploadDirCheck, downloadDirCheck]).then((values) => {
+			if (!values.every((value) => value)) {
+				console.log(getTimeString(new Date()), `创建缓存文件夹`);
+				fs.mkdir(uploadDir, () => {});
+				fs.mkdir(downloadDir, () => {});	
 			}
 		});
 	},

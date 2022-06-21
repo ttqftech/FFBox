@@ -89,14 +89,14 @@ export default Vue.extend({
 				let index = (this.buttons as Buttons).findIndex((button) => {
 					return button.role === ButtonRole.Cancel;
 				});
-				if (index > 0) {
+				if (index > -1) {
 					this.close(index);
 				}
 			} else if (e.key === 'Enter') {
 				let index = (this.buttons as Buttons).findIndex((button) => {
-					return button.role === ButtonRole.Cancel;
+					return button.role === ButtonRole.Confirm;
 				});
-				if (index > 0) {
+				if (index > -1) {
 					this.close(index);
 				}
 			}

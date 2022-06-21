@@ -58,7 +58,7 @@ export default Vue.extend({
 		}
 	},
 	watch: {
-		text: function (newValue, oldValue) {		// props 的 text 只有单向数据流，因此新增 data 的 inputText 做双向绑定和事件监听
+		value: function (newValue, oldValue) {		// props 的 text 只有单向数据流，因此新增 data 的 inputText 做双向绑定和事件监听
 			this.inputText = newValue;
 		},
 		inputText: {

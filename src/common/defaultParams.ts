@@ -5,6 +5,8 @@ export const defaultParams: OutputParams = {
 		mode: 'standalone',
 		hwaccel: '不使用',
 		files: [],
+		begin: '',
+		end: '',
 	},
 	video: {
 		vcodec: 'HEVC',

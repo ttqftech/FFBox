@@ -74,7 +74,7 @@ export default Vue.extend<Data, any, any, any>({
 					mode = 'none';
 					break;
 			}
-			nodeBridge.remote?.getCurrentWindow().setProgressBar(this.workingStatusNProgress.progress * 0.99 + 0.01, {mode});
+			nodeBridge.remote?.getCurrentWindow().setProgressBar(mode === 'none' ? -1 : this.workingStatusNProgress.progress * 0.99 + 0.01, {mode});
 			return this.workingStatusNProgress.workingStatus ? this.workingStatusNProgress.progress * 100 + '%' : 0;
 		},
 		titleLeft: function () {		// 暂停、运行状态下输出左侧，否则中间

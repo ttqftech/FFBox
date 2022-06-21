@@ -396,8 +396,6 @@ export function replaceOutputParams(from: OutputParams, to: OutputParams) {
 	}
 	// 以下参数更改为任务原有的参数
 	ret.input.mode = to.input.mode;
-	ret.input.begin = to.input.begin;
-	ret.input.end = to.input.end;
 	ret.input.files = to.input.files;
 	return ret;
 }
