@@ -50,7 +50,6 @@ function callHelper<T>(func: (helper: ChildProcess) => Promise<T> | T): Promise<
 				helper = _helper;
 				_helper.on('close', (code, signal) => {
 					// 'close' 事件将始终在 'exit' 或 'error'（如果子进程衍生失败）已经触发之后触发
-					console.log('FFBoxHelper 退出！', code, signal);
 					switch (code) {
 						case -4058:
 							// 找不到文件，启动失败
@@ -66,9 +65,9 @@ function callHelper<T>(func: (helper: ChildProcess) => Promise<T> | T): Promise<
 				// helper?.on('exit', (code, signal) => {
 				// 	console.log('exit', code, signal);
 				// });
-				_helper.stdout!.on('data', (data) => {
-					console.warn(data.toString());
-				});
+				// _helper.stdout!.on('data', (data) => {
+				// 	console.warn(data.toString());
+				// });
 				callCorrespondingFunction(_helper);
 			}).catch((reason) => {
 				console.error(reason);
@@ -88,7 +87,7 @@ export default {
 				hwnd = data[0] + data[1] * 2**8 + data[2] * 2**16 + data[3] * 2**24;
 				console.log(`本窗口 hwnd：` + hwnd);
 				callHelper((helper) => {
-					console.log('helper', helper);
+					// console.log('helper', helper);
 					helper.stdin!.write(`2${turnON ? '1' : '0'}${hwnd.toString().padStart(8, '0')}`);
 				}).then(() => {
 					resolve();

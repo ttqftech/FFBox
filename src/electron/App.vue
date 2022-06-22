@@ -127,7 +127,7 @@ const store = new Vuex.Store<StoreState>({
 			let dropDelayCount = 0;
 			for (const file of files) {
 				setTimeout(() => {	// v2.4 版本开始完全可以不要延时，但是太生硬，所以加个动画
-					console.log(file.path);
+					console.log('添加任务', file.path);
 					let isRemote = currentBridge.ip !== 'localhost';
 					let promise: Promise<number> = (mainVue as any).addTask(upath.trimExt(file.name), undefined, isRemote ? '' : file.path);
 					if (isRemote) {
@@ -304,7 +304,7 @@ const store = new Vuex.Store<StoreState>({
 			mainVue.$store.commit('initializeServer', { serverName: args.ip });
 		},
 		initializeServer (state, args: { serverName: string }) {
-			console.log('initializeServer', args.serverName);
+			console.log('初始化服务器连接', args.serverName);
 
 			let server: Server = state.servers[args.serverName];
 			let bridge: ServiceBridge = state.serviceBridges[args.serverName];
@@ -332,19 +332,15 @@ const store = new Vuex.Store<StoreState>({
 			});
 
 			bridge.on('ffmpegVersion', (data) => {
-				console.log('event: ffmpegVersion', data);
 				(mainVue as any).handleFFmpegVersion(server, bridge, data.content);
 			});
 			bridge.on('workingStatusUpdate', (data) => {
-				console.log('event: workingStatusUpdate', data);
 				(mainVue as any).handleWorkingStatusUpdate(server, bridge, data.value);
 			});
 			bridge.on('tasklistUpdate', (data) => {
-				console.log('event: tasklistUpdate', data);
 				(mainVue as any).handleTasklistUpdate(server, bridge, data.content);
 			});
 			bridge.on('taskUpdate', (data) => {
-				console.log('event: taskUpdate', data);
 				(mainVue as any).handleTaskUpdate(server, bridge, data.id, data.content);
 			});
 			bridge.on('cmdUpdate', (data) => {
@@ -354,7 +350,6 @@ const store = new Vuex.Store<StoreState>({
 				(mainVue as any).handleProgressUpdate(server, bridge, data.id, data.content);
 			});
 			bridge.on('taskNotification', (data) => {
-				console.log('event: taskNotification', data);
 				(mainVue as any).handleTaskNotification(server, bridge, data.id, data.content, data.level);
 			});
 		},
@@ -773,7 +768,7 @@ export default Vue.extend({
 		nodeBridge.ipcRenderer?.on("downloadStatusChange", (event, params: { url: string, status: TransferStatus }) => {
 			const { serverName, taskId } = this.$store.state.downloadMap.get(params.url);
 			const server = this.$store.state.servers[serverName];
-			console.log("downloadStatusChange", params);
+			// console.log("downloadStatusChange", params);
 			(this as any).handleDownloadStatusChange(server, taskId, params.status);
 		});
 		nodeBridge.ipcRenderer?.on("downloadProgress", (event, params: { url: string, loaded: number, total: number }) => {

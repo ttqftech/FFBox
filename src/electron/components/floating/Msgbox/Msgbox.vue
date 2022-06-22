@@ -46,7 +46,7 @@ export default Vue.extend({
 	mounted: function () {
 		// 设置动画并自动退出
 		this.show = true;
-    	document.addEventListener('keydown', this.onKeydown);
+    	document.addEventListener('keypress', this.onKeypress);
 		// 设置输入框的默认值（如果有）
 		for (let i = 0; i < this.inputs.length; i++) {
 			if ((this.inputs[i] as any).default) {
@@ -80,11 +80,11 @@ export default Vue.extend({
 			this.onClose();
 		},
 		afterLeave() {
-			document.removeEventListener('keydown', this.onKeydown);
+			document.removeEventListener('keypress', this.onKeypress);
 			this.$destroy();
 			this.$el.parentNode!.removeChild(this.$el);
 		},
-		onKeydown(e: KeyboardEvent) {
+		onKeypress(e: KeyboardEvent) {
 			if (e.key === 'Escape') {
 				let index = (this.buttons as Buttons).findIndex((button) => {
 					return button.role === ButtonRole.Cancel;

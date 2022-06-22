@@ -35,7 +35,6 @@ function createWindow() {
 		}
 	})
 
-	console.log('WEBPACK_DEV_SERVER_URL', process.env.WEBPACK_DEV_SERVER_URL);
 	if (process.env.WEBPACK_DEV_SERVER_URL) {
 		// Load the url of the dev server if in development mode
 		win.loadURL(process.env.WEBPACK_DEV_SERVER_URL + 'electron.html')
@@ -56,13 +55,11 @@ function mountIpcEvents() {
 	// 窗口主动发送的确认关闭通知
     ipcMain.on('exitConfirm', () => {
 		exitConfirm = true;
-		console.log('exitConfirm', exitConfirm);
 	});
 
 	// 窗口主动发送的关闭通知
     ipcMain.on('close', () => {
 		win!.close();
-		console.log('close');
 	});
 
 	// 获取主窗口 Hwnd

@@ -180,7 +180,6 @@ export class FFmpeg extends (EventEmitter as new () => TypedEventEmitter<FFmpegI
 					setTimeout(() => {				// 避免存储空间已满时也会产生 finished	// 🔵 finish
 						if (!this.requireStop && this.errors.size == 0) {
 							this.emit('finished');
-							console.log('FFmpeg finished.');
 							this.status = -1;
 						}
 					}, 100);

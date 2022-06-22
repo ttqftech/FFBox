@@ -208,7 +208,7 @@ function getRouter(): Router {
 			return;
 		}
 		// 暂定 body 里的属性只有一个 hashs: Array<string>，不写 ts 定义了
-		console.log('检查文件', ctx.request.body);
+		console.log(getTimeString(new Date()), '检查文件缓存性', ctx.request.body.hashs);
 		let hashs = ctx.request.body.hashs as Array<string>;
 		let ret = [];
 		for (const hash of hashs) {
