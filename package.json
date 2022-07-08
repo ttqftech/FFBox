@@ -1,0 +1,42 @@
+{
+  "name": "ffbox_v5",
+  "version": "1.0.0",
+  "description": "An Electron application with Vue and TypeScript",
+  "main": "./out/main/index.js",
+  "author": "example.com",
+  "scripts": {
+    "format": "prettier --write .",
+    "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix",
+    "typecheck": "tsc --noEmit",
+    "start": "electron-vite preview",
+    "dev": "electron-vite dev",
+    "build": "tsc --noEmit && electron-vite build",
+    "postinstall": "electron-builder install-app-deps",
+    "build:win": "npm run build && electron-builder --win --config",
+    "build:mac": "npm run build && electron-builder --mac --config",
+    "build:linux": "npm run build && electron-builder --linux --config"
+  },
+  "dependencies": {
+    "@electron-toolkit/preload": "^1.0.1",
+    "@electron-toolkit/utils": "^1.0.2"
+  },
+  "devDependencies": {
+    "@electron-toolkit/tsconfig": "^1.0.1",
+    "@rushstack/eslint-patch": "^1.1.1",
+    "@types/node": "16.11.22",
+    "@vitejs/plugin-vue": "^2.3.1",
+    "@vue/eslint-config-prettier": "^7.0.0",
+    "@vue/eslint-config-typescript": "^10.0.0",
+    "electron": "^17.3.1",
+    "electron-builder": "^22.14.13",
+    "electron-notarize": "^1.2.1",
+    "electron-vite": "^1.0.2",
+    "eslint": "^8.12.0",
+    "eslint-plugin-vue": "^8.5.0",
+    "less": "^4.1.2",
+    "prettier": "^2.6.1",
+    "typescript": "^4.5.5",
+    "vite": "^2.9.1",
+    "vue": "^3.2.31"
+  }
+}
