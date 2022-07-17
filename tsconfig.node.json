@@ -7,6 +7,12 @@
 		"paths": {
 			"@common/*": [
 				"src/common/*"
+			],
+			"@renderer/*": [
+				"src/renderer/src/*"
+			],
+			"@main/*": [
+				"src/main/*"
 			]
 		}
 	}

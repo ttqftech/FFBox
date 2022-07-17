@@ -1,10 +1,11 @@
 import { app, shell, BrowserWindow, ipcMain } from 'electron';
 import * as path from 'path';
 import { electronApp, optimizer, is } from '@electron-toolkit/utils';
+import { FFBoxService } from './service/FFBoxService';
 
 class ElectronApp {
 	mainWindow: BrowserWindow | null = null;
-	service: FFBoxService | null;
+	service: FFBoxService | null = null;
 	blockWindowClose = true;
 
 	constructor() {
@@ -117,7 +118,7 @@ class ElectronApp {
 		});
 
 		// 获取主窗口 Hwnd
-		ipcMain.on('getHwnd', (event, hwnd) => {
+		ipcMain.on('getHwnd', () => {
 			this.mainWindow!.webContents.send('hwnd', this.mainWindow!.getNativeWindowHandle());
 		});
 
@@ -128,7 +129,7 @@ class ElectronApp {
 		 * webContents.downloadURL()，mainWindow.webContents.session.on('will-download') 在此处 handle 下载进度，不断向主窗口发送 downloadProgress
 		 * 下载完成后再次发送 downloadStatusChange 信号，告知主窗口改变 UI
 		 */
-		ipcMain.on('downloadFile', (event, params: { url: string; serverName: string; taskId: number }) => {
+		ipcMain.on('downloadFile', (_event, params: { url: string; serverName: string; taskId: number }) => {
 			this.mainWindow!.webContents.downloadURL(params.url);
 			console.log('发动下载请求：', params.url);
 		});

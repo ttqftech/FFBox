@@ -1,11 +1,12 @@
+/* eslint-disable no-fallthrough */
 // #region 格式转换区
 
-import { OutputParams, ServiceTask, Task, TaskStatus, TransferStatus, UITask } from "@/types/types";
+import { OutputParams, ServiceTask, Task, TaskStatus, TransferStatus, UITask } from '@common/types';
 
-/** 
+/**
  * 传入 "xxx kbps"，返回比特率（Kbps）
  */
-export function getKbpsValue (text: string): number {	
+export function getKbpsValue (text: string): number {
 	return parseInt(text.slice(0, -5));
 }
 
@@ -21,9 +22,9 @@ export function getFormattedBitrate (Kbps: number): string {
  */
 export function getFormattedTime (timeValue: number): string {
 	if (timeValue !== -1) {
-		let Hour = Math.floor(timeValue / 3600);
-		let Minute = Math.floor((timeValue - Hour * 3600) / 60);
-		let Second = timeValue - Hour * 3600 - Minute * 60;
+		const Hour = Math.floor(timeValue / 3600);
+		const Minute = Math.floor((timeValue - Hour * 3600) / 60);
+		const Second = timeValue - Hour * 3600 - Minute * 60;
 		return ("0" + Hour).slice(-2) + ":" + ("0" + Minute).slice(-2) + ":" + ("0" + Second.toFixed(2)).slice(-5);
 	} else {
 		return "时长未知";
@@ -35,7 +36,7 @@ export function getFormattedTime (timeValue: number): string {
  */
 export function getTimeValue (timeString: string): number {
 	if (timeString !== "N/A") {
-		let seconds = parseInt(timeString.slice(0, 2)) * 3600 + parseInt(timeString.slice(3, 5)) * 60 - (-timeString.slice(6));
+		const seconds = parseInt(timeString.slice(0, 2)) * 3600 + parseInt(timeString.slice(3, 5)) * 60 - (-timeString.slice(6));
 		if (seconds > 0) {
 			return seconds;
 		} else {
@@ -62,7 +63,7 @@ export function getTimeValue (timeString: string): number {
 export function selectString (text: string, pre: string, post = '', begin = 0, includePostLength = false) {
 	let outText;
 	let outPos = -1;
-	let prePos = text.indexOf(pre, begin);
+	const prePos = text.indexOf(pre, begin);
 	if (prePos !== -1) {
 		let postPos;
 		if (post === '') {
@@ -91,12 +92,12 @@ export function selectString (text: string, pre: string, post = '', begin = 0, i
  * @returns {string} 替换后的字符串
  */
 export function replaceString (text: string, searchValue: string, replaceValue: string, start: number, end: number): string {
-	let front = text.slice(0, start);
+	const front = text.slice(0, start);
 	let mid = text.slice(start, end);
 	while (mid.indexOf(searchValue) != -1) {
 		mid = mid.replace(searchValue, replaceValue);
 	}
-	let rear = text.slice(end);
+	const rear = text.slice(end);
 	return front + mid + rear;
 }
 
@@ -112,7 +113,7 @@ export function scanf (input: string, format: string, splitter = ' '): Array<any
 	let c = '', f = '';		// c：正在匹配的输入字符		f：正在匹配的格式字符
 	let status = 0;			// 0：正常逐位匹配		1：正在匹配字符串		2：正在匹配数字		4：匹配结束
 	let str = "";			// 字符串或数字匹配过程中的字符串
-	let returnList: Array<any> = [];
+	const returnList: Array<any> = [];
 	while (status != 4) {
 		switch (status) {
 			case 0:			// 正常逐位匹配
@@ -138,7 +139,7 @@ export function scanf (input: string, format: string, splitter = ' '): Array<any
 							default:		// 格式错误或为空
 								status = 4;
 								break;
-						}		
+						}
 						break;
 					case ' ':		// 忽略空格
 						break;
@@ -152,7 +153,7 @@ export function scanf (input: string, format: string, splitter = ' '): Array<any
 						}
 						if (f != c) {
 							status = 4;
-						}	
+						}
 						break;
 				}
 				break;
@@ -231,13 +232,13 @@ export function scanf (input: string, format: string, splitter = ' '): Array<any
 				break;
 		}
 	}
-	return returnList;				
+	return returnList;
 }
 
 /**
  * 获取随机字符串
  */
-export function randomString (length = 6, dictionary = 'abcdefghijklmnopqrstuvwxyz'): string {
+export function randomString(length = 6, dictionary = 'abcdefghijklmnopqrstuvwxyz'): string {
 	let result = '';
 	for (let i = length; i > 0; --i) result += dictionary[Math.floor(Math.random() * dictionary.length)];
 	return result;
@@ -311,18 +312,18 @@ export function getInitialTask(fileBaseName: string, outputParams?: OutputParams
 }
 
 export function getInitialServiceTask(fileName: string, outputParams?: OutputParams): ServiceTask {
-	let task: ServiceTask = {
+	const task: ServiceTask = {
 		...getInitialTask(fileName, outputParams),
 		...{
 			ffmpeg: null,
 			remoteTask: false,
-		}
-	}
+		},
+	};
 	return task;
 }
 
 export function getInitialUITask(fileName: string, outputParams?: OutputParams): UITask {
-	let task: UITask = {
+	const task: UITask = {
 		...getInitialTask(fileName, outputParams),
 		...{
 			dashboard: {
@@ -348,35 +349,35 @@ export function getInitialUITask(fileName: string, outputParams?: OutputParams):
 			transferProgressLog: {
 				transferred: [],
 				total: NaN,
-			}
-		}
-	}
-	return task;	
+			},
+		},
+	};
+	return task;
 }
 
 /**
  * 任务信息在进行网络传送前调用此函数，过滤掉仅存在于 ServiceTask | UITask 的属性
  */
 export function convertAnyTaskToTask(task: ServiceTask | UITask): Task {
-    return {
-        fileBaseName: task.fileBaseName,
-        before: task.before,
-        after: task.after,
-        paraArray: task.paraArray,
-        status: task.status,
-        progressLog: task.progressLog,
-        cmdData: task.cmdData,
-        errorInfo: task.errorInfo,
-        notifications: task.notifications,
+	return {
+		fileBaseName: task.fileBaseName,
+		before: task.before,
+		after: task.after,
+		paraArray: task.paraArray,
+		status: task.status,
+		progressLog: task.progressLog,
+		cmdData: task.cmdData,
+		errorInfo: task.errorInfo,
+		notifications: task.notifications,
 		outputFile: task.outputFile,
-    }
+	};
 }
 
 /**
  * 来自 FFBoxService 的任务信息自网络接收后与现存的 UITask 进行合并
  */
 export function mergeTaskFromService(self: UITask, remote: Task): UITask {
-    let ret = self;
+    const ret = self;
     Object.assign(ret, JSON.parse(JSON.stringify(remote)));
     return ret;
 }
@@ -387,13 +388,12 @@ export function mergeTaskFromService(self: UITask, remote: Task): UITask {
  * @param to 任务原有的参数列表
  */
 export function replaceOutputParams(from: OutputParams, to: OutputParams) {
-	let ret: OutputParams;
-	ret = {
+	const ret: OutputParams = {
 		input: JSON.parse(JSON.stringify(from.input)),
 		video: JSON.parse(JSON.stringify(from.video)),
 		audio: JSON.parse(JSON.stringify(from.audio)),
 		output: JSON.parse(JSON.stringify(from.output)),
-	}
+	};
 	// 以下参数更改为任务原有的参数
 	ret.input.mode = to.input.mode;
 	ret.input.files = to.input.files;
@@ -412,27 +412,29 @@ export type Arguments<T> = [T] extends [(...args: infer U) => any]
 	: [T] extends [void] ? [] : [T];
 
 export interface TypedEventEmitter<Events> {
-	addListener<E extends keyof Events> (event: E, listener: Events[E]): this
-	on<E extends keyof Events> (event: E, listener: Events[E]): this
-	once<E extends keyof Events> (event: E, listener: Events[E]): this
-	prependListener<E extends keyof Events> (event: E, listener: Events[E]): this
-	prependOnceListener<E extends keyof Events> (event: E, listener: Events[E]): this
-  
+	addListener<E extends keyof Events>(event: E, listener: Events[E]): this
+	on<E extends keyof Events>(event: E, listener: Events[E]): this
+	once<E extends keyof Events>(event: E, listener: Events[E]): this
+	prependListener<E extends keyof Events>(event: E, listener: Events[E]): this
+	prependOnceListener<E extends keyof Events>(event: E, listener: Events[E]): this
+
 	off<E extends keyof Events>(event: E, listener: Events[E]): this
-	removeAllListeners<E extends keyof Events> (event?: E): this
-	removeListener<E extends keyof Events> (event: E, listener: Events[E]): this
-  
-	emit<E extends keyof Events> (event: E, ...args: Arguments<Events[E]>): boolean
-	eventNames (): (keyof Events | string | symbol)[]
-	rawListeners<E extends keyof Events> (event: E): Function[]
-	listeners<E extends keyof Events> (event: E): Function[]
-	listenerCount<E extends keyof Events> (event: E): number
-  
-	getMaxListeners (): number
-	setMaxListeners (maxListeners: number): this
+	removeAllListeners<E extends keyof Events>(event?: E): this
+	removeListener<E extends keyof Events>(event: E, listener: Events[E]): this
+
+	emit<E extends keyof Events>(event: E, ...args: Arguments<Events[E]>): boolean
+	eventNames(): (keyof Events | string | symbol)[]
+	// eslint-disable-next-line @typescript-eslint/ban-types
+	rawListeners<E extends keyof Events>(event: E): Function[];
+	// eslint-disable-next-line @typescript-eslint/ban-types
+	listeners<E extends keyof Events>(event: E): Function[];
+	listenerCount<E extends keyof Events>(event: E): number;
+
+	getMaxListeners(): number;
+	setMaxListeners(maxListeners: number): this;
 }
 
-export function getTimeString(date: Date, showMs: boolean = true): string {
+export function getTimeString(date: Date, showMs = true): string {
 	return `${date.getFullYear()}-${(date.getMonth() + 1 + '').padStart(2, '0')}-${(date.getDate() + '').padStart(2, '0')} ${(date.getHours() + '').padStart(2, '0')}:${(date.getMinutes() + '').padStart(2, '0')}:${(date.getSeconds() + '').padStart(2, '0')}${showMs ? '.' + (date.getMilliseconds() + '').padStart(3, '0') : ''}`;
 }
 

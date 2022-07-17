@@ -1,16 +1,16 @@
-import { generator as fGenerator } from "./formats";
-import { generator as vGenerator } from "./vcodecs";
-import { generator as aGenerator } from "./acodecs";
+import { generator as fGenerator } from './formats';
+import { generator as vGenerator } from './vcodecs';
+import { generator as aGenerator } from './acodecs';
 import upath from 'upath'
-import { OutputParams } from "@/types/types";
+import { OutputParams } from '@common/types';
 
 /**
  * 获取命令行参数
  * 如果不提供 outputBaseName 或 outputDir，则自动从 outputParams.input.files[0].filePath 中提取
  */
-export function getFFmpegParaArray(outputParams: OutputParams, withQuotes: boolean = false, outputBaseName?: string, outputDir?: string, overrideFilePath?: string) {
-	let ret = [];
-	let inputFilePath = outputParams.input.files[0] && outputParams.input.files[0].filePath;
+export function getFFmpegParaArray(outputParams: OutputParams, withQuotes = false, outputBaseName?: string, outputDir?: string, overrideFilePath?: string) {
+	const ret: Array<string> = [];
+	const inputFilePath = outputParams.input.files[0] && outputParams.input.files[0].filePath;
 	outputBaseName = outputBaseName || upath.trimExt(upath.basename(inputFilePath || '[输出文件名]'));
 	outputDir = outputDir || upath.dirname(inputFilePath || '[输出目录]');
 	ret.push('-hide_banner');
@@ -23,7 +23,7 @@ export function getFFmpegParaArray(outputParams: OutputParams, withQuotes: boole
 }
 
 export function getFFmpegParaArrayOutputPath(outputParams: OutputParams) {
-	let inputFilePath = outputParams.input.files[0] && outputParams.input.files[0].filePath;
+	const inputFilePath = outputParams.input.files[0] && outputParams.input.files[0].filePath;
 	const outputBaseName = upath.trimExt(upath.basename(inputFilePath || '[输出文件名]'));
 	const outputDir = upath.dirname(inputFilePath || '[输出目录]');
 	return fGenerator.concatFilePath(outputParams.output, outputDir, outputBaseName);

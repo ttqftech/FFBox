@@ -288,8 +288,8 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 		// newFFmpeg.on('error', ({ error }) => {
 		// 	task.errorInfo.push(error.description);
 		// });
-		newFFmpeg.on('warning', (warning: any) => {
-			this.setNotification(id, task.fileBaseName + '：' + warning.description, NotificationLevel.warning);
+		newFFmpeg.on('warning', (warning) => {
+			this.setNotification(id, task.fileBaseName + '：' + warning.content, NotificationLevel.warning);
 		});
 		newFFmpeg.on('critical', ({ content: errors }) => {
 			console.log(getTimeString(new Date()), `任务出错：${task.fileBaseName}。id：${id}。`);

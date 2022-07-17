@@ -23,20 +23,12 @@ interface InputInfoString {
 
 interface FFmpegInvokerEvent {
 	data: (arg: { content: string }) => void;
-	status: (arg: {
-		frame: number;
-		fps: number;
-		q: number;
-		size: number;
-		time: number;
-		bitrate: number;
-		speed: number;
-	}) => void;
+	status: (arg: { frame: number; fps: number; q: number; size: number; time: number; bitrate: number; speed: number }) => void;
 	version: (arg: { content?: string }) => void;
 	metadata: (arg: { content: InputInfoString }) => void;
-	finished: () => void; // 正常完成任务退出时触发
-	escaped: () => void; // 非正常退出时触发
-	closed: () => void; // 任何情况进程结束都触发
+	finished: () => void; 	// 正常完成任务退出时触发
+	escaped: () => void; 	// 非正常退出时触发
+	closed: () => void; 	// 任何情况进程结束都触发
 	pending: (arg: { content: string }) => void;
 	critical: (arg: { content: Set<string> }) => void;
 	warning: (arg: { content: string }) => void;
@@ -52,8 +44,10 @@ export class FFmpeg extends (EventEmitter as new () => TypedEventEmitter<FFmpegI
 	private input: InputInfoString;
 	private stdoutBuffer: string;
 
+	/**
+	 * @param mode 0: 直接执行 ffmpeg　1: 检测 ffmpeg 版本　２：多媒体文件信息读取
+	 */
 	constructor(mode: 0 | 1 | 2, params?: Array<string>) {
-		// 构造器，传入 func: 0: 直接执行 ffmpeg　1: 检测 ffmpeg 版本　２：多媒体文件信息读取
 		super();
 		console.log('启动 ffmpeg：', (params || []).join(', '));
 		spawnInvoker('ffmpeg', params, {
@@ -89,7 +83,7 @@ export class FFmpeg extends (EventEmitter as new () => TypedEventEmitter<FFmpegI
 		};
 		this.stdoutBuffer = '';
 	}
-	mountSpawnEvents() {
+	mountSpawnEvents(): void {
 		this.process!.stdout!.on('data', (data) => {
 			this.stdoutProcessing(data);
 		});
@@ -108,14 +102,15 @@ export class FFmpeg extends (EventEmitter as new () => TypedEventEmitter<FFmpegI
 			}, 100);
 		});
 	}
-	stdoutProcessing(data: string) {
+	stdoutProcessing(data: string): void {
 		this.stdoutBuffer += data.toString();
 		this.dataProcessing();
 	}
-	dataProcessing() {
-		// FFmpeg 传回的数据处理总成
-		const newLinePos =
-			this.stdoutBuffer.indexOf('\n') >= 0 ? this.stdoutBuffer.indexOf('\n') : this.stdoutBuffer.indexOf(`\r`);
+	/**
+	 * FFmpeg 传回的数据处理总成
+	 */
+	dataProcessing(): void {
+		const newLinePos = this.stdoutBuffer.indexOf('\n') >= 0 ? this.stdoutBuffer.indexOf('\n') : this.stdoutBuffer.indexOf(`\r`);
 		if (newLinePos < 0) {
 			// 一行没接收完
 			return;
@@ -133,7 +128,7 @@ export class FFmpeg extends (EventEmitter as new () => TypedEventEmitter<FFmpegI
 		switch (this.sm) {
 			case 0:
 				if (thisLine.includes('frame=') && !thisLine.includes('Lsize')) {
-				// 🔵 status（有视频）
+					// 🔵 status（有视频）
 					// const l_status = scanf(thisLine, `frame=%d fps=%f q=%f size=%dkB time=%d:%d:%d.%d bitrate=%dkbits/s speed=%dx`);
 					const l_status = thisLine.match(/(\d+([.|:]?\d*)*)|(N\/A)/g)!;
 					const time = l_status[4].match(/\d+/g)!;
@@ -147,7 +142,7 @@ export class FFmpeg extends (EventEmitter as new () => TypedEventEmitter<FFmpegI
 						speed: parseFloat(l_status[6]),
 					});
 				} else if (thisLine.includes('size=')) {
-				// 🔵 status（无视频）
+					// 🔵 status（无视频）
 					// const l_status = scanf(thisLine, `size=%dkB time=%d:%d:%d.%d bitrate=%dkbits/s speed=%dx`);
 					const l_status = thisLine.match(/(\d+([.|:]?\d*)*)|(N\/A)/g)!;
 					const time = l_status[1].match(/\d+/g)!;
@@ -161,7 +156,7 @@ export class FFmpeg extends (EventEmitter as new () => TypedEventEmitter<FFmpegI
 						speed: parseFloat(l_status[3]),
 					});
 				} else if (thisLine.includes('Input #')) {
-				// ⚪ metadata：获得媒体信息
+					// ⚪ metadata：获得媒体信息
 					const format = selectString(thisLine, ', ', ', from', 0).text;
 					switch (format) {
 						case 'avi':
@@ -187,32 +182,32 @@ export class FFmpeg extends (EventEmitter as new () => TypedEventEmitter<FFmpegI
 					this.sm = 1; // 转入其他状态进行处理
 				} else if (thisLine.includes('video:')) {
 					setTimeout(() => {
-					// 避免存储空间已满时也会产生 finished	// 🔵 finish
+						// 避免存储空间已满时也会产生 finished								// 🔵 finish
 						if (!this.requireStop && this.errors.size == 0) {
 							this.emit('finished');
 							this.status = -1;
 						}
 					}, 100);
 				} else if (thisLine.includes('Conversion failed')) {
-				// 🔵 critical：错误终止并结束
+					// 🔵 critical：错误终止并结束
 					this.emit('critical', { content: this.errors });
 					this.status = -1;
 				} else if (thisLine.includes(`'ffmpeg'`)) {
-				// 🔵 version（Windows）：'ffmpeg' 不是内部或外部命令，也不是可运行的程序
+					// 🔵 version（Windows）：'ffmpeg' 不是内部或外部命令，也不是可运行的程序
 					this.emit('version', {});
 					this.status = -1;
 				} else if (thisLine.includes('not found')) {
-				// 🔵 version（Linux）：/bin/sh: 1: ffmpeg: not found
+					// 🔵 version（Linux）：/bin/sh: 1: ffmpeg: not found
 					this.emit('version', {});
 					this.status = -1;
 				} else if (thisLine.includes('No such file or directory')) {
-				// 🔵 critical：No such file or directory
+					// 🔵 critical：No such file or directory
 					this.errors.add('不是一个文件。');
 					this.emit('critical', { content: this.errors });
 					this.status = -1;
 				} else if (thisLine.includes('[') && thisLine.includes('@')) {
-				// ⚪ demuxer/decoder/encoder/muxer 等发来的信息
-					const sender = scanf(thisLine, '[%s @ %s]', ']')[1];
+					// ⚪ demuxer/decoder/encoder/muxer 等发来的信息
+					// const sender = scanf(thisLine, '[%s @ %s]', ']')[1];
 					const msg = thisLine.slice(thisLine.indexOf(']') + 2);
 					// 已识别的消息判断为 critical 放入 critical 列表，其余的 emit error 信息
 					if (false) {
@@ -227,39 +222,35 @@ export class FFmpeg extends (EventEmitter as new () => TypedEventEmitter<FFmpegI
 					} else if (msg.includes('CreateComponent(AMFVideoEncoderVCE_AVC) failed')) {
 						this.errors.add('AMD 编码器初始化失败。');
 					} else if (msg.includes('codec not currently supported in container')) {
-					// 例：[mp4 @ 000001d2146edf00] Could not find tag for codec ansi in stream #0, codec not currently supported in container
-						this.errors.add(
-						`容器不支持编码“${
-							selectString(msg, 'for codec ', ' in stream', 0).text
-						}”，请尝试更换容器（格式）或编码。`,
-					);
+						// 例：[mp4 @ 000001d2146edf00] Could not find tag for codec ansi in stream #0, codec not currently supported in container
+						this.errors.add(`容器不支持编码“${selectString(msg, 'for codec ', ' in stream', 0).text}”，请尝试更换容器（格式）或编码。`);
 					} else if (msg.includes('unknown codec')) {
-					// 例：[mov,mp4,m4a,3gp,3g2,mj2 @ 000002613bc8c540] Could not find codec parameters for stream 0 (Video: none (HEVC / 0x43564548), none, 2560x1440, 24211 kb/s): unknown codec
+						// 例：[mov,mp4,m4a,3gp,3g2,mj2 @ 000002613bc8c540] Could not find codec parameters for stream 0 (Video: none (HEVC / 0x43564548), none, 2560x1440, 24211 kb/s): unknown codec
 						this.errors.add('文件中的某些编码无法识别。');
 					} else if (msg.includes('Starting second pass: moving the moov atom to the beginning of the file')) {
 						this.emit('pending', { content: '正在移动文件信息到文件头' });
 					}
 				} else if (thisLine.includes('ffmpeg version')) {
-				// 🔵 version：找到 ffmpeg，并读出版本，需要放在读取文件信息后，也要放在“Conversion”后。注意有时候 version 后会附带网址，所以以空格作为结束
+					// 🔵 version：找到 ffmpeg，并读出版本，需要放在读取文件信息后，也要放在“Conversion”后。注意有时候 version 后会附带网址，所以以空格作为结束
 					if (this.getSingleMsg) {
 						this.emit('version', { content: selectString(thisLine, 'version ', ' ', 0).text });
 						this.status = -1;
 					}
 				} else if (thisLine.includes('Error while opening encoder for output stream')) {
-				// ⚪ error：例：Error initializing output stream 0:0 -- Error while opening encoder for output stream #0:0 - maybe incorrect parameters such as bit_rate, rate, width or height
+					// ⚪ error：例：Error initializing output stream 0:0 -- Error while opening encoder for output stream #0:0 - maybe incorrect parameters such as bit_rate, rate, width or height
 					this.errors.add('输出参数设置有误。');
 				} else if (thisLine.includes('Invalid data found when processing input')) {
-				// 🔵 critical：Invalid data found when processing input
+					// 🔵 critical：Invalid data found when processing input
 					this.errors.add('输入文件无法识别。');
 					this.emit('critical', { content: this.errors });
 					this.status = -1;
 				} else if (thisLine.includes('Permission denied')) {
-				// 🔵 critical：Permission denied
+					// 🔵 critical：Permission denied
 					this.errors.add('权限不足，无法操作。');
 					this.emit('critical', { content: this.errors });
 					this.status = -1;
 				} else if (thisLine.includes('No space left on device')) {
-				// 🔵 error：多种部件发来的 No space left on device
+					// 🔵 error：多种部件发来的 No space left on device
 					this.errors.add('外存不足。');
 				}
 				break;
@@ -277,7 +268,7 @@ export class FFmpeg extends (EventEmitter as new () => TypedEventEmitter<FFmpegI
 				} else if (thisLine.includes('Stream ') && thisLine.includes('Video')) {
 					// 先把括号里的逗号去掉
 					let front = 0,
-					rear = 0;
+						rear = 0;
 					let _thisLine = thisLine;
 					while ((front = _thisLine.indexOf('(', front)) != -1) {
 						rear = thisLine.indexOf(')', front);
@@ -286,8 +277,7 @@ export class FFmpeg extends (EventEmitter as new () => TypedEventEmitter<FFmpegI
 					}
 					// 读取视频行
 					let video_paraline = '',
-					currentPos = 0;
-					// @ts-ignore
+						currentPos = 0;
 					({ text: video_paraline, pos: currentPos } = selectString(_thisLine, 'Video: '));
 					const video_paraItems = video_paraline.split(', ');
 					this.input.vcodec = video_paraItems[0];
@@ -318,7 +308,7 @@ export class FFmpeg extends (EventEmitter as new () => TypedEventEmitter<FFmpegI
 				} else if (thisLine.includes('Stream ') && thisLine.includes('Audio')) {
 					// 先把括号里的逗号去掉
 					let front = 0,
-					rear = 0;
+						rear = 0;
 					let _thisLine = thisLine;
 					while ((front = thisLine.indexOf('(', front)) != -1) {
 						rear = thisLine.indexOf(')', front);
@@ -327,8 +317,7 @@ export class FFmpeg extends (EventEmitter as new () => TypedEventEmitter<FFmpegI
 					}
 					// 读取音频行
 					let audio_paraline = '',
-					currentPos = 0;
-					// @ts-ignore
+						currentPos = 0;
 					({ text: audio_paraline, pos: currentPos } = selectString(_thisLine, 'Audio: '));
 					const audio_paraItems = audio_paraline.split(', ');
 					this.input.acodec = audio_paraItems[0];
@@ -338,8 +327,8 @@ export class FFmpeg extends (EventEmitter as new () => TypedEventEmitter<FFmpegI
 					// audio_samplerate = audio_paraItems.find((element) => {return element.indexOf('Hz') != -1;});
 					// audio_samplerate = audio_samplerate == undefined ? undefined : audio_samplerate.slice(0, -3);
 					this.input.abitrate = audio_paraItems.find((element) => {
-					return element.includes('kb/s');
-				});
+						return element.includes('kb/s');
+					});
 					if (this.input.abitrate != undefined) {
 						if (this.input.abitrate.includes('(')) {
 							this.input.abitrate = this.input.abitrate.slice(0, this.input.abitrate.indexOf('(') - 1);
@@ -347,22 +336,22 @@ export class FFmpeg extends (EventEmitter as new () => TypedEventEmitter<FFmpegI
 						this.input.abitrate = this.input.abitrate.slice(0, -5);
 					}
 				} else if (thisLine.includes('[') && thisLine.includes('@')) {
-				// ⚪ demuxer/decoder/encoder/muxer 等发来的信息
+					// ⚪ demuxer/decoder/encoder/muxer 等发来的信息
 					// const sender = scanf(thisLine, '[%s @ %s]', ']')[1];
 					const msg = thisLine.slice(thisLine.indexOf(']') + 2);
 					// 已识别的消息判断为 critical 放入 critical 列表，其余的 emit error 信息
 					if (false) {
 					} else if (msg.includes('Unable to find a suitable output format')) {
-					// 例：[NULL @ 00000250d7ab1040] Unable to find a suitable output format for '童可可 - 小光芒_converted.MP0'
+						// 例：[NULL @ 00000250d7ab1040] Unable to find a suitable output format for '童可可 - 小光芒_converted.MP0'
 						this.errors.add('容器设置有误。');
 					}
 				} else if (thisLine.includes('Unknown encoder')) {
-				// 🔵 critical：Unknown encoder
+					// 🔵 critical：Unknown encoder
 					this.errors.add(`无法识别的输出编码“${selectString(thisLine, "'", "'", 0).text}”。`);
 					this.emit('critical', { content: this.errors });
 					this.status = -1;
 				} else if (thisLine.includes('Invalid argument')) {
-				// 🔵 critical：Invalid argument
+					// 🔵 critical：Invalid argument
 					this.errors.add('参数有误。');
 					this.emit('critical', { content: this.errors });
 					this.status = -1;
@@ -370,7 +359,7 @@ export class FFmpeg extends (EventEmitter as new () => TypedEventEmitter<FFmpegI
 				break;
 
 			case 2:
-		case 3:
+			case 3:
 				// 暂时不需要
 				this.sm = 0;
 				break;
@@ -390,14 +379,14 @@ export class FFmpeg extends (EventEmitter as new () => TypedEventEmitter<FFmpegI
 		}
 		this.dataProcessing(); // 可以把整个函数都 while (true)，为了节省空间，就改用递归了
 	}
-	kill(callback: () => void) {
+	kill(callback: () => void): void {
 		if (!this.process) {
 			return;
 		}
 		this.addListener('closed', callback);
 		this.process.kill();
 	}
-	forceKill(callback: () => void) {
+	forceKill(callback: () => void): void {
 		if (!this.process) {
 			return;
 		}
@@ -409,7 +398,7 @@ export class FFmpeg extends (EventEmitter as new () => TypedEventEmitter<FFmpegI
 			shell: false,
 		});
 	}
-	exit(callback: () => void) {
+	exit(callback: () => void): void {
 		if (!this.process) {
 			return;
 		}
@@ -423,7 +412,7 @@ export class FFmpeg extends (EventEmitter as new () => TypedEventEmitter<FFmpegI
 		this.addListener('closed', callback);
 		this.process.stdin!.write('q');
 	}
-	pause() {
+	pause(): void {
 		if (!this.process) {
 			return;
 		}
@@ -447,7 +436,7 @@ export class FFmpeg extends (EventEmitter as new () => TypedEventEmitter<FFmpegI
 		}
 		this.status = 0;
 	}
-	resume() {
+	resume(): void {
 		if (!this.process) {
 			return;
 		}
@@ -471,13 +460,13 @@ export class FFmpeg extends (EventEmitter as new () => TypedEventEmitter<FFmpegI
 		}
 		this.status = 1;
 	}
-	sendKey(key: string) {
+	sendKey(key: string): void {
 		if (!this.process) {
 			return;
 		}
 		this.process.stdin!.write(key);
 	}
-	sendSig(str: number) {
+	sendSig(str: number): void {
 		if (!this.process) {
 			return;
 		}

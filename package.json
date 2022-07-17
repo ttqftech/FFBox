@@ -19,10 +19,25 @@
   "dependencies": {
     "@electron-toolkit/preload": "^1.0.1",
     "@electron-toolkit/utils": "^1.0.2",
-    "crypto-js": "^4.1.1"
-  },
-  "devDependencies": {
-    "@electron-toolkit/tsconfig": "^1.0.1",
+    "@types/formidable": "^2.0.5",
+    "@types/koa": "^2.13.5",
+    "@types/koa-mount": "^4.0.1",
+    "@types/koa-router": "^7.4.4",
+    "@types/koa-static": "^4.0.2",
+    "@types/ws": "^8.5.3",
+    "crypto-js": "^4.1.1",
+    "electron-store": "^8.0.2",
+    "formidable": "^2.0.1",
+    "koa": "^2.13.4",
+    "koa-body": "^5.0.0",
+    "koa-mount": "^4.0.0",
+    "koa-router": "^11.0.1",
+    "koa-static": "^5.0.0",
+    "upath": "^2.0.1",
+    "ws": "^8.8.0"
+},
+"devDependencies": {
+	"@electron-toolkit/tsconfig": "^1.0.1",
     "@rushstack/eslint-patch": "^1.1.1",
     "@types/node": "16.11.22",
     "@vitejs/plugin-vue": "^2.3.1",
@@ -39,6 +54,7 @@
     "prettier": "^2.6.1",
     "typescript": "^4.5.5",
     "vite": "^2.9.1",
+	"vite-tsconfig-paths": "^3.5.0",
     "vue": "^3.2.31"
   }
 }

@@ -1,5 +1,5 @@
-import { ServiceBridge } from '@/electron/bridge/serviceBridge'
-import { FFmpeg } from '../service/FFmpegInvoke'
+// import { ServiceBridge } from '@renderer/bridge/serviceBridge';
+// import { FFmpeg } from '@main/service/FFmpegInvoke';
 
 export interface FFBoxServiceInterface {
 	initFFmpeg(): void;
@@ -26,19 +26,19 @@ export interface FFBoxServiceEventParam {
 	workingStatusUpdate: { value: WorkingStatus };
 	tasklistUpdate: { content: Array<number> };
 	taskUpdate: { id: number; content: Task };
-	cmdUpdate: { id: number, content: string, append: boolean };
-	progressUpdate: { id: number, content: any };
-	taskNotification: { id: number, content: string, level: NotificationLevel };
+	cmdUpdate: { id: number; content: string; append: boolean };
+	progressUpdate: { id: number; content: any };
+	taskNotification: { id: number; content: string; level: NotificationLevel };
 }
 
 export type FFBoxServiceEvent = {
 	[K in keyof FFBoxServiceEventParam]: (arg: FFBoxServiceEventParam[K]) => void;
-}
+};
 
 export type FFBoxServiceEventApi = {
-	event: keyof FFBoxServiceEventParam,
-	payload: FFBoxServiceEventParam[keyof FFBoxServiceEventParam],
-}
+	event: keyof FFBoxServiceEventParam;
+	payload: FFBoxServiceEventParam[keyof FFBoxServiceEventParam];
+};
 
 export interface FFBoxServiceFunctionApi {
 	function: keyof FFBoxServiceInterface;
@@ -53,39 +53,39 @@ export interface OutputParams {
 }
 
 export type OutputParams_input = {
-	mode: 'standalone',
+	mode: 'standalone';
 	// 暂定 begin end 仅支持在独立模式下切割时长
-	begin?: string,
-	end?: string,
+	begin?: string;
+	end?: string;
 } & {
-	files: Array<InputFile>,
-	hwaccel: string,
-}
+	files: Array<InputFile>;
+	hwaccel: string;
+};
 
 export type OutputParams_video = {
-	vcodec: string,
-	vencoder: string,
-	resolution: string,
-	framerate: string,
-	ratecontrol: string,
-	ratevalue: number,
-	detail: Object,
+	vcodec: string;
+	vencoder: string;
+	resolution: string;
+	framerate: string;
+	ratecontrol: string;
+	ratevalue: number;
+	detail: Record<string, unknown>;
 }
 
 export type OutputParams_audio = {
-	acodec: string,
-	aencoder: string,
-	ratecontrol: string,
-	ratevalue: number,
-	vol: number,
-	detail: Object,
-}
+	acodec: string;
+	aencoder: string;
+	ratecontrol: string;
+	ratevalue: number;
+	vol: number;
+	detail: Record<string, unknown>;
+};
 
 export type OutputParams_output = {
-	format: string,
-	moveflags: boolean,
-	filename: string,
-}
+	format: string;
+	moveflags: boolean;
+	filename: string;
+};
 
 export interface InputFile {
 	filePath?: string;		// 本地模式下直接是文件全路径，网络模式下 merge 之后获得的文件名填充到此处
@@ -174,7 +174,9 @@ export interface Task {
 }
 
 export interface ServiceTask extends Task {
-	ffmpeg: FFmpeg | null;
+	// ffmpeg: FFmpeg | null;
+	// TODO
+	ffmpeg: any | null;
 	remoteTask: boolean;	// 本地/远程任务对于 service 来说，对输出文件名的处理方式不同；对于 UI 来说，只需要判断 IP 是否为 localhost 即决定是下载还是直接打开了
 }
 
@@ -234,7 +236,8 @@ export interface StoreState {
 	notifications: Array<Notification>;
 	unreadNotificationCount: number;
 	servers: {[key: string]: Server};
-	serviceBridges: {[key: string]: ServiceBridge};
+	// serviceBridges: { [key: string]: ServiceBridge };
+	serviceBridges: { [key: string]: any };
 	currentServerName: string;
 	selectedTask: Set<string>;
 	globalParams: OutputParams;
@@ -265,7 +268,7 @@ export type Parameter = {
 	parameter: string,
 	display: string,
 	items: Array<BaseComboItem>,
-}
+};
 
 export interface NormalApiWrapper<T> {
 	status: number;

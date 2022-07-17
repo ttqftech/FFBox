@@ -1,16 +1,16 @@
-import Http from "http";
-import WebSocket from "ws";
-import Koa from "koa";
-import Router from "koa-router";
-import koaBody from "koa-body";
-import koaStatic from "koa-static";
-import koaMount from "koa-mount";
-import formidable from "formidable";
-import fs from "fs";
-import os from "os"
-import { FFBoxServiceEventApi, FFBoxServiceEventParam, FFBoxServiceFunctionApi } from "@/types/types";
-import { FFBoxService } from "./FFBoxService";
-import { getTimeString } from "@/common/utils";
+import Http from 'http';
+import WebSocket from 'ws';
+import Koa from 'koa';
+import Router from 'koa-router';
+import koaBody from 'koa-body';
+import koaStatic from 'koa-static';
+import koaMount from 'koa-mount';
+import formidable from 'formidable';
+import fs from 'fs';
+import os from 'os';
+import { FFBoxServiceEventApi, FFBoxServiceEventParam, FFBoxServiceFunctionApi } from '@common/types';
+import { FFBoxService } from './FFBoxService';
+import { getTimeString } from '@common/utils';
 
 // let koaBody = require('koa-body');
 
@@ -19,32 +19,32 @@ let koa: Koa | null;
 let wss: WebSocket.Server | null;
 let ffboxService: FFBoxService | null;
 
-const uploadDir = os.tmpdir() + '/FFBoxUploadCache' // 文件上传目录
-const downloadDir = os.tmpdir() + '/FFBoxDownloadCache' // 文件下载目录
+const uploadDir = os.tmpdir() + '/FFBoxUploadCache'; // 文件上传目录
+const downloadDir = os.tmpdir() + '/FFBoxDownloadCache'; // 文件下载目录
 
 const uiBridge = {
-	init(self: FFBoxService) {
+	init(self: FFBoxService): void {
 		ffboxService = self;
 		const uploadDirCheck = new Promise((resolve) => {
 			fs.access(uploadDir, fs.constants.F_OK, (err) => {
 				return resolve(err ? false : true);
-			});	
-		})
+			});
+		});
 		const downloadDirCheck = new Promise((resolve) => {
 			fs.access(downloadDir, fs.constants.F_OK, (err) => {
 				return resolve(err ? false : true);
-			});	
-		})
+			});
+		});
 		Promise.all([uploadDirCheck, downloadDirCheck]).then((values) => {
 			if (!values.every((value) => value)) {
 				console.log(getTimeString(new Date()), `创建缓存文件夹`);
 				fs.mkdir(uploadDir, () => {});
-				fs.mkdir(downloadDir, () => {});	
+				fs.mkdir(downloadDir, () => {});
 			}
 		});
 	},
-	
-	listen() {
+
+	listen(): void {
 		koa = new Koa();
 
 		// 初始化响应头和响应码
@@ -62,20 +62,22 @@ const uiBridge = {
 				console.log(err);
 			}
 		});
-		
+
 		// 读取请求体，提取到 request.body 中
-		koa.use(koaBody({
-			multipart: true,
-			formidable: {
-				maxFileSize: 1024 ** 4,	// 设置上传文件大小最大限制为 1TiB，默认 2MB
-				uploadDir
-			}
-		}));
+		koa.use(
+			koaBody({
+				multipart: true,
+				formidable: {
+					maxFileSize: 1024 ** 4, // 设置上传文件大小最大限制为 1TiB，默认 2MB
+					uploadDir,
+				},
+			}),
+		);
 
 		// 下载资源响应
 		const staticServer = koaStatic(`${os.tmpdir()}/FFBoxDownloadCache`);
 		koa.use(koaMount('/download', staticServer));
-				
+
 		// 路由
 		const router = getRouter();
 		koa.use(router.routes());
@@ -106,16 +108,15 @@ const uiBridge = {
 			}
 		}, 0);
 	},
-
-}
+};
 
 // #region 事件挂载区
 
 /**
  * 对每个传入的 WebSocket 客户端连接挂载事件监听
  */
-function mountWebSocketEvents(ws: WebSocket, request: Http.IncomingMessage) {
-	let address = request.socket.remoteAddress;
+function mountWebSocketEvents(ws: WebSocket, request: Http.IncomingMessage): void {
+	const address = request.socket.remoteAddress;
 	console.log(getTimeString(new Date()), `新客户端接入：${address}。`);
 
 	ws.on('message', function (message: string | Buffer) {
@@ -135,30 +136,31 @@ function mountWebSocketEvents(ws: WebSocket, request: Http.IncomingMessage) {
 
 	ws.on('open', function () {
 		console.log(getTimeString(new Date()), `客户端连接打开：${address}。`);
-	})
+	});
 }
 
 /**
  * 接受 UI 事件入口（来自 ws.onmessage）
  */
-function handleMessageFromClient(message: string) {
+function handleMessageFromClient(message: string): void {
 	if (!ffboxService) {
-		throw new Error("uiBridge 使用前应 init()");
+		throw new Error('uiBridge 使用前应 init()');
 	}
-	let data: FFBoxServiceFunctionApi = JSON.parse(message);
-	let args = data.args;
+	const data: FFBoxServiceFunctionApi = JSON.parse(message);
+	const args = data.args;
 	// @ts-ignore
-	ffboxService[data.function](...args.map((value) => value === null ? undefined : value));
+	ffboxService[data.function](...args.map((value) => (value === null ? undefined : value)));
 }
 
 /**
  * 挂载 ffboxService 事件发送到 UI 的监听
  */
-function mountEventFromService() {
+function mountEventFromService(): void {
 	if (!ffboxService || !wss) {
-		throw new Error("uiBridge 使用前应 init()");
+		throw new Error('uiBridge 使用前应 init()');
 	}
-	let eventsEnum: Array<keyof FFBoxServiceEventParam> = [
+	// eslint-disable-next-line
+	const eventsEnum: Array<keyof FFBoxServiceEventParam> = [
 		'ffmpegVersion',
 		"workingStatusUpdate",
 		"tasklistUpdate",
@@ -171,15 +173,15 @@ function mountEventFromService() {
 		ffboxService.on(event, (payload: FFBoxServiceEventParam[keyof FFBoxServiceEventParam]) => {
 			for (const client of wss!.clients) {
 				if (client.readyState === client.OPEN) {
-					let data: FFBoxServiceEventApi = {
+					const data: FFBoxServiceEventApi = {
 						event,
 						payload,
-					}
+					};
 					// console.log('将要发送 ws 信息', event, event === 'taskUpdate' ? [(payload as any).content.after.input.files, (payload as any).content.paraArray.join(' ')] : undefined);
 					client.send(JSON.stringify(data));
 				}
 			}
-		})
+		});
 	}
 }
 
@@ -197,7 +199,7 @@ function mountEventFromService() {
  */
 
 function getRouter(): Router {
-	let router = new Router();
+	const router = new Router();
 
 	// 检查文件是否已缓存
 	// 已缓存返回奇数
@@ -209,31 +211,31 @@ function getRouter(): Router {
 		}
 		// 暂定 body 里的属性只有一个 hashs: Array<string>，不写 ts 定义了
 		console.log(getTimeString(new Date()), '检查文件缓存性', ctx.request.body.hashs);
-		let hashs = ctx.request.body.hashs as Array<string>;
-		let ret = [];
+		const hashs = ctx.request.body.hashs as Array<string>;
+		const ret: Array<number> = [];
 		for (const hash of hashs) {
-			let filePath = uploadDir + '/' + hash;
+			const filePath = uploadDir + '/' + hash;
 			if (fs.existsSync(filePath)) {
-				ret.push(Math.floor(Math.random() * (2 ** 31)) * 2 + 1);
+				ret.push(Math.floor(Math.random() * 2 ** 31) * 2 + 1);
 			} else {
-				ret.push(Math.floor(Math.random() * (2 ** 31)) * 2);
+				ret.push(Math.floor(Math.random() * 2 ** 31) * 2);
 			}
 		}
 		ctx.response.status = 200;
 		ctx.response.body = ret;
-	})
-	
+	});
+
 	// 接收文件
 	router.post('/upload/file', async function (ctx) {
-		if (!ctx.request.files || !ctx.request.files.file/* || !(ctx.request.files instanceof formidable.File)*/) {
+		if (!ctx.request.files || !ctx.request.files.file /* || !(ctx.request.files instanceof formidable.File)*/) {
 			// 非法请求
 			ctx.response.status = 400;
 			return;
 		}
-		let file = ctx.request.files.file as any as formidable.File;
-		let body = ctx.request.body;
+		const file = ctx.request.files.file as formidable.File as any;
+		const body = ctx.request.body;
 		console.log(getTimeString(new Date()), '收到文件', file.name);
-		let destPath = uploadDir + '/' + body.name;
+		const destPath = uploadDir + '/' + body.name;
 		try {
 			fs.renameSync(file.path, destPath);
 			console.log(getTimeString(new Date()), '文件已缓存至', destPath);
@@ -251,8 +253,8 @@ function getRouter(): Router {
 			ctx.response.status = 400;
 			return;
 		}
-		let body = ctx.request.body;
-		let result = await ffboxService!.taskAdd(body.fileBaseName, body.outputParams);
+		const body = ctx.request.body;
+		const result = await ffboxService!.taskAdd(body.fileBaseName, body.outputParams);
 		ctx.response.status = 200;
 		ctx.response.body = result;
 	});

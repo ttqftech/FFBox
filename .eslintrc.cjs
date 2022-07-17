@@ -1,4 +1,5 @@
 /* eslint-env node */
+/* eslint-disable */
 require('@rushstack/eslint-patch/modern-module-resolution');
 
 module.exports = {
@@ -26,7 +27,10 @@ module.exports = {
 		'@typescript-eslint/no-var-requires': 'off',
 		'vue/require-default-prop': 'off',
 		'vue/multi-word-component-names': 'off',
-		indent: ['warn', 'tab'],
+		'indent': ['warn', 'tab', { 'SwitchCase': 1 }],
+		'no-irregular-whitespace': 'off',
+		'no-empty': 'off',
+		'no-constant-condition': 'off',
 	},
 	overrides: [
 		{
