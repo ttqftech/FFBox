@@ -1,0 +1,36 @@
+/**
+ * @see https://www.electron.build/configuration/configuration
+ */
+{
+  "appId": "FFBox",
+  "asar": false,
+  "directories": {
+    "output": "release"
+  },
+  "files": [
+    "app"
+  ],
+  "mac": {
+    "artifactName": "${productName}_${version}.${ext}",
+    "target": [
+      "dmg"
+    ]
+  },
+  "win": {
+    "target": [
+      {
+        "target": "dir",
+        "arch": [
+          "x64"
+        ]
+      }
+    ],
+    "artifactName": "${productName}_${version}.${ext}"
+  },
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "allowToChangeInstallationDirectory": true,
+    "deleteAppDataOnUninstall": false
+  }
+}

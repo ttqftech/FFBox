@@ -1,0 +1,5 @@
+app
+dist
+pnpm-lock.yaml
+tsconfig.json
+tsconfig.*.json

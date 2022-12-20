@@ -1,0 +1,44 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "编译调试后端 (vite)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceRoot}",
+      "runtimeExecutable": "node",
+      // "windows": {
+      //   "runtimeExecutable": "npm.cmd"
+      // },
+      // "runtimeArgs": ["run", "dev:backend"],
+      // "outputCapture": "std",
+      // "serverReadyAction": {
+      //   "pattern": "Local:   http://127.0.0.1:([0-9]+)",
+      //   "uriFormat": "http://localhost:%s",
+      //   "action": "openExternally"
+      // },
+      "program": "${workspaceFolder}/src/backend/index.ts",
+      "outFiles": ["${workspaceFolder}/app/backend/**/*.cjs"],
+      // "skipFiles": [
+      //     "<node_internals>/**"
+      // ],
+      // "timeout": 60000,
+      "preLaunchTask": "启动 vite:backend 脚本 (dev)",
+    },
+    {
+      "name": "编译调试后端 (webpack)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceRoot}",
+      "program": "${workspaceFolder}/src/backend/index.ts",
+      "outFiles": ["${workspaceFolder}/app/backend/**/*.js"],
+      "preLaunchTask": "启动 webpack:backend 脚本 (dev)",
+    },
+    {
+      "name": "插入调试后端",
+      "type": "node",
+      "request": "attach",
+      "port": 9229,
+    }
+  ]
+}

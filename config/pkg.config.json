@@ -1,0 +1,8 @@
+{
+	"scripts": [],
+	"assets": [],
+	"targets": [
+		"node16-win-x64"
+	],
+	"outputPath": "app/backend"
+}

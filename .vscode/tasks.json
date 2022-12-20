@@ -1,0 +1,27 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "启动 vite:backend 脚本 (dev)",
+			"type": "npm",
+			"script": "vite:backend",
+			"isBackground": false,
+			"options": {
+				"env": {
+					"NODE_ENV": "development",
+				}
+			}
+		},
+		{
+			"label": "启动 webpack:backend 脚本 (dev)",
+			"type": "npm",
+			"script": "webpack:backend",
+			"isBackground": false,
+			"options": {
+				"env": {
+					"NODE_ENV": "development",
+				}
+			}
+		}
+	]
+}

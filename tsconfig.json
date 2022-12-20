@@ -1,0 +1,39 @@
+// tsconfig.json
+{
+	"include": [
+		"src/backend/**/*",
+		"src/common/**/*",
+		"src/main/**/*",
+		"src/preload/**/*",
+		"src/renderer/**/*"
+	],
+	"compilerOptions": {
+		"outDir": "./dist暂时无用/",
+		"noImplicitAny": true,
+		"sourceMap": true,
+		"module": "esnext",
+		"target": "esnext",
+		"jsx": "react",
+		"allowJs": true,
+		"moduleResolution": "node",
+		"esModuleInterop": true, // 对于 upath 包，不开启此选项的情况下需要 import * as fs from 'fs'
+		"baseUrl": ".",
+		"paths": {
+			"@common/*": [
+				"src/common/*"
+			],
+			"@backend/*": [
+				"src/backend/*"
+			],
+			"@renderer/*": [
+				"src/renderer/src/*"
+			],
+			"@preload/*": [
+				"src/preload/*"
+			],
+			"@main/*": [
+				"src/main/*"
+			]
+		}
+	}
+}

@@ -1,0 +1,52 @@
+{
+  "name": "FFBox",
+  "version": "4.0.0-alpha",
+  "description": "",
+  "main": "app/main/index.cjs",
+  "scripts": {
+    "build无用": "node scripts/build",
+    "dev:backend无用": "node scripts/dev-backend.mjs",
+    "dev:frontend": "node scripts/dev-frontend.mjs",
+    "vite:backend": "vite build --config ./config/vite.backend.ts",
+    "webpack:backend": "webpack --config ./config/webpack.backend.js --stats-error-details",
+    "vite:main": "vite build --config ./config/vite.main.ts",
+    "vite:renderer": "vite build --config ./config/vite.renderer.ts",
+    "vite:preload": "vite build --config ./config/vite.preload.ts",
+    "pkg:backend": "pkg --config ./config/pkg.config.json ./app/backend/index.js",
+    "package": "electron-builder"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/crypto-js": "^4.1.1",
+    "@types/koa": "^2.13.5",
+    "@types/koa-mount": "^4.0.2",
+    "@types/koa-router": "^7.4.4",
+    "@types/koa-static": "^4.0.2",
+    "@types/node": "^18.11.13",
+    "@types/ws": "^8.5.3",
+    "@vitejs/plugin-vue": "^4.0.0",
+    "electron": "^22.0.0",
+    "electron-builder": "^23.6.0",
+    "eslint": "^8.29.0",
+    "prettier": "^2.8.1",
+    "ts-loader": "^9.4.2",
+    "typescript": "^4.9.4",
+    "upath": "^2.0.1",
+    "vite": "^4.0.0",
+    "webpack": "^5.75.0",
+    "webpack-cli": "^5.0.1"
+  },
+  "dependencies": {
+    "@vitejs/plugin-vue-jsx": "^3.0.0",
+    "crypto-js": "^4.1.1",
+    "koa": "^2.14.1",
+    "koa-body": "^6.0.0",
+    "koa-mount": "^4.0.0",
+    "koa-router": "^12.0.0",
+    "koa-static": "^5.0.0",
+    "less": "^4.1.3",
+    "vue": "^3.2.45",
+    "ws": "^8.11.0"
+  }
+}
