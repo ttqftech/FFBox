@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron';
+import { app, shell, BrowserWindow, ipcMain, Menu } from 'electron';
 import * as path from 'path';
 // import { electronApp, optimizer, is } from '@electron-toolkit/utils';
 // import { FFBoxService } from './service/FFBoxService';
@@ -53,11 +53,23 @@ class ElectronApp {
 	}
 
 	createMainWindow(): void {
-		this.mainWindow = new BrowserWindow({
+		const mainWindow = new BrowserWindow({
 			width: 960,
 			height: 720,
+			minWidth: 600,
+			minHeight: 300,
 			show: false,
-			autoHideMenuBar: true,
+			resizable: true,
+			maximizable: true,
+			center: true,
+			// transparent: true,
+			frame: false,
+			hasShadow: true,
+			// titleBarOverlay: {
+			// 	color: '#444444'
+			// },
+			// titleBarStyle: 'hidden',
+			// autoHideMenuBar: true,
 			...(process.platform === 'linux' ? { icon: path.join(__dirname, '../../build/icon.png') } : {}),
 			webPreferences: {
 				preload: path.join(__dirname, '../preload/index.cjs'),
@@ -68,42 +80,80 @@ class ElectronApp {
 			// 	// preload: path.join(__dirname, '../preload/index.js'),
 			// },
 		});
+		this.mainWindow = mainWindow;
 
 		// 设置默认使用外部应用（浏览器）打开链接
-		this.mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+		mainWindow.webContents.setWindowOpenHandler(({ url }) => {
 			if (['https:', 'http:'].includes(new URL(url).protocol)) {
 				shell.openExternal(url);
 			}
 			return { action: 'deny' };
 		});
 
-		this.mainWindow.once('ready-to-show', () => {
-			this.mainWindow!.show();
+		mainWindow.once('ready-to-show', () => {
+			mainWindow!.show();
 		});
 
 		// HMR for renderer base on electron-vite cli.
 		// Load the remote URL for development or the local html file for production.
 		// if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-		// 	this.mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL']);
+		// 	mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL']);
 		// } else {
-		// 	this.mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
+		// 	mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
 		// }
 		if (app.isPackaged) {
-			this.mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'))
+			mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'))
 		} else {
 			// 环境变量来自 build.mjs 传入
 			const url = `http://${process.env['VITE_DEV_SERVER_HOST']}:${process.env['VITE_DEV_SERVER_PORT']}`;
 	
-			this.mainWindow.loadURL(url);
-			this.mainWindow.webContents.openDevTools();
+			mainWindow.loadURL(url);
+			mainWindow.webContents.openDevTools();
 		}
 	
-		this.mainWindow.on('close', (e) => {
+		mainWindow.on('close', (e) => {
 			if (this.blockWindowClose) {
 				e.preventDefault();
-				this.mainWindow!.webContents.send('exitConfirm');
+				mainWindow!.webContents.send('exitConfirm');
 			}
 		});
+
+		// 应用菜单
+		const menuTemplate = [
+			{
+				label: 'FFBox (A)',
+				submenu: [
+					{ label: '访问官网', click: () => mainWindow.webContents.send('menu', 'FFBox.访问官网') },
+					{ label: '访问源码' },
+					{ label: '检查更新' },
+					{ type: 'separator' },
+					{ label: 'FFBox v4.0' },
+				],
+			},
+			{
+				label: '任务 (T)',
+				submenu: [
+					{ label: '添加任务' },
+					{ label: '停止所有任务' },
+					{ label: '强行停止所有任务' },
+					{ label: '删除所有未在运行的任务' },
+					{ type: 'separator' },
+					{ label: '开始执行队列' },
+					{ label: '暂停执行队列' },
+				],
+			},
+			{
+				label: '视图 (V)',
+				submenu: [
+					{ label: '放大' },
+					{ label: '缩小' },
+					{ label: '重置缩放' },
+				],
+			},
+		];
+		
+		const menu = Menu.buildFromTemplate(menuTemplate as any);
+		Menu.setApplicationMenu(menu)
 	}
 
 	createService(): void {
@@ -121,6 +171,25 @@ class ElectronApp {
 	}
 
 	mountIpcEvents(): void {
+		// 最小化按钮
+		ipcMain.on('minimize', () => {
+			this.mainWindow.minimize();
+		});
+
+		// 窗口模式按钮
+		ipcMain.on('windowmode', () => {
+			if (this.mainWindow.isMaximized()) {
+				this.mainWindow.unmaximize();
+			} else {
+				this.mainWindow.maximize();
+			}
+		});
+
+		// 关闭按钮
+		ipcMain.on('close', () => {
+			this.mainWindow.close();
+		});
+
 		// 窗口主动发送的确认关闭通知
 		ipcMain.on('exitConfirm', () => {
 			this.blockWindowClose = false;

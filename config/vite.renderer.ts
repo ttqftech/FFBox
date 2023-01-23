@@ -2,6 +2,7 @@ import { builtinModules } from 'module';
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import vueJsx from '@vitejs/plugin-vue-jsx';
+import svgLoader from 'vite-svg-loader';
 import path from 'path';
 import pkgJSON from '../package.json';
 
@@ -41,5 +42,6 @@ export default defineConfig({
 	plugins: [
 		vue(),
 		vueJsx(),
+		svgLoader(),
 	]
 })

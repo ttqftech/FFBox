@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer, webFrame } from 'electron';
 
-import { domReady } from './utils'
+// import { domReady } from './utils'
 // import { useLoading } from './loading'
 
 // const { appendLoading, removeLoading } = useLoading()
@@ -11,54 +11,54 @@ import { domReady } from './utils'
 const electronAPI = {
     ipcRenderer: {
         send(channel, ...args) {
-            electron.ipcRenderer.send(channel, ...args);
+            ipcRenderer.send(channel, ...args);
         },
         sendTo(webContentsId, channel, ...args) {
-            electron.ipcRenderer.sendTo(webContentsId, channel, ...args);
+            ipcRenderer.sendTo(webContentsId, channel, ...args);
         },
         sendSync(channel, ...args) {
-            electron.ipcRenderer.sendSync(channel, ...args);
+            ipcRenderer.sendSync(channel, ...args);
         },
         sendToHost(channel, ...args) {
-            electron.ipcRenderer.sendToHost(channel, ...args);
+            ipcRenderer.sendToHost(channel, ...args);
         },
         postMessage(channel, message, transfer) {
             if (!process.contextIsolated) {
-                electron.ipcRenderer.postMessage(channel, message, transfer);
+                ipcRenderer.postMessage(channel, message, transfer);
             }
         },
         invoke(channel, ...args) {
-            return electron.ipcRenderer.invoke(channel, ...args);
+            return ipcRenderer.invoke(channel, ...args);
         },
         on(channel, listener) {
-            electron.ipcRenderer.on(channel, listener);
+            ipcRenderer.on(channel, listener);
             return this;
         },
         once(channel, listener) {
-            electron.ipcRenderer.once(channel, listener);
+            ipcRenderer.once(channel, listener);
             return this;
         },
         removeListener(channel, listener) {
-            electron.ipcRenderer.removeListener(channel, listener);
+            ipcRenderer.removeListener(channel, listener);
             return this;
         },
         removeAllListeners(channel) {
-            electron.ipcRenderer.removeAllListeners(channel);
+            ipcRenderer.removeAllListeners(channel);
             return this;
         }
     },
     webFrame: {
         insertCSS(css) {
-            return electron.webFrame.insertCSS(css);
+            return webFrame.insertCSS(css);
         },
         setZoomFactor(factor) {
             if (typeof factor === 'number' && factor > 0) {
-                electron.webFrame.setZoomFactor(factor);
+                webFrame.setZoomFactor(factor);
             }
         },
         setZoomLevel(level) {
             if (typeof level === 'number') {
-                electron.webFrame.setZoomLevel(level);
+                webFrame.setZoomLevel(level);
             }
         }
     },
