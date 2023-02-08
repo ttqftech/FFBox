@@ -218,6 +218,9 @@ export enum WorkingStatus {
 }
 
 export interface Server {
+	id: string;			// 仅供前端一次性使用
+	name: string;		// 默认为空
+	nickName?: string;	// 暂不支持
 	tasks: Array<UITask>;
 	ffmpegVersion: string;
 	workingStatus: WorkingStatus;

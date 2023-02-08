@@ -39,4 +39,9 @@ module.exports = {
 			},
 		},
 	],
+	// plugins: ["react", "react-hooks"],
+	parser: 'babel-eslint',	// 支持 jsx 识别
+    parserOptions: {
+        sourceType: "module",	// 解决 Parsing error: 'import' and 'export' may appear only with 'sourceType'
+    }
 };

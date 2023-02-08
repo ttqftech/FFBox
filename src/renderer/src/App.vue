@@ -1,9 +1,20 @@
 <script setup lang="ts">
+// 以下这句对全局有效
+/// <reference types="vite-svg-loader" />
+import { onMounted } from 'vue'
+import { useAppStore } from '@renderer/stores/appStore';
 import MainFrame from './containers/MainFrame.vue';
+
+onMounted(() => {
+	const appStore = useAppStore();
+	setTimeout(() => {
+		appStore.initTemp();
+	}, 1000);
+});
 </script>
 
 <template>
-	<MainFrame id="app" />
+	<MainFrame />
 </template>
 
 <style>

@@ -22,12 +22,3 @@ export function getSingleArgvValue(argName: string, ignoreCase = false) {
 let time = 0;
 
 const service = new FFBoxService();
-
-setInterval(() => {
-    console.log(service);
-    if (time++ > 19) {
-        process.exit(0);
-    }
-}, 1000);
-
-console.log('ok', service);

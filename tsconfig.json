@@ -13,7 +13,9 @@
 		"sourceMap": true,
 		"module": "esnext",
 		"target": "esnext",
-		"jsx": "react",
+		// 若使用 "react"，ts 将检查 react 的相关依赖项，也将使用 react 的特定语法。而本项目使用的不是 react，故使用 "preserve"
+		// https://cn.vuejs.org/guide/extras/render-function.html#jsx-tsx
+		"jsx": "preserve",
 		"allowJs": true,
 		"moduleResolution": "node",
 		"esModuleInterop": true, // 对于 upath 包，不开启此选项的情况下需要 import * as fs from 'fs'

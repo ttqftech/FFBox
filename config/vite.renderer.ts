@@ -35,13 +35,15 @@ export default defineConfig({
 	resolve: {
 		extensions: ['.ts', '.js'],
 		alias: {
-			'@common': '../common',
-			'@renderer': './src/',
+			'@common': path.resolve('src/common'),	// 因为 vite 根目录被设置成 renderer，其 devServer 出来的路径不能再找上一级了，所以需要另行处理
+			'@renderer': './src',
 		},
 	},
 	plugins: [
 		vue(),
-		vueJsx(),
+		vueJsx(
+			// options are passed on to @vue/babel-plugin-jsx
+		),
 		svgLoader(),
 	]
-})
+});
