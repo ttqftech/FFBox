@@ -1,3 +1,173 @@
 .red {
-    color: red;
+	color: red;
+}
+
+.taskWrapper1 {
+	// 第 1 层 wrapper 用于取消第 2 层 wrapper 阴影带来的多余边距↓，但是空 2px 间隙出来
+	margin-bottom: -14px;
+	.taskWrapper2 {
+		// 第 2 层 wrapper 用于产生左右边距
+		// 				  产生 16px 的阴影区域↑，其中 12 px 向下，4px 向上
+		margin-top: 4px;
+		padding: 0px 16px 12px;
+		// width: 100%;
+		// box-sizing: border-box;
+		overflow: hidden;
+		transform: translateZ(0);
+		// .task
+	}
+}
+.task {
+	position: relative;
+	height: 28px;
+	pointer-events: none;
+	.backgroundWhite {
+		height: 100%;
+		border-radius: 2px;
+		background-color: hwb(0deg 98% 2%);
+		box-shadow: 0 0 1px 2px hwb(0deg 98% 2%),
+					0 2px 6px 0 hwb(0deg 0% 100% / 0.2);
+		transition: height 0.5s, background-color 0.3s;
+		pointer-events: all;
+		&:hover {
+			transition: background-color 0.2s cubic-bezier(0, 2, 0.3, 1);
+			background: hwb(210 90% 2%);
+		}
+	}
+	.previewIcon {
+		position: absolute;
+		left: 2px;
+		top: 2px;
+		height: 24px;
+		width: 24px;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		svg {
+			width: 16px;
+			height: 16px;
+		}
+	}
+	.taskName {
+		position: absolute;
+		top: 2px;
+		bottom: 2px;
+		left: 32px;
+		display: -webkit-box;
+		font-size: 16px;
+		width: ~'max(calc(100% - 820px), 64px)';
+		text-align: left;
+		overflow: hidden;
+		// text-overflow: ellipsis;
+		-webkit-line-clamp: 1;
+		-webkit-box-orient: vertical;
+	}
+	.paraArea {
+		position: absolute;
+		top: 2px;
+		bottom: 2px;
+		right: 32px;
+		max-width: calc(100% - 128px);
+		overflow: hidden;
+		text-align: right;
+		&>* {
+			text-align: center;
+		}
+		// outline: green 1px solid;
+		.formatBefore, .formatAfter, .smpteBefore, .smpteAfter, .videoBefore, .videoAfter, .audioBefore, .audioAfter {
+			display: inline-block;
+			height: 24px;
+			width: 60px;
+			line-height: 24px;
+			vertical-align: middle;
+			font-size: 11px;
+			text-overflow: ellipsis;
+			overflow: hidden;
+			white-space: nowrap;
+			// outline: red 1px solid;
+		}
+		.formatBefore, .formatAfter {
+			width: 36px;
+		}
+		.smpteBefore, .smpteAfter {
+			width: 88px;
+		}
+		.videoBefore, .audioBefore {
+			width: 96px;
+		}
+		.videoAfter, .audioAfter {
+			width: 120px;
+		}
+		.formatTo, .smpteTo, .videoTo, .audioTo {
+			display: inline-flex;
+			justify-content: center;
+			align-items: center;
+			vertical-align: middle;
+			height: 24px;
+			width: 14px;
+			// outline: blue 1px solid;
+			svg {
+				width: 12px;
+				height: 12px;
+			}
+		}
+		.divider {
+			display: inline-flex;
+			justify-content: center;
+			align-items: center;
+			height: 24px;
+			width: 3px;
+			vertical-align: middle;
+			div {
+				height: 16px;
+				width: 1px;
+				background-color: hwb(0deg 50% 50% / 0.3);
+			}
+		}
+	}
+	.button {
+		position: absolute;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		width: 32px;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		border: none;
+		outline: none;
+		padding: 0;
+		background: none;
+		pointer-events: all;
+		transition: background-color 0.3s;
+		&:hover {
+			transition: none;
+			background: hwb(210 90% 2%);
+			border-radius: 2px;
+			box-shadow: 0 0 12px 6px hwb(210 90% 2%) inset,
+						0 1px 2px 0 hwb(0 0% 100% / 0.1);
+		}
+		&:active {
+			transition: none;
+			// box-shadow: 0 1px 2px hwb(0 0% 100% / 0.3) inset;
+			box-shadow: 0 0 2px 1px hwb(0 0% 100% / 0.05), // 外部阴影
+						0 6px 12px hwb(0 0% 100% / 0.1) inset; // 内部凹陷阴影
+			transform: translateY(0.5px);
+		}
+		div {
+			width: 12px;
+			height: 12px;
+			background-size: 300%;	/* 三倍大小 */
+			background-position-x: 0px;
+			background-size: 300%;	/* 三倍大小 */
+			background-image: url(src/assets/deleteNpause_button.svg);
+			pointer-events: none;
+			&:hover {
+				background-position-y: -16px;
+			}
+			&:hover {
+				background-position-y: -32px;
+			}
+		}
+	}
 }

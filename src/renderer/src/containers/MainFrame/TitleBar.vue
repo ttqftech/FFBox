@@ -10,17 +10,17 @@ const appStore = useAppStore();
 
 // 最小化按钮点击响应
 const handleMinimizeClicked = () => {
-	window.electron.ipcRenderer.send('minimize');
+	window.jsb.ipcRenderer.send('minimize');
 };
 
 // 窗口模式按钮点击响应
 const handleWindowmodeClicked = () => {
-	window.electron.ipcRenderer.send('windowmode');
+	window.jsb.ipcRenderer.send('windowmode');
 };
 
 // 关闭按钮
 const handleCloseClicked = () => {
-	window.electron.ipcRenderer.send('close');
+	window.jsb.ipcRenderer.send('close');
 };
 
 </script>

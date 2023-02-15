@@ -10,6 +10,3 @@ const app = createApp(App);
 app.mount('#app');
 //   .$nextTick(window.removeLoading)
 // app.use(pinia);
-
-console.log('Hello world');
-console.log(window.electron);

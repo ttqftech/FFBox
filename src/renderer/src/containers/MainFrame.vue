@@ -14,8 +14,6 @@ const appStore = useAppStore();
 // 	return 'startbutton-gray';
 // }
 
-console.log('render', appStore.currentServer);
-
 </script>
 
 <template>

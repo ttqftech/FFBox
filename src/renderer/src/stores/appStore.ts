@@ -1,13 +1,10 @@
 import { defineStore } from 'pinia';
-import { OutputParams, Server as ServerData, WorkingStatus } from '@common/types';
+import { OutputParams, WorkingStatus } from '@common/types';
+import { Server } from '@renderer/types';
 import { defaultParams } from "@common/defaultParams";
 import { ServiceBridge } from '@renderer/bridges/serviceBridge'
-import { randomString } from '@common/utils';
-
-interface Server {
-	data: ServerData;
-	entity: ServiceBridge;
-}
+import { getInitialUITask, randomString } from '@common/utils';
+import { handleCmdUpdate, handleFFmpegVersion, handleProgressUpdate, handleTasklistUpdate, handleTaskNotification, handleTaskUpdate, handleWorkingStatusUpdate } from './serverEventsHandler';
 
 interface StoreState {
 	servers: Server[];
@@ -34,6 +31,9 @@ export const useAppStore = defineStore('app', {
 		},
 	},
 	actions: {
+		/**
+		 * 添加服务器
+		 */
 		addServer (ip: string, port: number) {
 			const 这 = useAppStore();
 			if (!ip) {
@@ -44,9 +44,10 @@ export const useAppStore = defineStore('app', {
 				return;
 			}
 			const _port = port ?? 33269;
+			const id = randomString(6);
 			这.servers.push({
 				data: {
-					id: randomString(6),
+					id: id,
 					name: ip === 'localhost' ? '本地服务器' : ip,
 					tasks: [],
 					ffmpegVersion: '',
@@ -56,14 +57,15 @@ export const useAppStore = defineStore('app', {
 				},
 				entity: new ServiceBridge(ip, _port),
 			});
-			// mainVue.$store.commit('initializeServer', { serverName: args.ip });
+			这.initializeServer(id);
+			return id;
 		},
 		/**
 		 * 添加任务
 		 * path 将自动添加到 params 中去
 		 * @param path 输入文件（仅支持 1 个）的路径。若为远程任务则留空
 		 */
-		addTask (baseName: string, path?: string) {
+		addTask (baseName: string, path?: string): Promise<number> {
 			const 这 = useAppStore();
 			const currentBridge = 这.currentServer?.entity;
 			if (!currentBridge) {
@@ -79,12 +81,80 @@ export const useAppStore = defineStore('app', {
 		/**
 		 * 初始化服务器连接并挂载事件监听
 		 */
-		initializeServer() {},
+		initializeServer(serverId: string) {
+			const 这 = useAppStore();
+			const server = 这.servers.find((server) => server.data.id === serverId) as Server;
+			console.log('初始化服务器连接', server.data);
+
+			const entity = server.entity;
+			entity.on('connected', () => {
+				console.log(`成功连接到服务器 ${server.entity.ip}`);
+				// mainVue.$store.commit('pushMsg',{
+				// 	message: `成功连接到服务器 ${args.serverName}`,
+				// 	level: NotificationLevel.ok,
+				// });
+				这.updateGlobalTask(server);
+				entity.getTaskList();
+				这.switchServer(server.data.id);
+			});
+			entity.on('disconnected', () => {
+				console.log(`已断开服务器 ${server.entity.ip} 的连接`);
+				// mainVue.$store.commit('pushMsg',{
+				// 	message: `已断开服务器 ${args.serverName} 的连接`,
+				// 	level: NotificationLevel.warning,
+				// });
+			});
+			entity.on('error', () => {
+				console.log(`服务器 ${server.entity.ip} 连接出错，建议检查网络连接或防火墙`);
+				// mainVue.$store.commit('pushMsg',{
+				// 	message: `服务器 ${args.serverName} 连接出错，建议检查网络连接或防火墙`,
+				// 	level: NotificationLevel.error,
+				// });
+			});
+
+			entity.on('ffmpegVersion', (data) => {
+				handleFFmpegVersion(server, data.content);
+			});
+			entity.on('workingStatusUpdate', (data) => {
+				handleWorkingStatusUpdate(server, data.value);
+			});
+			entity.on('tasklistUpdate', (data) => {
+				handleTasklistUpdate(server, data.content);
+			});
+			entity.on('taskUpdate', (data) => {
+				handleTaskUpdate(server, data.id, data.content);
+			});
+			entity.on('cmdUpdate', (data) => {
+				handleCmdUpdate(server, data.id, data.content);
+			});
+			entity.on('progressUpdate', (data) => {
+				handleProgressUpdate(server, data.id, data.content);
+			});
+			entity.on('taskNotification', (data) => {
+				handleTaskNotification(server, data.id, data.content, data.level);
+			});
+		},
+		/**
+		 * 切换当前服务器标签页
+		 */
+		switchServer (serverId: string) {
+			const 这 = useAppStore();
+			这.currentServerId = serverId;
+		},
+		/**
+		 * 获取 service 中 task id 为 -1 的 globalTask 更新到本地
+		 */
+		updateGlobalTask (server: Server) {
+			let newTask = getInitialUITask('');
+			server.data.tasks[-1] = newTask;
+			server.entity.getTask(-1);
+		},
 		initTemp() {
 			const 这 = useAppStore();
-			这.addServer('localhost', 33269);
+			const localServerId = 这.addServer('localhost', 33269);
+			这.currentServerId = localServerId;
 			setTimeout(() => {
-				这.addTask('小光芒', 'B:/文档/人物/童可可/MV/童可可 - 小光芒.mp4')
+				// 这.addTask('小光芒', 'B:/文档/人物/童可可/MV/童可可 - 小光芒.mp4')
 			}, 1000);
 		},
 	},

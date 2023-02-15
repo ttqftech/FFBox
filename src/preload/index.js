@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, webFrame } from 'electron';
-
+// import { spawn, exec } from 'child_process';    // 不可用
 // import { domReady } from './utils'
 // import { useLoading } from './loading'
 
@@ -8,7 +8,7 @@ import { contextBridge, ipcRenderer, webFrame } from 'electron';
 
 // domReady().then(appendLoading)
 
-const electronAPI = {
+const jsb = {
     ipcRenderer: {
         send(channel, ...args) {
             ipcRenderer.send(channel, ...args);
@@ -63,6 +63,8 @@ const electronAPI = {
         }
     },
     process,
+    spawn: () => {},
+    exec: () => {},
 };
 
-contextBridge.exposeInMainWorld('electron', electronAPI);
+contextBridge.exposeInMainWorld('jsb', jsb);

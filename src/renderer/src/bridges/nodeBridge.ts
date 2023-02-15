@@ -8,11 +8,11 @@ let ElectronStore: typeof _ElectronStore, electronStore: _ElectronStore;
 let ipcRenderer: IpcRenderer;
 let spawn: (...args: any) => ChildProcess, exec: (...args: any) => ChildProcess;
 
-if (process.env.IS_ELECTRON) {
+if (getEnv() === 'electron-renderer') {
 	ElectronStore = window.require('electron-store');
-	ipcRenderer = window.require('electron').ipcRenderer;
-	spawn = window.require('child_process').spawn;
-	exec = window.require('child_process').exec;
+	ipcRenderer = window.jsb.ipcRenderer as any;
+	spawn = window.jsb.spawn;
+	exec = window.jsb.exec;
 }
 
 export default {
@@ -129,5 +129,13 @@ export default {
 				window.open(url);
 				break;
 		}
+	},
+
+	flashFrame(value = true): void {
+		ipcRenderer?.send('flashFrame', value);
+	},
+
+	openDevTools(): void {
+		ipcRenderer?.send('openDevTools');
 	}
 }

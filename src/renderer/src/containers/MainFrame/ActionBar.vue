@@ -23,6 +23,7 @@ const startButtonText = false ? '⏸暂停' : '▶开始'
 		position: relative;
 		width: 100%;
 		height: 56px;
+		flex: 0 0 auto;
 		display: flex;
 		justify-content: space-between;
 		background-color: hwb(220 97% 3%);

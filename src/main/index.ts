@@ -205,6 +205,16 @@ class ElectronApp {
 			this.mainWindow!.webContents.send('hwnd', this.mainWindow!.getNativeWindowHandle());
 		});
 
+		// 闪烁任务栏图标
+		ipcMain.on('flashFrame', (event, value) => {
+			this.mainWindow!.flashFrame(value);
+		})
+
+		// 打开开发者工具
+		ipcMain.on('openDevTools', (event) => {
+			this.mainWindow!.webContents.openDevTools();
+		})
+
 		/**
 		 * 启动文件下载流程：
 		 * taskitem 双击，发出带有下载 url 的 downloadFile 信号

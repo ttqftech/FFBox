@@ -1,10 +1,12 @@
-export declare interface ElectronAPI {
+export declare interface JSBridge {
     ipcRenderer: IpcRenderer;
     webFrame: WebFrame;
     process: NodeProcess;
+    spawn: any;
+    exec: any;
 }
 
-export declare const electronAPI: ElectronAPI;
+export declare const jsb: JSBridge;
 
 /**
  * Expose Electron APIs from your preload script, the API

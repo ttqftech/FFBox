@@ -1,18 +1,16 @@
 <script setup lang="ts">
 import { useAppStore } from '@renderer/stores/appStore';
-import { TaskItem, TaskJtem, TaskKtem } from './MainArea/ListArea/TaskItem';
+import { computed } from 'vue';
+import ListArea from './MainArea/ListArea.vue';
 
 const paraSelected = 0;
+const appStore = useAppStore();
 </script>
 
 <template>
 	<div class="mainarea">
-		<div class="listarea">
-			<TaskItem />
-			<TaskJtem />
-			<TaskKtem value="Vue 3.1" />
-		</div>
-		<div class="parabox">
+		<ListArea :style="{ height: '60%' }" />
+		<div class="parabox" :style="{ height: '40%' }">
 			<div class="upper">
 				<div class="devider">
 					<div class="buttons">
@@ -37,12 +35,13 @@ const paraSelected = 0;
 		// height: 24px;
 		background-color: hwb(0 92% 8%);
 		flex: 1 0 auto;
+		// .listarea
 		.parabox  {
 			position: absolute;
 			bottom: 0;
 			width: 100%;
 			min-height: 28px;
-			height: 40%;
+			// height: 40%;
 			background-color: hwb(0 94% 6%);
 			box-shadow: 0px 0px 8px hwb(0 0% 100% / 0.05), // 远距离上阴影
 						0px 1px 1px hwb(0 100% 0% / 0.25) inset; // 内部上阴影

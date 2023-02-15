@@ -442,7 +442,7 @@ export function getTimeString(date: Date, showMs = true): string {
  * 获取当前运行环境
  */
 export function getEnv(): 'browser' | 'node' | 'electron-renderer' | 'electron-main' {
-	if (process) {
+	if (typeof process !== 'undefined') {
 		if (process.env.IS_ELECTRON) {
 			if (typeof window !== 'undefined') {
 				return 'electron-renderer';
