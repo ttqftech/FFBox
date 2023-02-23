@@ -27,7 +27,7 @@ const tasks = computed(() => {
 	// this.lastTaskListLength = ret.length;
 	return ret;
 });
-const dropfilesimage = computed(() => 'src/assets/drop_files.png');
+const dropfilesimage = computed(() => 'src/assets/mainArea/drop_files.png');
 
 const debugLauncher = (() => {
 	let clickSpeedCounter = 0;
@@ -86,7 +86,7 @@ const debugLauncher = (() => {
 			margin-top: 8px;
 			flex-grow: 1;
 			.dropfilesimage {
-				/* background-image: url(/images/drop_files.png); */
+				/* background-image: url(/images/mainArea/drop_files.png); */
 				background-size: contain;
 				background-position: center;
 				background-repeat: no-repeat;

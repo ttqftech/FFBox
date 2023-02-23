@@ -33,6 +33,7 @@ onMounted(() => {
 		color: hsl(0, 0%, 20%);
 		position: relative;
 		overflow: hidden;
+		user-select: none;
 	}
 	#app {
 		height: 100vh;

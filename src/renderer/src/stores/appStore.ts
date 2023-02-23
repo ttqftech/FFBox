@@ -1,3 +1,4 @@
+import { VNodeRef } from 'vue';
 import { defineStore } from 'pinia';
 import { OutputParams, WorkingStatus } from '@common/types';
 import { Server } from '@renderer/types';
@@ -7,6 +8,17 @@ import { getInitialUITask, randomString } from '@common/utils';
 import { handleCmdUpdate, handleFFmpegVersion, handleProgressUpdate, handleTasklistUpdate, handleTaskNotification, handleTaskUpdate, handleWorkingStatusUpdate } from './serverEventsHandler';
 
 interface StoreState {
+	// 界面类
+	paraSelected: number,
+	draggerPos: number,
+	taskViewSettings: {
+		showParams: boolean,
+		showDashboard: boolean,
+		showCmd: boolean,
+	}
+	showGlobalParams: boolean,
+	componentRefs: { [key: string]: VNodeRef | Element },
+	// 非界面类
 	servers: Server[];
 	currentServerId: string;
 	globalParams: OutputParams;
@@ -20,6 +32,17 @@ export const useAppStore = defineStore('app', {
 	state: (): StoreState => {
 		return {
 			// 所有这些属性都将自动推断其类型
+			// 界面类
+			paraSelected: 1,
+			draggerPos: 60,
+			taskViewSettings: {
+				showParams: true,
+				showDashboard: true,
+				showCmd: true,
+			},
+			showGlobalParams: true,
+			componentRefs: {},
+			// 非界面类
 			servers: [],
 			currentServerId: undefined,
 			globalParams: JSON.parse(JSON.stringify(defaultParams)),

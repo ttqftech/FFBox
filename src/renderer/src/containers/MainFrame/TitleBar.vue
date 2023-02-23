@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { useAppStore } from '@renderer/stores/appStore';
-import IconX from '@renderer/assets/×.svg?component';
-import IconAdd from '@renderer/assets/add.svg?component';
-import IconMinimize from '@renderer/assets/minimize.svg?component';
-import IconMaximize from '@renderer/assets/maximize.svg?component';
-import IconClose from '@renderer/assets/close.svg?component';
+import IconX from '@renderer/assets/titleBar/×.svg?component';
+import IconAdd from '@renderer/assets/titleBar/add.svg?component';
+import IconMinimize from '@renderer/assets/titleBar/minimize.svg?component';
+import IconMaximize from '@renderer/assets/titleBar/maximize.svg?component';
+import IconClose from '@renderer/assets/titleBar/close.svg?component';
 
 const appStore = useAppStore();
 
@@ -32,21 +32,21 @@ const handleCloseClicked = () => {
 				<span>{{ server.data.name }}</span>
 				<div class="progress" style="width: 50%"></div>
 				<div class="close">
-					<img src="../../assets/×.svg" alt="" srcset="">
+					<img src="../../assets/titleBar/×.svg" alt="" srcset="">
 				</div>
 			</div>
 		</div>
 		<div class="buttonArea">
-			<button class="normalButton">
+			<button class="normalButton" aria-label="添加服务器">
 				<IconAdd />
 			</button>
-			<button class="normalButton" @click="handleMinimizeClicked">
+			<button class="normalButton" aria-label="最小化窗口" @click="handleMinimizeClicked">
 				<IconMinimize />
 			</button>
-			<button class="normalButton" @click="handleWindowmodeClicked">
+			<button class="normalButton" aria-label="最大化或还原窗口" @click="handleWindowmodeClicked">
 				<IconMaximize />
 			</button>
-			<button class="redButton" @click="handleCloseClicked">
+			<button class="redButton" aria-label="关闭窗口" @click="handleCloseClicked">
 				<IconClose />
 			</button>
 		</div>

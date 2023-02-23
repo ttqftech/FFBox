@@ -19,17 +19,18 @@
 }
 .task {
 	position: relative;
-	height: 28px;
+	// height: 28px;
+	// height: 64px;
 	pointer-events: none;
 	.backgroundWhite {
 		height: 100%;
-		border-radius: 2px;
+		border-radius: 3px;
 		background-color: hwb(0deg 98% 2%);
 		box-shadow: 0 0 1px 2px hwb(0deg 98% 2%),
 					0 2px 6px 0 hwb(0deg 0% 100% / 0.2);
 		transition: height 0.5s, background-color 0.3s;
 		pointer-events: all;
-		&:hover {
+		&:hover, &:has(~ .cmdArea:hover) {
 			transition: background-color 0.2s cubic-bezier(0, 2, 0.3, 1);
 			background: hwb(210 90% 2%);
 		}
@@ -38,8 +39,8 @@
 		position: absolute;
 		left: 2px;
 		top: 2px;
-		height: 24px;
-		width: 24px;
+		bottom: 2px;
+		width: 32px;
 		display: flex;
 		justify-content: center;
 		align-items: center;
@@ -52,12 +53,14 @@
 		position: absolute;
 		top: 2px;
 		bottom: 2px;
-		left: 32px;
+		left: 36px;
+		max-height: 92px;
 		display: -webkit-box;
 		font-size: 16px;
-		width: ~'max(calc(100% - 820px), 64px)';
+		width: ~'max(calc(100% - 828px), 64px)';
 		text-align: left;
 		overflow: hidden;
+		word-break: break-word;
 		// text-overflow: ellipsis;
 		-webkit-line-clamp: 1;
 		-webkit-box-orient: vertical;
@@ -65,15 +68,14 @@
 	.paraArea {
 		position: absolute;
 		top: 2px;
-		bottom: 2px;
-		right: 32px;
+		height: 24px;
+		right: 36px;
 		max-width: calc(100% - 128px);
 		overflow: hidden;
 		text-align: right;
 		&>* {
 			text-align: center;
 		}
-		// outline: green 1px solid;
 		.formatBefore, .formatAfter, .smpteBefore, .smpteAfter, .videoBefore, .videoAfter, .audioBefore, .audioAfter {
 			display: inline-block;
 			height: 24px;
@@ -125,6 +127,202 @@
 			}
 		}
 	}
+	.dashboardArea {
+		position: absolute;
+		top: 2px;
+		height: 72px;
+		right: 36px;
+		max-width: calc(100% - 128px);
+		overflow: hidden;
+		text-align: right;
+		&>* {
+			vertical-align: middle;
+		}
+		.roundGraphItem {
+			position: relative;
+			display: inline-block;
+			width: 64px;
+			height: 60px;
+			margin: 6px 12px;
+			.ring {
+				width: 64px;
+				height: 64px;
+				border-radius: 50%;
+				-webkit-mask: radial-gradient(transparent 60%, #000 61%);
+				background: conic-gradient(#36D 0%, #36D 0%, #DDD 0%, #DDD 75%, transparent 75%);
+				transform: rotate(225deg);
+			}
+			.data {
+				position: absolute;
+				left: 0;
+				top: 22px;
+				width: 100%;
+				text-align: center;
+				font-weight: 600;
+				font-size: 15px;
+				font-family: Bahnschrift,Calibri,"SF Electrotome",Avenir,"苹方-简","苹方","微软雅黑","Segoe UI",Consolas,Roboto,"黑体";
+			}
+			.description {
+				position: absolute;
+				left: 0;
+				bottom: -2px;
+				width: 100%;
+				text-align: center;
+				font-size: 11px;
+			}
+		}
+		.linearGraphItems {
+			position: relative;
+			display: inline-flex;
+			flex-direction: column;
+			justify-content: space-between;
+			width: 180px;
+			height: 60px;
+			margin: 6px 12px;
+			.linearGraphItem {
+				position: relative;
+				width: 180px;
+				height: 30px;
+				transform: translateY(3px);
+				.line {
+					position: absolute;
+					left: 40px;
+					top: 13px;
+					height: 4px;
+					width: calc(100% - 40px - 80px);
+				}
+				.data {
+					position: absolute;
+					right: 0;
+					top: 0;
+					height: 30px;
+					width: 70px;
+					font-size: 22px;
+					font-family: Bahnschrift,Calibri,"SF Electrotome",Avenir,"苹方-简","苹方","微软雅黑","Segoe UI",Consolas,Roboto,"黑体";
+					line-height: 30px;
+					text-align: left;
+				}
+				.description {
+					position: absolute;
+					left: 0;
+					top: 0;
+					height: 30px;
+					width: 30px;
+					font-size: 12px;
+					font-family: Bahnschrift,Calibri,"SF Electrotome",Avenir,"苹方-简","苹方","微软雅黑","Segoe UI",Consolas,Roboto,"黑体";
+					line-height: 30px;
+					text-align: right;
+				}
+			}
+		}
+		.overallProgressItem {
+			position: relative;
+			display: inline-block;
+			width: 80px;
+			height: 60px;
+			margin: 6px 12px;
+			.data {
+				position: absolute;
+				left: 0;
+				top: 10px;
+				width: 100%;
+				text-align: center;
+				font-size: 30px;
+				font-family: Bahnschrift,Calibri,"SF Electrotome",Avenir,"苹方-简","苹方","微软雅黑","Segoe UI",Consolas,Roboto,"黑体";
+				line-height: 30px;
+			}
+			.description {
+				position: absolute;
+				left: 0;
+				bottom: -2px;
+				width: 100%;
+				text-align: center;
+				font-size: 11px;
+			}
+		}
+	}
+	.cmdArea {
+		position: absolute;
+		top: 2px;
+		height: 64px;
+		left: 2px;
+		right: 2px;
+		padding: 4px;
+		box-sizing: border-box;
+		.margin {
+			display: flex;
+			position: relative;
+			height: 100%;
+			pointer-events: all;
+			.switch {
+				width: 40px;
+				height: 100%;
+				color: #666;
+				.item {
+					width: 40px;
+					height: 28px;
+					box-sizing: border-box;
+					font-size: 12px;
+					line-height: 28px;
+					background-color: hwb(0deg 99% 1%);
+					border-radius: 2px 0 0 2px;
+					// outline: #36D 1px solid;
+					box-shadow: 0 0 1px 0.5px hwb(0deg 99% 1%),
+								0 1.5px 3px 0 hwb(0deg 0% 100% / 0.2);
+					border-left: transparent 3px solid;
+					pointer-events: none;
+				}
+				.itemSelected {
+					background-color: hwb(0deg 97% 3%);
+					border-radius: 2px 0 0 2px;
+					box-shadow: 0 0 2px 1px hwb(0 0% 100% / 0.05), // 外部阴影
+								0 3px 6px hwb(0 0% 100% / 0.1) inset; // 内部凹陷阴影
+					border-left: hsl(130, 75%, 50%) 3px solid;
+				}
+			}
+			.code {
+				width: calc(100% - 28px);
+				height: 100%;
+				textarea {
+					border: none;
+					background: hwb(0 96% 4% / 0.6);
+					outline: none;
+					width: calc(100% - 4px);
+					height: calc(100% - 4px);
+					resize: none;
+					color: #333;
+					font-family: Consolas,monaco,"黑体","苹方-简","苹方",Roboto;
+					font-weight: 400;
+					font-size: 12px;
+					line-height: 13px; // 52 / 4
+					border-radius: 0 2px 2px 0;
+					box-shadow: 0 0 1px 1px hwb(0 0% 100% / 0.05), // 外部阴影
+								0 3px 6px hwb(0 0% 100% / 0.02) inset; // 内部凹陷阴影
+					&:hover {
+						background: hwb(0 97% 3% / 0.8);
+						box-shadow: 0 0 1px 1px hwb(210deg 0% 0% / 0.5), // 外部阴影
+									0 3px 6px hwb(0 0% 100% / 0.02) inset; // 内部凹陷阴影
+					}
+				}
+			}
+		}
+	}
+	.vline {
+		position: absolute;
+		top: 2px;
+		bottom: 2px;
+		right: 32px;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		width: 3px;
+		vertical-align: middle;
+		div {
+			height: calc(100% - 8px);
+			width: 1px;
+			background-color: hwb(0deg 50% 50% / 0.3);
+		}
+	}
 	.button {
 		position: absolute;
 		top: 0;
@@ -160,7 +358,7 @@
 			background-size: 300%;	/* 三倍大小 */
 			background-position-x: 0px;
 			background-size: 300%;	/* 三倍大小 */
-			background-image: url(src/assets/deleteNpause_button.svg);
+			background-image: url(src/assets/mainArea/deleteNpause_button.svg);
 			pointer-events: none;
 			&:hover {
 				background-position-y: -16px;

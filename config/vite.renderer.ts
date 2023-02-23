@@ -44,6 +44,22 @@ export default defineConfig({
 		vueJsx(
 			// options are passed on to @vue/babel-plugin-jsx
 		),
-		svgLoader(),
+		svgLoader({
+			// svgo: false,
+			svgoConfig: {
+				plugins: [
+					{
+						name: 'preset-default',
+						params: {
+							overrides: {
+								inlineStyles: {
+									onlyMatchedOnce: false,
+								},
+							},
+						},
+					},
+				],
+			}
+		}),
 	]
 });
