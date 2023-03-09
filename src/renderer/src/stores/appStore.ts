@@ -15,6 +15,7 @@ interface StoreState {
 		showParams: boolean,
 		showDashboard: boolean,
 		showCmd: boolean,
+		cmdDisplay: 'input' | 'output',
 	}
 	showGlobalParams: boolean,
 	componentRefs: { [key: string]: VNodeRef | Element },
@@ -34,11 +35,12 @@ export const useAppStore = defineStore('app', {
 			// 所有这些属性都将自动推断其类型
 			// 界面类
 			paraSelected: 1,
-			draggerPos: 60,
+			draggerPos: 0.6,
 			taskViewSettings: {
 				showParams: true,
 				showDashboard: true,
 				showCmd: true,
+				cmdDisplay: 'input',
 			},
 			showGlobalParams: true,
 			componentRefs: {},

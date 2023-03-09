@@ -33,10 +33,11 @@ export default defineConfig({
 		},
 	},
 	resolve: {
-		extensions: ['.ts', '.js'],
+		extensions: ['.ts', '.js', '.tsx'],
 		alias: {
 			'@common': path.resolve('src/common'),	// 因为 vite 根目录被设置成 renderer，其 devServer 出来的路径不能再找上一级了，所以需要另行处理
-			'@renderer': './src',
+			'@renderer': path.resolve('src/renderer/src'),
+			// '@renderer': './src',	// 生产模式下这样引用不到
 		},
 	},
 	plugins: [

@@ -3,13 +3,12 @@ import { useAppStore } from '@renderer/stores/appStore';
 import ListArea from './MainArea/ListArea.vue';
 import ParaBox from './MainArea/ParaBox.vue';
 
-const paraSelected = 0;
 const appStore = useAppStore();
 
 </script>
 
 <template>
-	<div class="mainarea" :ref="(el) => appStore.componentRefs['MainArea'] = el">
+	<div class="mainarea" :ref="(el) => appStore.componentRefs['MainArea'] = (el as Element)">
 		<ListArea :style="{ height: `${appStore.draggerPos * 100}%` }" />
 		<ParaBox :style="{ height: `${(1 - appStore.draggerPos) * 100}%` }" />
 	</div>

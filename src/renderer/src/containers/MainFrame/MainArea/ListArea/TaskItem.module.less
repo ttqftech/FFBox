@@ -262,15 +262,29 @@
 					width: 40px;
 					height: 28px;
 					box-sizing: border-box;
+					padding: 0;
+					position: relative;
+					outline: none;
+					border: none;
 					font-size: 12px;
 					line-height: 28px;
 					background-color: hwb(0deg 99% 1%);
 					border-radius: 2px 0 0 2px;
-					// outline: #36D 1px solid;
 					box-shadow: 0 0 1px 0.5px hwb(0deg 99% 1%),
 								0 1.5px 3px 0 hwb(0deg 0% 100% / 0.2);
 					border-left: transparent 3px solid;
-					pointer-events: none;
+					transition: all 0.3s cubic-bezier(0, 1.5, 0.3, 1);
+					user-select: none;
+					&:not(.itemSelected):hover::after {
+						content: '';
+						position: absolute;
+						left: -3px;
+						width: 40px;
+						height: 100%;
+						border-radius: 2px 0 0 2px;
+						// background: hwb(0 100% 0% / 0.2);
+						box-shadow: 0 0 2px hwb(0 0% 100% / 0.2);
+					}
 				}
 				.itemSelected {
 					background-color: hwb(0deg 97% 3%);

@@ -5,6 +5,7 @@ import { generator as aGenerator } from '@common/acodecs';
 import IconPreview from '@renderer/assets/video.svg';
 import IconRightArrow from '@renderer/assets/mainArea/swap_right.svg';
 import style from './TaskItem.module.less';
+import { useAppStore } from '@renderer/stores/appStore';
 
 interface Props {
 	task: UITask;
@@ -12,9 +13,8 @@ interface Props {
 
 export const TaskItem: FunctionalComponent<Props> = (props) => {
 	const { task } = props;
-	const showParams = ref(true);
-	const showDashboard = ref(true);
-	const showCmd = ref(true);
+	const appStore = useAppStore();
+	const settings = appStore.taskViewSettings;
 
 	// #region 参数
 
@@ -68,8 +68,9 @@ export const TaskItem: FunctionalComponent<Props> = (props) => {
 			return second.toFixed(2);
 		}
 	};
-	// const graphTime = computed(() => timeFilter(task.dashboard_smooth.time));
-	const graphTime = { value: '1:59:59'};
+	const graphTime = computed(() => timeFilter(task.dashboard_smooth.time));
+	// const graphTime = { value: '1:59:59'};
+	const graphLeftTime = { value: '1:59:59'};
 
 	// 圆环 style 部分
 	// 计算方式：(log(数值) / log(底，即每增长多少倍数为一格) + 数值为 1 时偏移多少格) / 格数
@@ -88,16 +89,16 @@ export const TaskItem: FunctionalComponent<Props> = (props) => {
 	const graphTimeStyle = computed(() => {
 		const valueOdd = Math.min(task.dashboard_smooth.time % 2, 1);
 		const valueEven = Math.max(task.dashboard_smooth.time % 2 - 1, 0);
-		return `background: linear-gradient(#DDD 0%, #DDD ${valueEven * 100}%, #36D ${valueEven * 100}%, #36D ${valueOdd * 100}%, #DDD ${valueOdd * 100}%, #DDD 100%, transparent 100%)`;
+		return `background: linear-gradient(to right, #DDD 0%, #DDD ${valueEven * 100}%, #36D ${valueEven * 100}%, #36D ${valueOdd * 100}%, #DDD ${valueOdd * 100}%, #DDD 100%, transparent 100%)`;
 	});
 	const graphFrameStyle = computed(() => {
 		const valueOdd = Math.min(task.dashboard_smooth.frame % 2, 1);
 		const valueEven = Math.max(task.dashboard_smooth.frame % 2 - 1, 0);
-		return `background: linear-gradient(#DDD 0%, #DDD ${valueEven * 100}%, #36D ${valueEven * 100}%, #36D ${valueOdd * 100}%, #DDD ${valueOdd * 100}%, #DDD 100%, transparent 100%)`;
+		return `background: linear-gradient(to right, #DDD 0%, #DDD ${valueEven * 100}%, #36D ${valueEven * 100}%, #36D ${valueOdd * 100}%, #DDD ${valueOdd * 100}%, #DDD 100%, transparent 100%)`;
 	});
 
-	// const overallProgress = computed(() => task.transferStatus === 'normal' ? task.dashboard_smooth.progress : task.dashboard_smooth.transferred / task.transferProgressLog.total);
-	const overallProgress = { value: 0.99 };
+	const overallProgress = computed(() => task.transferStatus === 'normal' ? task.dashboard_smooth.progress : task.dashboard_smooth.transferred / task.transferProgressLog.total);
+	// const overallProgress = { value: 0.99 };
 	const overallProgressDescription = computed(() => task.transferStatus === 'normal' ? '转码进度' : '上传进度');
 
 	// #endregion
@@ -110,18 +111,18 @@ export const TaskItem: FunctionalComponent<Props> = (props) => {
 			case TaskStatus.TASK_STOPPED:
 				return '0px';	// 删除按钮
 			case TaskStatus.TASK_RUNNING:
-				return '-16px';	// 暂停按钮
+				return '-100%';	// 暂停按钮
 			case TaskStatus.TASK_PAUSED: case TaskStatus.TASK_STOPPING: case TaskStatus.TASK_FINISHING: case TaskStatus.TASK_FINISHED: case TaskStatus.TASK_ERROR:
-				return '-32px';	// 重置按钮
+				return '-200%';	// 重置按钮
 		}
 		return '';
 	});
 	// 整个任务项的高度，包括上下 margin
 	const taskHeight = computed(() => {
 		let height = 4;
-		height += showParams.value ? 24 : 0;
-		height += showDashboard.value ? 72 : 0;
-		height += showCmd.value ? 64 : 0;
+		height += settings.showParams ? 24 : 0;
+		height += settings.showDashboard ? 72 : 0;
+		height += settings.showCmd ? 64 : 0;
 		height = Math.max(24, height);
 		return height;
 	});
@@ -131,11 +132,11 @@ export const TaskItem: FunctionalComponent<Props> = (props) => {
 			<div class={style.taskWrapper2}>
 				<div class={style.task} style={{ height: `${taskHeight.value}px` }}>
 					<div class={style.backgroundWhite}></div>
-					<div class={style.previewIcon} style={{ bottom: showCmd.value ? '66px' : undefined}}>
+					<div class={style.previewIcon} style={{ bottom: settings.showCmd ? '66px' : undefined}}>
 						<IconPreview />
 					</div>
-					<div class={style.taskName} style={showDashboard.value ? { '-webkit-line-clamp': 4 } : {}}>{task.fileBaseName ?? '读取中'}</div>
-					{showParams.value && (
+					<div class={style.taskName} style={settings.showDashboard ? { '-webkit-line-clamp': 4 } : {}}>{task.fileBaseName ?? '读取中'}</div>
+					{settings.showParams && (
 						<div class={style.paraArea}>
 							<div class={style.divider}><div></div></div>
 							{/* 容器 */}
@@ -159,8 +160,8 @@ export const TaskItem: FunctionalComponent<Props> = (props) => {
 							<div class={style.audioAfter}>{task.after.audio.acodec}{audioRateControl.value}</div>
 						</div>
 					)}
-					{showDashboard.value && (
-						<div class={style.dashboardArea} style={{ top: `${(showParams.value ? 1 : 0) * 24 + 2}px` }}>
+					{settings.showDashboard && (
+						<div class={style.dashboardArea} style={{ top: `${(settings.showParams ? 1 : 0) * 24 + 2}px` }}>
 							<div class={style.linearGraphItems}>
 								<div class={style.linearGraphItem}>
 									<div class={style.line} style={graphTimeStyle.value}></div>
@@ -184,26 +185,44 @@ export const TaskItem: FunctionalComponent<Props> = (props) => {
 								<span class={style.description}>速度</span>
 							</div>
 							<div class={style.overallProgressItem}>
+								<span class={style.data}>{ graphLeftTime.value }</span>
+								<span class={style.description}>预计剩余时间</span>
+							</div>
+							<div class={style.overallProgressItem}>
 								<span class={style.data}>{ overallProgress.value === 1 ? '🆗' : `${(overallProgress.value * 100).toFixed(1)}%` }</span>
 								<span class={style.description}>{ overallProgressDescription.value }</span>
 							</div>
 						</div>
 					)}
-					{showCmd.value && (
-						<div class={style.cmdArea} style={{ top: `${(showParams.value ? 1 : 0) * 24 + (showDashboard.value ? 1 : 0) * 72 + 2}px` }}>
+					{settings.showCmd && (
+						<div class={style.cmdArea} style={{ top: `${(settings.showParams ? 1 : 0) * 24 + (settings.showCmd ? 1 : 0) * 72 + 2}px` }}>
 							<div class={style.margin}>
 								<div class={style.switch}>
-									<div class={style.item}>输入</div>
-									<div class={`${style.item} ${style.itemSelected}`}>输出</div>
+									<button
+										class={`${style.item} ${settings.cmdDisplay === 'input' ? style.itemSelected : ''}`}
+										onMousedown={() => settings.cmdDisplay = 'input'}
+									>
+										输入
+									</button>
+									<button
+										class={`${style.item} ${settings.cmdDisplay === 'output' ? style.itemSelected : ''}`}
+										onMousedown={() => settings.cmdDisplay = 'output'}
+									>
+										输出
+									</button>
 								</div>
 								<div class={style.code}>
-									<textarea aria-label="任务命令行" readonly value={task.cmdData}></textarea>
+									<textarea
+										aria-label="任务命令行"
+										readonly
+										value={settings.cmdDisplay === 'input' ? ['ffmpeg', ...task.paraArray].join(' ') : task.cmdData}
+									/>
 								</div>
 							</div>
 						</div>
 					)}
-					<div class={style.vline} style={{ bottom: showCmd.value ? '66px' : undefined}}><div></div></div>
-					<button aria-label='重置或删除任务' class={style.button} style={{ bottom: showCmd.value ? '66px' : undefined}}>
+					<div class={style.vline} style={{ bottom: settings.showCmd ? '66px' : undefined}}><div></div></div>
+					<button aria-label='重置或删除任务' class={style.button} style={{ bottom: settings.showCmd ? '66px' : undefined}}>
 						<div style={{ backgroundPositionX: deleteButtonBackgroundPositionX.value }}></div>
 					</button>
 				</div>

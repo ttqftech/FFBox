@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { useAppStore } from '@renderer/stores/appStore';
 import { ref } from 'vue';
+import ShortcutsView from './ParaBox/InputView';
+import InputView from './ParaBox/InputView';
+import VcodecView from './ParaBox/InputView';
+import AcodecView from './ParaBox/InputView';
+import EffectView from './ParaBox/InputView';
+import OutputView from './ParaBox/InputView';
 import IconSidebarFavorite from '@renderer/assets/mainArea/paraBox/parabox_favorite.svg?component';
 import IconSidebarInput from '@renderer/assets/mainArea/paraBox/parabox_input.svg?component';
 import IconSidebarVideo from '@renderer/assets/mainArea/paraBox/parabox_video.svg?component';
@@ -12,12 +18,10 @@ import IconUpArrow from '@renderer/assets/mainArea/paraBox/uparrow.svg?component
 const sidebarIcons = [IconSidebarFavorite, IconSidebarInput, IconSidebarVideo, IconSidebarAudio, IconSidebarEffect, IconSidebarOutput];
 const sidebarTexts = ['快捷', '输入', '视频', '音频', '效果', '输出'];
 const sidebarColors = ['hwb(45 0% 5%)', 'hwb(195 0% 10%)', 'hwb(285 10% 5%)', 'hwb(120 0% 15%)', 'hwb(315 0% 0%)', 'hwb(0 30% 0%)'];
-const paraSelected = 0;
 const appStore = useAppStore();
 const deviderRef = ref<Element>(null);
 
-// appStore.componentRefs['MainArea']
-const dragStart = (event: MouseEvent | TouchEvent) => {
+const handleDragStart = (event: MouseEvent | TouchEvent) => {
 	event.preventDefault();
 	const deviderRect = deviderRef.value.getBoundingClientRect();	// 列表元素的 rect
 	const mainAreaRect = (appStore.componentRefs['MainArea'] as Element).getBoundingClientRect();	// 列表元素的 rect
@@ -37,22 +41,25 @@ const dragStart = (event: MouseEvent | TouchEvent) => {
 	}
 	window.addEventListener('mousemove', handleMouseMove);
 	window.addEventListener('mouseup', handleMouseUp);
-
 }
+
+const getButtonColorStyle = (index: number) => ({ color: appStore.paraSelected === index ? sidebarColors[index] : 'hwb(0 50% 50%)' });
+
 </script>
 
 <template>
 	<div class="parabox">
 		<div class="upper" :style="{ height: appStore.showGlobalParams ? '64px' : undefined }">
-			<div class="devider" :ref="(el) => deviderRef = el">
-				<div class="buttons" @mousedown="dragStart" @touchstart="dragStart">
-					<button v-for="index in [0, 1, 2, 3, 4, 5]" :key="index" :aria-label="sidebarTexts[index] + '参数'">
+			<div class="devider" :ref="(el) => deviderRef = el as Element">
+				<div class="buttons" @mousedown="handleDragStart" @touchstart="handleDragStart">
+					<button v-for="index in [0, 1, 2, 3, 4, 5]" :key="index" :aria-label="sidebarTexts[index] + '参数'" @click="appStore.paraSelected = index">
 						<!-- <div class="icon" :class="{'icon-selected': paraSelected == index}" :style="{ backgroundPositionY: `${(value + 2) / 7 * 100}%` }"></div> -->
-						<component :is="sidebarIcons[index]" :style="{ color: sidebarColors[index] }" />
-						<span :style="{ color: sidebarColors[index] }">{{ sidebarTexts[index] }}</span>
+						<component :is="sidebarIcons[index]" :style="getButtonColorStyle(index)" />
+						<span :style="getButtonColorStyle(index)">{{ sidebarTexts[index] }}</span>
 					</button>
 				</div>
 				<button class="showGlobalButton" @mousedown="appStore.showGlobalParams = !appStore.showGlobalParams" aria-label="展示全局参数开关">
+					<span>全局参数</span>
 					<IconUpArrow :style="{ transform: appStore.showGlobalParams ? undefined : 'rotate(-180deg)' }" />
 				</button>
 			</div>
@@ -60,7 +67,26 @@ const dragStart = (event: MouseEvent | TouchEvent) => {
 				<textarea readonly aria-label="全局参数" value="ffmpeg -hide_banner -hwaccel auto -i [输入文件路径] -vcodec hevc -preset medium -crf 24 -acodec copy ./[输出文件名]_converted.mp4 -y"></textarea>
 			</div>
 		</div>
-		<div class="lower"></div>
+		<div class="lower">
+			<transition name="paraboxes-ani">
+				<ShortcutsView v-show="appStore.paraSelected == 0" />
+			</transition>
+			<transition name="paraboxes-ani">
+				<InputView v-show="appStore.paraSelected == 1" />
+			</transition>
+			<transition name="paraboxes-ani">
+				<VcodecView v-show="appStore.paraSelected == 2" />
+			</transition>
+			<transition name="paraboxes-ani">
+				<AcodecView v-show="appStore.paraSelected == 3" />
+			</transition>
+			<transition name="paraboxes-ani">
+				<EffectView v-show="appStore.paraSelected == 4" />
+			</transition>
+			<transition name="paraboxes-ani">
+				<OutputView v-show="appStore.paraSelected == 5" />
+			</transition>
+		</div>
 	</div>
 </template>
 
@@ -68,6 +94,8 @@ const dragStart = (event: MouseEvent | TouchEvent) => {
 	.parabox  {
 		position: absolute;
 		bottom: 0;
+		display: flex;
+		flex-direction: column;
 		width: 100%;
 		min-height: 28px;
 		// height: 40%;
@@ -79,6 +107,7 @@ const dragStart = (event: MouseEvent | TouchEvent) => {
 		.upper {
 			position: relative;
 			height: 30px;
+			flex: 0 0 auto;
 			background-color: hwb(0 97% 3%);
 			box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.02), // 远距离下阴影
 						0px -2px 1px -1px rgba(0, 0, 0, 0.1) inset; // 内部下阴影
@@ -112,6 +141,7 @@ const dragStart = (event: MouseEvent | TouchEvent) => {
 							width: 24px;
 							height: 24px;
 							vertical-align: middle;
+							filter: drop-shadow(0 0 0px hwb(0 100% 0% / 1)) drop-shadow(0 1px 1px hwb(0 0% 100% / 0.1));
 						}
 						span {
 							display: inline-block;
@@ -122,6 +152,7 @@ const dragStart = (event: MouseEvent | TouchEvent) => {
 							white-space: nowrap;
 							overflow: hidden;
 							transition: width 0.3s ease, padding 0.3s ease;
+							filter: drop-shadow(0 0 0px hwb(0 100% 0% / 1)) drop-shadow(0 1px 1px hwb(0 0% 100% / 0.1));
 						}
 					}
 				}
@@ -149,6 +180,7 @@ const dragStart = (event: MouseEvent | TouchEvent) => {
 					padding: 0;
 					background-color: transparent;
 					border: none;
+					transition: width 0.3s ease;
 					&:hover {
 						background-color: hwb(0 100% 0% / 0.5);
 						box-shadow: 0 0 4px 2px hwb(0 0% 100% / 0.05);
@@ -159,11 +191,33 @@ const dragStart = (event: MouseEvent | TouchEvent) => {
 									0 6px 12px hwb(0 0% 100% / 0.1) inset; // 内部凹陷阴影
 						transform: translateY(0.25px);
 					}
+					span {
+						position: relative;
+						display: inline-block;
+						width: 0px;
+						margin-right: 0px;
+						letter-spacing: 1px;
+						top: -0.5px;
+						white-space: nowrap;
+						overflow: hidden;
+						color: #777;
+						transition: width 0.3s ease, padding 0.3s ease;
+						filter: drop-shadow(0 0 0px hwb(0 100% 0% / 1)) drop-shadow(0 1px 1px hwb(0 0% 100% / 0.1));
+					}
 					svg {
 						width: 20px;
 						height: 20px;
 						color: #777;
 						transition: transform 0.4s cubic-bezier(0.2, 1.4, 0.65, 1);
+					}
+				}
+				@media only screen and (min-width: 960px) {
+					.showGlobalButton {
+						width: 120px;
+						span {
+							width: 62px;
+							margin-right: 8px;
+						}
 					}
 				}
 			}
@@ -200,7 +254,8 @@ const dragStart = (event: MouseEvent | TouchEvent) => {
 			}
 		}
 		.lower {
-
+			position: relative;
+			height: 100%;
 		}
 	}
 

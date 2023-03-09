@@ -54,7 +54,7 @@ class ElectronApp {
 
 	createMainWindow(): void {
 		const mainWindow = new BrowserWindow({
-			width: 960,
+			width: 1080,
 			height: 720,
 			minWidth: 600,
 			minHeight: 300,
@@ -76,9 +76,6 @@ class ElectronApp {
 				// nodeIntegration: true,
 				// contextIsolation: false,
 			},
-			// webPreferences: {
-			// 	// preload: path.join(__dirname, '../preload/index.js'),
-			// },
 		});
 		this.mainWindow = mainWindow;
 
