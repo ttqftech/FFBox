@@ -4,7 +4,7 @@ import { ref } from 'vue';
 interface Props {
 	title: string;
 	value: number;
-	tags?: [number, string][];
+	tags?: [number, string][] | Map<number, string>;
 	step?: number;
 	valueToText: (value: number) => string;
 	valueProcess?: (value?: number) => number;

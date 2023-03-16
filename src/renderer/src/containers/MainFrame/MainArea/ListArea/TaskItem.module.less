@@ -22,8 +22,10 @@
 	// height: 28px;
 	// height: 64px;
 	pointer-events: none;
+	box-sizing: border-box;
 	.backgroundWhite {
 		height: 100%;
+		box-sizing: border-box;
 		border-radius: 3px;
 		background-color: hwb(0deg 98% 2%);
 		box-shadow: 0 0 1px 2px hwb(0deg 98% 2%),
@@ -33,6 +35,9 @@
 		&:hover, &:has(~ .cmdArea:hover) {
 			transition: background-color 0.2s cubic-bezier(0, 2, 0.3, 1);
 			background: hwb(210 90% 2%);
+		}
+		&:active {
+			border: hsl(210, 100%, 80%) 1px solid;
 		}
 	}
 	.previewIcon {

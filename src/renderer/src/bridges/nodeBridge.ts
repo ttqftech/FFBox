@@ -1,48 +1,50 @@
-import _ElectronStore from 'electron-store';
+// import _ElectronStore from 'electron-store';
 import { IpcRenderer } from 'electron';
 import { ChildProcess } from 'child_process';
 import CryptoJS from 'crypto-js';
 import { getEnv } from '@common/utils';
 
-let ElectronStore: typeof _ElectronStore, electronStore: _ElectronStore;
-let ipcRenderer: IpcRenderer;
-let spawn: (...args: any) => ChildProcess, exec: (...args: any) => ChildProcess;
+// let ElectronStore: typeof _ElectronStore, electronStore: _ElectronStore;
+// let ipcRenderer: IpcRenderer;
+// let spawn: (...args: any) => ChildProcess, exec: (...args: any) => ChildProcess;
 
-if (getEnv() === 'electron-renderer') {
-	ElectronStore = window.require('electron-store');
-	ipcRenderer = window.jsb.ipcRenderer as any;
-	spawn = window.jsb.spawn;
-	exec = window.jsb.exec;
-}
+// if (getEnv() === 'electron-renderer') {
+// 	ElectronStore = window.require('electron-store');
+// 	ipcRenderer = window.jsb.ipcRenderer as any;
+// 	spawn = window.jsb.spawn;
+// 	exec = window.jsb.exec;
+// }
 
 export default {
-	/**
-	 * 执行任何 nodeBridge 函数前都应检查当前是否在 electron 环境
-	 * 可以通过此函数验证，或者，若不是 electron 环境，取出的 node 模块将为 undefined
-	 */
-	get isElectron(): boolean {
-		return getEnv() !== 'browser';
+	get env(): 'electron' | 'browser' {
+		if (window.jsb) {
+			return 'electron';
+		} else {
+			return 'browser';
+		}
 	},
 
-	get electronStore(): _ElectronStore | undefined {
-		if (ElectronStore) {
-			if (!electronStore) {
-				electronStore = new ElectronStore();
-			}
-			return electronStore;
+	get electronStore() {
+		return {
+			get(key: string) {
+				return window.jsb.ipcRenderer.invoke('electron-store', 'get', key);
+			},
+			set(key: string, value: any) {
+				return window.jsb.ipcRenderer.invoke('electron-store', 'set', key, JSON.parse(JSON.stringify(value)));
+			},
 		}
 	},
 
 	get ipcRenderer(): IpcRenderer | undefined {
-		return ipcRenderer;
+		return window.jsb.ipcRenderer as any;
 	},
 
 	get spawn(): (...args: any) => ChildProcess | undefined {
-		return spawn;
+		return window.jsb.spawn;
 	},
 
 	get exec(): (...args: any) => ChildProcess | undefined {
-		return exec;
+		return window.jsb.exec;
 	},
 
 	get cryptoJS(): typeof CryptoJS {
@@ -50,6 +52,7 @@ export default {
 	},
 
 	get os(): 'Windows' | 'Linux' | 'MacOS' | 'Unix' | 'Android' | 'iPadOS' | 'iOS' | 'unknown' {
+		// TODO this.isElectron 不可用
 		if (this.isElectron) {
 			// electron 环境
 			let platform : NodeJS.Platform = process.platform
@@ -91,6 +94,7 @@ export default {
 	},
 
 	jumpToUrl(url: string): void {
+		// TODO this.isElectron 不可用
 		if (this.isElectron) {
 			switch (this.os) {
 				case 'MacOS':
@@ -112,6 +116,7 @@ export default {
 	},
 
 	openFile(url: string): void {
+		// TODO this.isElectron 不可用
 		if (!this.isElectron) {
 			return;
 		}
@@ -132,10 +137,10 @@ export default {
 	},
 
 	flashFrame(value = true): void {
-		ipcRenderer?.send('flashFrame', value);
+		window.jsb.ipcRenderer?.send('flashFrame', value);
 	},
 
 	openDevTools(): void {
-		ipcRenderer?.send('openDevTools');
+		window.jsb.ipcRenderer?.send('openDevTools');
 	}
 }

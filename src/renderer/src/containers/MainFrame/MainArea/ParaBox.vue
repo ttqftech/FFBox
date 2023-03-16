@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { useAppStore } from '@renderer/stores/appStore';
 import { ref } from 'vue';
-import ShortcutsView from './ParaBox/InputView';
+import ShortcutView from './ParaBox/ShortcutView';
 import InputView from './ParaBox/InputView';
-import VcodecView from './ParaBox/InputView';
-import AcodecView from './ParaBox/InputView';
-import EffectView from './ParaBox/InputView';
-import OutputView from './ParaBox/InputView';
+import VcodecView from './ParaBox/VcodecView';
+import AcodecView from './ParaBox/AcodecView';
+import EffectView from './ParaBox/EffectView';
+import OutputView from './ParaBox/OutputView';
 import IconSidebarFavorite from '@renderer/assets/mainArea/paraBox/parabox_favorite.svg?component';
 import IconSidebarInput from '@renderer/assets/mainArea/paraBox/parabox_input.svg?component';
 import IconSidebarVideo from '@renderer/assets/mainArea/paraBox/parabox_video.svg?component';
@@ -20,6 +20,7 @@ const sidebarTexts = ['快捷', '输入', '视频', '音频', '效果', '输出'
 const sidebarColors = ['hwb(45 0% 5%)', 'hwb(195 0% 10%)', 'hwb(285 10% 5%)', 'hwb(120 0% 15%)', 'hwb(315 0% 0%)', 'hwb(0 30% 0%)'];
 const appStore = useAppStore();
 const deviderRef = ref<Element>(null);
+const animationName = ref('animationLeft');
 
 const handleDragStart = (event: MouseEvent | TouchEvent) => {
 	event.preventDefault();
@@ -42,6 +43,10 @@ const handleDragStart = (event: MouseEvent | TouchEvent) => {
 	window.addEventListener('mousemove', handleMouseMove);
 	window.addEventListener('mouseup', handleMouseUp);
 }
+const handleParaButtonClicked = (index: number) => {
+	animationName.value = index < appStore.paraSelected ? 'animationLeft' : 'animationRight';
+	appStore.paraSelected = index;
+}
 
 const getButtonColorStyle = (index: number) => ({ color: appStore.paraSelected === index ? sidebarColors[index] : 'hwb(0 50% 50%)' });
 
@@ -52,8 +57,7 @@ const getButtonColorStyle = (index: number) => ({ color: appStore.paraSelected =
 		<div class="upper" :style="{ height: appStore.showGlobalParams ? '64px' : undefined }">
 			<div class="devider" :ref="(el) => deviderRef = el as Element">
 				<div class="buttons" @mousedown="handleDragStart" @touchstart="handleDragStart">
-					<button v-for="index in [0, 1, 2, 3, 4, 5]" :key="index" :aria-label="sidebarTexts[index] + '参数'" @click="appStore.paraSelected = index">
-						<!-- <div class="icon" :class="{'icon-selected': paraSelected == index}" :style="{ backgroundPositionY: `${(value + 2) / 7 * 100}%` }"></div> -->
+					<button v-for="index in [0, 1, 2, 3, 4, 5]" :key="index" :aria-label="sidebarTexts[index] + '参数'" @click="handleParaButtonClicked(index)">
 						<component :is="sidebarIcons[index]" :style="getButtonColorStyle(index)" />
 						<span :style="getButtonColorStyle(index)">{{ sidebarTexts[index] }}</span>
 					</button>
@@ -68,22 +72,22 @@ const getButtonColorStyle = (index: number) => ({ color: appStore.paraSelected =
 			</div>
 		</div>
 		<div class="lower">
-			<transition name="paraboxes-ani">
-				<ShortcutsView v-show="appStore.paraSelected == 0" />
+			<transition :name="animationName">
+				<ShortcutView v-show="appStore.paraSelected == 0" />
 			</transition>
-			<transition name="paraboxes-ani">
+			<transition :name="animationName">
 				<InputView v-show="appStore.paraSelected == 1" />
 			</transition>
-			<transition name="paraboxes-ani">
+			<transition :name="animationName">
 				<VcodecView v-show="appStore.paraSelected == 2" />
 			</transition>
-			<transition name="paraboxes-ani">
+			<transition :name="animationName">
 				<AcodecView v-show="appStore.paraSelected == 3" />
 			</transition>
-			<transition name="paraboxes-ani">
+			<transition :name="animationName">
 				<EffectView v-show="appStore.paraSelected == 4" />
 			</transition>
-			<transition name="paraboxes-ani">
+			<transition :name="animationName">
 				<OutputView v-show="appStore.paraSelected == 5" />
 			</transition>
 		</div>
@@ -104,6 +108,48 @@ const getButtonColorStyle = (index: number) => ({ color: appStore.paraSelected =
 		box-shadow: 0px 0px 8px hwb(0 0% 100% / 0.05), // 远距离上阴影
 					0px 1px 1px hwb(0 100% 0% / 0.25) inset; // 内部上阴影
 		overflow: hidden;
+		// 切换动画（向左）
+		.animationLeft-enter-from {
+			/* z-index: 0; */
+			opacity: 0;
+			transform: translateX(-30px);
+		}
+		.animationLeft-enter-active, .animationLeft-leave-active {
+			transition: opacity 0.3s, transform 0.5s cubic-bezier(0.2, 1.25, 0.3, 1);
+		}
+		.animationLeft-enter-to, .animationLeft-leave-from {
+			/* z-index: 1; */
+			opacity: 1;
+			transform: translateX(0);
+		}
+		.animationLeft-leave-active {
+			transition: opacity 0.3s, transform 0.3s cubic-bezier(0.5, 0, 1, 1);
+		}
+		.animationLeft-leave-to {
+			opacity: 0;
+			transform: translateX(30px);
+		}
+		// 切换动画（向右）
+		.animationRight-enter-from {
+			/* z-index: 0; */
+			opacity: 0;
+			transform: translateX(30px);
+		}
+		.animationRight-enter-active, .animationRight-leave-active {
+			transition: opacity 0.3s, transform 0.4s cubic-bezier(0.2, 1.25, 0.3, 1);
+		}
+		.animationRight-enter-to, .animationRight-leave-from {
+			/* z-index: 1; */
+			opacity: 1;
+			transform: translateX(0);
+		}
+		.animationRight-leave-active {
+			transition: opacity 0.3s, transform 0.3s cubic-bezier(0.5, 0, 1, 1);
+		}
+		.animationRight-leave-to {
+			opacity: 0;
+			transform: translateX(-30px);
+		}
 		.upper {
 			position: relative;
 			height: 30px;

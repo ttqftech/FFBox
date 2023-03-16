@@ -9,6 +9,10 @@ import { useAppStore } from '@renderer/stores/appStore';
 
 interface Props {
 	task: UITask;
+	selected?: boolean;
+	onClick?: (event: MouseEvent) => any;
+	onDblClick?: (event: MouseEvent) => any;
+	onPauseOrRemove?: () => any;
 }
 
 export const TaskItem: FunctionalComponent<Props> = (props) => {
@@ -102,9 +106,8 @@ export const TaskItem: FunctionalComponent<Props> = (props) => {
 	const overallProgressDescription = computed(() => task.transferStatus === 'normal' ? '转码进度' : '上传进度');
 
 	// #endregion
-	
-	// console.log(task.fileBaseName, videoRateControl.value, videoRateControl.value);
-	// console.log(props);
+
+	// #region 其他样式
 
 	const deleteButtonBackgroundPositionX = computed(() => {
 		switch (task.status) {
@@ -117,6 +120,7 @@ export const TaskItem: FunctionalComponent<Props> = (props) => {
 		}
 		return '';
 	});
+
 	// 整个任务项的高度，包括上下 margin
 	const taskHeight = computed(() => {
 		let height = 4;
@@ -127,11 +131,24 @@ export const TaskItem: FunctionalComponent<Props> = (props) => {
 		return height;
 	});
 
+	const taskBackgroundStyle = computed(() => {
+		if (props.selected) {
+			return {
+				background: 'hsl(210, 100%, 90%)',
+				border: 'hsl(210, 100%, 80%) 1px solid',
+			};
+		} else {
+			return {};
+		}
+	});
+
+	// #endregion
+
 	return (
 		<div class={style.taskWrapper1}>
 			<div class={style.taskWrapper2}>
 				<div class={style.task} style={{ height: `${taskHeight.value}px` }}>
-					<div class={style.backgroundWhite}></div>
+					<div class={style.backgroundWhite} style={taskBackgroundStyle.value} />
 					<div class={style.previewIcon} style={{ bottom: settings.showCmd ? '66px' : undefined}}>
 						<IconPreview />
 					</div>
@@ -222,7 +239,7 @@ export const TaskItem: FunctionalComponent<Props> = (props) => {
 						</div>
 					)}
 					<div class={style.vline} style={{ bottom: settings.showCmd ? '66px' : undefined}}><div></div></div>
-					<button aria-label='重置或删除任务' class={style.button} style={{ bottom: settings.showCmd ? '66px' : undefined}}>
+					<button aria-label='重置或删除任务' class={style.button} style={{ bottom: settings.showCmd ? '66px' : undefined}} onClick={props.onPauseOrRemove}>
 						<div style={{ backgroundPositionX: deleteButtonBackgroundPositionX.value }}></div>
 					</button>
 				</div>

@@ -1,10 +1,12 @@
 import { app, shell, BrowserWindow, ipcMain, Menu } from 'electron';
+import ElectronStore from 'electron-store';
 import * as path from 'path';
 // import { electronApp, optimizer, is } from '@electron-toolkit/utils';
 // import { FFBoxService } from './service/FFBoxService';
 
 class ElectronApp {
 	mainWindow: BrowserWindow | null = null;
+	electronStore: ElectronStore;
 	// service: FFBoxService | null = null;
 	blockWindowClose = true;
 
@@ -150,7 +152,9 @@ class ElectronApp {
 		];
 		
 		const menu = Menu.buildFromTemplate(menuTemplate as any);
-		Menu.setApplicationMenu(menu)
+		Menu.setApplicationMenu(menu);
+
+		this.electronStore = new ElectronStore();
 	}
 
 	createService(): void {
@@ -228,6 +232,14 @@ class ElectronApp {
 		// ipcMain.on('startService', () => {
 		// 	this.createService();
 		// });
+
+		ipcMain.handle('electron-store', (event, type: 'get' | 'set', key: string, value?: string) => {
+			if (type === 'get') {
+				return this.electronStore.get(key);
+			} else {
+				return this.electronStore.set(key, value);
+			}
+		});
 	}
 }
 

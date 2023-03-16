@@ -69,7 +69,7 @@ export type OutputParams_video = {
 	framerate: string;
 	ratecontrol: string;
 	ratevalue: number;
-	detail: Record<string, unknown>;
+	detail: Record<string, any>;
 }
 
 export type OutputParams_audio = {
@@ -78,13 +78,15 @@ export type OutputParams_audio = {
 	ratecontrol: string;
 	ratevalue: number;
 	vol: number;
-	detail: Record<string, unknown>;
+	detail: Record<string, any>;
 };
 
 export type OutputParams_output = {
 	format: string;
 	moveflags: boolean;
 	filename: string;
+	begin?: string;
+	end?: string;
 };
 
 export interface InputFile {

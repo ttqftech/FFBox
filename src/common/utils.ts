@@ -440,6 +440,7 @@ export function getTimeString(date: Date, showMs = true): string {
 
 /**
  * 获取当前运行环境
+ * 注：若 nodeIntegration 关闭，则渲染进程会获得“browser”
  */
 export function getEnv(): 'browser' | 'node' | 'electron-renderer' | 'electron-main' {
 	if (typeof process !== 'undefined') {

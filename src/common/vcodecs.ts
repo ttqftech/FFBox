@@ -1,4 +1,44 @@
+import { OutputParams_video } from "./types";
+
 const VALUE = Symbol()
+
+type strict2 = { strict2?: boolean };
+export interface BasicMenuOption {
+	sName: string;
+	lName: string;
+	imageName?: string;
+	imageOffset?: number;
+	description?: string;
+	strict2?: boolean;
+}
+export interface ComboOptions {
+	items: BasicMenuOption[];
+}
+export interface SliderOptions {
+	step: number;	// 步长，如不需要则传 0
+	tags: Map<number, string>;
+	valueToText: (value: number) => string;	// 显示在滑杆旁边的文字
+	valueProcess: (value: number) => number;	// 进行吸附、整数化处理
+	valueToParam: (value: number) => string | number; // 输出到 ffmpeg 参数的文字
+}
+export interface BasicParameter {
+	parameter: string;	// 实际传给 ffmpeg 的参数
+	display: string;	// 显示于表单标题
+}
+export type Parameter = BasicParameter & (
+	({ mode: 'combo' } & ComboOptions) |
+	({ mode: 'slider' } & SliderOptions)
+);
+export type RateControl = BasicMenuOption & { cmd: (string | Symbol)[] } & SliderOptions;
+export interface VEncoder extends BasicMenuOption {
+	codecName: string;	// 实际传给 ffmpeg 的编码器
+	parameters?: Parameter[];
+	ratecontrol?: RateControl[];
+}
+export interface VCodec extends BasicMenuOption {
+	codecName: string;
+	encoders?: VEncoder[];
+}
 
 const 自动 = {
 	sName: '自动',
@@ -68,7 +108,7 @@ const Q = {
 
 // #region 预置 slider
 
-function approximation (number, numList, threshould = 0.01) {
+function approximation (number: number, numList: number[], threshould = 0.01) {
 	for (const num of numList) {
 		if (Math.abs(num - number) < threshould) {
 			number = num;
@@ -79,7 +119,7 @@ function approximation (number, numList, threshould = 0.01) {
 
 // valueToText：显示在滑杆旁边的文字　　valueProcess：进行吸附、整数化处理　　valueToParam：输出到 ffmpeg 参数的文字
 
-const H264265crfSlider = {
+const H264265crfSlider: SliderOptions = {
 	step: 51,
 	tags: new Map([
 		[0.000, '51（最低画质）'],
@@ -90,80 +130,80 @@ const H264265crfSlider = {
 		[1.000, '0（无损）']
 	]),
 	valueToText: function (value) {
-		return 51 - Math.round(value * 51)
+		return String(51 - Math.round(value * 51));
 	},
 	valueProcess: function (value) {
-		return Math.round(value * 51) / 51
+		return Math.round(value * 51) / 51;
 	},
 	valueToParam: function (value) {
-		return 51 - Math.round(value * 51)
+		return 51 - Math.round(value * 51);
 	}
 }
-const crf63slider = {
+const crf63slider: SliderOptions = {
 	step: 63,
 	tags: new Map([
 		[0.000, '63（最低画质）'],
 		[1.000, '0（无损）']
 	]),
 	valueToText: function (value) {
-		return 63 - Math.round(value * 63)
+		return String(63 - Math.round(value * 63));
 	},
 	valueProcess: function (value) {
-		return Math.round(value * 63) / 63
+		return Math.round(value * 63) / 63;
 	},
 	valueToParam: function (value) {
-		return 63 - Math.round(value * 63)
+		return 63 - Math.round(value * 63);
 	}
 }
-const crf51slider = {
+const crf51slider: SliderOptions = {
 	step: 51,
 	tags: new Map([
 		[0.000, '51（最低画质）'],
 		[1.000, '0（无损）']
 	]),
 	valueToText: function (value) {
-		return 51 - Math.round(value * 51)
+		return String(51 - Math.round(value * 51));
 	},
 	valueProcess: function (value) {
-		return Math.round(value * 51) / 51
+		return Math.round(value * 51) / 51;
 	},
 	valueToParam: function (value) {
-		return 51 - Math.round(value * 51)
+		return 51 - Math.round(value * 51);
 	}
 }
-const qp70slider = {
+const qp70slider: SliderOptions = {
 	step: 70,
 	tags: new Map([
 		[0.000, '70（最低画质）'],
 		[1.000, '0（无损）']
 	]),
 	valueToText: function (value) {
-		return 70 - Math.round(value * 70)
+		return String(70 - Math.round(value * 70));
 	},
 	valueProcess: function (value) {
-		return Math.round(value * 70) / 70
+		return Math.round(value * 70) / 70;
 	},
 	valueToParam: function (value) {
-		return 70 - Math.round(value * 70)
+		return 70 - Math.round(value * 70);
 	}
 }
-const qp51slider = {
+const qp51slider: SliderOptions = {
 	step: 51,
 	tags: new Map([
 		[0.000, '51（最低画质）'],
 		[1.000, '0（无损）']
 	]),
 	valueToText: function (value) {
-		return 51 - Math.round(value * 51)
+		return String(51 - Math.round(value * 51));
 	},
 	valueProcess: function (value) {
-		return Math.round(value * 51) / 51
+		return Math.round(value * 51) / 51;
 	},
 	valueToParam: function (value) {
-		return 51 - Math.round(value * 51)
+		return 51 - Math.round(value * 51);
 	}
 }
-const vbitrateSlider = {
+const vbitrateSlider: SliderOptions = {
 	step: 0,
 	tags: new Map([
 		[0.000, '62.5 Kbps'],
@@ -189,7 +229,7 @@ const vbitrateSlider = {
 		return Math.round(62.5 * Math.pow(2, value * 12)) + "k"
 	}
 }
-const q100slider = {
+const q100slider: SliderOptions = {
 	step: 0,
 	tags: new Map([
 		[0.000, '0'],
@@ -205,7 +245,7 @@ const q100slider = {
 		return (value * 100).toFixed(0)
 	}
 }
-const H264265presetSlider = {
+const H264265presetSlider: SliderOptions = {
 	step: 9,
 	tags: new Map([
 		[0 / 9, 'ultrafast'],
@@ -231,7 +271,7 @@ const H264265presetSlider = {
 		return ['ultrafast', 'superfast', 'veryfast', 'faster', 'fast', 'medium', 'slow', 'slower', 'veryslow', 'placebo'][value]
 	}
 }
-const qsvPresetSlider = {
+const qsvPresetSlider: SliderOptions = {
 	step: 6,
 	tags: new Map([
 		[0 / 6, 'veryfast'],
@@ -1028,7 +1068,7 @@ const 默认编码器 = {
 	codecName: '-',
 }
 
-const vcodecs = [
+const vcodecs: VCodec[] = [
 	{
 		sName: '禁用视频',
 		lName: '禁用视频',
@@ -2574,105 +2614,95 @@ const framerate = [
 
 
 const generator = {
-	getVideoParam: function (videoParams) {
-		var ret = []
-		var strict2 = false
-		if (videoParams.vcodec == '禁用视频') {
-			ret.push('-vn')
-		} else if (videoParams.vcodec == '不重新编码') {
-			ret.push('-vcodec')
-			ret.push('copy')
-		} else if (videoParams.vcodec != '自动') {
-			var vcodec = vcodecs.find((value) => {
-				return value.sName == videoParams.vcodec
-			})
-			if (vcodec) {
-				var vencoder = vcodec.encoders.find((value) => {
-					return value.sName == videoParams.vencoder
-				})
-			}
+	getVideoParam: function (videoParams: OutputParams_video) {
+		const ret = [];
+		let strict2 = false;
+		if (videoParams.vcodec === '禁用视频') {
+			ret.push('-vn');
+		} else if (videoParams.vcodec === '不重新编码') {
+			ret.push('-vcodec');
+			ret.push('copy');
+		} else if (videoParams.vcodec !== '自动') {
+			const vcodec = vcodecs.find((value) => value.sName == videoParams.vcodec);
+			const vencoder = vcodec?.encoders.find((value) => value.sName == videoParams.vencoder);
 			if (vcodec && vencoder) {
 				// 不是用户手动填的 vcodec 和 vencoder
-				if (videoParams.vencoder == "默认") {
+				if (videoParams.vencoder === "默认") {
 					// 使用默认编码器，返回 vcodec.codecName
-					ret.push('-vcodec')
-					ret.push(vcodec.codecName)
+					ret.push('-vcodec');
+					ret.push(vcodec.codecName);
 				} else {
 					// 使用特定编码器，返回 vcodev.encoder[].codecName
-					ret.push('-vcodec')
-					ret.push(vencoder.codecName)
+					ret.push('-vcodec');
+					ret.push(vencoder.codecName);
 				}
 				if (vcodec.strict2 || vencoder.strict2) {
-					strict2 = true
+					strict2 = true;
 				}
 				for (const parameter of vencoder.parameters) {
 					// 逐个遍历详细参数
-					if (parameter.mode == 'combo') {
+					if (parameter.mode === 'combo') {
 						if (videoParams.detail[parameter.parameter] != '默认' && videoParams.detail[parameter.parameter] != '自动') {
-							ret.push('-' + parameter.parameter)
-							ret.push(videoParams.detail[parameter.parameter])
+							ret.push('-' + parameter.parameter);
+							ret.push(videoParams.detail[parameter.parameter]);
 						}
 						// 检查参数项是否有 strict2 标记
-						var item = parameter.items.find((value) => {
-							return value.sName == videoParams.detail[parameter.parameter]
-						})
-						if (item && item.strict2) {
-							strict2 = true
+						const item = parameter.items.find((value) => value.sName === videoParams.detail[parameter.parameter]);
+						if (item?.strict2) {
+							strict2 = true;
 						}
 					} else if (parameter.mode == 'slider') {
-						ret.push('-' + parameter.parameter)
-						var floatValue = videoParams.detail[parameter.parameter]
-						var value = parameter.valueToParam(floatValue)
-						ret.push(value)
+						ret.push('-' + parameter.parameter);
+						const floatValue = videoParams.detail[parameter.parameter];
+						const value = parameter.valueToParam(floatValue);
+						ret.push(value);
 					}
 				}
 								// 调试用↓
 								// ret.push('-threads')
 								// ret.push('1')
 								// 调试用↑
-				var ratecontrol = vencoder.ratecontrol.find(value => {
-					return value.sName == videoParams.ratecontrol
-				})
-				if (ratecontrol != null) {
+				const ratecontrol = vencoder.ratecontrol.find((value) => value.sName === videoParams.ratecontrol);
+				if (ratecontrol !== null) {
 					// 计算值
-					var floatValue = videoParams.ratevalue
-					var value = ratecontrol.valueToParam(floatValue)
+					const floatValue = videoParams.ratevalue;
+					const value = ratecontrol.valueToParam(floatValue);
 					// 将值插入参数列表中
 					for (const item of ratecontrol.cmd) {
-						if (item == VALUE) {
-							ret.push(value)
+						if (item === VALUE) {
+							ret.push(value);
 						} else {
-							ret.push(item)
+							ret.push(item);
 						}
 					}
 				}
 				if (strict2) {
-					ret.push('-strict')
-					ret.push('-2')
+					ret.push('-strict');
+					ret.push('-2');
 				}
 				// 设置通用参数
 				if (videoParams.resolution != '不改变') {
-					ret.push('-s')
-					ret.push(videoParams.resolution)
+					ret.push('-s');
+					ret.push(videoParams.resolution);
 				}
 				if (videoParams.framerate != '不改变') {
-					ret.push('-r')
-					ret.push(videoParams.framerate)
+					ret.push('-r');
+					ret.push(videoParams.framerate);
 				}
 			} else if (vcodec) {
 				// 用户手动填入的 vencoder
-				ret.push('-vcodec')
-				ret.push(videoParams.vencoder)
+				ret.push('-vcodec');
+				ret.push(videoParams.vencoder);
 			} else {
 				// 用户手动填入的 vcodec
-				ret.push('-vcodec')
-				ret.push(videoParams.vcodec)
+				ret.push('-vcodec');
+				ret.push(videoParams.vcodec);
 			}
 		} // 如果编码为自动，则不设置 vcodec 参数，返回空 Array
-		return ret
+		return ret;
 	},
 	// 获取 ratecontrol 方面的参数，主要是给 taskitem 用
-	getRateControlParam: function (videoParams) {
+	getRateControlParam: function (videoParams: OutputParams_video) {
 		var ret = {
 			mode: '-',
 			value: '-'

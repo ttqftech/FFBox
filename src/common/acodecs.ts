@@ -1,4 +1,44 @@
+import { OutputParams_audio } from "./types";
+
 const VALUE = Symbol()
+
+type strict2 = { strict2?: boolean };
+export interface BasicMenuOption {
+	sName: string;
+	lName: string;
+	imageName?: string;
+	imageOffset?: number;
+	description?: string;
+	strict2?: boolean;
+}
+export interface ComboOptions {
+	items: BasicMenuOption[];
+}
+export interface SliderOptions {
+	step: number;	// 步长，如不需要则传 0
+	tags: Map<number, string>;
+	valueToText: (value: number) => string;	// 显示在滑杆旁边的文字
+	valueProcess: (value: number) => number;	// 进行吸附、整数化处理
+	valueToParam: (value: number) => string | number; // 输出到 ffmpeg 参数的文字
+}
+export interface BasicParameter {
+	parameter: string;	// 实际传给 ffmpeg 的参数
+	display: string;	// 显示于表单标题
+}
+export type Parameter = BasicParameter & (
+	({ mode: 'combo' } & ComboOptions) |
+	({ mode: 'slider' } & SliderOptions)
+);
+export type RateControl = BasicMenuOption & { cmd: (string | Symbol)[] } & SliderOptions;
+export interface AEncoder extends BasicMenuOption {
+	codecName: string;	// 实际传给 ffmpeg 的编码器
+	parameters?: Parameter[];
+	ratecontrol?: RateControl[];
+}
+export interface ACodec extends BasicMenuOption {
+	codecName: string;
+	encoders?: AEncoder[];
+}
 
 const 自动 = {
 	sName: '自动',
@@ -34,7 +74,7 @@ const Q = {
 
 // #region 预置 slider
 
-function approximation (number, numList, threshould = 0.01) {
+function approximation (number: number, numList: number[], threshould = 0.01) {
 	for (const num of numList) {
 		if (Math.abs(num - number) < threshould) {
 			number = num;
@@ -43,7 +83,7 @@ function approximation (number, numList, threshould = 0.01) {
 	return number;
 }
 
-const abitrateSlider = {
+const abitrateSlider: SliderOptions = {
 	step: 60,
 	tags: new Map([
 		[0.000, '8 Kbps'],
@@ -66,7 +106,7 @@ const abitrateSlider = {
 		return Math.round(8 * Math.pow(2, value * 6)) + "k"
 	}
 }
-const q100slider = {
+const q100slider: SliderOptions = {
 	step: 0,
 	tags: new Map([
 		[0.000, '0'],
@@ -421,7 +461,7 @@ const lo_downmix = {
 
 // #endregion
 
-const volSlider = {
+const volSlider: SliderOptions = {
 	step: 96,
 	tags: new Map([
 		[0.000, '-48 dB'],
@@ -463,7 +503,7 @@ const 默认编码器 = {
 	codecName: '-',
 }
 
-var acodecs = [
+var acodecs: ACodec[] = [
 	{
 		sName: '禁用音频',
 		lName: '禁用音频',
@@ -1345,99 +1385,89 @@ var acodecs = [
 ]
 
 
-var generator = {
-	getAudioParam: function (audioParams) {
-		var ret = []
-		var strict2 = false
+const generator = {
+	getAudioParam: function (audioParams: OutputParams_audio) {
+		const ret = [];
+		let strict2 = false;
 		if (audioParams.acodec == '禁用音频') {
-			ret.push('-an')
+			ret.push('-an');
 		} else if (audioParams.acodec == '不重新编码') {
-			ret.push('-acodec')
-			ret.push('copy')
-		} else if (audioParams.acodec != '自动') {
-			var acodec = acodecs.find((value) => {
-				return value.sName == audioParams.acodec
-			})
-			if (acodec) {
-				var aencoder = acodec.encoders.find((value) => {
-					return value.sName == audioParams.aencoder
-				})
-			}
+			ret.push('-acodec');
+			ret.push('copy');
+		} else if (audioParams.acodec !== '自动') {
+			const acodec = acodecs.find((value) => value.sName == audioParams.acodec);
+			const aencoder = acodec?.encoders.find((value) => value.sName == audioParams.aencoder);
 			if (acodec && aencoder) {
 				// 不是用户手动填的 acodec 和 aencoder
-				if (audioParams.aencoder == "默认") {
+				if (audioParams.aencoder === "默认") {
 					// 使用默认编码器，返回 acodec.codecName
-					ret.push('-acodec')
-					ret.push(acodec.codecName)
+					ret.push('-acodec');
+					ret.push(acodec.codecName);
 				} else {
 					// 使用特定编码器，返回 acodev.ancoder[].codecName
-					ret.push('-acodec')
-					ret.push(aencoder.codecName)
+					ret.push('-acodec');
+					ret.push(aencoder.codecName);
 				}
 				if (acodec.strict2 || aencoder.strict2) {
-					strict2 = true
+					strict2 = true;
 				}
 				for (const parameter of aencoder.parameters) {
 					// 普通的详细参数
-					if (parameter.mode == 'combo') {
+					if (parameter.mode === 'combo') {
 						if (audioParams.detail[parameter.parameter] != '默认' && audioParams.detail[parameter.parameter] != '自动') {
-							ret.push('-' + parameter.parameter)
-							ret.push(audioParams.detail[parameter.parameter])
+							ret.push('-' + parameter.parameter);
+							ret.push(audioParams.detail[parameter.parameter]);
 						}
 						// 检查参数项是否有 strict2 标记
-						var item = parameter.items.find((value) => {
-							return value.sName == audioParams.detail[parameter.parameter]
-						})
-						if (item && item.strict2) {
-							strict2 = true
+						var item = parameter.items.find((value) => value.sName === audioParams.detail[parameter.parameter]);
+						if (item?.strict2) {
+							strict2 = true;
 						}
 					} else if (parameter.mode == 'slider') {
-						ret.push('-' + parameter.parameter)
-						var floatValue = audioParams.detail[parameter.parameter]
-						var value = parameter.valueToParam(floatValue)
-						ret.push(value)
+						ret.push('-' + parameter.parameter);
+						const floatValue = audioParams.detail[parameter.parameter];
+						const value = parameter.valueToParam(floatValue);
+						ret.push(value);
 					}
 				}
-				var ratecontrol = aencoder.ratecontrol.find(value => {
-					return value.sName == audioParams.ratecontrol
-				})
-				if (ratecontrol != null) {
+				const ratecontrol = aencoder.ratecontrol.find((value) => value.sName === audioParams.ratecontrol);
+				if (ratecontrol !== null) {
 					// 计算值
-					var floatValue = audioParams.ratevalue
-					var value = ratecontrol.valueToParam(floatValue)
+					const floatValue = audioParams.ratevalue;
+					const value = ratecontrol.valueToParam(floatValue);
 					// 将值插入参数列表中
 					for (const item of ratecontrol.cmd) {
-						if (item == VALUE) {
-							ret.push(value)
+						if (item === VALUE) {
+							ret.push(value);
 						} else {
-							ret.push(item)
+							ret.push(item);
 						}
 					}
 				}
 				if (strict2) {
-					ret.push('-strict')
-					ret.push('-2')
+					ret.push('-strict');
+					ret.push('-2');
 				}
 			} else if (acodec) {
 				// 用户手动填入的 aencoder
-				ret.push('-acodec')
-				ret.push(audioParams.aencoder)
+				ret.push('-acodec');
+				ret.push(audioParams.aencoder);
 			} else {
 				// 用户手动填入的 acodec
-				ret.push('-acodec')
-				ret.push(audioParams.acodec)
+				ret.push('-acodec');
+				ret.push(audioParams.acodec);
 			}
 		} // 如果编码为自动，则不设置 acodec 参数，返回空 Array
-		if (audioParams.acodec != '禁用音频' && audioParams.acodec != '不重新编码') {
-			if (audioParams.vol != 0.5) {
-				ret.push('-vol')
-				ret.push(volSlider.valueToParam(audioParams.vol))
+		if (audioParams.acodec !== '禁用音频' && audioParams.acodec !== '不重新编码') {
+			if (audioParams.vol !== 0.5) {
+				ret.push('-vol');
+				ret.push(volSlider.valueToParam(audioParams.vol));
 			}
 		}
-		return ret
+		return ret;
 	},
 	// 获取 ratecontrol 方面的参数，主要是给 taskitem 用
-	getRateControlParam: function (audioParams) {
+	getRateControlParam: function (audioParams: OutputParams_audio) {
 		var ret = {
 			mode: '-',
 			value: '-'

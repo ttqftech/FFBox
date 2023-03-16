@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import nodeBridge from '@renderer/bridges/nodeBridge';
 import { useAppStore } from '@renderer/stores/appStore';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { TaskItem } from './ListArea/TaskItem';
 
 const appStore = useAppStore();
+
+const selectedTask_last = ref(-1);
+
 const tasks = computed(() => {
 	// console.log('服务器', appStore.currentServer, '任务', appStore.currentServer?.data.tasks);
 	const currentServer = appStore.currentServer;
@@ -59,15 +62,53 @@ const debugLauncher = (() => {
 		}
 	}
 })();
+
+const handleTaskClicked = (event: MouseEvent, id: number, index: number) => {
+	let currentSelection = new Set(appStore.selectedTask);
+	if (event.shiftKey) {
+		if (selectedTask_last.value !== -1) {		// 之前没选东西，现在选一堆
+			currentSelection.clear();
+			const minIndex = Math.min(selectedTask_last.value, index);
+			const maxIndex = Math.max(selectedTask_last.value, index);
+			for (let i = minIndex; i <= maxIndex; i++) {	// 对 taskOrder 里指定区域项目进行选择
+				currentSelection.add(tasks.value[i].id);
+				// if (taskArray.has(id)) {	// 如果任务未被删除
+				// 	currentSelection.add(i);
+				// }
+			}
+		} else {							// 之前没选东西，现在选第一个
+			currentSelection = new Set([id]);
+		}
+	} else if (event.ctrlKey == true || nodeBridge.os === 'MacOS' && event.metaKey == true) {
+		if (currentSelection.has(id)) {
+			currentSelection.delete(id);
+		} else {
+			currentSelection.add(id);
+		}
+	} else {
+		currentSelection.clear();
+		currentSelection.add(id);
+	}
+	selectedTask_last.value = index;
+	// this.selectedTask = new Set([...this.selectedTask])	// 更新自身的引用值以触发 computed: taskSelected
+	appStore.selectedTask = new Set([...currentSelection]);
+	console.log('选中', appStore.selectedTask);
+	appStore.applySelectedTask();
+};
 </script>
 
 <template>
 	<div class="listarea">
 		<div class="tasklist">
-			<TaskItem v-for="task in tasks" :key="task.id" :task="task" />
+			<TaskItem
+				v-for="(task, index) in tasks"
+				:key="task.id"
+				:task="task"
+				:selected="appStore.selectedTask.has(task.id)"
+				@click="handleTaskClicked($event, task.id, index)" />
 		</div>
-		<div class="dropfilesdiv">
-			<div class="dropfilesimage" @click="debugLauncher" :style="{ 'backgroundImage': `url(${dropfilesimage})` }"></div>
+		<div class="dropfilesdiv" @click="appStore.selectedTask = new Set()">
+			<div class="dropfilesimage" @click="debugLauncher" :style="{ 'backgroundImage': `url(${dropfilesimage})` }" />
 		</div>
 	</div>
 </template>
@@ -79,11 +120,13 @@ const debugLauncher = (() => {
 		box-sizing: border-box;
 		padding: 8px 0;
 		overflow-y: auto;
+		.tasklist {
+			margin-bottom: 14px;
+		}
 		.dropfilesdiv {
 			display: flex;
 			width: 100%;
 			min-height: 80px;
-			margin-top: 8px;
 			flex-grow: 1;
 			.dropfilesimage {
 				/* background-image: url(/images/mainArea/drop_files.png); */

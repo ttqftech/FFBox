@@ -4,8 +4,9 @@ import { OutputParams, WorkingStatus } from '@common/types';
 import { Server } from '@renderer/types';
 import { defaultParams } from "@common/defaultParams";
 import { ServiceBridge } from '@renderer/bridges/serviceBridge'
-import { getInitialUITask, randomString } from '@common/utils';
+import { getInitialUITask, randomString, replaceOutputParams } from '@common/utils';
 import { handleCmdUpdate, handleFFmpegVersion, handleProgressUpdate, handleTasklistUpdate, handleTaskNotification, handleTaskUpdate, handleWorkingStatusUpdate } from './serverEventsHandler';
+import nodeBridge from '@renderer/bridges/nodeBridge';
 
 interface StoreState {
 	// 界面类
@@ -22,6 +23,7 @@ interface StoreState {
 	// 非界面类
 	servers: Server[];
 	currentServerId: string;
+	selectedTask: Set<number>,
 	globalParams: OutputParams;
 }
 
@@ -47,6 +49,7 @@ export const useAppStore = defineStore('app', {
 			// 非界面类
 			servers: [],
 			currentServerId: undefined,
+			selectedTask: new Set(),
 			globalParams: JSON.parse(JSON.stringify(defaultParams)),
 		};
 	},
@@ -56,10 +59,98 @@ export const useAppStore = defineStore('app', {
 		},
 	},
 	actions: {
+		// #region 纯 UI
+		// #endregion 纯 UI
+		// #region 任务处理
+		/**
+		 * 添加任务
+		 * path 将自动添加到 params 中去
+		 * @param path 输入文件（仅支持 1 个）的路径。若为远程任务则留空
+		 */
+		addTask(baseName: string, path?: string): Promise<number> {
+			const 这 = useAppStore();
+			const currentBridge = 这.currentServer?.entity;
+			if (!currentBridge) {
+				return;
+			}
+			const params: OutputParams = JSON.parse(JSON.stringify(这.globalParams));
+			params.input.files.push({
+				filePath: path,
+			});
+			const result = currentBridge.taskAdd(baseName, params);
+			return result;
+		},
+		/**
+		 * 获取 service 中 task id 为 -1 的 globalTask 更新到本地
+		 */
+		updateGlobalTask(server: Server) {
+			let newTask = getInitialUITask('');
+			server.data.tasks[-1] = newTask;
+			server.entity.getTask(-1);
+		},
+		/**
+		 * 修改已选任务项后调用
+		 * 函数将使用已选择的任务项替换 globalParameters
+		 */
+		applySelectedTask() {
+			const 这 = useAppStore();
+			if (这.selectedTask.size > 0) {
+				for (const id of 这.selectedTask) {
+					这.globalParams = replaceOutputParams(这.currentServer.data.tasks[id].after, 这.globalParams);
+				}
+			}
+		},
+		// #endregion 任务处理
+		// #region 参数处理
+		/**
+		 * 修改全局参数后调用
+		 * 函数将修改后的全局参数应用到当前选择的任务项，然后保存到本地磁盘
+		 */
+		applyParameters() {
+			const 这 = useAppStore();
+			// 更改到一些不匹配的值后会导致 getFFmpegParaArray 出错，但是修正代码就在后面，因此仅需忽略它，让它继续运行下去，不要急着更新
+			// let currentServer = state.servers[state.currentServerName];
+			// let currentBridge = state.serviceBridges[state.currentServerName];
+			const entity = 这.currentServer.entity;
+			const data = 这.currentServer.data;
+			if (data) {
+				// 收集需要批量更新的输出参数，交给 service
+				let needToUpdateIds: Array<number> = [];
+				for (const id of 这.selectedTask) {
+					let task = data.tasks[id];
+					task.after = replaceOutputParams(这.globalParams, task.after);
+					needToUpdateIds.push(id);
+				}
+				// paraArray 由 service 算出后回填本地
+				// 更新方式是 taskUpdate
+				entity.setParameter(needToUpdateIds, 这.globalParams);
+				// for (const indexNid of Object.values(needToUpdateIds)) {
+				// 	let task = currentServer.tasks[indexNid];
+				// 	task.paraArray = result[indexNid];
+				// }
+			}
+
+			// 存盘
+			clearTimeout((window as any).saveAllParaTimer);
+			(window as any).saveAllParaTimer = setTimeout(() => {
+				let electronStore = nodeBridge.electronStore;
+				if (nodeBridge.env === 'electron') {
+					nodeBridge.electronStore.set('input', 这.globalParams.input);
+					nodeBridge.electronStore.set('video', 这.globalParams.video);
+					nodeBridge.electronStore.set('audio', 这.globalParams.audio);
+					nodeBridge.electronStore.set('output', 这.globalParams.output);
+					console.log('参数已保存');
+				}
+			}, 700);
+		},
+		// #endregion 参数处理
+		// #region 通知处理
+		// #endregion 通知处理
+		// #region 服务器处理
 		/**
 		 * 添加服务器
 		 */
-		addServer (ip: string, port: number) {
+		addServer(ip: string, port: number) {
 			const 这 = useAppStore();
 			if (!ip) {
 				// mainVue.$popup({
@@ -78,30 +169,12 @@ export const useAppStore = defineStore('app', {
 					ffmpegVersion: '',
 					workingStatus: WorkingStatus.stopped,
 					progress: 0,
-					overallProgressTimerID: NaN,	
+					overallProgressTimerID: NaN,
 				},
 				entity: new ServiceBridge(ip, _port),
 			});
 			这.initializeServer(id);
 			return id;
-		},
-		/**
-		 * 添加任务
-		 * path 将自动添加到 params 中去
-		 * @param path 输入文件（仅支持 1 个）的路径。若为远程任务则留空
-		 */
-		addTask (baseName: string, path?: string): Promise<number> {
-			const 这 = useAppStore();
-			const currentBridge = 这.currentServer?.entity;
-			if (!currentBridge) {
-				return;
-			}
-			const params: OutputParams = JSON.parse(JSON.stringify(这.globalParams));
-			params.input.files.push({
-				filePath: path
-			});
-			const result = currentBridge.taskAdd(baseName, params);
-			return result;
 		},
 		/**
 		 * 初始化服务器连接并挂载事件监听
@@ -162,18 +235,14 @@ export const useAppStore = defineStore('app', {
 		/**
 		 * 切换当前服务器标签页
 		 */
-		switchServer (serverId: string) {
+		switchServer(serverId: string) {
 			const 这 = useAppStore();
 			这.currentServerId = serverId;
 		},
-		/**
-		 * 获取 service 中 task id 为 -1 的 globalTask 更新到本地
-		 */
-		updateGlobalTask (server: Server) {
-			let newTask = getInitialUITask('');
-			server.data.tasks[-1] = newTask;
-			server.entity.getTask(-1);
-		},
+		// #endregion 服务器处理
+		// #region 其他
+		// #endregion 其他
+
 		initTemp() {
 			const 这 = useAppStore();
 			const localServerId = 这.addServer('localhost', 33269);
