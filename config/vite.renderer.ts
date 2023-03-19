@@ -3,6 +3,7 @@ import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import vueJsx from '@vitejs/plugin-vue-jsx';
 import svgLoader from 'vite-svg-loader';
+// import VueTypeImports from 'vite-plugin-vue-type-imports';
 import path from 'path';
 import pkgJSON from '../package.json';
 
@@ -45,6 +46,7 @@ export default defineConfig({
 		vueJsx(
 			// options are passed on to @vue/babel-plugin-jsx
 		),
+		// VueTypeImports(),	// 解决 <script setup> 中引入外部类型不能被 defineProps 识别的问题
 		svgLoader({
 			// svgo: false,
 			svgoConfig: {

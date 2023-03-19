@@ -100,7 +100,7 @@ const AcodecView: FunctionalComponent<Props> = (props) => {
 						step={volSlider.step}
 						valueToText={volSlider.valueToText}
 						valueProcess={volSlider.valueProcess}
-						onChange={(value: number) => handleDetailChange('slider', 'vol', value)}
+						onChange={(value: number) => handleChange('slider', 'vol', value)}
 					/>
 				</>
 			)}

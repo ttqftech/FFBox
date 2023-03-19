@@ -434,6 +434,27 @@ export interface TypedEventEmitter<Events> {
 	setMaxListeners(maxListeners: number): this;
 }
 
+const isValidExt = function (ext: string, ignoreExts: any, maxSize: number) {
+	if (ignoreExts == null) {
+		ignoreExts = [];
+	}
+	return ext && ext.length <= maxSize && [].indexOf.call(ignoreExts.map(function (e: any) {
+		return (e && e[0] !== "." ? "." : "") + e;
+	}), ext) < 0;
+};  
+export function trimExt(pathModule: any, filename: string, ignoreExts?: any, maxSize?: number) {
+    var oldExt;
+    if (maxSize == null) {
+    	maxSize = 7;
+    }
+    oldExt = pathModule.extname(filename);
+    if (isValidExt(oldExt, ignoreExts, maxSize)) {
+      return filename.slice(0, +(filename.length - oldExt.length - 1) + 1 || 9000000000);
+    } else {
+      return filename;
+    }
+}
+
 export function getTimeString(date: Date, showMs = true): string {
 	return `${date.getFullYear()}-${(date.getMonth() + 1 + '').padStart(2, '0')}-${(date.getDate() + '').padStart(2, '0')} ${(date.getHours() + '').padStart(2, '0')}:${(date.getMinutes() + '').padStart(2, '0')}:${(date.getSeconds() + '').padStart(2, '0')}${showMs ? '.' + (date.getMilliseconds() + '').padStart(3, '0') : ''}`;
 }

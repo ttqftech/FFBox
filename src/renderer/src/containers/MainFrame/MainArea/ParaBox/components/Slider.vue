@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, VNodeRef } from 'vue';
 
 interface Props {
 	title: string;
@@ -13,7 +13,7 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const slipperRef = ref<Element>(null);
+const slipperRef = ref<VNodeRef>(null);
 
 const handleDragStart = (event: MouseEvent | TouchEvent) => {
 	event.preventDefault();
@@ -86,7 +86,7 @@ const handleKeypress = (event: KeyboardEvent) => {
 			<div class="slider-module-track"></div>
 			<div class="slider-module-track-background" :style="{ width: props.value * 100 + '%' }"></div>
 			<span v-for="(tag, index) in tags" :key="index" class="slider-module-mark" :style="{ left: tag[0] * 100 + '%' }">{{ tag[1] }}</span>
-			<button class="slider-module-slipper" v-bind:style="{ left: props.value * 100 + '%' }" @keydown="handleKeypress" :aria-label="title + '滑块'"></button>
+			<button class="slider-module-slipper" v-bind:style="{ left: props.value * 100 + '%' }" ref="slipperRef" @keydown="handleKeypress" :aria-label="title + '滑块'"></button>
 		</div>
 		<div class="slider-text">{{ valueToText(value) }}</div>
 	</div>
@@ -124,7 +124,6 @@ const handleKeypress = (event: KeyboardEvent) => {
 				background: #FFF;
 				border-radius: 8px;
 				box-shadow: 0px 2px 2px 0px rgba(0, 0, 0, 0.15) inset;
-							
 			}
 			.slider-module-track-background {
 				position: absolute;
@@ -133,6 +132,7 @@ const handleKeypress = (event: KeyboardEvent) => {
 				background: #49e;
 				border-radius: 8px;
 				box-shadow: 0px 2px 2px 0px rgba(0, 0, 0, 0.15) inset;
+				pointer-events: none;
 			}
 			.slider-module-slipper {
 				position: absolute;
@@ -144,6 +144,7 @@ const handleKeypress = (event: KeyboardEvent) => {
 				border-radius: 4px;
 				box-shadow: 0px 2px 2px 0px rgba(0, 0, 0, 0.2);
 				border: none;
+				outline: none;
 			}
 			.slider-module-slipper:hover {
 				background: linear-gradient(180deg, #ffffff, #fefefe);

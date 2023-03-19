@@ -125,7 +125,7 @@ const VcodecView: FunctionalComponent<Props> = (props) => {
 							step={ratecontrolSlider.value.step}
 							valueToText={ratecontrolSlider.value.valueToText}
 							valueProcess={ratecontrolSlider.value.valueProcess}
-							onChange={(value: number) => handleDetailChange('slider', 'ratevalue', value)}
+							onChange={(value: number) => handleChange('slider', 'ratevalue', value)}
 						/>
 					)}
 					{parametersList.value.map((parameter) => {

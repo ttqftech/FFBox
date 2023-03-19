@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useAppStore } from '@renderer/stores/appStore';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import ShortcutView from './ParaBox/ShortcutView';
 import InputView from './ParaBox/InputView';
 import VcodecView from './ParaBox/VcodecView';
@@ -14,6 +14,7 @@ import IconSidebarAudio from '@renderer/assets/mainArea/paraBox/parabox_audio.sv
 import IconSidebarEffect from '@renderer/assets/mainArea/paraBox/parabox_effect.svg?component';
 import IconSidebarOutput from '@renderer/assets/mainArea/paraBox/parabox_output.svg?component';
 import IconUpArrow from '@renderer/assets/mainArea/paraBox/uparrow.svg?component';
+import { getFFmpegParaArray } from '@common/getFFmpegParaArray';
 
 const sidebarIcons = [IconSidebarFavorite, IconSidebarInput, IconSidebarVideo, IconSidebarAudio, IconSidebarEffect, IconSidebarOutput];
 const sidebarTexts = ['快捷', '输入', '视频', '音频', '效果', '输出'];
@@ -21,6 +22,11 @@ const sidebarColors = ['hwb(45 0% 5%)', 'hwb(195 0% 10%)', 'hwb(285 10% 5%)', 'h
 const appStore = useAppStore();
 const deviderRef = ref<Element>(null);
 const animationName = ref('animationLeft');
+
+const globalParamsText = computed(() => {
+	const globalparamsArray = getFFmpegParaArray(appStore.globalParams);
+	return ['ffmpeg', ...globalparamsArray].join(' ');
+});
 
 const handleDragStart = (event: MouseEvent | TouchEvent) => {
 	event.preventDefault();
@@ -68,7 +74,7 @@ const getButtonColorStyle = (index: number) => ({ color: appStore.paraSelected =
 				</button>
 			</div>
 			<div class="globalparam" :style="{ opacity: appStore.showGlobalParams ? 1 : 0 }">
-				<textarea readonly aria-label="全局参数" value="ffmpeg -hide_banner -hwaccel auto -i [输入文件路径] -vcodec hevc -preset medium -crf 24 -acodec copy ./[输出文件名]_converted.mp4 -y"></textarea>
+				<textarea readonly aria-label="全局参数" :value="globalParamsText"></textarea>
 			</div>
 		</div>
 		<div class="lower">
@@ -198,7 +204,7 @@ const getButtonColorStyle = (index: number) => ({ color: appStore.paraSelected =
 							white-space: nowrap;
 							overflow: hidden;
 							transition: width 0.3s ease, padding 0.3s ease;
-							filter: drop-shadow(0 0 0px hwb(0 100% 0% / 1)) drop-shadow(0 1px 1px hwb(0 0% 100% / 0.1));
+							filter: drop-shadow(0 -0.5px 0px hwb(0 100% 0% / 1)) drop-shadow(0 1px 1px hwb(0 0% 100% / 0.1));
 						}
 					}
 				}
