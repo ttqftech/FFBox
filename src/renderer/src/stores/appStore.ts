@@ -3,7 +3,7 @@ import { defineStore } from 'pinia';
 import { OutputParams, WorkingStatus } from '@common/types';
 import { Server } from '@renderer/types';
 import { defaultParams } from "@common/defaultParams";
-import { ServiceBridge } from '@renderer/bridges/serviceBridge'
+import { ServiceBridge, ServiceBridgeStatus } from '@renderer/bridges/serviceBridge'
 import { getInitialUITask, randomString, replaceOutputParams } from '@common/utils';
 import { handleCmdUpdate, handleFFmpegVersion, handleProgressUpdate, handleTasklistUpdate, handleTaskNotification, handleTaskUpdate, handleWorkingStatusUpdate } from './serverEventsHandler';
 import nodeBridge from '@renderer/bridges/nodeBridge';
@@ -148,10 +148,50 @@ export const useAppStore = defineStore('app', {
 		// #endregion 通知处理
 		// #region 服务器处理
 		/**
-		 * 添加服务器
+		 * 添加服务器标签页
 		 */
-		addServer(ip: string, port: number) {
+		addServer() {
 			const 这 = useAppStore();
+			if (这.servers.length && 这.servers[这.servers.length - 1].entity.status === ServiceBridgeStatus.Idle) {
+				return;
+			}
+			const id = randomString(6);
+			这.servers.push({
+				data: {
+					id: id,
+					name: '未连接',
+					tasks: [],
+					ffmpegVersion: '',
+					workingStatus: WorkingStatus.stopped,
+					progress: 0,
+					overallProgressTimerID: NaN,
+				},
+				entity: new ServiceBridge(),
+			});
+			这.currentServerId = id;
+			return id;
+		},
+		/**
+		 * 关闭服务器标签页
+		 * TODO 暂未实现上传下载中断逻辑
+		 */
+		removeServer(serverId: string) {
+			const 这 = useAppStore();
+			const index = 这.servers.findIndex((server) => server.data.id === serverId);
+			if (index > -1) {
+				这.servers.splice(index, 1);
+			}
+			if (这.currentServerId === serverId) {
+				这.currentServerId = 这.servers[index - 1].data.id;
+			}
+		},
+		/**
+		 * 初始化服务器连接并挂载事件监听
+		 */
+		initializeServer(serverId: string, ip: string, port: number) {
+			const 这 = useAppStore();
+			const server = 这.servers.find((server) => server.data.id === serverId) as Server;
+			const entity = server.entity;
 			if (!ip) {
 				// mainVue.$popup({
 				// 	message: '请输入服务器 IP 或域名以添加服务器',
@@ -160,32 +200,11 @@ export const useAppStore = defineStore('app', {
 				return;
 			}
 			const _port = port ?? 33269;
-			const id = randomString(6);
-			这.servers.push({
-				data: {
-					id: id,
-					name: ip === 'localhost' ? '本地服务器' : ip,
-					tasks: [],
-					ffmpegVersion: '',
-					workingStatus: WorkingStatus.stopped,
-					progress: 0,
-					overallProgressTimerID: NaN,
-				},
-				entity: new ServiceBridge(ip, _port),
-			});
-			这.initializeServer(id);
-			return id;
-		},
-		/**
-		 * 初始化服务器连接并挂载事件监听
-		 */
-		initializeServer(serverId: string) {
-			const 这 = useAppStore();
-			const server = 这.servers.find((server) => server.data.id === serverId) as Server;
 			console.log('初始化服务器连接', server.data);
+			entity.connect(ip, _port);
 
-			const entity = server.entity;
 			entity.on('connected', () => {
+				server.data.name = ip === 'localhost' ? '本地服务器' : ip;
 				console.log(`成功连接到服务器 ${server.entity.ip}`);
 				// mainVue.$store.commit('pushMsg',{
 				// 	message: `成功连接到服务器 ${args.serverName}`,
@@ -233,6 +252,14 @@ export const useAppStore = defineStore('app', {
 			});
 		},
 		/**
+		 * 重新连接已掉线或未成功连接的服务器
+		 */
+		reConnectServer(serverId: string) {
+			const 这 = useAppStore();
+			const server = 这.servers.find((server) => server.data.id === serverId) as Server;
+			server.entity.connect();
+		},
+		/**
 		 * 切换当前服务器标签页
 		 */
 		switchServer(serverId: string) {
@@ -245,11 +272,11 @@ export const useAppStore = defineStore('app', {
 
 		initTemp() {
 			const 这 = useAppStore();
-			const localServerId = 这.addServer('localhost', 33269);
-			这.currentServerId = localServerId;
+			const localServerId = 这.addServer();
 			setTimeout(() => {
+				这.initializeServer(localServerId, 'localhost', 33269);
 				// 这.addTask('小光芒', 'B:/文档/人物/童可可/MV/童可可 - 小光芒.mp4')
-			}, 1000);
+			}, 800);
 		},
 	},
 });

@@ -9,7 +9,7 @@ onMounted(() => {
 	const appStore = useAppStore();
 	setTimeout(() => {
 		appStore.initTemp();
-	}, 1000);
+	}, 800);
 });
 </script>
 

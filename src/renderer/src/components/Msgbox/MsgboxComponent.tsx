@@ -1,5 +1,6 @@
 import { FunctionalComponent, computed, ref, Transition, h } from 'vue';
-import { MsgboxOptions, Button, ButtonRole } from './Msgbox';
+import { MsgboxOptions, ButtonRole } from './Msgbox';
+import Button, { ButtonProps } from '@renderer/components/Button/Button';
 import style from './MsgboxComponent.module.less';
 
 interface Props extends MsgboxOptions {
@@ -8,6 +9,7 @@ interface Props extends MsgboxOptions {
 
 const MsgboxComponent: FunctionalComponent<Props> = (props) => {
 	const show = ref(false);
+	const disable = ref(false);
 	setTimeout(() => {
 		show.value = true;
 	}, 0);
@@ -17,17 +19,15 @@ const MsgboxComponent: FunctionalComponent<Props> = (props) => {
 		backgroundMouseDown.value ? { transform: 'scale(0.97)', transition: 'all cubic-bezier(0.1, 2.5, 0.6, 1) 0.5s' } : {})
 	);
 
-	const getButtonClass = (role?: ButtonRole) => {
-		if (role === ButtonRole.Primary) {
-			return style['primary'];
-		} else if (role === ButtonRole.Danger) {
-			return style['danger'];
-		}
-	};
-	const handleButtonClick = (button: Button) => {
+	const handleButtonClick = (button: MsgboxOptions['buttons'][number]) => {
+		disable.value = true;
 		const ret = button.callback();
-		if (true) {
+		if (ret === undefined || ret === true) {
 			show.value = false;
+		} else if (ret instanceof Promise) {
+			ret.then(() => show.value = false);
+		} else {
+			disable.value = false;
 		}
 	};
 
@@ -74,9 +74,13 @@ const MsgboxComponent: FunctionalComponent<Props> = (props) => {
 						{props.buttons && (
 							<div class={style.buttons}>
 								{props.buttons.map((button) => (
-									<button class={getButtonClass(button.role)} onClick={() => handleButtonClick(button)}>
+									<Button
+										role={button.role}
+										disabled={disable.value}
+										onClick={() => handleButtonClick(button)}
+									>
 										{ button.text }
-									</button>
+									</Button>
 								))}
 							</div>
 						)}

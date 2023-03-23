@@ -10,7 +10,7 @@ export interface MsgboxOptions {
 };
 export interface Button {
 	text: string;
-	callback?: Function;
+	callback?: () => boolean | Promise<void> | void;
 	role?: ButtonRole;
 }[];
 export enum ButtonRole {
@@ -24,9 +24,6 @@ const defaultButton: Button = {
 	role: ButtonRole.Normal,
 	callback: () => console.log('cancelled'),
 };
-
-let instances: any = [];
-let seed = 0;
 
 const Msgbox = function (options?: MsgboxOptions) {
 	const handleClose = () => {

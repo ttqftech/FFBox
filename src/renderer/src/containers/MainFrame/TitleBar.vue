@@ -23,21 +23,41 @@ const handleCloseClicked = () => {
 	window.jsb.ipcRenderer.send('close');
 };
 
+// 点击标签页
+const handleTabClicked = (serverId: string) => {
+	appStore.currentServerId = serverId;
+};
+
+// 点击关闭标签页
+const handleTabCloseClicked = (serverId: string, event: MouseEvent) => {
+	appStore.removeServer(serverId);
+	event.stopPropagation();
+}
+
 </script>
 
 <template>
 	<div class="titlebar">
 		<div class="tabArea">
-			<div v-for="server in appStore.servers" class="tab">
-				<span>{{ server.data.name }}</span>
-				<div class="progress" style="width: 50%"></div>
-				<div class="close">
-					<img src="../../assets/titleBar/×.svg" alt="" srcset="">
+			<TransitionGroup name="tabanimate">
+				<div
+					v-for="server in appStore.servers"
+					:key="server.data.id"
+					class="tabWrapper"
+					@click="handleTabClicked(server.data.id)"
+				>
+					<div class="tab" :class="appStore.currentServerId === server.data.id ? 'selected' : 'unselected'">
+						<span>{{ server.data.name }}</span>
+						<div class="progress" style="width: 50%"></div>
+						<div class="close" v-if="server.entity.ip !== 'localhost'" @click="handleTabCloseClicked(server.data.id, $event)">
+							<img src="../../assets/titleBar/×.svg" alt="" srcset="">
+						</div>
+					</div>
 				</div>
-			</div>
+			</TransitionGroup>
 		</div>
 		<div class="buttonArea">
-			<button class="normalButton" aria-label="添加服务器">
+			<button class="normalButton" aria-label="添加服务器" @click="appStore.addServer()">
 				<IconAdd />
 			</button>
 			<button class="normalButton" aria-label="最小化窗口" @click="handleMinimizeClicked">
@@ -54,7 +74,7 @@ const handleCloseClicked = () => {
 
 </template>
 
-<style lang="less">
+<style scoped lang="less">
 	.titlebar {
 		position: relative;
 		height: 36px;
@@ -79,45 +99,86 @@ const handleCloseClicked = () => {
 			&::-webkit-scrollbar {
 				height: 0;
 			}
-			.tab {
+			.tabWrapper {
 				position: relative;
 				flex: 0 1 200px;
 				min-width: 140px;
 				margin-right: 8px;
-				border-radius: 6px 6px 0 0;
-				background-color: hwb(0 97% 3%);
-				box-shadow: 0 0 6px hwb(0 0% 100% / 0.2),
-							0 -24px 12px -12px hwb(0 100% 0%) inset,
-							0 4px 2px -2px hwb(0 100% 0% / 0.5) inset;
-				span {
-					font-size: 14px;
-					line-height: 28px;
+				.tab {
+					position: relative;
+					border-radius: 6px 6px 0 0;
+					transition: transform 0.4s cubic-bezier(0.1, 1.5, 0.3, 1);
+					span {
+						font-size: 14px;
+						line-height: 28px;
+					}
+					.progress {
+						position: absolute;
+						left: 0;
+						height: 100%;
+					}
+					.close {
+						position: absolute;
+						right: 4px;
+						top: 4px;
+						width: 20px;
+						height: 20px;
+						border-radius: 2px;
+						&:hover {
+							box-shadow: 0 1px 4px hwb(0 0% 100% / 0.2),
+										0 4px 2px -2px hwb(0 100% 0% / 0.5) inset;
+						}
+						&:active {
+							box-shadow: 0 0px 1px hwb(0 0% 100% / 0.2),
+										0 20px 15px -10px hwb(0 0% 100% / 0.15) inset;
+							transform: translateY(0.25px);
+						}
+						img {
+							width: 100%;
+						}
+					}
 				}
-				.progress {
-					position: absolute;
-					left: 0;
-					height: 100%;
-				}
-				.close {
-					position: absolute;
-					right: 4px;
-					top: 4px;
-					width: 20px;
-					height: 20px;
-					border-radius: 2px;
+				.selected {
+					background-color: hwb(0 97% 3%);
+					box-shadow: 0 0 6px hwb(0 0% 100% / 0.2),	// 外阴影
+								0 -24px 12px -12px hwb(0 100% 0%) inset,	// 内高光
+								0 4px 2px -2px hwb(0 100% 0% / 0.5) inset;	// 上高光
 					&:hover {
-						box-shadow: 0 1px 4px hwb(0 0% 100% / 0.2),
-									0 4px 2px -2px hwb(0 100% 0% / 0.5) inset;
-					}
-					&:active {
-						box-shadow: 0 0px 1px hwb(0 0% 100% / 0.2),
-									0 20px 15px -10px hwb(0 0% 100% / 0.15) inset;
-						transform: translateY(0.25px);
-					}
-					img {
-						width: 100%;
+						box-shadow: 0 0 6px hwb(0 0% 100% / 0.3),	// 外阴影
+								0 -32px 16px -12px hwb(0 100% 0%) inset,	// 内高光
+								0 4px 2px -2px hwb(0 100% 0% / 0.5) inset;	// 上高光
 					}
 				}
+				.unselected {
+					background-color: transparent;
+					transform: translateY(1px);
+					opacity: 0.8;
+					box-shadow: 0 0 6px hwb(0 0% 100% / 0.05),	// 外阴影
+								0 -12px 10px -10px hwb(0 100% 0% / 0.1) inset,	// 内阴影
+								0 4px 2px -2px hwb(0 100% 0% / 0.25) inset;	// 上高光
+					&:hover {
+						background-color: hwb(0 97% 3% / 0.5);
+						opacity: 1;
+					}
+				}
+			}
+			.tabanimate-enter-from, .tabanimate-leave-to {
+				.tab {
+					transform: translateX(-100%);
+				}
+			}
+			.tabanimate-enter-to, .tabanimate-leave-from {
+				.tab {
+					transform: translateX(0);
+				}
+			}
+			.tabanimate-enter-active {	// 这个类似乎不生效
+				overflow: hidden;
+				// transition: transform linear 0.4s; // 这个 transition 会被上面的定义覆盖，无需启用
+			}
+			.tabanimate-leave-active {
+				overflow: hidden;
+				transition: transform linear 0.2s; // 这个 transition 会被上面的定义覆盖，但需要定义时长让 Vue 控制消失
 			}
 		}
 		.buttonArea {

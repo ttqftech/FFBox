@@ -7,32 +7,43 @@ export interface ServeiceBridgeEvent {
 	disconnected: () => void;
 	error: (event: Event) => void;
 	message: (event: MessageEvent<any>) => void;
-}
+};
+
+export enum ServiceBridgeStatus {
+	Idle = 'Idle',
+	Connecting = 'Connecting',
+	Connected = 'Connected',
+	Disconnected = 'Disconnected',
+};
 
 export class ServiceBridge extends (EventEmitter as new () => TypedEventEmitter<FFBoxServiceEvent & ServeiceBridgeEvent>) implements FFBoxServiceInterface {
-	private ws: WebSocket | null;
+	private ws: WebSocket | null = null;
 	public ip: string;
 	public port: number;
-	private wsReady: boolean = false;
+	public status = ServiceBridgeStatus.Idle;
 
-	constructor(ip: string, port: number) {
+	constructor(ip?: string, port?: number) {
 		super();
-		this.ip = ip;
-		this.port = port;
-		this.ws = null;
 		setTimeout(() => {
-			this.connect();
+			if (ip && port) {
+				this.connect(ip, port);
+			}
 		}, 0);
 	}
 
-	public connect() {
+	public connect(ip?: string, port?: number) {
+		if (ip && port) {
+			this.ip = ip;
+			this.port = port;
+		}
 		console.log(`serviceBridge: 正在连接服务器 ws://${this.ip}:${this.port}/`);
+		this.status = ServiceBridgeStatus.Connecting;
 		let ws = new WebSocket(`ws://${this.ip}:${this.port}/`);
 		this.ws = ws;
 		let 这 = this;
 		ws.onopen = function (event) {
 			console.log(`serviceBridge: ws://${这.ip}:${这.port}/ 服务器连接成功`, event);
-			这.wsReady = true;
+			这.status = ServiceBridgeStatus.Connected;
 			这.emit('connected');
 			这.getFFmpegVersion();
 
@@ -41,12 +52,12 @@ export class ServiceBridge extends (EventEmitter as new () => TypedEventEmitter<
 			}, 4000);
 		}
 		ws.onclose = function (event) {
-			这.wsReady = false;
+			这.status = ServiceBridgeStatus.Disconnected;
 			这.emit('disconnected');
 		}
 		ws.onerror = function (event) {
 			console.log(`serviceBridge: ws://${这.ip}:${这.port}/ 服务器连接失败`, event);
-			这.wsReady = false;
+			这.status = ServiceBridgeStatus.Idle;
 			这.emit('error', event);
 		}
 		ws.onmessage = function (event) {
@@ -58,9 +69,9 @@ export class ServiceBridge extends (EventEmitter as new () => TypedEventEmitter<
 
 	public disconnect() {
 		console.log(`serviceBridge: 正在断开服务器 ws://${this.ip}:${this.port}/`);
-		this.wsReady = false;
 		this.ws?.close();
 		this.ws = null;
+		this.status = ServiceBridgeStatus.Idle;
 	}
 
 	/**
@@ -75,7 +86,7 @@ export class ServiceBridge extends (EventEmitter as new () => TypedEventEmitter<
 	 * UI 调用 service 网络出口
 	 */
 	private sendWs(data: FFBoxServiceFunctionApi) {
-		this.wsReady && this.ws?.send(JSON.stringify(data));
+		this.status === ServiceBridgeStatus.Connected && this.ws?.send(JSON.stringify(data));
 	}
 
 	private testSendBigPackage() {

@@ -91,7 +91,7 @@ onMounted(() => {
 	.inputbox {
 		position: relative;
 		height: 56px;
-		margin: 4px 24px;
+		margin: 4px 28px 4px 20px;
 	}
 		.inputbox-title {
 			position: absolute;
