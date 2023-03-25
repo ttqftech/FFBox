@@ -1,12 +1,45 @@
 <script setup lang="ts">
+import { computed, StyleValue, watch } from 'vue';
 import { useAppStore } from '@renderer/stores/appStore';
+import { Server as ServerData, WorkingStatus } from '@common/types';
 import IconX from '@renderer/assets/titleBar/×.svg?component';
 import IconAdd from '@renderer/assets/titleBar/add.svg?component';
 import IconMinimize from '@renderer/assets/titleBar/minimize.svg?component';
 import IconMaximize from '@renderer/assets/titleBar/maximize.svg?component';
 import IconClose from '@renderer/assets/titleBar/close.svg?component';
+import nodeBridge from '@renderer/bridges/nodeBridge';
 
 const appStore = useAppStore();
+
+const serverStyle = computed(() => {
+	const map: {
+		[key: string]: {
+			colorStyle: any;
+			text: string;
+		}
+	} = {};
+	for (const server of appStore.servers) {
+		const obj = {
+			colorStyle: { width: server.data.workingStatus === WorkingStatus.stopped ? '0%' : `${server.data.progress * 100}%` },
+			text: server.data.name + (server.data.workingStatus === WorkingStatus.stopped ? '' : ` (${(server.data.progress * 100).toFixed(0)}%)`)
+		};
+		map[server.data.id] = obj;
+	}
+	return map;
+});
+
+watch(
+	[() => appStore.currentServer?.data?.progress, () => appStore.currentServer?.data?.workingStatus],
+	() => {
+		const mode = ['indeterminate', 'normal', 'paused', 'none', 'error'][
+			[NaN, WorkingStatus.running, WorkingStatus.paused, WorkingStatus.stopped].findIndex((value) => value === appStore.currentServer?.data?.workingStatus)
+		] as any;
+		nodeBridge.setProgressBar(
+			appStore.currentServer?.data?.workingStatus !== WorkingStatus.stopped ? appStore.currentServer.data.progress * 0.99 + 0.01 : 0,
+			{ mode },
+		);
+	}
+);
 
 // 最小化按钮点击响应
 const handleMinimizeClicked = () => {
@@ -47,8 +80,9 @@ const handleTabCloseClicked = (serverId: string, event: MouseEvent) => {
 					@click="handleTabClicked(server.data.id)"
 				>
 					<div class="tab" :class="appStore.currentServerId === server.data.id ? 'selected' : 'unselected'">
-						<span>{{ server.data.name }}</span>
-						<div class="progress" style="width: 50%"></div>
+						<div class="progress progress-green" :style="{...serverStyle[server.data.id].colorStyle, opacity: server.data.workingStatus === WorkingStatus.running ? 1 : 0}" />
+						<div class="progress progress-yellow" :style="{...serverStyle[server.data.id].colorStyle, opacity: server.data.workingStatus === WorkingStatus.paused ? 1 : 0}" />
+						<span>{{ serverStyle[server.data.id].text }}</span>
 						<div class="close" v-if="server.entity.ip !== 'localhost'" @click="handleTabCloseClicked(server.data.id, $event)">
 							<img src="../../assets/titleBar/×.svg" alt="" srcset="">
 						</div>
@@ -106,17 +140,36 @@ const handleTabCloseClicked = (serverId: string, event: MouseEvent) => {
 				margin-right: 8px;
 				.tab {
 					position: relative;
+					height: 28px;
 					border-radius: 6px 6px 0 0;
+					overflow: hidden;
 					transition: transform 0.4s cubic-bezier(0.1, 1.5, 0.3, 1);
 					span {
+						position: absolute;
+						left: 0;
+						top: 0;
+						display: inline-block;
+						width: 100%;
+						height: 100%;
 						font-size: 14px;
 						line-height: 28px;
 					}
 					.progress {
 						position: absolute;
 						left: 0;
+						top: 0;
 						height: 100%;
+						transition: width 0.3s ease-out, opacity 0.2s ease-out;
 					}
+					.progress-green {
+						background: linear-gradient(180deg, hwb(120 80% 0% / 0.9), hwb(120 60% 0% / 0.9));
+						box-shadow: 0 6px 12px hwb(120 30% 30% / 0.33);
+					}
+					.progress-yellow {
+						background: linear-gradient(180deg, hwb(50 80% 0% / 0.9), hwb(50 60% 0% / 0.9));
+						box-shadow: 0 6px 12px hwb(50 30% 30% / 0.33);
+					}
+
 					.close {
 						position: absolute;
 						right: 4px;

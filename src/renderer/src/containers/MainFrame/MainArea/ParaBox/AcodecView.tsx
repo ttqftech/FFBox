@@ -21,6 +21,45 @@ const AcodecView: FunctionalComponent<Props> = (props) => {
 			return []
 		}
 	});
+	const rateControlsList = computed(() => {
+		const sName_aencoder = appStore.globalParams.audio.aencoder;
+		const aencoder = aencodersList.value.find((encoder) => encoder.sName == sName_aencoder);
+		return aencoder?.ratecontrol || [];
+	});
+	// 根据当前选择的码率控制器显示具体使用何种 slider
+	const ratecontrolSlider = computed(() => {
+		const rList = rateControlsList.value;
+		if (!rList.length) {
+			return null;
+		}
+		const sName_ratecontrol = appStore.globalParams.audio.ratecontrol
+		let index = rList.findIndex((value) => value.sName === sName_ratecontrol);
+		// 切换编码器后没有原来的码率控制模式了
+		if (index == -1) {
+			index = 0
+			appStore.globalParams.video.ratecontrol = rList[0].sName;
+			appStore.applyParameters();
+		}
+		const slider = rList[index];
+		let display;
+		switch (slider.sName) {
+			case 'CBR/ABR':
+				display = '码率'
+				break;
+			case 'Q':
+				display = '质量参数'
+				break;
+		}
+		return {
+			display, 
+			parameter: 'ratevalue',
+			step: slider.step,
+			tags: slider.tags,
+			valueToText: slider.valueToText,
+			valueProcess: slider.valueProcess,
+			valueToParam: slider.valueToParam
+		};
+	});
 	const parametersList = computed(() => {
 		const sName_aencoder = appStore.globalParams.audio.aencoder;
 		const aencoder = aencodersList.value.find((value) => value.sName == sName_aencoder);
@@ -69,6 +108,18 @@ const AcodecView: FunctionalComponent<Props> = (props) => {
 					{appStore.globalParams.audio.acodec !== '自动' && (
 						<Combobox title="编码器" text={appStore.globalParams.audio.aencoder} list={aencodersList.value} onChange={(value: string) => handleChange('combo', 'aencoder', value)} />
 					)}
+					<Combobox title="码率控制" text={appStore.globalParams.audio.ratecontrol} list={rateControlsList.value} onChange={(value: string) => handleChange('combo', 'ratecontrol', value)} />
+					{ratecontrolSlider.value && (
+						<Slider
+							title={ratecontrolSlider.value.display}
+							value={appStore.globalParams.audio.ratevalue}
+							tags={ratecontrolSlider.value.tags}
+							step={ratecontrolSlider.value.step}
+							valueToText={ratecontrolSlider.value.valueToText}
+							valueProcess={ratecontrolSlider.value.valueProcess}
+							onChange={(value: number) => handleChange('slider', 'ratevalue', value)}
+						/>
+					)}
 					{parametersList.value.map((parameter) => {
 						if (parameter.mode === 'slider') {
 							return (
@@ -88,7 +139,7 @@ const AcodecView: FunctionalComponent<Props> = (props) => {
 									title={parameter.display}
 									text={appStore.globalParams.audio.detail[parameter.parameter]}
 									list={parameter.items}
-									onChange={(value: number) => handleDetailChange('combo', parameter.parameter, value)}
+									onChange={(value: string) => handleDetailChange('combo', parameter.parameter, value)}
 								/>
 							);
 						}

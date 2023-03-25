@@ -69,7 +69,7 @@ const VcodecView: FunctionalComponent<Props> = (props) => {
 	const parametersList = computed(() => {
 		const sName_vencoder = appStore.globalParams.video.vencoder;
 		const vencoder = vencodersList.value.find((value) => value.sName == sName_vencoder);
-		return vencoder.parameters || [];
+		return vencoder?.parameters || [];
 	});
 
 	const handleChange = (mode: any, sName: string, value: any) => {
@@ -147,7 +147,7 @@ const VcodecView: FunctionalComponent<Props> = (props) => {
 									title={parameter.display}
 									text={appStore.globalParams.video.detail[parameter.parameter]}
 									list={parameter.items}
-									onChange={(value: number) => handleDetailChange('combo', parameter.parameter, value)}
+									onChange={(value: string) => handleDetailChange('combo', parameter.parameter, value)}
 								/>
 							);
 						}

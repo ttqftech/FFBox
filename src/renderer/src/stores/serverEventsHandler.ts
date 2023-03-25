@@ -102,16 +102,15 @@ export function handleCmdUpdate(server: Server, id: number, content: string) {
 /**
  * 整个更新 progressLog
  */
-export function handleProgressUpdate(server: Server, id: number, progressLog: Task['progressLog']) {
+export function handleProgressUpdate(server: Server, id: number, progressLog: Task['progressLog'], functionLevel: number) {
     server.data.tasks[id].progressLog = progressLog;
-    if (this.$store.state.functionLevel < 50) {
+    if (functionLevel < 50) {
         if (progressLog.time.slice(-1)[0][1] > 671 ||
             progressLog.elapsed + new Date().getTime() / 1000 - progressLog.lastStarted > 671) {
             server.entity.trailLimit_stopTranscoding(id);
             return;
         }
     }
-
 };
 /**
  * 增量更新 notifications

@@ -26,10 +26,6 @@ const isConnecting = computed(() => appStore.currentServer?.entity.status === Se
 const isDisconnected = computed(() => appStore.currentServer?.entity.status === ServiceBridgeStatus.Disconnected);
 const disconnectBoxVisible = computed(() => !loginBoxVisible.value && (isConnecting.value || isDisconnected.value));
 
-watch(() => appStore.currentServerId, (value) => console.log(appStore.currentServer.entity.status, loginBoxVisible.value));
-
-const result = computed(() => console.log(loginBoxVisible.value, isConnecting.value, isDisconnected.value, disconnectBoxVisible.value) );
-
 const handleConnectClicked = () => {
 	if (!ip.value.length || isNaN(Number(port.value))) {
 		return;
@@ -39,7 +35,7 @@ const handleConnectClicked = () => {
 </script>
 
 <template>
-	<div class="mainarea" :ref="(el) => appStore.componentRefs['MainArea'] = (el as Element)" :ppp="result">
+	<div class="mainarea" :ref="(el) => appStore.componentRefs['MainArea'] = (el as Element)">
 		<div class="upperArea" :style="{ height: `${appStore.draggerPos * 100}%`, position: 'relative' }">
 			<!-- 登录窗口 -->
 			<div class="loginArea" v-if="loginBoxVisible">
@@ -117,8 +113,7 @@ const handleConnectClicked = () => {
 		flex: 1 1 auto;
 		overflow-y: auto;
 		.upperArea {
-			&>div {
-				height: 100%;
+			.loginArea, .disconnectArea {
 				overflow: hidden;
 				@keyframes bganimation {
 					from {
@@ -212,7 +207,6 @@ const handleConnectClicked = () => {
 						align-items: center;
 						width: 400px;
 						border-radius: 8px;
-						padding-right: 20px;
 						background-color: hwb(0 97% 3% / 0.8);
 						box-shadow: 0 3px 2px -2px hwb(0 100% 0%) inset,	// 上亮光
 								0 16px 32px 0px hwb(0 0% 100% / 0.02),

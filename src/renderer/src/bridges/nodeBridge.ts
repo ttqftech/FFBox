@@ -137,10 +137,14 @@ export default {
 	},
 
 	flashFrame(value = true): void {
-		window.jsb.ipcRenderer?.send('flashFrame', value);
+		window.jsb?.ipcRenderer?.send('flashFrame', value);
+	},
+
+	setProgressBar(progress: number, options?: Electron.ProgressBarOptions | undefined): void {
+		window.jsb?.ipcRenderer?.send('setProgressBar', progress, options);
 	},
 
 	openDevTools(): void {
-		window.jsb.ipcRenderer?.send('openDevTools');
-	}
+		window.jsb?.ipcRenderer?.send('openDevTools');
+	},
 }

@@ -1,6 +1,6 @@
 import { VNodeRef } from 'vue';
 import { defineStore } from 'pinia';
-import { OutputParams, WorkingStatus } from '@common/types';
+import { OutputParams, TaskStatus, WorkingStatus } from '@common/types';
 import { Server } from '@renderer/types';
 import { defaultParams } from "@common/defaultParams";
 import { ServiceBridge, ServiceBridgeStatus } from '@renderer/bridges/serviceBridge'
@@ -17,6 +17,12 @@ interface StoreState {
 		showDashboard: boolean,
 		showCmd: boolean,
 		cmdDisplay: 'input' | 'output',
+		paramsVisibility: {
+			format: 'all' | 'input' | 'none',
+			smpte: 'all' | 'input' | 'none',
+			video: 'all' | 'input' | 'none',
+			audio: 'all' | 'input' | 'none',
+		},
 	}
 	showGlobalParams: boolean,
 	componentRefs: { [key: string]: VNodeRef | Element },
@@ -25,6 +31,7 @@ interface StoreState {
 	currentServerId: string;
 	selectedTask: Set<number>,
 	globalParams: OutputParams;
+	functionLevel: number;
 }
 
 // useStore 可以是 useUser、useCart 之类的任何东西
@@ -43,6 +50,12 @@ export const useAppStore = defineStore('app', {
 				showDashboard: true,
 				showCmd: true,
 				cmdDisplay: 'input',
+				paramsVisibility: {
+					format: 'none',
+					smpte: 'none',
+					video: 'none',
+					audio: 'none',
+				},
 			},
 			showGlobalParams: true,
 			componentRefs: {},
@@ -51,6 +64,7 @@ export const useAppStore = defineStore('app', {
 			currentServerId: undefined,
 			selectedTask: new Set(),
 			globalParams: JSON.parse(JSON.stringify(defaultParams)),
+			functionLevel: 50,
 		};
 	},
 	getters: {
@@ -100,6 +114,35 @@ export const useAppStore = defineStore('app', {
 				}
 			}
 		},
+		startNpause () {
+			const 这 = useAppStore();
+			if (这.currentServer.entity.status !== ServiceBridgeStatus.Connected) {
+				return;
+			}
+			const data = 这.currentServer.data;
+			const entity = 这.currentServer.entity;
+			if (data.workingStatus === WorkingStatus.stopped || data.workingStatus === WorkingStatus.paused) {		// 开始任务
+				entity.queueAssign();
+			} else {
+				entity.queuePause();
+			}
+		},
+		pauseNremove (taskId: number) {
+			const 这 = useAppStore();
+			if (这.currentServer.entity.status !== ServiceBridgeStatus.Connected) {
+				return;
+			}
+			const data = 这.currentServer.data;
+			const entity = 这.currentServer.entity;
+			let task = data.tasks[taskId];
+			if (task.status === TaskStatus.TASK_RUNNING) {
+				entity.taskPause(taskId);
+			} else if (task.status === TaskStatus.TASK_PAUSED || task.status === TaskStatus.TASK_STOPPING || task.status === TaskStatus.TASK_FINISHED || task.status === TaskStatus.TASK_ERROR) {
+				entity.taskReset(taskId);
+			} else if (task.status === TaskStatus.TASK_STOPPED || task.status === TaskStatus.TASK_INITIALIZING) {
+				entity.taskDelete(taskId);
+			}
+		},
 		// #endregion 任务处理
 		// #region 参数处理
 		/**
@@ -111,8 +154,8 @@ export const useAppStore = defineStore('app', {
 			// 更改到一些不匹配的值后会导致 getFFmpegParaArray 出错，但是修正代码就在后面，因此仅需忽略它，让它继续运行下去，不要急着更新
 			// let currentServer = state.servers[state.currentServerName];
 			// let currentBridge = state.serviceBridges[state.currentServerName];
-			const entity = 这.currentServer.entity;
-			const data = 这.currentServer.data;
+			const entity = 这.currentServer?.entity;
+			const data = 这.currentServer?.data;
 			if (data) {
 				// 收集需要批量更新的输出参数，交给 service
 				let needToUpdateIds: Array<number> = [];
@@ -142,6 +185,57 @@ export const useAppStore = defineStore('app', {
 					console.log('参数已保存');
 				}
 			}, 700);
+		
+		},
+		/**
+		 * 检查有多少参数是非“不重新编码”的，以此更改界面显示形式
+		 * 在服务器初次加载和修改参数时调用
+		 */
+		recalcChangedParams() {
+			const 这 = useAppStore();
+			const paramsVisibility = {
+				format: 0,
+				smpte: 0,
+				video: 0,
+				audio: 0,
+			};
+			for (const [index, task] of Object.entries(这.currentServer?.data.tasks) || []) {
+				if (index === '-1') {
+					continue;
+				}
+				const after = task.after;
+				if (after.output.format === '无' || after.output.format === task.before.format) {
+					paramsVisibility.format = Math.max(paramsVisibility.format, 1);
+				} else {
+					paramsVisibility.format = Math.max(paramsVisibility.format, 2);
+				}
+				if (after.video.vcodec !== '禁用视频') {
+					if (after.video.vcodec !== '不重新编码') {
+						paramsVisibility.video = Math.max(paramsVisibility.video, 2);
+						if (after.video.resolution !== '不改变' || task.after.video.framerate !== '不改变') {
+							paramsVisibility.smpte = Math.max(paramsVisibility.smpte, 2);
+						} else {
+							paramsVisibility.smpte = Math.max(paramsVisibility.smpte, 1);
+						}
+					} else {
+						paramsVisibility.video = Math.max(paramsVisibility.video, 1);
+					}
+				}
+				if (after.audio.acodec !== '禁用音频') {
+					if (after.audio.acodec !== '不重新编码') {
+						paramsVisibility.audio = Math.max(paramsVisibility.audio, 2);
+					} else {
+						paramsVisibility.audio = Math.max(paramsVisibility.audio, 1);
+					}
+				}
+			}
+			这.taskViewSettings.paramsVisibility = {
+				format: (['none', 'input', 'all'] as any)[paramsVisibility.format],
+				smpte: (['none', 'input', 'all'] as any)[paramsVisibility.smpte],
+				video: (['none', 'input', 'all'] as any)[paramsVisibility.video],
+				audio: (['none', 'input', 'all'] as any)[paramsVisibility.audio],
+			};
+			// console.log('recalcChangedParams', 这.taskViewSettings.paramsVisibility);
 		},
 		// #endregion 参数处理
 		// #region 通知处理
@@ -212,7 +306,6 @@ export const useAppStore = defineStore('app', {
 				// });
 				这.updateGlobalTask(server);
 				entity.getTaskList();
-				这.switchServer(server.data.id);
 			});
 			entity.on('disconnected', () => {
 				console.log(`已断开服务器 ${server.entity.ip} 的连接`);
@@ -237,15 +330,17 @@ export const useAppStore = defineStore('app', {
 			});
 			entity.on('tasklistUpdate', (data) => {
 				handleTasklistUpdate(server, data.content);
+				这.recalcChangedParams();
 			});
 			entity.on('taskUpdate', (data) => {
 				handleTaskUpdate(server, data.id, data.content);
+				这.recalcChangedParams();
 			});
 			entity.on('cmdUpdate', (data) => {
 				handleCmdUpdate(server, data.id, data.content);
 			});
 			entity.on('progressUpdate', (data) => {
-				handleProgressUpdate(server, data.id, data.content);
+				handleProgressUpdate(server, data.id, data.content, 这.functionLevel);
 			});
 			entity.on('taskNotification', (data) => {
 				handleTaskNotification(server, data.id, data.content, data.level);
@@ -258,13 +353,6 @@ export const useAppStore = defineStore('app', {
 			const 这 = useAppStore();
 			const server = 这.servers.find((server) => server.data.id === serverId) as Server;
 			server.entity.connect();
-		},
-		/**
-		 * 切换当前服务器标签页
-		 */
-		switchServer(serverId: string) {
-			const 这 = useAppStore();
-			这.currentServerId = serverId;
 		},
 		// #endregion 服务器处理
 		// #region 其他

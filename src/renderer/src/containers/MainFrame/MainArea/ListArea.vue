@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import nodeBridge from '@renderer/bridges/nodeBridge';
 import { useAppStore } from '@renderer/stores/appStore';
 import { TaskItem } from './ListArea/TaskItem';
@@ -31,6 +31,7 @@ const tasks = computed(() => {
 	// this.lastTaskListLength = ret.length;
 	return ret;
 });
+
 const hasFFmpeg = computed(() => appStore.currentServer?.data.ffmpegVersion !== '-');
 
 const debugLauncher = (() => {
@@ -93,7 +94,6 @@ const handleTaskClicked = (event: MouseEvent, id: number, index: number) => {
 	selectedTask_last.value = index;
 	// this.selectedTask = new Set([...this.selectedTask])	// 更新自身的引用值以触发 computed: taskSelected
 	appStore.selectedTask = new Set([...currentSelection]);
-	console.log('选中', appStore.selectedTask);
 	appStore.applySelectedTask();
 };
 const handleDownloadFFmpegClicked = () => {
@@ -109,7 +109,8 @@ const handleDownloadFFmpegClicked = () => {
 				:key="task.id"
 				:task="task"
 				:selected="appStore.selectedTask.has(task.id)"
-				@click="handleTaskClicked($event, task.id, index)" />
+				@click="handleTaskClicked($event, task.id, index)"
+				@pause-or-remove="appStore.pauseNremove(task.id)"/>
 		</div>
 		<div v-if="hasFFmpeg" class="dropfilesdiv" @click="appStore.selectedTask = new Set()">
 			<div class="dropfilesimage" @click="debugLauncher" :style="{ 'backgroundImage': `url(src/assets/mainArea/drop_files.png)` }" />
@@ -139,6 +140,7 @@ const handleDownloadFFmpegClicked = () => {
 		display: flex;
 		flex-direction: column;
 		box-sizing: border-box;
+		height: 100%;
 		padding: 8px 0;
 		overflow-y: auto;
 		.tasklist {
@@ -190,9 +192,7 @@ const handleDownloadFFmpegClicked = () => {
 					height: auto;
 					padding-right: 24px;
 					transition: all 0.3s ease-in-out;
-				}
-				@media only screen and (max-width: 680px) {
-					svg {
+					@media only screen and (max-width: 680px) {
 						width: 0;
 						padding-right: 0;
 					}

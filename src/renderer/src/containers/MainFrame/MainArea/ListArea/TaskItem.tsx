@@ -1,4 +1,4 @@
-import { computed, defineComponent, FunctionalComponent, ref } from 'vue'; // defineComponent 的主要功能是提供类型检查
+import { computed, defineComponent, FunctionalComponent, ref, Transition, VNodeRef, watch } from 'vue'; // defineComponent 的主要功能是提供类型检查
 import { TaskStatus, UITask } from '@common/types';
 import { generator as vGenerator } from '@common/vcodecs';
 import { generator as aGenerator } from '@common/acodecs';
@@ -109,6 +109,20 @@ export const TaskItem: FunctionalComponent<Props> = (props) => {
 
 	// #region 其他样式
 
+	const showDashboard = computed(() => [TaskStatus.TASK_RUNNING, TaskStatus.TASK_PAUSED, TaskStatus.TASK_STOPPING].includes(task.status));
+
+	const taskNameWidth = computed(() => {
+		let shrinkSpace = 80;
+		shrinkSpace += [0, 13 + 96, 13 + 96 + 14 + 120 ][['none', 'input', 'all'].indexOf(settings.paramsVisibility.audio)];
+		shrinkSpace += [0, 13 + 96, 13 + 96 + 14 + 120 ][['none', 'input', 'all'].indexOf(settings.paramsVisibility.video)];
+		shrinkSpace += [0, 13 + 88, 13 + 88 + 14 + 88 ][['none', 'input', 'all'].indexOf(settings.paramsVisibility.smpte)];
+		shrinkSpace += [0, 13 + 36, 13 + 36 + 14 + 36 ][['none', 'input', 'all'].indexOf(settings.paramsVisibility.format)];
+		if (showDashboard.value) {
+			shrinkSpace = Math.max(shrinkSpace, 656);
+		}
+		return `max(calc(100% - ${shrinkSpace}px), 64px)`;
+	});
+
 	const deleteButtonBackgroundPositionX = computed(() => {
 		switch (task.status) {
 			case TaskStatus.TASK_STOPPED:
@@ -125,7 +139,7 @@ export const TaskItem: FunctionalComponent<Props> = (props) => {
 	const taskHeight = computed(() => {
 		let height = 4;
 		height += settings.showParams ? 24 : 0;
-		height += settings.showDashboard ? 72 : 0;
+		height += showDashboard.value ? 72 : 0;
 		height += settings.showCmd ? 64 : 0;
 		height = Math.max(24, height);
 		return height;
@@ -142,77 +156,143 @@ export const TaskItem: FunctionalComponent<Props> = (props) => {
 		}
 	});
 
+	const taskBackgroundProgressStyle = computed(() => ({
+		width: (task.transferStatus === 'normal' ? task.dashboard_smooth.progress : task.dashboard_smooth.transferred / task.transferProgressLog.total) * 100 + '%' }
+	));
+
 	// #endregion
+
+	const cmdRef = ref<VNodeRef>(null);
+	const cmdText = computed(() => settings.cmdDisplay === 'input' ? ['ffmpeg', ...task.paraArray].join(' ') : task.cmdData);
+	// watch(() => task.cmdData, () => {
+	// 	console.log('变化');
+	// 	const elem = cmdRef.value as Element;
+	// 	if (elem) {
+	// 		const scrollBottom = elem?.scrollTop + elem.getBoundingClientRect().height;
+	// 		if (elem.scrollHeight - scrollBottom < 1) {
+	// 			console.log('到底');
+	// 			setTimeout(() => {
+	// 				elem.scrollTo(0, Number.MAX_SAFE_INTEGER);
+	// 			}, 0);
+	// 		}
+	// 	}
+	// });
+	// console.log('props', props);
 
 	return (
 		<div class={style.taskWrapper1}>
 			<div class={style.taskWrapper2}>
 				<div class={style.task} style={{ height: `${taskHeight.value}px` }}>
 					<div class={style.backgroundWhite} style={taskBackgroundStyle.value} />
+					<div class={`${style.backgroundProgress} ${style.progressBlue}`} style={{ ...taskBackgroundProgressStyle.value, opacity: task.status === TaskStatus.TASK_INITIALIZING ? 1: 0}} />
+					<div class={`${style.backgroundProgress} ${style.progressGreen}`} style={{ ...taskBackgroundProgressStyle.value, opacity: [TaskStatus.TASK_RUNNING, TaskStatus.TASK_FINISHING].includes(task.status) ? 1: 0}} />
+					<div class={`${style.backgroundProgress} ${style.progressYellow}`} style={{ ...taskBackgroundProgressStyle.value, opacity: [TaskStatus.TASK_PAUSED, TaskStatus.TASK_STOPPING].includes(task.status) ? 1: 0}} />
+					<div class={`${style.backgroundProgress} ${style.progressGray}`} style={{ ...taskBackgroundProgressStyle.value, opacity: [TaskStatus.TASK_FINISHED, TaskStatus.TASK_STOPPED].includes(task.status) ? 1: 0}} />
+					<div class={`${style.backgroundProgress} ${style.progressRed}`} style={{ ...taskBackgroundProgressStyle.value, opacity: task.status === TaskStatus.TASK_ERROR ? 1: 0}} />
 					<div class={style.previewIcon} style={{ bottom: settings.showCmd ? '66px' : undefined}}>
 						<IconPreview />
 					</div>
-					<div class={style.taskName} style={settings.showDashboard ? { '-webkit-line-clamp': 4 } : {}}>{task.fileBaseName ?? '读取中'}</div>
+					<div
+						class={style.taskName}
+						style={{
+							...(showDashboard.value ? {} : { maxHeight: '26px', '-webkit-line-clamp': 1 }),
+							width: taskNameWidth.value,
+							...(!showDashboard.value ? { fontSize: '16px' } : {}),	// 不显示 dashboard 时不允许文字放大
+						}}
+					>
+						{task.fileBaseName ?? '读取中'}
+					</div>
 					{settings.showParams && (
 						<div class={style.paraArea}>
 							<div class={style.divider}><div></div></div>
 							{/* 容器 */}
 							<div class={style.formatBefore}>{task.before.format}</div>
-							<div class={style.formatTo}><IconRightArrow /></div>
-							<div class={style.formatAfter}>{task.after.output.format}</div>
+							{settings.paramsVisibility.format === 'all' && (
+								<>
+									<div class={style.formatTo}><IconRightArrow /></div>
+									<div class={style.formatAfter}>{task.after.output.format}</div>
+								</>
+							)}
 							<div class={style.divider}><div></div></div>
 							{/* 分辨率码率 */}
-							<div class={style.smpteBefore}>{smpteBefore.value}</div>
-							<div class={style.smpteTo}><IconRightArrow /></div>
-							<div class={style.smpteAfter}>{task.after.video.resolution}@{task.after.video.framerate}</div>
-							<div class={style.divider}><div></div></div>
+							{settings.paramsVisibility.smpte !== 'none' && (
+								<>
+									<div class={style.smpteBefore}>{smpteBefore.value}</div>
+									{settings.paramsVisibility.smpte === 'all' && (
+										<>
+											<div class={style.smpteTo}><IconRightArrow /></div>
+											<div class={style.smpteAfter}>{task.after.video.resolution}@{task.after.video.framerate}</div>
+										</>
+									)}
+									<div class={style.divider}><div></div></div>
+								</>
+							)}
 							{/* 视频 */}
-							<div class={style.videoBefore}>{task.before.vcodec}{videoInputBitrate.value}</div>
-							<div class={style.videoTo}><IconRightArrow /></div>
-							<div class={style.videoAfter}>{task.after.video.vcodec}{videoRateControl.value}</div>
-							<div class={style.divider}><div></div></div>
+							{settings.paramsVisibility.video !== 'none' && (
+								<>
+									<div class={style.videoBefore}>{task.before.vcodec}{videoInputBitrate.value}</div>
+									{settings.paramsVisibility.video === 'all' && (
+										<>
+											<div class={style.videoTo}><IconRightArrow /></div>
+											<div class={style.videoAfter}>{task.after.video.vcodec}{videoRateControl.value}</div>
+										</>
+									)}
+									<div class={style.divider}><div></div></div>
+								</>
+							)}
 							{/* 音频 */}
-							<div class={style.audioBefore}>{task.before.acodec}{audioInputBitrate.value}</div>
-							<div class={style.audioTo}><IconRightArrow /></div>
-							<div class={style.audioAfter}>{task.after.audio.acodec}{audioRateControl.value}</div>
+							{settings.paramsVisibility.audio !== 'none' && (
+								<>
+									<div class={style.audioBefore}>{task.before.acodec}{audioInputBitrate.value}</div>
+									{settings.paramsVisibility.audio === 'all' && (
+										<>
+											<div class={style.audioTo}><IconRightArrow /></div>
+											<div class={style.audioAfter}>{task.after.audio.acodec}{audioRateControl.value}</div>
+											<div class={style.divider}><div></div></div>
+										</>
+									)}
+								</>
+							)}
 						</div>
 					)}
-					{settings.showDashboard && (
-						<div class={style.dashboardArea} style={{ top: `${(settings.showParams ? 1 : 0) * 24 + 2}px` }}>
-							<div class={style.linearGraphItems}>
-								<div class={style.linearGraphItem}>
-									<div class={style.line} style={graphTimeStyle.value}></div>
-									<span class={style.data}>{ graphTime.value }</span>
-									<span class={style.description}>时间</span>
+					<Transition enterActiveClass={style['dashboardTrans-enter-active']} leaveActiveClass={style['dashboardTrans-leave-active']}>
+						{showDashboard.value && (
+							<div class={style.dashboardArea} style={{ top: `${(settings.showParams ? 1 : 0) * 24 + 2}px` }}>
+								<div class={style.linearGraphItems}>
+									<div class={style.linearGraphItem}>
+										<div class={style.line} style={graphTimeStyle.value}></div>
+										<span class={style.data}>{ graphTime.value }</span>
+										<span class={style.description}>时间</span>
+									</div>
+									<div class={style.linearGraphItem}>
+										<div class={style.line} style={graphFrameStyle.value}></div>
+										<span class={style.data}>{ task.dashboard_smooth.frame.toFixed(0) }</span>
+										<span class={style.description}>帧</span>
+									</div>
 								</div>
-								<div class={style.linearGraphItem}>
-									<div class={style.line} style={graphFrameStyle.value}></div>
-									<span class={style.data}>{ task.dashboard_smooth.frame.toFixed(0) }</span>
-									<span class={style.description}>帧</span>
+								<div class={style.roundGraphItem}>
+									<div class={style.ring} style={graphBitrateStyle.value}></div>
+									<span class={style.data}>{ graphBitrate.value }</span>
+									<span class={style.description}>码率</span>
+								</div>
+								<div class={style.roundGraphItem}>
+									<div class={style.ring} style={graphSpeedStyle.value}></div>
+									<span class={style.data}>{ graphSpeed.value }</span>
+									<span class={style.description}>速度</span>
+								</div>
+								<div class={style.overallProgressItem}>
+									<span class={style.data}>{ graphLeftTime.value }</span>
+									<span class={style.description}>预计剩余时间</span>
+								</div>
+								<div class={style.overallProgressItem}>
+									<span class={style.data}>{ overallProgress.value === 1 ? '🆗' : `${(overallProgress.value * 100).toFixed(1)}%` }</span>
+									<span class={style.description}>{ overallProgressDescription.value }</span>
 								</div>
 							</div>
-							<div class={style.roundGraphItem}>
-								<div class={style.ring} style={graphBitrateStyle.value}></div>
-								<span class={style.data}>{ graphBitrate.value }</span>
-								<span class={style.description}>码率</span>
-							</div>
-							<div class={style.roundGraphItem}>
-								<div class={style.ring} style={graphSpeedStyle.value}></div>
-								<span class={style.data}>{ graphSpeed.value }</span>
-								<span class={style.description}>速度</span>
-							</div>
-							<div class={style.overallProgressItem}>
-								<span class={style.data}>{ graphLeftTime.value }</span>
-								<span class={style.description}>预计剩余时间</span>
-							</div>
-							<div class={style.overallProgressItem}>
-								<span class={style.data}>{ overallProgress.value === 1 ? '🆗' : `${(overallProgress.value * 100).toFixed(1)}%` }</span>
-								<span class={style.description}>{ overallProgressDescription.value }</span>
-							</div>
-						</div>
-					)}
+						)}
+					</Transition>
 					{settings.showCmd && (
-						<div class={style.cmdArea} style={{ top: `${(settings.showParams ? 1 : 0) * 24 + (settings.showCmd ? 1 : 0) * 72 + 2}px` }}>
+						<div class={style.cmdArea} style={{ top: `${(settings.showParams ? 1 : 0) * 24 + (showDashboard.value ? 1 : 0) * 72 + 2}px` }}>
 							<div class={style.margin}>
 								<div class={style.switch}>
 									<button
@@ -232,7 +312,8 @@ export const TaskItem: FunctionalComponent<Props> = (props) => {
 									<textarea
 										aria-label="任务命令行"
 										readonly
-										value={settings.cmdDisplay === 'input' ? ['ffmpeg', ...task.paraArray].join(' ') : task.cmdData}
+										value={cmdText.value}
+										ref={cmdRef}
 									/>
 								</div>
 							</div>

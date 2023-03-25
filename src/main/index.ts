@@ -209,12 +209,17 @@ class ElectronApp {
 		// 闪烁任务栏图标
 		ipcMain.on('flashFrame', (event, value) => {
 			this.mainWindow!.flashFrame(value);
-		})
+		});
+
+		// 设置任务栏 / dock 进度状态
+		ipcMain.on('setProgressBar', (event, progress: number, options?: Electron.ProgressBarOptions | undefined) => {
+			this.mainWindow!.setProgressBar(progress, options);
+		});
 
 		// 打开开发者工具
 		ipcMain.on('openDevTools', (event) => {
 			this.mainWindow!.webContents.openDevTools();
-		})
+		});
 
 		/**
 		 * 启动文件下载流程：

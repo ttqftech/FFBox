@@ -15,10 +15,9 @@
 }
 .task {
 	position: relative;
-	// height: 28px;
-	// height: 64px;
 	pointer-events: none;
 	box-sizing: border-box;
+	transition: height 0.4s ease;
 	.backgroundWhite {
 		height: 100%;
 		box-sizing: border-box;
@@ -35,6 +34,39 @@
 		&:active {
 			border: hsl(210, 100%, 80%) 1px solid;
 		}
+	}
+	.backgroundProgress {
+		transition: width 0.3s ease-out, opacity 0.2s ease-out;
+		position: absolute;
+		top: 0;
+		height: 100%;
+		border-radius: 2px;
+		// will-change: width, opacity;
+	}
+	.progressBlue {
+		background: linear-gradient(180deg, hwb(225 80% 0% / 0.7), hwb(225 60% 0% / 0.7));
+		box-shadow: 0 4px 12px 0 hwb(225 40% 20% / 0.4),
+					0 0px 1px 0.75px hwb(225 80% 0%) inset;
+	}
+	.progressGreen {
+		background: linear-gradient(180deg, hwb(120 80% 0% / 0.7), hwb(120 60% 0% / 0.7));
+		box-shadow: 0 4px 12px 0 hwb(120 40% 20% / 0.4),
+					0 0px 1px 0.75px hwb(120 80% 0%) inset;
+	}
+	.progressYellow {
+		background: linear-gradient(180deg, hwb(50 75% 0% / 0.7), hwb(50 55% 0% / 0.7));
+		box-shadow: 0 4px 12px 0 hwb(50 40% 20% / 0.4),
+					0 0px 1px 0.75px hwb(50 80% 0%) inset;
+	}
+	.progressRed {
+		background: linear-gradient(180deg, hwb(0 75% 0% / 0.7), hwb(0 55% 0% / 0.7));
+		box-shadow: 0 4px 12px 0 hwb(0 40% 20% / 0.4),
+					0 0px 1px 0.75px hwb(0 80% 0%) inset;
+	}
+	.progressGray {
+		background: linear-gradient(180deg, hwb(0 93% 7% / 0.7), hwb(0 87% 13% / 0.7));
+		box-shadow: 0 4px 12px 0 hwb(0 50% 50% / 0.2),
+					0 0px 1px 0.5px hwb(0 50% 50% / 0.1) inset;
 	}
 	.previewIcon {
 		position: absolute;
@@ -58,13 +90,19 @@
 		max-height: 92px;
 		display: -webkit-box;
 		font-size: 16px;
+		font-weight: 500;
 		width: ~'max(calc(100% - 828px), 64px)';
 		text-align: left;
 		overflow: hidden;
 		word-break: break-word;
 		// text-overflow: ellipsis;
-		-webkit-line-clamp: 1;
+		transition: font-size 0.4s ease, max-height 0.4s ease;
+		-webkit-line-clamp: 4;
 		-webkit-box-orient: vertical;
+		@media only screen and (min-width: 1280px) {
+			font-size: 22px;
+			-webkit-line-clamp: 3;
+		}
 	}
 	.paraArea {
 		position: absolute;
@@ -72,6 +110,7 @@
 		height: 24px;
 		right: 36px;
 		max-width: calc(100% - 128px);
+		margin-right: -9px;
 		overflow: hidden;
 		text-align: right;
 		&>* {
@@ -119,7 +158,7 @@
 			justify-content: center;
 			align-items: center;
 			height: 24px;
-			width: 3px;
+			width: 13px;
 			vertical-align: middle;
 			div {
 				height: 16px;
@@ -127,6 +166,22 @@
 				background-color: hwb(0deg 50% 50% / 0.3);
 			}
 		}
+	}
+	@keyframes dashboardTransAni {
+		from {
+			height: 0;
+		}
+	}
+	@keyframes dashboardTransAniReverse {
+		to {
+			height: 0;
+		}
+	}
+	.dashboardTrans-enter-active {
+		animation: dashboardTransAni 0.4s ease;
+	}
+	.dashboardTrans-leave-active {
+		animation: dashboardTransAniReverse 0.4s ease;
 	}
 	.dashboardArea {
 		position: absolute;
@@ -250,6 +305,7 @@
 		right: 2px;
 		padding: 4px;
 		box-sizing: border-box;
+		transition: top 0.4s ease;
 		.margin {
 			display: flex;
 			position: relative;

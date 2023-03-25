@@ -2663,7 +2663,7 @@ const generator = {
 								// ret.push('1')
 								// 调试用↑
 				const ratecontrol = vencoder.ratecontrol.find((value) => value.sName === videoParams.ratecontrol);
-				if (ratecontrol !== null) {
+				if (ratecontrol) {
 					// 计算值
 					const floatValue = videoParams.ratevalue;
 					const value = ratecontrol.valueToParam(floatValue);

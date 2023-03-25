@@ -1,9 +1,22 @@
 <script setup lang="ts">
+import { computed } from 'vue';
+import { ServiceBridgeStatus } from '@renderer/bridges/serviceBridge';
 import { useAppStore } from '@renderer/stores/appStore';
+import { WorkingStatus } from '@common/types';
 
 const appStore = useAppStore();
-const startButtonClass = /*currentServer.workingStatus > 0*/ false ? 'startbutton-yellow' : 'startbutton-green';
-const startButtonText = false ? '⏸暂停' : '▶开始'
+const startButtonClass = computed(() => {
+	if (!appStore.currentServer || appStore.currentServer.entity.status !== ServiceBridgeStatus.Connected) {
+		return 'startbutton-gray';
+	}
+	return appStore.currentServer.data.workingStatus === WorkingStatus.running ? 'startbutton-yellow' : 'startbutton-green';
+});
+const startButtonText = computed(() => {
+	if (!appStore.currentServer || appStore.currentServer.entity.status !== ServiceBridgeStatus.Connected) {
+		return '▶开始';
+	}
+	return appStore.currentServer.data.workingStatus === WorkingStatus.running ? '⏸暂停' : '▶开始';
+});
 
 </script>
 
@@ -13,12 +26,12 @@ const startButtonText = false ? '⏸暂停' : '▶开始'
 				<!-- <button class="startbutton startbutton-gray" @click="appStore.initTemp()">➕添加</button> -->
 			</div>
 			<div class="right">
-				<button class="startbutton" :class="startButtonClass">{{ startButtonText }}</button>
+				<button class="startbutton" :class="startButtonClass" @click="appStore.startNpause()">{{ startButtonText }}</button>
 			</div>
 	</div>
 </template>
 
-<style lang="less">
+<style scoped lang="less">
 	.actionbar {
 		position: relative;
 		width: 100%;
@@ -104,17 +117,14 @@ const startButtonText = false ? '⏸暂停' : '▶开始'
 						0px 4px 24px 0px hsl(54, 80%, 65%);
 		}
 		.startbutton-gray {
-			color: hwb(0 20% 80%);
+			color: hwb(0 40% 60%);
 			text-shadow: none;
-			background: linear-gradient(180deg, hsl(0, 0%, 100%), hsl(0, 0%, 90%));
-			box-shadow: 0px -1px 1px 0px rgba(255, 255, 255, 0.3),
-						0px 1px 1px 0px rgba(16, 16, 16, 0.15),
-						0px 2px 6px 0px rgba(0, 0, 0, 0.15),
-						0px 4px 16px -4px hsl(0, 0%, 100%);
+			opacity: 0.8;
+			background: linear-gradient(180deg, hsl(0, 0%, 98%), hsl(0, 0%, 92%));
+			box-shadow: 0px -1px 1px 0px rgba(255, 255, 255, 0.3),	// 上高光
+						0px 1px 1px 0px rgba(16, 16, 16, 0.15),	// 下立体
+						0px 2px 6px 0px rgba(0, 0, 0, 0.15);	// 下阴影
+			pointer-events: none;
 		}
-		.startbutton-gray:active {
-			background: linear-gradient(180deg, #BBB, #DDD);
-		}
-
 	}
 </style>

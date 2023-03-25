@@ -29,14 +29,14 @@ const globalParamsText = computed(() => {
 });
 
 const handleDragStart = (event: MouseEvent | TouchEvent) => {
-	event.preventDefault();
+	// event.preventDefault();
 	const deviderRect = deviderRef.value.getBoundingClientRect();	// 列表元素的 rect
 	const mainAreaRect = (appStore.componentRefs['MainArea'] as Element).getBoundingClientRect();	// 列表元素的 rect
 	const mouseY = (event as MouseEvent).pageY || (event as TouchEvent).touches[0].pageY;	// 鼠标在窗口内的 Y
 	// const inElementY = (event as MouseEvent).offsetY || (event as TouchEvent).touches[0].offsetY;	// 鼠标在元素内的 Y
 	const inElementY = mouseY - deviderRect.top;	// 不直接用 offsetY 的原因是，鼠标所在的元素不一定是 devider
 	// 添加鼠标事件捕获
-	let handleMouseMove = (event: Partial<MouseEvent>) => {
+	let handleMouseMove = (event: Partial<MouseEvent | TouchEvent>) => {
 		const mouseY = (event as MouseEvent).pageY || (event as TouchEvent).touches[0].pageY;	// 鼠标在窗口内的 Y
 		let listPercent = (mouseY - mainAreaRect.top - inElementY) / mainAreaRect.height;
 		listPercent = Math.min(Math.max(listPercent, 0), 1);
@@ -44,11 +44,15 @@ const handleDragStart = (event: MouseEvent | TouchEvent) => {
 	}
 	let handleMouseUp = () => {
 		window.removeEventListener('mousemove', handleMouseMove);
+		window.removeEventListener('touchmove', handleMouseMove);
 		window.removeEventListener('mouseup', handleMouseUp);
+		window.removeEventListener('touchend', handleMouseUp);
 	}
 	window.addEventListener('mousemove', handleMouseMove);
+	window.addEventListener('touchmove', handleMouseMove);
 	window.addEventListener('mouseup', handleMouseUp);
-}
+	window.addEventListener('touchend', handleMouseUp);
+};
 const handleParaButtonClicked = (index: number) => {
 	animationName.value = index < appStore.paraSelected ? 'animationLeft' : 'animationRight';
 	appStore.paraSelected = index;
@@ -206,11 +210,7 @@ const getButtonColorStyle = (index: number) => ({ color: appStore.paraSelected =
 							transition: width 0.3s ease, padding 0.3s ease;
 							filter: drop-shadow(0 -0.5px 0px hwb(0 100% 0% / 1)) drop-shadow(0 1px 1px hwb(0 0% 100% / 0.1));
 						}
-					}
-				}
-				@media only screen and (max-width: 600px) {
-					.buttons {
-						button {
+						@media only screen and (max-width: 600px) {
 							width: 50px;
 							span {
 								// display: none;
@@ -262,9 +262,7 @@ const getButtonColorStyle = (index: number) => ({ color: appStore.paraSelected =
 						color: #777;
 						transition: transform 0.4s cubic-bezier(0.2, 1.4, 0.65, 1);
 					}
-				}
-				@media only screen and (min-width: 960px) {
-					.showGlobalButton {
+					@media only screen and (min-width: 960px) {
 						width: 120px;
 						span {
 							width: 62px;

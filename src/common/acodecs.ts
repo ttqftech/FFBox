@@ -1431,7 +1431,7 @@ const generator = {
 					}
 				}
 				const ratecontrol = aencoder.ratecontrol.find((value) => value.sName === audioParams.ratecontrol);
-				if (ratecontrol !== null) {
+				if (ratecontrol) {
 					// 计算值
 					const floatValue = audioParams.ratevalue;
 					const value = ratecontrol.valueToParam(floatValue);
