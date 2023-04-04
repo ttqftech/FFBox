@@ -146,7 +146,7 @@ const generator = {
 	 */
 	concatFilePath: function (outputParams, fileDir, fileBasename) {
 		let extension;
-		if (outputParams.format !== '无') {
+		if (outputParams.format.length && outputParams.format !== '无') {
 			let format = formats.find((value) => {
 				return value.sName === outputParams.format;
 			});
@@ -168,7 +168,7 @@ const generator = {
 	},
 	getOutputParam: function (outputParams, filedir, filebasename, withQuotes = false, overrideFilePath) {
 		let ret = [];
-		if (outputParams.format !== '无') {
+		if (outputParams.format.length && outputParams.format !== '无') {
 			let format = formats.find((value) => {
 				return value.sName == outputParams.format;
 			});
@@ -213,11 +213,11 @@ const generator = {
 	},
 	getInputParam: function (inputParams, withQuotes = false) {
 		let ret = [];
-		if (inputParams.hwaccel != '不使用') {
+		if (inputParams.hwaccel.length && inputParams.hwaccel !== '不使用') {
 			ret.push('-hwaccel');
 			let hwaccel = hwaccels.find((value) => {
 				return value.sName == inputParams.hwaccel
-			}).hwaccel;
+			})?.hwaccel;
 			ret.push(hwaccel);
 		}
 		if (inputParams.mode === 'standalone') {

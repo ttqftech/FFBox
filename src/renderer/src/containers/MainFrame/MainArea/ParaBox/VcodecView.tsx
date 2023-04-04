@@ -116,7 +116,9 @@ const VcodecView: FunctionalComponent<Props> = (props) => {
 					)}
 					<Combobox title="分辨率" text={appStore.globalParams.video.resolution} list={resolution} onChange={(value: string) => handleChange('combo', 'resolution', value)} />
 					<Combobox title="输出帧速" text={appStore.globalParams.video.framerate} list={framerate} onChange={(value: string) => handleChange('combo', 'framerate', value)} />
-					<Combobox title="码率控制" text={appStore.globalParams.video.ratecontrol} list={rateControlsList.value} onChange={(value: string) => handleChange('combo', 'ratecontrol', value)} />
+					{rateControlsList.value.length ? (
+						<Combobox title="码率控制" text={appStore.globalParams.video.ratecontrol} list={rateControlsList.value} onChange={(value: string) => handleChange('combo', 'ratecontrol', value)} />
+					) : null}
 					{ratecontrolSlider.value && (
 						<Slider
 							title={ratecontrolSlider.value.display}

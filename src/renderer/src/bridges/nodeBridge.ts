@@ -94,45 +94,18 @@ export default {
 	},
 
 	jumpToUrl(url: string): void {
-		// TODO this.isElectron 不可用
-		if (this.isElectron) {
-			switch (this.os) {
-				case 'MacOS':
-					this.exec('open ' + url);
-					break;
-				case 'Windows':
-					this.exec('start ' + url);
-					break;
-				case 'Linux':
-					this.exec('xdg-open', [url]);
-					break;
-				default:
-					window.open(url);
-					break;
-			}
+		if (window.jsb.ipcRenderer) {
+			window.jsb.ipcRenderer.send('jumpToUrl', url);
 		} else {
 			window.open(url);
 		}
 	},
 
 	openFile(url: string): void {
-		// TODO this.isElectron 不可用
-		if (!this.isElectron) {
-			return;
-		}
-		switch (this.os) {
-			case 'MacOS':
-				this.exec(url);
-				break;
-			case 'Windows':
-				this.exec(url);
-				break;
-			case 'Linux':
-				this.exec(url);
-				break;
-			default:
-				window.open(url);
-				break;
+		if (window.jsb.ipcRenderer) {
+			window.jsb.ipcRenderer.send('openFile', url);
+		} else {
+			window.open(url);
 		}
 	},
 

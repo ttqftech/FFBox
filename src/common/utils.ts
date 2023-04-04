@@ -20,8 +20,8 @@ export function getFormattedBitrate(Kbps: number): string {
 /**
  * 传入秒数，返回 --:--:--.--
  */
-export function getFormattedTime(timeValue: number): string {
-	if (timeValue !== -1) {
+export function stringifyTimeValue(timeValue: number): string {
+	if (!isNaN(timeValue) && timeValue !== -1) {
 		const Hour = Math.floor(timeValue / 3600);
 		const Minute = Math.floor((timeValue - Hour * 3600) / 60);
 		const Second = timeValue - Hour * 3600 - Minute * 60;
@@ -32,19 +32,37 @@ export function getFormattedTime(timeValue: number): string {
 }
 
 /**
- * 传入 --:--:--.--，返回秒数
+ * 传入 ffmpeg 支持的时间格式（如 --:--:--.-- 或 ---.--），返回秒数（如格式错误则返回 -1）
  */
-export function getTimeValue(timeString: string): number {
-	if (timeString !== 'N/A') {
-		const seconds = parseInt(timeString.slice(0, 2)) * 3600 + parseInt(timeString.slice(3, 5)) * 60 - -timeString.slice(6);
-		if (seconds > 0) {
-			return seconds;
-		} else {
-			return -1;
-		}
-	} else {
+export function parseTimeString(timeString: string): number {
+	if (timeString === 'N/A') {
 		return -1;
 	}
+	let exp: RegExpExecArray;
+	if (exp = /^(\d+):([0-5]?[0-9]):([0-5]?[0-9])(.\d+)?$/.exec(timeString)) {
+		// (时):(分):(秒)(.小)
+		const hour = Number(exp[1]);
+		const minute = Number(exp[2]);
+		const second = Number(exp[3]);
+		const mili = Number(exp[4] ?? '0');
+		if (minute >= 60 || second >= 60) {
+			return -1;
+		}
+		return hour * 3600 + minute * 60 + second + Number(mili);
+	} else if (exp = /^([0-5]?[0-9]):([0-5]?[0-9])(.\d+)?$/.exec(timeString)) {
+		// (分):(秒)(.小)
+		const minute = Number(exp[1]);
+		const second = Number(exp[2]);
+		const mili = Number(exp[3] ?? '0');
+		if (minute >= 60 || second >= 60) {
+			return -1;
+		}
+		return minute * 60 + second + Number(mili);
+	} else if (/^(\d+)(.\d+)?$/.test(timeString)) {
+		// (秒)(.小)
+		return Number(timeString);
+	}
+	return -1;
 }
 
 // #endregion
@@ -332,6 +350,7 @@ export function getInitialUITask(fileName: string, outputParams?: OutputParams):
 				speed: 0,
 				time: 0,
 				frame: 0,
+				size: 0,
 				transferred: 0,
 				transferSpeed: 0,
 			},
@@ -341,6 +360,7 @@ export function getInitialUITask(fileName: string, outputParams?: OutputParams):
 				speed: 0,
 				time: 0,
 				frame: 0,
+				size: 0,
 				transferred: 0,
 				transferSpeed: 0,
 			},

@@ -8,6 +8,7 @@ import IconNoffmpeg from '@renderer/assets/mainArea/noffmpeg.svg?component';
 const appStore = useAppStore();
 
 const selectedTask_last = ref(-1);
+const dragging = ref(false);
 
 const tasks = computed(() => {
 	// console.log('服务器', appStore.currentServer, '任务', appStore.currentServer?.data.tasks);
@@ -96,18 +97,39 @@ const handleTaskClicked = (event: MouseEvent, id: number, index: number) => {
 	appStore.selectedTask = new Set([...currentSelection]);
 	appStore.applySelectedTask();
 };
+
 const handleDownloadFFmpegClicked = () => {
 	nodeBridge.jumpToUrl('https://ffmpeg.org/download.html');
 };
+
+const onDragenter = (event: DragEvent) => {
+	// 这里把 dragenter 和 dragover 都引到这里了，拖动时会高频率调用，虽然不是很好，但是不加 dragover 会导致 drop 没反应
+	if (!appStore.currentServer || appStore.currentServer.data.ffmpegVersion === '-') {
+		return;
+	}
+	event.preventDefault();
+	dragging.value = true;
+};
+const onDragleave = (event: DragEvent) => {
+	event.preventDefault();
+	dragging.value = false;
+};
+const onDrop = (event: DragEvent) => {	// 此函数触发四次 taskList update，分别为加入任务、ffmpeg data、ffmpeg metadata、selectedTask update？
+	event.stopPropagation();
+	dragging.value = false;
+	appStore.addTasks(event.dataTransfer?.files);
+};
+
 </script>
 
 <template>
-	<div class="listarea">
+	<div class="listarea"  @dragenter="onDragenter($event)" @dragover="onDragenter($event)" @dragleave="onDragleave($event)" @drop="onDrop($event)">
 		<div class="tasklist">
 			<TaskItem
 				v-for="(task, index) in tasks"
 				:key="task.id"
 				:task="task"
+				:id="task.id"
 				:selected="appStore.selectedTask.has(task.id)"
 				@click="handleTaskClicked($event, task.id, index)"
 				@pause-or-remove="appStore.pauseNremove(task.id)"/>

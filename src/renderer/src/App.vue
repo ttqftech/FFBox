@@ -3,13 +3,32 @@
 /// <reference types="vite-svg-loader" />
 import { onMounted } from 'vue'
 import { useAppStore } from '@renderer/stores/appStore';
+import { handleDownloadStatusChange, handleDownloadProgress } from '@renderer/stores/eventsHandler';
+import { TransferStatus } from '@common/types';
 import MainFrame from './containers/MainFrame.vue';
+import nodeBridge from './bridges/nodeBridge';
 
 onMounted(() => {
 	const appStore = useAppStore();
-	setTimeout(() => {
-		appStore.initTemp();
-	}, 800);
+
+	// 初始化本地服务器
+	const localServerId = appStore.addServer();
+	appStore.initializeServer(localServerId, 'localhost', 33269);
+
+	// 挂载下载进度指示
+	nodeBridge.ipcRenderer?.on("downloadStatusChange", (event, params: { url: string, status: TransferStatus }) => {
+		const { serverId, taskId } = appStore.downloadMap.get(params.url);
+		const server = appStore.servers.find((server) => server.data.id === serverId);
+		const task = server.data.tasks[taskId];
+		// console.log("downloadStatusChange", params);
+		handleDownloadStatusChange(task, params.status);
+	});
+	nodeBridge.ipcRenderer?.on("downloadProgress", (event, params: { url: string, loaded: number, total: number }) => {
+		const { serverId, taskId } = appStore.downloadMap.get(params.url);
+		const server = appStore.servers.find((server) => server.data.id === serverId);
+		const task = server.data.tasks[taskId];
+		handleDownloadProgress(task, params);
+	});
 });
 </script>
 

@@ -1,134 +1,37 @@
-import nodeBridge from "@renderer/bridges/nodeBridge";
-import { NotificationLevel, Server as ServerData, SingleProgressLog, Task, TaskStatus, TransferStatus, UITask, WorkingStatus } from "@common/types";
-import { Server } from '@renderer/types';
-import { getInitialUITask, mergeTaskFromService } from "@common/utils";
+import { SingleProgressLog, TransferStatus, UITask, Server } from "@common/types";
+import { parseTimeString } from "@common/utils";
 
-export function handleFFmpegVersion(server: Server, content: string) {
-    server.data.ffmpegVersion = content || '-';
-};
-export function handleWorkingStatusUpdate(server: Server, workingStatus: WorkingStatus) {
-    const serverData = server.data;
-    serverData.workingStatus = workingStatus;
-    // 处理 overallProgressTimer
-    if (workingStatus === WorkingStatus.running && !serverData.overallProgressTimerID) {
-        let timerID = setInterval(overallProgressTimer, 80, serverData);
-        serverData.overallProgressTimerID = timerID;
-        overallProgressTimer(serverData);
-    } else if (workingStatus === WorkingStatus.stopped && serverData.overallProgressTimerID) {
-        clearInterval(serverData.overallProgressTimerID);
-        serverData.overallProgressTimerID = NaN;
-        overallProgressTimer(serverData);
-        // if (nodeBridge.remote && nodeBridge.remote.getCurrentWindow().isFocused()) {
-            nodeBridge.flashFrame(true);
-        // }
-    } else if (workingStatus === WorkingStatus.paused && serverData.overallProgressTimerID) {
-        clearInterval(serverData.overallProgressTimerID);
-        serverData.overallProgressTimerID = NaN;
-        overallProgressTimer(serverData);
-    }
-};
-export function handleTasklistUpdate(server: Server, content: Array<number>) {
-    const serverData = server.data;
-    let localI = 0;
-    let remoteI = 0;
-    let localKeys = Object.keys(serverData.tasks).map(Number).filter((value) => value >= 0);	// [1,3,4,5]
-    let remoteKeys = content.filter((value) => value >= 0);										// [1,3,5,6,7]
-    let newTaskIds: Array<number> = [];
-    let newTaskList: Array<UITask> = [];
-    while (localI < localKeys.length || remoteI < remoteKeys.length) {
-        let localKey = localKeys[localI];
-        let remoteKey = remoteKeys[remoteI];
-        if (localI >= localKeys.length) {
-            // 本地下标越界，说明远端添加任务了
-            let newTask = getInitialUITask('');
-            // newTask = mergeTaskFromService(newTask, ffboxService.getTask(remoteKey) as Task);
-            // 先用一个 InitialUITask 放在新位置，完成列表合并后再统一 getTask() 获取任务信息
-            newTaskIds.push(remoteKey);
-            newTaskList[remoteKey] = newTask;
-            remoteI++;
-        } else if (remoteI >= remoteKeys.length) {
-            // 远端下标越界，说明远端删除了最后面的若干个任务
-            break;
-        } else if (localKey < remoteKey) {
-            // 远端跳号了，说明远端删除了中间的任务
-            localI++;
-        } else if (localKey === remoteKey) {
-            // 从 local 处直接复制
-            newTaskList[localKey] = serverData.tasks[localKey];
-            localI++;
-            remoteI++;
-        }
-    }
-    serverData.tasks = Object.assign(newTaskList, {'-1': serverData.tasks[-1]});
-    // 依次获取所有新增任务的信息
-    for (const newTaskId of newTaskIds) {
-        server.entity.getTask(newTaskId);
-    }
-};
-/**
- * 更新整个 task
- */
-export function handleTaskUpdate(server: Server, id: number, content: Task) {
-    const serverData = server.data;
-    let task = mergeTaskFromService(serverData.tasks[id], content);
-    serverData.tasks[id] = task;
-    // timer 相关处理
-    if (task.status === TaskStatus.TASK_RUNNING && !task.dashboardTimer) {
-        task.dashboardTimer = setInterval(dashboardTimer, 50, task) as any;
-    } else if (task.dashboardTimer) {
-        clearInterval(task.dashboardTimer);
-        task.dashboardTimer = NaN;
-    }
-    // 进度条相关处理
-    if (task.status === TaskStatus.TASK_FINISHED || task.status === TaskStatus.TASK_ERROR) {
-        task.dashboard.progress = 1;
-        task.dashboard_smooth.progress = 1;
-    } else if (task.status === TaskStatus.TASK_STOPPED) {
-        task.dashboard.progress = 0;
-        task.dashboard_smooth.progress = 0;
-    }
-    // serverData.tasks = Object.assign({}, serverData.tasks);
-};
-/**
- * 增量更新 cmdData
- */
-export function handleCmdUpdate(server: Server, id: number, content: string) {
-    let task = server.data.tasks[id];
-    if (task.cmdData.slice(-1) !== '\n' && task.cmdData.length) {
-        task.cmdData += '\n';
-    }
-    task.cmdData += content;
-};
-/**
- * 整个更新 progressLog
- */
-export function handleProgressUpdate(server: Server, id: number, progressLog: Task['progressLog'], functionLevel: number) {
-    server.data.tasks[id].progressLog = progressLog;
-    if (functionLevel < 50) {
-        if (progressLog.time.slice(-1)[0][1] > 671 ||
-            progressLog.elapsed + new Date().getTime() / 1000 - progressLog.lastStarted > 671) {
-            server.entity.trailLimit_stopTranscoding(id);
-            return;
-        }
-    }
-};
-/**
- * 增量更新 notifications
- */
-export function handleTaskNotification(server: Server, id: number, content: string, level: NotificationLevel) {
-    server.data.tasks[id].notifications.push({ content, level, time: new Date().getTime() });
-    this.$popup({
-        message: content,
-        level: level,
-    });
-    this.$store.commit('setUnreadNotification', false);
-};
+export function getOutputDuration(task: UITask): number {
+	let duration = task.before.duration;
+	if (isNaN(duration)) {
+		return NaN;
+	}
+	if (task.after.input.begin || task.after.input.end) {
+		const begin = task.after.input.begin ? parseTimeString(task.after.input.begin) : 0;
+		let end = task.after.input.end ? parseTimeString(task.after.input.end) : duration;
+		if (begin === -1 || end === -1 || begin > end || begin > duration) {
+			return NaN;
+		}
+		end = Math.min(end, duration);
+		duration = end - begin;
+	}
+	if (task.after.output.begin || task.after.output.end) {
+		const begin = task.after.output.begin ? parseTimeString(task.after.output.begin) : 0;
+		let end = task.after.output.end ? parseTimeString(task.after.output.end) : duration;
+		if (begin === -1 || end === -1 || begin > end || begin > duration) {
+			return NaN;
+		}
+		end = Math.min(end, duration);
+		duration = end - begin;
+	}
+	return duration;
+}
 
 /**
  * 计算整体进度的 timer，根据计算结果修改 currentServer.progress
  * （progressBar 的修改由 titlebar.vue 负责）
  */
-function overallProgressTimer(currentServer: ServerData) {
+export function overallProgressTimer(currentServer: Server) {
 	let tasks = currentServer.tasks;
 	let totalTime = 0.000001;
 	let totalProcessedTime = 0;
@@ -198,7 +101,7 @@ function calcDashboard(progressLog: SingleProgressLog, time = new Date()) {
 /**
  * 计算单个任务的 timer 函数，根据计算结果原地修改 progress 和 progress_smooth
  */
-function dashboardTimer(task: UITask) {
+export function dashboardTimer(task: UITask) {
 	if (task.transferStatus === TransferStatus.normal) {
 		if (task.progressLog.time.length <= 2) {
 			// 任务刚开始时显示的数据不准确
@@ -214,10 +117,10 @@ function dashboardTimer(task: UITask) {
 		// 任务进度计算
 		let progress: number;
 		if (task.before.duration !== -1) {
-			progress = currentTime / task.before.duration;
-			progress = isNaN(progress) || progress === Infinity ? 0 : progress;
+			progress = currentTime / getOutputDuration(task);
+			progress = isNaN(progress) || progress === Infinity || progress < 0 ? 0 : progress;
 		} else {
-			progress = 0.5;
+			progress = 0;
 		}
 
 		// 进度细节计算
@@ -229,20 +132,23 @@ function dashboardTimer(task: UITask) {
 				speed: frameK / task.before.vframerate || timeK,	// 如果可以读出帧速，或者输出的是视频，用帧速算 speed 更准确；否则用时间算 speed
 				time: currentTime,
 				frame: currentFrame,
+				size: currentSize,
 			};
 
 			// 平滑处理
-			let { bitrate, speed, time, frame } = task.dashboard_smooth;
+			let { bitrate, speed, time, frame, size } = task.dashboard_smooth;
 			progress = progress * 0.7 + task.dashboard.progress * 0.3;
 			bitrate  = bitrate * 0.9 + task.dashboard.bitrate * 0.1;
 			speed    = speed * 0.6 + task.dashboard.speed * 0.4;
 			time     = time * 0.7 + task.dashboard.time * 0.3;
 			frame    = frame * 0.7 + task.dashboard.frame * 0.3;
+			size    = size * 0.9 + task.dashboard.size * 0.1;
 			if (isNaN(bitrate) || bitrate == Infinity) { bitrate = 0 }
 			if (isNaN(speed)) { speed = 0 }
 			if (isNaN(time)) { time = 0 }
 			if (isNaN(frame)) { frame = 0 }
-			task.dashboard_smooth = { ...task.dashboard_smooth, progress, bitrate, speed, time, frame };
+			if (isNaN(size)) { size = 0 }
+			task.dashboard_smooth = { ...task.dashboard_smooth, progress, bitrate, speed, time, frame, size };
 		} else {
 			// 进度满了就别更新了
 			task.dashboard.progress = 1;

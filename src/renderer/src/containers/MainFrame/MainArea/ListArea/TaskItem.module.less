@@ -108,7 +108,7 @@
 		position: absolute;
 		top: 2px;
 		height: 24px;
-		right: 36px;
+		right: 48px;
 		max-width: calc(100% - 128px);
 		margin-right: -9px;
 		overflow: hidden;
@@ -116,10 +116,9 @@
 		&>* {
 			text-align: center;
 		}
-		.formatBefore, .formatAfter, .smpteBefore, .smpteAfter, .videoBefore, .videoAfter, .audioBefore, .audioAfter {
+		.durationBefore, .durationAfter, .formatBefore, .formatAfter, .smpteBefore, .smpteAfter, .videoBefore, .videoAfter, .audioBefore, .audioAfter {
 			display: inline-block;
 			height: 24px;
-			width: 60px;
 			line-height: 24px;
 			vertical-align: middle;
 			font-size: 11px;
@@ -127,6 +126,9 @@
 			overflow: hidden;
 			white-space: nowrap;
 			// outline: red 1px solid;
+		}
+		.durationBefore, .durationAfter {
+			width: 64px;
 		}
 		.formatBefore, .formatAfter {
 			width: 36px;
@@ -140,7 +142,7 @@
 		.videoAfter, .audioAfter {
 			width: 120px;
 		}
-		.formatTo, .smpteTo, .videoTo, .audioTo {
+		.durationTo, .formatTo, .smpteTo, .videoTo, .audioTo {
 			display: inline-flex;
 			justify-content: center;
 			align-items: center;
@@ -271,21 +273,24 @@
 				}
 			}
 		}
-		.overallProgressItem {
+		.textItem {
 			position: relative;
 			display: inline-block;
-			width: 80px;
+			width: 96px;
 			height: 60px;
-			margin: 6px 12px;
+			margin: 6px 8px;
 			.data {
 				position: absolute;
 				left: 0;
 				top: 10px;
 				width: 100%;
 				text-align: center;
-				font-size: 30px;
+				font-size: 25px;
 				font-family: Bahnschrift,Calibri,"SF Electrotome",Avenir,"苹方-简","苹方","微软雅黑","Segoe UI",Consolas,Roboto,"黑体";
 				line-height: 30px;
+			}
+			.dataLarge {
+				font-size: 30px;
 			}
 			.description {
 				position: absolute;
@@ -396,10 +401,10 @@
 	}
 	.button {
 		position: absolute;
-		top: 0;
-		right: 0;
-		bottom: 0;
-		width: 32px;
+		top: 1px;
+		right: 1px;
+		bottom: 1px;
+		width: 31px;
 		display: flex;
 		justify-content: center;
 		align-items: center;

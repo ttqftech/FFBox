@@ -1,6 +1,9 @@
 import { app, shell, BrowserWindow, ipcMain, Menu } from 'electron';
 import ElectronStore from 'electron-store';
+import { exec } from 'child_process';
 import * as path from 'path';
+import { TransferStatus } from '@common/types';
+import { getOs } from './utils';
 // import { electronApp, optimizer, is } from '@electron-toolkit/utils';
 // import { FFBoxService } from './service/FFBoxService';
 
@@ -117,6 +120,26 @@ class ElectronApp {
 			}
 		});
 
+		mainWindow.webContents.session.on('will-download', (event, item, webContents) => {
+			// item.setSavePath(folderpath + `\\${item.getFilename()}`);	// 设置文件存放位置
+			mainWindow.webContents.send('downloadStatusChange', { url: item.getURL(), status: TransferStatus.downloading });
+			item.on('updated', (event, state) => {
+				if (state === 'interrupted') {
+					console.log(item.getURL(), '下载取消');
+				} else if (state === 'progressing') {
+					if (item.isPaused()) {
+						console.log(item.getURL(), '下载暂停');
+					} else {
+						mainWindow.webContents.send('downloadProgress', { url: item.getURL(), loaded: item.getReceivedBytes(), total: item.getTotalBytes() });
+					}
+				}
+			})
+			item.once('done', (event, state) => {
+				console.log(item.getURL(), `下载${state === 'completed' ? '完成' : '失败'}`);
+				mainWindow.webContents.send('downloadStatusChange', { url: item.getURL(), status: TransferStatus.normal });
+			})
+		});	
+
 		// 应用菜单
 		const menuTemplate = [
 			{
@@ -204,6 +227,36 @@ class ElectronApp {
 		// 获取主窗口 Hwnd
 		ipcMain.on('getHwnd', () => {
 			this.mainWindow!.webContents.send('hwnd', this.mainWindow!.getNativeWindowHandle());
+		});
+
+		// 打开 url
+		ipcMain.on('jumpToUrl', (event, url: string) => {
+			switch (getOs()) {
+				case 'MacOS':
+					exec('open ' + url);
+					break;
+				case 'Windows':
+					exec('start ' + url);
+					break;
+				case 'Linux':
+					exec('xdg-open' + url);
+					break;
+			}
+		});
+
+		// 打开文件
+		ipcMain.on('openFile', (event, url: string) => {
+			switch (getOs()) {
+				case 'MacOS':
+					exec(url);
+					break;
+				case 'Windows':
+					exec(url);
+					break;
+				case 'Linux':
+					exec(url);
+					break;
+			}
 		});
 
 		// 闪烁任务栏图标

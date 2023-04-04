@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
+import { parseTimeString } from '@common/utils';
 
 interface Props {
 	title: string;
@@ -58,10 +59,7 @@ watch(inputText, (newValue, oldValue) => {		// props 的 text 只有单向数据
 	}
 	switch (props.type) {
 		case 'duration':
-			typeCheckOK.value = newValue.match(/^\d+(.\d+)?$/)
-							 || newValue.match(/^\d+:[0-5]?[0-9](.\d+)?$/)
-							 || newValue.match(/^\d+:[0-5]?[0-9]:[0-5]?[0-9](.\d+){0,1}$/)
-							  ? true : false;
+			typeCheckOK.value = parseTimeString(newValue) > 0;
 			break;
 		case 'number':
 			typeCheckOK.value = newValue.match(/^\d+(.\d+)?$/) ? true : false;

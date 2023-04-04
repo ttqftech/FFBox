@@ -19,8 +19,8 @@ const appStore = useAppStore();
  * 成功    connected   ip       正常
  * 掉线       dis      ip   正常 + 掉线提示
  */
-const ip = ref('');
-const port = ref('');
+const ip = ref('127.0.0.1');
+const port = ref('33269');
 const loginBoxVisible = computed(() => appStore.currentServer?.data.name === '未连接');
 const isConnecting = computed(() => appStore.currentServer?.entity.status === ServiceBridgeStatus.Connecting);
 const isDisconnected = computed(() => appStore.currentServer?.entity.status === ServiceBridgeStatus.Disconnected);

@@ -1,12 +1,16 @@
 import { VNodeRef } from 'vue';
 import { defineStore } from 'pinia';
-import { OutputParams, TaskStatus, WorkingStatus } from '@common/types';
+// @ts-ignore
+import path from 'path-browserify';
+import CryptoJS from 'crypto-js';
+import { OutputParams, TaskStatus, TransferStatus, WorkingStatus } from '@common/types';
 import { Server } from '@renderer/types';
 import { defaultParams } from "@common/defaultParams";
 import { ServiceBridge, ServiceBridgeStatus } from '@renderer/bridges/serviceBridge'
-import { getInitialUITask, randomString, replaceOutputParams } from '@common/utils';
-import { handleCmdUpdate, handleFFmpegVersion, handleProgressUpdate, handleTasklistUpdate, handleTaskNotification, handleTaskUpdate, handleWorkingStatusUpdate } from './serverEventsHandler';
+import { getInitialUITask, randomString, replaceOutputParams, trimExt } from '@common/utils';
+import { handleCmdUpdate, handleFFmpegVersion, handleProgressUpdate, handleTasklistUpdate, handleTaskNotification, handleTaskUpdate, handleWorkingStatusUpdate } from './eventsHandler';
 import nodeBridge from '@renderer/bridges/nodeBridge';
+import { dashboardTimer } from '@renderer/common/dashboardCalc';
 
 interface StoreState {
 	// 界面类
@@ -18,6 +22,7 @@ interface StoreState {
 		showCmd: boolean,
 		cmdDisplay: 'input' | 'output',
 		paramsVisibility: {
+			duration: 'all' | 'input' | 'none',
 			format: 'all' | 'input' | 'none',
 			smpte: 'all' | 'input' | 'none',
 			video: 'all' | 'input' | 'none',
@@ -31,6 +36,7 @@ interface StoreState {
 	currentServerId: string;
 	selectedTask: Set<number>,
 	globalParams: OutputParams;
+	downloadMap: Map<string, { serverId: string, taskId: number }>;
 	functionLevel: number;
 }
 
@@ -51,6 +57,7 @@ export const useAppStore = defineStore('app', {
 				showCmd: true,
 				cmdDisplay: 'input',
 				paramsVisibility: {
+					duration: 'none',
 					format: 'none',
 					smpte: 'none',
 					video: 'none',
@@ -64,6 +71,7 @@ export const useAppStore = defineStore('app', {
 			currentServerId: undefined,
 			selectedTask: new Set(),
 			globalParams: JSON.parse(JSON.stringify(defaultParams)),
+			downloadMap: new Map(),
 			functionLevel: 50,
 		};
 	},
@@ -76,6 +84,113 @@ export const useAppStore = defineStore('app', {
 		// #region 纯 UI
 		// #endregion 纯 UI
 		// #region 任务处理
+		/**
+		 * 添加一系列任务，来自 TaskView.onDrop
+		 */
+		addTasks (files: FileList) {
+			function checkAndUploadFile(file: File, id: number) {
+				const reader = new FileReader();
+				reader.readAsBinaryString(file);
+				reader.addEventListener('loadend', () => {
+					console.log(file.name, '开始计算文件校验码');
+					let contentBuffer = reader.result as string;
+					// 为什么用 Latin1：https://www.icode9.com/content-1-193333.html
+					let toEncode = CryptoJS.enc.Latin1.parse(contentBuffer);
+					let hash = CryptoJS.SHA1(toEncode).toString();
+					console.log(file.name, '校验码：' + hash);
+					fetch(`http://${server.entity.ip}:${server.entity.port}/upload/check/`, {
+						method: 'post',
+						body: JSON.stringify({
+							hashs: [hash]
+						}),
+						headers: new Headers({
+							'Content-Type': 'application/json'
+						}),
+					}).then((response) => {
+						response.text().then((text) => {
+							let content = JSON.parse(text) as number[];
+							if (content[0] % 2) {
+								console.log(file.name, '已缓存');
+								server.entity.mergeUploaded(id, [hash]);
+							} else {
+								console.log(file.name, '未缓存');
+								uploadFile(id, hash, file);
+							}
+						})
+					}).catch((err) => {
+						console.error('网络请求出错', err);
+					})
+				})
+			}
+			function uploadFile(id: number, hash: string, file: File) {
+				const currentServer = 这.currentServer.data;
+				const task = currentServer.tasks[id];
+				task.transferStatus = TransferStatus.uploading;
+				task.transferProgressLog.total = file.size;
+				const form = new FormData();
+				form.append('name', hash);
+				form.append('file', file);
+				const xhr = new XMLHttpRequest;
+				xhr.upload.addEventListener('progress', (event) => {
+					// let progress = event.loaded / event.total;
+					const transferred = task.transferProgressLog.transferred;
+					transferred.push([new Date().getTime() / 1000, event.loaded]);
+					transferred.splice(0, transferred.length - 3);	// 限制列表最大长度为 3
+				}, false);
+				xhr.onreadystatechange = function (e) {
+					if (xhr.readyState !== 0) {
+						if (xhr.status >= 400 && xhr.status < 500) {
+							// thisVue.$popup({
+							// 	message: `【${file.name}】网络请求故障，上传失败`,
+							// 	level: NotificationLevel.error,
+							// })
+						} else if (xhr.status >= 500 && xhr.status < 600) {
+							// thisVue.$popup({
+							// 	message: `【${file.name}】服务器故障，上传失败`,
+							// 	level: NotificationLevel.error,
+							// })
+						}
+					}
+				}
+				xhr.onload = function () {
+					console.log(file.name, `发送完成`);
+					server.entity.mergeUploaded(id, [hash]);
+					task.transferStatus = TransferStatus.normal;
+					clearInterval(task.dashboardTimer);
+					task.dashboardTimer = NaN;
+				}
+				xhr.open('post', `http://${server.entity.ip}:${server.entity.port}/upload/file/`, true);
+				// xhr.setRequestHeader('Content-Type', 'multipart/form-data');
+				xhr.send(form);
+				task.dashboardTimer = setInterval(dashboardTimer, 50, task) as any;
+			}
+			const 这 = useAppStore();
+			let fileCount = files.length;
+			let server = 这.currentServer;
+			let newlyAddedTaskIds: Promise<number>[] = [];
+			let dropDelayCount = 0;
+			for (const file of files) {
+				setTimeout(() => {	// v2.4 版本开始完全可以不要延时，但是太生硬，所以加个动画
+					console.log('添加任务', file.path);
+					let isRemote = server.entity.ip !== 'localhost';
+					let promise: Promise<number> = 这.addTask(trimExt(path, file.name), isRemote ? '' : file.path);
+					if (isRemote) {
+						promise.then((id) => {
+							checkAndUploadFile(file, id);
+						});
+					}
+					newlyAddedTaskIds.push(promise);
+					if (newlyAddedTaskIds.length === fileCount) {
+						Promise.all(newlyAddedTaskIds).then((ids) => {
+							这.selectedTask = new Set(ids);
+							这.applySelectedTask();
+						})
+					}
+				}, dropDelayCount);
+				// console.log(dropDelayCount)
+				dropDelayCount += 33.33;
+			}
+		},
 		/**
 		 * 添加任务
 		 * path 将自动添加到 params 中去
@@ -194,6 +309,7 @@ export const useAppStore = defineStore('app', {
 		recalcChangedParams() {
 			const 这 = useAppStore();
 			const paramsVisibility = {
+				duration: 0,
 				format: 0,
 				smpte: 0,
 				video: 0,
@@ -204,6 +320,11 @@ export const useAppStore = defineStore('app', {
 					continue;
 				}
 				const after = task.after;
+				if (after.input.begin || after.input.end || after.output.begin || after.output.end) {
+					paramsVisibility.duration = Math.max(paramsVisibility.duration, 2);
+				} else {
+					paramsVisibility.duration = Math.max(paramsVisibility.duration, 1);
+				}
 				if (after.output.format === '无' || after.output.format === task.before.format) {
 					paramsVisibility.format = Math.max(paramsVisibility.format, 1);
 				} else {
@@ -230,6 +351,7 @@ export const useAppStore = defineStore('app', {
 				}
 			}
 			这.taskViewSettings.paramsVisibility = {
+				duration: (['none', 'input', 'all'] as any)[paramsVisibility.duration],
 				format: (['none', 'input', 'all'] as any)[paramsVisibility.format],
 				smpte: (['none', 'input', 'all'] as any)[paramsVisibility.smpte],
 				video: (['none', 'input', 'all'] as any)[paramsVisibility.video],
@@ -357,14 +479,5 @@ export const useAppStore = defineStore('app', {
 		// #endregion 服务器处理
 		// #region 其他
 		// #endregion 其他
-
-		initTemp() {
-			const 这 = useAppStore();
-			const localServerId = 这.addServer();
-			setTimeout(() => {
-				这.initializeServer(localServerId, 'localhost', 33269);
-				// 这.addTask('小光芒', 'B:/文档/人物/童可可/MV/童可可 - 小光芒.mp4')
-			}, 800);
-		},
 	},
 });
