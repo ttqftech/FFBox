@@ -1,6 +1,6 @@
 import { FunctionalComponent, computed, ref, Transition, h } from 'vue';
-import { MsgboxOptions, ButtonRole } from './Msgbox';
-import Button, { ButtonProps } from '@renderer/components/Button/Button';
+import { MsgboxOptions } from './Msgbox';
+import Button from '@renderer/components/Button/Button';
 import style from './MsgboxComponent.module.less';
 
 interface Props extends MsgboxOptions {
@@ -10,32 +10,57 @@ interface Props extends MsgboxOptions {
 const MsgboxComponent: FunctionalComponent<Props> = (props) => {
 	const show = ref(false);
 	const disable = ref(false);
+	const backgroundMouseDown = ref(false);
+
 	setTimeout(() => {
 		show.value = true;
 	}, 0);
-	const backgroundMouseDown = ref(false);
-	
+
 	const mouseDownTransformStyle = computed(() => (
 		backgroundMouseDown.value ? { transform: 'scale(0.97)', transition: 'all cubic-bezier(0.1, 2.5, 0.6, 1) 0.5s' } : {})
 	);
 
+	const handleKeyPress = (e: KeyboardEvent) => {
+		console.log('handleKeyPress', e);
+		if (e.key === 'Escape') {
+			const button = props.buttons.find((button) => button.role === 'cancel');
+			if (button) {
+				handleButtonClick(button);
+			}
+		} else if (e.key === 'Enter') {
+			const button = props.buttons.find((button) => button.role === 'confirm');
+			if (button) {
+				handleButtonClick(button);
+			}
+		}
+	}
+	
 	const handleButtonClick = (button: MsgboxOptions['buttons'][number]) => {
-		disable.value = true;
-		const ret = button.callback();
-		if (ret === undefined || ret === true) {
-			show.value = false;
-		} else if (ret instanceof Promise) {
-			ret.then(() => show.value = false);
+		if (button.callback) {
+			disable.value = true;
+			const ret = button.callback();
+			if (ret === undefined || ret === true) {
+				show.value = false;
+			} else if (ret instanceof Promise) {
+				ret.then(() => show.value = false);
+			} else {
+				disable.value = false;
+			}
 		} else {
-			disable.value = false;
+			show.value = false;
 		}
 	};
+
+	document.addEventListener('keypress', handleKeyPress);
 
 	return (
 		<dialog class={style.dialog}>
 			<Transition
 				// name={style.bganimate}
-				on-after-leave={() => props.onClose()}
+				on-after-leave={() => {
+					document.removeEventListener('keypress', handleKeyPress);
+					props.onClose();
+				}}
 				enterActiveClass={style['bganimate-enter-active']}
 				leaveActiveClass={style['bganimate-leave-active']}
 			>
@@ -75,7 +100,7 @@ const MsgboxComponent: FunctionalComponent<Props> = (props) => {
 							<div class={style.buttons}>
 								{props.buttons.map((button) => (
 									<Button
-										role={button.role}
+										type={button.type}
 										disabled={disable.value}
 										onClick={() => handleButtonClick(button)}
 									>

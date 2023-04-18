@@ -3,10 +3,11 @@
 /// <reference types="vite-svg-loader" />
 import { onMounted } from 'vue'
 import { useAppStore } from '@renderer/stores/appStore';
-import { handleDownloadStatusChange, handleDownloadProgress } from '@renderer/stores/eventsHandler';
+import { handleDownloadStatusChange, handleDownloadProgress, handleCloseConfirm } from '@renderer/stores/eventsHandler';
 import { TransferStatus } from '@common/types';
 import MainFrame from './containers/MainFrame.vue';
 import nodeBridge from './bridges/nodeBridge';
+import { Server } from './types';
 
 onMounted(() => {
 	const appStore = useAppStore();
@@ -14,6 +15,12 @@ onMounted(() => {
 	// 初始化本地服务器
 	const localServerId = appStore.addServer();
 	appStore.initializeServer(localServerId, 'localhost', 33269);
+
+	// 挂载退出确认
+	nodeBridge.ipcRenderer?.on("exitConfirm", () => {
+		const localServer = appStore.servers.find((server) => server.entity.ip === 'localhost')
+		handleCloseConfirm(localServer as Server);
+	});
 
 	// 挂载下载进度指示
 	nodeBridge.ipcRenderer?.on("downloadStatusChange", (event, params: { url: string, status: TransferStatus }) => {

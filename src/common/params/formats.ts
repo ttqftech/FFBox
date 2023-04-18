@@ -1,4 +1,14 @@
-const formats = [
+import { OutputParams_output, OutputParams_input } from "../types";
+import { strict2, BasicMenuOption, ComboOptions, SliderOptions, BasicParameter, Parameter, RateControl } from './types';
+
+export interface Format extends BasicMenuOption {
+	extension: string;
+}
+export interface Hwaccel extends BasicMenuOption {
+	hwaccel: string;
+}
+
+const formats: Format[] = [
 	{
 		sName: 'MP4',
 		lName: 'MP4',
@@ -81,7 +91,7 @@ const formats = [
 	},
 ]
 
-const hwaccels = [
+const hwaccels: Hwaccel[] = [
 	{
 		sName: '不使用',
 		lName: '不使用',
@@ -144,7 +154,7 @@ const generator = {
 	/**
 	 * 连接并补充扩展名的文件名（fileDir 为空则仅输出带扩展名的文件名）
 	 */
-	concatFilePath: function (outputParams, fileDir, fileBasename) {
+	concatFilePath: function (outputParams: OutputParams_output, fileDir: string, fileBasename: string) {
 		let extension;
 		if (outputParams.format.length && outputParams.format !== '无') {
 			let format = formats.find((value) => {
@@ -166,7 +176,7 @@ const generator = {
 		}
 		return filePath;
 	},
-	getOutputParam: function (outputParams, filedir, filebasename, withQuotes = false, overrideFilePath) {
+	getOutputParam: function (outputParams: OutputParams_output, filedir: string, filebasename: string, withQuotes = false, overrideFilePath: string) {
 		let ret = [];
 		if (outputParams.format.length && outputParams.format !== '无') {
 			let format = formats.find((value) => {
@@ -211,7 +221,7 @@ const generator = {
 		}
 		return ret;
 	},
-	getInputParam: function (inputParams, withQuotes = false) {
+	getInputParam: function (inputParams: OutputParams_input, withQuotes = false) {
 		let ret = [];
 		if (inputParams.hwaccel.length && inputParams.hwaccel !== '不使用') {
 			ret.push('-hwaccel');

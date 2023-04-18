@@ -5,7 +5,7 @@ import { ServiceBridgeStatus } from '@renderer/bridges/serviceBridge';
 import ListArea from './MainArea/ListArea.vue';
 import ParaBox from './MainArea/ParaBox.vue';
 import Inputbox from './MainArea/ParaBox/components/Inputbox.vue';
-import Button, { ButtonRole } from '@renderer/components/Button/Button';
+import Button, { ButtonType } from '@renderer/components/Button/Button';
 import IconDisconnected from '@renderer/assets/mainArea/disconnect.svg?component';
 import IconLoading from '@renderer/assets/mainArea/loading.svg?component';
 
@@ -54,7 +54,7 @@ const handleConnectClicked = () => {
 						</div>
 						<div class="buttonBox">
 							<Button
-								:role="ButtonRole.Primary"
+								:type="ButtonType.Primary"
 								size="large"
 								:disabled="appStore.currentServer?.entity.status === ServiceBridgeStatus.Connecting"
 								@click="handleConnectClicked"
@@ -88,7 +88,7 @@ const handleConnectClicked = () => {
 						</div>
 						<div class="buttonBox">
 							<Button
-								:role="ButtonRole.Primary"
+								:role="ButtonType.Primary"
 								size="large"
 								:disabled="appStore.currentServer?.entity.status === ServiceBridgeStatus.Connecting"
 								@click="appStore.reConnectServer(appStore.currentServerId)"

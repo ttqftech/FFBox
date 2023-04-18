@@ -50,8 +50,8 @@
 				0 16px 32px 0px hwb(0 0% 100% / 0.02),
 				0 6px 6px 0px hwb(0 0% 100% / 0.02),
 				0 0 0 1px hwb(0deg 100% 0% / 0.9);	// 包边
-		will-change: transform, opacity;
 		transition: transform cubic-bezier(0.33, 1, 1, 1) 0.3s, opacity linear 0.2s;
+		z-index: 0;	// 可能是由于 chromium 的 bug，不加这个会导致背景的 backdrop-filter 应用到 box 上
 		&>*:not(:last-child) {
 			margin-bottom: 12px;
 		}

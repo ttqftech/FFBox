@@ -4,21 +4,21 @@ import style from './Button.module.less';
 export interface ButtonProps {
 	disabled?: boolean;
 	onClick?: () => any;
-	role?: ButtonRole;
+	type?: ButtonType;
 	size?: 'small' | 'normal' | 'large';
 }[];
-export enum ButtonRole {
+export enum ButtonType {
 	Normal = 0,
 	Primary = 1,
 	Danger = 2,
 };
 
-const getButtonClass = (role?: ButtonRole, disabled?: boolean, size?: ButtonProps['size']) => {
+const getButtonClass = (type?: ButtonType, disabled?: boolean, size?: ButtonProps['size']) => {
 	let classText = style['button'];
 	classText += ' ';
-	if (role === ButtonRole.Primary) {
+	if (type === ButtonType.Primary) {
 		classText += style['primary'];
-	} else if (role === ButtonRole.Danger) {
+	} else if (type === ButtonType.Danger) {
 		classText += style['danger'];
 	}
 	classText += ' ';
@@ -35,7 +35,7 @@ const getButtonClass = (role?: ButtonRole, disabled?: boolean, size?: ButtonProp
 const ButtonComponent: FunctionalComponent<ButtonProps> = (props, ctx) => {
 	return (
 		<button
-			class={getButtonClass(props.role, props.disabled, props.size)}
+			class={getButtonClass(props.type, props.disabled, props.size)}
 			disabled={props.disabled}
 			onClick={() => props.onClick}
 		>

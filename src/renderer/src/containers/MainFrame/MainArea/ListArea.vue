@@ -2,6 +2,8 @@
 import { computed, ref, watch } from 'vue';
 import nodeBridge from '@renderer/bridges/nodeBridge';
 import { useAppStore } from '@renderer/stores/appStore';
+import Popup from '@renderer/components/Popup/Popup';
+import { NotificationLevel } from '@common/types';
 import { TaskItem } from './ListArea/TaskItem';
 import IconNoffmpeg from '@renderer/assets/mainArea/noffmpeg.svg?component';
 
@@ -42,11 +44,10 @@ const debugLauncher = (() => {
 	return function () {
 		clickSpeedCounter += 20;
 		if (clickSpeedCounter > 100) {
-			// @ts-ignore
-			// this.$popup({
-			//     message: '打开开发者工具',
-			//     level: NotificationLevel.info
-			// });
+			Popup({
+			    message: '打开开发者工具',
+			    level: NotificationLevel.info
+			});
 			console.log('打开开发者工具');
 			nodeBridge.openDevTools();
 			clickSpeedCounter = 0;

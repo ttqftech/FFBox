@@ -1,5 +1,5 @@
 import { computed, FunctionalComponent } from 'vue';
-import { vcodecs, resolution, framerate } from '@common/vcodecs';
+import { vcodecs, resolution, framerate } from '@common/params/vcodecs';
 import Combobox from './components/Combobox.vue';
 import Inputbox from './components/Inputbox.vue';
 import Slider from './components/Slider.vue';

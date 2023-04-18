@@ -1,7 +1,7 @@
 import { computed, defineComponent, FunctionalComponent, onBeforeUnmount, ref, Transition, VNodeRef, watch, onUnmounted } from 'vue'; // defineComponent 的主要功能是提供类型检查
 import { TaskStatus, TransferStatus, UITask } from '@common/types';
-import { generator as vGenerator } from '@common/vcodecs';
-import { generator as aGenerator } from '@common/acodecs';
+import { generator as vGenerator } from '@common/params/vcodecs';
+import { generator as aGenerator } from '@common/params/acodecs';
 import { useAppStore } from '@renderer/stores/appStore';
 import Tooltip from '@renderer/components/Tooltip/Tooltip';
 import nodeBridge from '@renderer/bridges/nodeBridge';

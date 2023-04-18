@@ -33,6 +33,8 @@ function callHelper<T>(func: (helper: ChildProcess) => Promise<T> | T): Promise<
 		}
 
 		// 检查 nodeBridge
+		// TODO isElectron 不可用
+		// @ts-ignore
 		if (!nodeBridge.isElectron) {
 			reject('非 electron 环境');
 			return;

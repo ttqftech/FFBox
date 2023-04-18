@@ -209,11 +209,6 @@ class ElectronApp {
 			}
 		});
 
-		// 关闭按钮
-		ipcMain.on('close', () => {
-			this.mainWindow.close();
-		});
-
 		// 窗口主动发送的确认关闭通知
 		ipcMain.on('exitConfirm', () => {
 			this.blockWindowClose = false;

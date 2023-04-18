@@ -1,8 +1,12 @@
 import nodeBridge from "@renderer/bridges/nodeBridge";
-import { NotificationLevel, Server as ServerData, SingleProgressLog, Task, TaskStatus, TransferStatus, UITask, WorkingStatus } from "@common/types";
+import { NotificationLevel, Task, TaskStatus, TransferStatus, UITask, WorkingStatus } from "@common/types";
 import { Server } from '@renderer/types';
 import { getInitialUITask, mergeTaskFromService } from "@common/utils";
 import { dashboardTimer, overallProgressTimer } from "@renderer/common/dashboardCalc";
+import Popup from "@renderer/components/Popup/Popup";
+import Msgbox from "@renderer/components/Msgbox/Msgbox";
+import IconExitConfirm from "@renderer/assets/exitConfirm.svg";
+import { ButtonType } from "@renderer/components/Button/Button";
 
 // #region server events
 
@@ -120,7 +124,7 @@ export function handleProgressUpdate(server: Server, id: number, progressLog: Ta
  */
 export function handleTaskNotification(server: Server, id: number, content: string, level: NotificationLevel) {
     server.data.tasks[id].notifications.push({ content, level, time: new Date().getTime() });
-    this.$popup({
+    Popup({
         message: content,
         level: level,
     });
@@ -148,6 +152,45 @@ export function handleDownloadProgress(task: UITask, progress: { loaded: number,
 	const transferred = task.transferProgressLog.transferred;
 	transferred.push([new Date().getTime() / 1000, progress.loaded]);
 	transferred.splice(0, transferred.length - 3);	// 限制列表最大长度为 3
+}
+
+export function handleCloseConfirm(localServer?: Server) {
+    function readyToClose () {
+        nodeBridge.ipcRenderer?.send('exitConfirm');
+        setTimeout(() => {
+            nodeBridge.ipcRenderer?.send('close');
+        }, 0);
+    }
+    // getQueueTaskCount 拷贝自 FFBoxService
+    function getQueueTaskCount(server: Server) {
+        let count: number = 0;
+        for (const task of Object.values(server.data.tasks)) {
+            if (task.status === TaskStatus.TASK_RUNNING || task.status === TaskStatus.TASK_PAUSED || task.status === TaskStatus.TASK_STOPPING || task.status === TaskStatus.TASK_FINISHING) {
+                count++;
+            }
+        }
+        return count;
+    }
+    if (!localServer) {
+        readyToClose();
+    } else {
+        let queueTaskCount = getQueueTaskCount(localServer);
+        if (queueTaskCount > 0) {
+            Msgbox({
+                container: document.body,
+                // container: containerRef.value,
+                image: <IconExitConfirm />,
+                title: '要退出吗？',
+                content: `本地服务器还有 ${queueTaskCount} 个任务未完成，退出将会强制停止任务哦～`,
+                buttons: [
+                    { text: '退退退', callback: readyToClose, type: ButtonType.Danger, role: 'confirm' },
+                    { text: '再等等', role: 'cancel' },
+                ]
+            })
+        } else {
+            readyToClose();
+        }
+    }
 }
 
 // #endregion

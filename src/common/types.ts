@@ -232,51 +232,6 @@ export interface Server {
 	overallProgressTimerID: any;
 }
 
-export interface StoreState {
-	// 界面类
-	showSponsorCenter: boolean;
-	showInfoCenter: boolean;
-	listSelected: number;
-	paraSelected: number;
-	draggerPos: number;
-	// 非界面类
-	notifications: Array<Notification>;
-	unreadNotificationCount: number;
-	servers: {[key: string]: Server};
-	// serviceBridges: { [key: string]: ServiceBridge };
-	serviceBridges: { [key: string]: any };
-	currentServerName: string;
-	selectedTask: Set<string>;
-	globalParams: OutputParams;
-	downloadMap: Map<string, { serverName: string, taskId: number }>;
-	machineCode: string;
-	functionLevel: number;
-}
-
-export interface BaseComboItem {
-	sName: string;
-	lName: string;
-	imageName?: string;
-	imageOffset?: number;
-	description?: string;
-}
-
-export type Parameter = {
-	mode: 'slider',
-	parameter: string,
-	display: string,
-	step: number,	// 档位数量，无档置 0
-	tags: Map<number, string>,	// 刻度
-	valueToText: (value: any) => string,	// 将值转换为供 UI 显示的文字
-	valueProcess: (value: any) => number,	// 调整滑块时作为中间过程调用，一般用于吸附、档位等功能
-	valueToParam: (value: any) => string,	// 将值转换为供 ffmpeg 识别的参数值
-} | {
-	mode: 'combo',
-	parameter: string,
-	display: string,
-	items: Array<BaseComboItem>,
-};
-
 export interface NormalApiWrapper<T> {
 	status: number;
 	message: string;

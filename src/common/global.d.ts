@@ -1,9 +1,4 @@
-import { FFBoxService } from '@main/service/FFBoxService';
-
 declare global {
-	interface Window {
-		ffboxService: FFBoxService;
-	}
 	interface Element {
 		focus(): void;
 		readonly offsetLeft: number;
@@ -25,3 +20,5 @@ declare global {
 		value: any;
 	}
 }
+
+export {};

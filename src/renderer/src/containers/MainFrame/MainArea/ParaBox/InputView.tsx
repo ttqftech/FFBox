@@ -1,7 +1,7 @@
 import { FunctionalComponent } from 'vue';
 import Combobox from './components/Combobox.vue'
 import Inputbox from './components/Inputbox.vue'
-import { hwaccels, generator } from '@common/formats'
+import { hwaccels, generator } from '@common/params/formats'
 import { useAppStore } from '@renderer/stores/appStore';
 import style from './index.module.less';
 

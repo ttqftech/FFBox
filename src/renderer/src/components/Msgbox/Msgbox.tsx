@@ -1,4 +1,5 @@
 import { AppContext, createVNode, render, VNode } from 'vue';
+import { ButtonType as ButtonType } from '../Button/Button';
 import MsgboxUI from './MsgboxComponent';
 
 export interface MsgboxOptions {
@@ -11,17 +12,13 @@ export interface MsgboxOptions {
 export interface Button {
 	text: string;
 	callback?: () => boolean | Promise<void> | void;
-	role?: ButtonRole;
+	type?: ButtonType;
+	role?: 'confirm' | 'cancel';
 }[];
-export enum ButtonRole {
-	Normal = 0,
-	Primary = 1,
-	Danger = 2,
-};
 
 const defaultButton: Button = {
 	text: '好嘅',
-	role: ButtonRole.Normal,
+	type: ButtonType.Normal,
 	callback: () => console.log('cancelled'),
 };
 

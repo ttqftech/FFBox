@@ -2,7 +2,7 @@ import { FunctionalComponent } from 'vue';
 import Combobox from './components/Combobox.vue'
 import Inputbox from './components/Inputbox.vue'
 import Checkbox from './components/Checkbox.vue'
-import { formats, generator } from '@common/formats'
+import { formats, generator } from '@common/params/formats'
 import { useAppStore } from '@renderer/stores/appStore';
 import style from './index.module.less';
 

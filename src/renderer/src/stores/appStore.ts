@@ -1,16 +1,18 @@
 import { VNodeRef } from 'vue';
 import { defineStore } from 'pinia';
-// @ts-ignore
-import path from 'path-browserify';
 import CryptoJS from 'crypto-js';
-import { OutputParams, TaskStatus, TransferStatus, WorkingStatus } from '@common/types';
+import { NotificationLevel, OutputParams, TaskStatus, TransferStatus, WorkingStatus } from '@common/types';
 import { Server } from '@renderer/types';
 import { defaultParams } from "@common/defaultParams";
 import { ServiceBridge, ServiceBridgeStatus } from '@renderer/bridges/serviceBridge'
-import { getInitialUITask, randomString, replaceOutputParams, trimExt } from '@common/utils';
+import { getInitialUITask, randomString, replaceOutputParams } from '@common/utils';
+import path from '@common/path';
 import { handleCmdUpdate, handleFFmpegVersion, handleProgressUpdate, handleTasklistUpdate, handleTaskNotification, handleTaskUpdate, handleWorkingStatusUpdate } from './eventsHandler';
 import nodeBridge from '@renderer/bridges/nodeBridge';
 import { dashboardTimer } from '@renderer/common/dashboardCalc';
+import Popup from '@renderer/components/Popup/Popup';
+
+const { trimExt } = path;
 
 interface StoreState {
 	// 界面类
@@ -140,15 +142,15 @@ export const useAppStore = defineStore('app', {
 				xhr.onreadystatechange = function (e) {
 					if (xhr.readyState !== 0) {
 						if (xhr.status >= 400 && xhr.status < 500) {
-							// thisVue.$popup({
-							// 	message: `【${file.name}】网络请求故障，上传失败`,
-							// 	level: NotificationLevel.error,
-							// })
+							Popup({
+								message: `【${file.name}】网络请求故障，上传失败`,
+								level: NotificationLevel.error,
+							})
 						} else if (xhr.status >= 500 && xhr.status < 600) {
-							// thisVue.$popup({
-							// 	message: `【${file.name}】服务器故障，上传失败`,
-							// 	level: NotificationLevel.error,
-							// })
+							Popup({
+								message: `【${file.name}】服务器故障，上传失败`,
+								level: NotificationLevel.error,
+							})
 						}
 					}
 				}
@@ -173,7 +175,7 @@ export const useAppStore = defineStore('app', {
 				setTimeout(() => {	// v2.4 版本开始完全可以不要延时，但是太生硬，所以加个动画
 					console.log('添加任务', file.path);
 					let isRemote = server.entity.ip !== 'localhost';
-					let promise: Promise<number> = 这.addTask(trimExt(path, file.name), isRemote ? '' : file.path);
+					let promise: Promise<number> = 这.addTask(trimExt(file.name), isRemote ? '' : file.path);
 					if (isRemote) {
 						promise.then((id) => {
 							checkAndUploadFile(file, id);
@@ -409,10 +411,6 @@ export const useAppStore = defineStore('app', {
 			const server = 这.servers.find((server) => server.data.id === serverId) as Server;
 			const entity = server.entity;
 			if (!ip) {
-				// mainVue.$popup({
-				// 	message: '请输入服务器 IP 或域名以添加服务器',
-				// 	level: NotificationLevel.error,
-				// })
 				return;
 			}
 			const _port = port ?? 33269;

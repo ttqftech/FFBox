@@ -1,5 +1,5 @@
 import { computed, FunctionalComponent } from 'vue';
-import { acodecs, volSlider } from '@common/acodecs';
+import { acodecs, volSlider } from '@common/params/acodecs';
 import Combobox from './components/Combobox.vue';
 import Inputbox from './components/Inputbox.vue';
 import Slider from './components/Slider.vue';

@@ -7,6 +7,7 @@ specifiers:
   '@types/koa-router': ^7.4.4
   '@types/koa-static': ^4.0.2
   '@types/node': ^18.11.13
+  '@types/path-browserify': ^1.0.0
   '@types/ws': ^8.5.3
   '@vitejs/plugin-vue': ^4.0.0
   '@vitejs/plugin-vue-jsx': ^3.0.0
@@ -27,8 +28,6 @@ specifiers:
   prettier: ^2.8.1
   ts-loader: ^9.4.2
   typescript: ^4.9.4
-  upath: ^2.0.1
-  upath2: ^3.1.19
   vite: ^4.0.0
   vite-plugin-vue-type-imports: ^0.2.4
   vite-svg-loader: ^4.0.0
@@ -50,7 +49,6 @@ dependencies:
   less: 4.1.3
   path-browserify: 1.0.1
   pinia: 2.0.29_prq2uz4lho2pwp6irk4cfkrxwu
-  upath2: 3.1.19
   vue: 3.2.45
   ws: 8.11.0
 
@@ -61,6 +59,7 @@ devDependencies:
   '@types/koa-router': 7.4.4
   '@types/koa-static': 4.0.2
   '@types/node': 18.11.13
+  '@types/path-browserify': 1.0.0
   '@types/ws': 8.5.3
   '@vitejs/plugin-vue': 4.0.0_vite@4.0.0+vue@3.2.45
   electron: 23.1.4
@@ -69,7 +68,6 @@ devDependencies:
   prettier: 2.8.1
   ts-loader: 9.4.2_3fkjkrd3audxnith3e7fo4fnxi
   typescript: 4.9.4
-  upath: 2.0.1
   vite: 4.0.0_wbf2dudkfgquhylqvtj6pxpbau
   vite-plugin-vue-type-imports: 0.2.4_vite@4.0.0+vue@3.2.45
   vite-svg-loader: 4.0.0
@@ -920,6 +918,10 @@ packages:
 
   /@types/node/18.11.13:
     resolution: {integrity: sha512-IASpMGVcWpUsx5xBOrxMj7Bl8lqfuTY7FKAnPmu5cHkfQVWF8GulWS1jbRqA934qZL35xh5xN/+Xe/i26Bod4w==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npm.taobao.org/@types/node/-/node-18.11.13.tgz}
+
+  /@types/path-browserify/1.0.0:
+    resolution: {integrity: sha512-XMCcyhSvxcch8b7rZAtFAaierBYdeHXVvg2iYnxOV0MCQHmPuRRmGZPFDRzPayxcGiiSL1Te9UIO+f3cuj0tfw==}
+    dev: true
 
   /@types/plist/3.0.2:
     resolution: {integrity: sha512-ULqvZNGMv0zRFvqn8/4LSPtnmN4MfhlPNtJCTpKuIIxGVGZ2rYWzFXrvEBoh9CVyqSE7D6YFRJ1hydLHI6kbWw==}
@@ -3625,12 +3627,6 @@ packages:
     resolution: {integrity: sha512-AVbw3UJ2e9bq64vSaS9Am0fje1Pa8pbGqTTsmXfaIiMpnr5DlDhfJOuLj9Sf95ZPVDAUerDfEk88MPmPe7UCQg==}
     engines: {node: '>=0.10.0'}
 
-  /path-is-network-drive/1.0.20:
-    resolution: {integrity: sha512-p5wCWlRB4+ggzxWshqHH9aF3kAuVu295NaENXmVhThbZPJQBeJdxZTP6CIoUR+kWHDUW56S9YcaO1gXnc/BOxw==}
-    dependencies:
-      tslib: 2.4.1
-    dev: false
-
   /path-key/3.1.1:
     resolution: {integrity: sha512-ojmeN0qd+y0jszEtoY48r0Peq5dwMEkIlCOu6Q5f41lfkswXuKtYrhgoTpLnyIcHm24Uhqx+5Tqm2InSwLhE6Q==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npm.taobao.org/path-key/-/path-key-3.1.1.tgz}
     engines: {node: '>=8'}
@@ -3638,12 +3634,6 @@ packages:
 
   /path-parse/1.0.7:
     resolution: {integrity: sha512-LDJzPVEEEPR+y48z93A0Ed0yXb8pAByGWo/k5YYdYgpY2/2EsOsksJrq7lOHxryrVOn1ejG6oAp8ahvOIQD8sw==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npm.taobao.org/path-parse/-/path-parse-1.0.7.tgz}
-
-  /path-strip-sep/1.0.17:
-    resolution: {integrity: sha512-+2zIC2fNgdilgV7pTrktY6oOxxZUo9x5zJYfTzxsGze5kSGDDwhA5/0WlBn+sUyv/WuuyYn3OfM+Ue5nhdQUgA==}
-    dependencies:
-      tslib: 2.4.1
-    dev: false
 
   /path-to-regexp/6.2.1:
     resolution: {integrity: sha512-JLyh7xT1kizaEvcaXOQwOc2/Yhw6KZOvPf1S8401UyLk86CU79LN3vl7ztXGm/pZ+YjoyAJ4rxmHwbkBXJX+yw==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npm.taobao.org/path-to-regexp/-/path-to-regexp-6.2.1.tgz}
@@ -4296,20 +4286,6 @@ packages:
   /unpipe/1.0.0:
     resolution: {integrity: sha512-pjy2bYhSsufwWlKwPc+l3cN7+wuJlK6uz0YdJEOlQDbl6jo/YlPi4mb8agUkVC8BF7V8NuzeyPNqRksA3hztKQ==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npm.taobao.org/unpipe/-/unpipe-1.0.0.tgz}
     engines: {node: '>= 0.8'}
-    dev: false
-
-  /upath/2.0.1:
-    resolution: {integrity: sha512-1uEe95xksV1O0CYKXo8vQvN1JEbtJp7lb7C5U9HMsIp6IVwntkH/oNUzyVNQSd4S1sYk2FpSSW44FqMc8qee5w==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npm.taobao.org/upath/-/upath-2.0.1.tgz}
-    engines: {node: '>=4'}
-    dev: true
-
-  /upath2/3.1.19:
-    resolution: {integrity: sha512-d23dQLi8nDWSRTIQwXtaYqMrHuca0As53fNiTLLFDmsGBbepsZepISaB2H1x45bDFN/n3Qw9bydvyZEacTrEWQ==}
-    dependencies:
-      '@types/node': 18.11.13
-      path-is-network-drive: 1.0.20
-      path-strip-sep: 1.0.17
-      tslib: 2.4.1
     dev: false
 
   /update-browserslist-db/1.0.10_browserslist@4.21.4:

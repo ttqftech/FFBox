@@ -4,7 +4,7 @@ import os from 'os';
 import fs from 'fs';
 import { ServiceTask, TaskStatus, OutputParams, FFBoxServiceEvent, NotificationLevel, FFmpegProgress, WorkingStatus, FFBoxServiceInterface } from '@common/types';
 import { getFFmpegParaArray, getFFmpegParaArrayOutputPath } from '@common/getFFmpegParaArray';
-import { generator as fGenerator } from '@common/formats';
+import { generator as fGenerator } from '@common/params/formats';
 import { defaultParams } from '@common/defaultParams';
 import { getInitialServiceTask, convertAnyTaskToTask, getTimeString, TypedEventEmitter, replaceOutputParams, randomString } from '@common/utils';
 import { FFmpeg } from './FFmpegInvoke';
