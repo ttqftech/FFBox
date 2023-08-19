@@ -120,4 +120,8 @@ export default {
 	openDevTools(): void {
 		window.jsb?.ipcRenderer?.send('openDevTools');
 	},
+
+	startService(): void {
+		window.jsb?.ipcRenderer?.send('startService');
+	},
 }

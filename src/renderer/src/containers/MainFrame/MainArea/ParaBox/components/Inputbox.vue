@@ -1,27 +1,25 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
-import { parseTimeString } from '@common/utils';
 
 interface Props {
 	title: string;
-	value: string;
+	value?: string;
 	long?: boolean;
-	type?: 'duration' | 'number';
+	validator?: (value: string) => string;
+	inputFixer?: (value: string) => string;
 	placeholder?: string;
-	notNull?: boolean;	// 是否不能为空，后期考虑改用其他验证器
 	onChange?: (value: string) => any;
-	onInput?: (value: string) => any;
 };
 
 const props = defineProps<Props>();
 
 const focused = ref(false);
 const inputText = ref('-');
-const typeCheckOK = ref(true);
+const invalidMsg = ref<string>(undefined);
 
 const selectorStyle = computed(() => {
 	const ret: any = {};
-	if (!typeCheckOK.value || (props.notNull && inputText.value === '')) {
+	if (invalidMsg.value) {
 		ret.border = '#E66 1px solid';
 		ret.boxShadow = '0 0 12px hsla(0, 100%, 60%, 0.3), 0px 4px 8px rgba(0, 0, 0, 0.05)';
 		if (focused.value) {
@@ -45,28 +43,20 @@ const handleFocus = (event: FocusEvent) => {
 	focused.value = true;
 };
 const handleInput = (event: KeyboardEvent) => {
-	(props.onChange || (() => {}))(event.target!.value);
-	(props.onInput || (() => {}))(event.target!.value);
+	if (props.inputFixer) {
+		inputText.value = props.inputFixer(event.target.value);
+	}
+	(props.onChange || (() => {}))(inputText.value);
 };
 
 watch(() => props.value, (newValue, oldValue) => {		// props 的 text 只有单向数据流，因此新增 data 的 inputText 做双向绑定和事件监听
 	inputText.value = newValue;
 });
 watch(inputText, (newValue, oldValue) => {		// props 的 text 只有单向数据流，因此新增 data 的 inputText 做双向绑定和事件监听
-	if (!newValue) {
-		typeCheckOK.value = true;
-		return;
-	}
-	switch (props.type) {
-		case 'duration':
-			typeCheckOK.value = parseTimeString(newValue) > 0;
-			break;
-		case 'number':
-			typeCheckOK.value = newValue.match(/^\d+(.\d+)?$/) ? true : false;
-			break;
-		default:
-			typeCheckOK.value = true;
-			break;
+	if (props.validator) {
+		invalidMsg.value = props.validator(newValue ?? '');
+	} else {
+		invalidMsg.value = undefined;
 	}
 }, { immediate: true });
 

@@ -27,9 +27,9 @@ export default defineConfig({
 		rollupOptions: {
 			external: [
 				'electron',
-				...builtinModules,
+				// ...builtinModules,
 				// @ts-ignore
-				...Object.keys(pkgJSON.dependencies || {}),
+				// ...Object.keys(pkgJSON.dependencies || {}),
 			],
 		},
 	},

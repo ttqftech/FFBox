@@ -1,6 +1,13 @@
 import { ChildProcess, spawn as spawnNode, SpawnOptions } from 'child_process';
 import { getEnv } from './utils';
 
+export enum ErrorType {
+	DEAD = '启动异常', // 进程意外退出（启动异常）
+	NON_EXISTENT = '文件不存在',  // 文件不存在
+	NON_EXECUTABLE = '不是可执行文件',  // 不是可执行文件
+	NO_PERMISSION = '无执行权限',  // 无执行权限
+}
+    
 let spawnElectron: (...args: any) => ChildProcess;
 
 if (getEnv() === 'electron-renderer') {
@@ -20,7 +27,7 @@ export function spawnInvoker(command: string, args: ReadonlyArray<string> | unde
 				process = spawn(command, args || [], options);
 				setTimeout(() => {
 					if (process.killed) {
-						reject(`${command} 启动异常`);
+						reject(ErrorType.DEAD);
 					} else {
 						resolve(process);
 					}
@@ -28,24 +35,24 @@ export function spawnInvoker(command: string, args: ReadonlyArray<string> | unde
 				process.on('error', (e) => {
 					const err = e as any;
 					if (err.code === 'ENOENT') {
-						reject(`${command} 不存在`);
+						reject(ErrorType.NON_EXISTENT);
 					} else {
-						reject(`${command} 启动异常`);
+						reject(ErrorType.DEAD);
 					}
 				});
 			} catch (e: any) {
 				if (e.code === 'EACCES' || e.code === 'EISDIR' || e.code === 'ENOEXEC') {
-					reject(`${command} 文件错误`);
+					reject(ErrorType.NON_EXECUTABLE);
 				} else if (e.code === 'EPERM') {
 					if (times === 0) {
-						reject(`${command} 无权限运行`);
+						reject(ErrorType.NO_PERMISSION);
 					} else {
 						setTimeout(() => {
 							trySpawn(times - 1);
 						}, 0);
 					}
 				} else {
-					reject(`${command} 无法启动`);
+					reject(ErrorType.DEAD);
 				}
 			}
 		}

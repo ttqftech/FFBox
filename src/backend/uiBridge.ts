@@ -13,6 +13,7 @@ import { FFBoxService } from './FFBoxService';
 import { getTimeString } from '@common/utils';
 
 // let koaBody = require('koa-body');
+const isDev = true;
 
 let server: Http.Server | null;
 let koa: Koa | null;
@@ -21,6 +22,12 @@ let ffboxService: FFBoxService | null;
 
 const uploadDir = os.tmpdir() + '/FFBoxUploadCache'; // 文件上传目录
 const downloadDir = os.tmpdir() + '/FFBoxDownloadCache'; // 文件下载目录
+
+function logDev(...content: any) {
+	if (isDev) {
+		console.log(...content);
+	}
+}
 
 const uiBridge = {
 	init(self: FFBoxService): void {
@@ -56,7 +63,7 @@ const uiBridge = {
 
 		// 初始化响应头和响应码
 		koa.use(async (ctx, next) => {
-			console.log(getTimeString(new Date()), '收到请求：', ctx.request.url);
+			logDev(getTimeString(new Date()), '收到请求：', ctx.request.url);
 			ctx.response.set('Access-Control-Allow-Origin', '*');
 			ctx.response.set('Access-Control-Allow-Headers', 'Content-Type');
 			if (ctx.request.method === 'OPTIONS') {
@@ -127,10 +134,10 @@ function mountWebSocketEvents(ws: WebSocket, request: Http.IncomingMessage): voi
 	const address = request.socket.remoteAddress;
 	console.log(getTimeString(new Date()), `新客户端接入：${address}。`);
 
-	ws.on('message', function (message: string | Buffer) {
+	ws.on('message', function (message: Buffer, isBinary: boolean): void {
 		// console.log('uiBridge: 收到来自客户端的消息', message);
-		if (typeof message === 'string') {
-			handleMessageFromClient(message as string);
+		if (!isBinary) {
+			handleMessageFromClient(message.toString());
 		}
 	});
 
@@ -156,6 +163,7 @@ function handleMessageFromClient(message: string): void {
 	}
 	const data: FFBoxServiceFunctionApi = JSON.parse(message);
 	const args = data.args;
+	logDev(getTimeString(new Date()), '收到调用：', data);
 	// @ts-ignore
 	ffboxService[data.function](...args.map((value) => (value === null ? undefined : value)));
 }
@@ -185,6 +193,7 @@ function mountEventFromService(): void {
 						event,
 						payload,
 					};
+					logDev(getTimeString(new Date()), '触发信息：', data);
 					// console.log('将要发送 ws 信息', event, event === 'taskUpdate' ? [(payload as any).content.after.input.files, (payload as any).content.paraArray.join(' ')] : undefined);
 					client.send(JSON.stringify(data));
 				}

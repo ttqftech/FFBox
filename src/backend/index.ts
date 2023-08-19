@@ -19,6 +19,10 @@ export function getSingleArgvValue(argName: string, ignoreCase = false) {
 	return undefined;
 }
   
-let time = 0;
-
 const service = new FFBoxService();
+service.on('serverError', () => {
+	process.exit();
+});
+service.on('serverClose', () => {
+	process.exit();
+});

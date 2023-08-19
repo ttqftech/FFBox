@@ -8,7 +8,16 @@
     "output": "release"
   },
   "files": [
-    "app"
+    "app/main",
+    "app/preload",
+    "app/renderer",
+    "!**/*.map"
+  ],
+  "extraFiles": [
+    {
+      "from": "app/backend/index.exe",
+      "to": "FFBoxService.exe",
+    }
   ],
   "mac": {
     "artifactName": "${productName}_${version}.${ext}",

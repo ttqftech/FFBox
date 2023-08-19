@@ -25,7 +25,7 @@
     "@types/koa-static": "^4.0.2",
     "@types/node": "^18.11.13",
     "@types/path-browserify": "^1.0.0",
-    "@types/ws": "^8.5.3",
+    "@types/ws": "^8.5.5",
     "@vitejs/plugin-vue": "^4.0.0",
     "electron": "^23",
     "electron-builder": "^23.6.0",
@@ -53,6 +53,6 @@
     "path-browserify": "^1.0.1",
     "pinia": "^2.0.29",
     "vue": "^3.2.45",
-    "ws": "^8.11.0"
+    "ws": "^8.13.0"
   }
 }

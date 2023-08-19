@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue';
 import { useAppStore } from '@renderer/stores/appStore';
 import { ServiceBridgeStatus } from '@renderer/bridges/serviceBridge';
+import nodeBridge from '@renderer/bridges/nodeBridge';
 import ListArea from './MainArea/ListArea.vue';
 import ParaBox from './MainArea/ParaBox.vue';
 import Inputbox from './MainArea/ParaBox/components/Inputbox.vue';
@@ -31,6 +32,12 @@ const handleConnectClicked = () => {
 		return;
 	}
 	appStore.initializeServer(appStore.currentServerId, ip.value, Number(port.value));
+};
+const handleReconnectClicked = async () => {
+	if (location.href.startsWith('file') && appStore.currentServer.entity.ip === 'localhost') {
+		nodeBridge.startService();
+	}
+	appStore.reConnectServer(appStore.currentServerId);
 };
 </script>
 
@@ -91,7 +98,7 @@ const handleConnectClicked = () => {
 								:role="ButtonType.Primary"
 								size="large"
 								:disabled="appStore.currentServer?.entity.status === ServiceBridgeStatus.Connecting"
-								@click="appStore.reConnectServer(appStore.currentServerId)"
+								@click="handleReconnectClicked"
 							>
 								重试
 							</Button>

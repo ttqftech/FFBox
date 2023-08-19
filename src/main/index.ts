@@ -3,6 +3,7 @@ import ElectronStore from 'electron-store';
 import { exec } from 'child_process';
 import * as path from 'path';
 import { TransferStatus } from '@common/types';
+import ProcessInstance from '@common/processInstance';
 import { getOs } from './utils';
 // import { electronApp, optimizer, is } from '@electron-toolkit/utils';
 // import { FFBoxService } from './service/FFBoxService';
@@ -10,7 +11,7 @@ import { getOs } from './utils';
 class ElectronApp {
 	mainWindow: BrowserWindow | null = null;
 	electronStore: ElectronStore;
-	// service: FFBoxService | null = null;
+	service: ProcessInstance | null = null;
 	blockWindowClose = true;
 
 	constructor() {
@@ -180,18 +181,11 @@ class ElectronApp {
 		this.electronStore = new ElectronStore();
 	}
 
-	createService(): void {
-		// if (this.service) {
-		// 	// 开发时使用重载，只重载网页（或热重载 Vue 相关内容），不重载服务
-		// 	return;
-		// }
-		// this.service = new FFBoxService();
-		// this.service.on('serverReady', () => {
-		// 	this.mainWindow!.webContents.send('serverReady');
-		// });
-		// this.service.on('serverError', (error) => {
-		// 	this.mainWindow!.webContents.send('serverError', error.error.message);
-		// });
+	createService(): Promise<void> {
+		this.service = new ProcessInstance();
+		// 目前做不了进程分离，因为启动的时候会瞬间弹一个黑框，十分不优雅。等后期给选项让用户决定行为再去做：https://github.com/nodejs/node/issues/21825
+		// return this.service.start('FFBoxService.exe', [], { detached: true, stdio: 'ignore', windowsHide: true, shell: false });
+		return this.service.start('FFBoxService.exe');
 	}
 
 	mountIpcEvents(): void {
@@ -265,7 +259,7 @@ class ElectronApp {
 		});
 
 		// 打开开发者工具
-		ipcMain.on('openDevTools', (event) => {
+		ipcMain.on('openDevTools', () => {
 			this.mainWindow!.webContents.openDevTools();
 		});
 
@@ -282,9 +276,9 @@ class ElectronApp {
 		});
 
 		// 启动一个 ffboxService，这个 ffboxService 目前钦定监听 localhost:33269，而 serviceBridge 会连接此 service
-		// ipcMain.on('startService', () => {
-		// 	this.createService();
-		// });
+		ipcMain.on('startService', () => {
+			this.createService();
+		});
 
 		ipcMain.handle('electron-store', (event, type: 'get' | 'set', key: string, value?: string) => {
 			if (type === 'get') {

@@ -13,6 +13,9 @@ onMounted(() => {
 	const appStore = useAppStore();
 
 	// 初始化本地服务器
+	if (location.href.startsWith('file')) {
+		nodeBridge.startService();
+	}
 	const localServerId = appStore.addServer();
 	appStore.initializeServer(localServerId, 'localhost', 33269);
 
