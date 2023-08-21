@@ -294,7 +294,7 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 		newFFmpeg.on('critical', ({ content: errors }) => {
 			console.log(getTimeString(new Date()), `任务出错：${task.fileBaseName}。id：${id}。`);
 			task.status = TaskStatus.TASK_ERROR;
-			this.setNotification(id, '任务「' + task.fileBaseName + '」转码失败。' + [...errors].join('') + '请到左侧的指令面板查看详细原因。', NotificationLevel.error);
+			this.setNotification(id, '任务「' + task.fileBaseName + '」转码失败。' + [...errors].join('') + '请到任务的命令行输出面板查看详细原因。', NotificationLevel.error);
 			this.emit('taskUpdate', {
 				id,
 				content: convertAnyTaskToTask(task),
@@ -304,7 +304,7 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 		newFFmpeg.on('escaped', () => {
 			console.log(getTimeString(new Date()), `任务异常终止：${task.fileBaseName}。id：${id}。`);
 			task.status = TaskStatus.TASK_ERROR;
-			this.setNotification(id, '任务「' + task.fileBaseName + '」异常终止。请到左侧的指令面板查看详细原因。', NotificationLevel.error);
+			this.setNotification(id, '任务「' + task.fileBaseName + '」异常终止。请到任务的命令行输出面板查看详细原因。', NotificationLevel.error);
 			this.emit('taskUpdate', {
 				id,
 				content: convertAnyTaskToTask(task),

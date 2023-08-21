@@ -392,11 +392,23 @@ export class FFmpeg extends (EventEmitter as new () => TypedEventEmitter<FFmpegI
 		}
 		this.requireStop = true;
 		this.status = -1;
+		switch (process.platform) {
+			case 'win32':
+				spawn('taskkill', ['/F', '/PID', this.process.pid + ''], {
+					detached: false,
+					shell: false,
+				});
+				break;
+			case 'linux':
+			case 'darwin':
+				spawn('kill', ['-KILL', this.process.pid! + ''], {
+					detached: false,
+					shell: false,
+				});
+				break;
+			default:
+		}
 		this.addListener('closed', callback);
-		spawn('taskkill', ['/F', '/PID', this.process.pid + ''], {
-			detached: false,
-			shell: false,
-		});
 	}
 	exit(callback: () => void): void {
 		if (!this.process) {
@@ -421,13 +433,8 @@ export class FFmpeg extends (EventEmitter as new () => TypedEventEmitter<FFmpegI
 				osBridge.pauseNresumeProcess(true, this.process.pid!);
 				break;
 			case 'linux':
-				spawn('kill', ['-STOP', this.process.pid! + ''], {
-					detached: false,
-					shell: false,
-				});
-				break;
 			case 'darwin':
-				spawn('kill', ['-s', 'STOP', this.process.pid! + ''], {
+				spawn('kill', ['-STOP', this.process.pid! + ''], {
 					detached: false,
 					shell: false,
 				});
@@ -445,13 +452,8 @@ export class FFmpeg extends (EventEmitter as new () => TypedEventEmitter<FFmpegI
 				osBridge.pauseNresumeProcess(false, this.process.pid!);
 				break;
 			case 'linux':
-				spawn('kill', ['-CONT', this.process.pid! + ''], {
-					detached: false,
-					shell: false,
-				});
-				break;
 			case 'darwin':
-				spawn('kill', ['-s', 'CONT', this.process.pid! + ''], {
+				spawn('kill', ['-CONT', this.process.pid! + ''], {
 					detached: false,
 					shell: false,
 				});

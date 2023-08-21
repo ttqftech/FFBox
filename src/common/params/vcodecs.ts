@@ -413,6 +413,62 @@ const nvencPreset = [
 		imageOffset: 0,
 		description: '',
 	},
+	{
+		sName: 'p1',
+		lName: 'p1',
+		imageName: '',
+		imageOffset: 0,
+		description: 'fastest (lowest quality)',
+	},
+	{
+		sName: 'p2',
+		lName: 'p2',
+		imageName: '',
+		imageOffset: 0,
+		description: 'faster (lower quality)',
+	},
+	{
+		sName: 'p3',
+		lName: 'p3',
+		imageName: '',
+		imageOffset: 0,
+		description: 'fast (low quality)',
+	},
+	{
+		sName: 'p4',
+		lName: 'p4',
+		imageName: '',
+		imageOffset: 0,
+		description: '',
+	},
+	{
+		sName: 'p4',
+		lName: 'p4',
+		imageName: '',
+		imageOffset: 0,
+		description: 'medium (default)',
+	},
+	{
+		sName: 'p5',
+		lName: 'p5',
+		imageName: '',
+		imageOffset: 0,
+		description: 'slow (good quality)',
+	},
+	{
+		sName: 'p6',
+		lName: 'p6',
+		imageName: '',
+		imageOffset: 0,
+		description: 'slower (better quality)',
+	},
+	{
+		sName: 'p7',
+		lName: 'p7',
+		imageName: '',
+		imageOffset: 0,
+		description: 'slowest (best quality)',
+	},
 ]
 
 // #endregion
@@ -764,6 +820,13 @@ const high444 = {
 	imageOffset: 0,
 	description: 'high444',
 }
+const extended = {
+	sName: 'extended',
+	lName: 'extended',
+	imageName: '',
+	imageOffset: 0,
+	description: 'extended',
+}
 
 
 // #endregion
@@ -1001,6 +1064,13 @@ const rgb24 = {
 	imageOffset: 0,
 	description: '',
 }
+const bgra = {
+	sName: 'bgra',
+	lName: 'bgra',
+	imageName: '',
+	imageOffset: 0,
+	description: '',
+}
 const cuda = {
 	sName: 'cuda',
 	lName: 'cuda',
@@ -1018,6 +1088,13 @@ const d3d11 = {
 const dxva2_vld = {
 	sName: 'dxva2_vld',
 	lName: 'dxva2_vld',
+	imageName: '',
+	imageOffset: 0,
+	description: '',
+}
+const videotoolbox_vld = {
+	sName: 'videotoolbox_vld',
+	lName: 'videotoolbox_vld',
 	imageName: '',
 	imageOffset: 0,
 	description: '',
@@ -1225,7 +1302,7 @@ const vcodecs: VCodec[] = [
 						...qsvPresetSlider,
 					},
 					{
-						mode: "combo", parameter: 'profile', display: '规格',
+						mode: "combo", parameter: 'profile:v', display: '规格',
 						items: [ 自动, main, main10, mainsp ]
 					},
 					{
@@ -1261,7 +1338,7 @@ const vcodecs: VCodec[] = [
 						items: [ 默认, psnr, ssim, fastdecode, zerolatency ]
 					},
 					{
-						mode: "combo", parameter: "profile", display: "规格",
+						mode: "combo", parameter: 'profile:v', display: "规格",
 						items: [ 自动, main, main10, rext ]
 					},
 					{
@@ -1348,7 +1425,7 @@ const vcodecs: VCodec[] = [
 						]
 					},
 					{
-						mode: "combo", parameter: "profile", display: "规格",
+						mode: "combo", parameter: 'profile:v', display: "规格",
 						items: [ 自动, main, high ]
 					},
 					{
@@ -1375,6 +1452,34 @@ const vcodecs: VCodec[] = [
 					},
 				]
 			},
+			{
+				sName: 'hevc_videotoolbox',
+				lName: 'hevc_videotoolbox',
+				imageName: 'video_vcodec',
+				imageOffset: 0,
+				description: '苹果硬件加速编码器',
+				codecName: 'hevc_videotoolbox',
+				parameters: [
+					{
+						mode: "combo", parameter: 'profile:v', display: "规格",
+						items: [ 自动, main, main10 ]
+					},
+					{
+						mode: "combo", parameter: "pix_fmt", display: "像素格式",
+						items: [ 自动, videotoolbox_vld, nv12, yuv420p, bgra, p010le ]
+					},
+				],
+				ratecontrol: [
+					{
+						...ABR,
+						...vbitrateSlider
+					},
+					{
+						...Q,
+						...q100slider
+					},
+				]
+			},
 		]
 	},
 	{
@@ -1397,7 +1502,7 @@ const vcodecs: VCodec[] = [
 						items: [ 默认, film, animation, grain, stillimage, psnr, ssim, fastdecode, zerolatency ]
 					},
 					{
-						mode: "combo", parameter: "profile", display: "规格",
+						mode: "combo", parameter: 'profile:v', display: "规格",
 						items: [ 自动, baseline, main, high, high422, high444 ]
 					},
 					{
@@ -1445,7 +1550,7 @@ const vcodecs: VCodec[] = [
 						items: [ 默认, film, animation, grain, stillimage, psnr, ssim, fastdecode, zerolatency ]
 					},
 					{
-						mode: "combo", parameter: "profile", display: "规格",
+						mode: "combo", parameter: 'profile:v', display: "规格",
 						items: [ 自动, baseline, main, high, high422, high444 ]
 					},
 					{
@@ -1533,7 +1638,7 @@ const vcodecs: VCodec[] = [
 						...qsvPresetSlider,
 					},
 					{
-						mode: "combo", parameter: 'profile', display: '规格',
+						mode: "combo", parameter: 'profile:v', display: '规格',
 						items: [ 自动, baseline, main, high ]
 					},
 					{
@@ -1569,12 +1674,12 @@ const vcodecs: VCodec[] = [
 						items: [ 默认, psnr, ssim, fastdecode, zerolatency ]
 					},
 					{
-						mode: "combo", parameter: "profile", display: "规格",
+						mode: "combo", parameter: 'profile:v', display: "规格",
 						items: [ 自动, baseline, main, high, high444p ]
 					},
 					{
 						mode: "combo", parameter: "level", display: "级别",
-						items: [ ...hevcLevel ]
+						items: [ ...h264Level ]
 					},
 					{
 						mode: "combo", parameter: "pix_fmt", display: "像素格式",
@@ -1655,12 +1760,12 @@ const vcodecs: VCodec[] = [
 						]
 					},
 					{
-						mode: "combo", parameter: "profile", display: "规格",
+						mode: "combo", parameter: 'profile:v', display: "规格",
 						items: [ 自动, main, high, constrained_baseline, constrained_high ]
 					},
 					{
 						mode: "combo", parameter: "level", display: "级别",
-						items: [ ...hevcLevel ]
+						items: [ ...h264Level ]
 					},
 					{
 						mode: "combo", parameter: "pix_fmt", display: "像素格式",
@@ -1679,6 +1784,38 @@ const vcodecs: VCodec[] = [
 					{
 						...ABR,
 						...vbitrateSlider
+					},
+				]
+			},
+			{
+				sName: 'h264_videotoolbox',
+				lName: 'h264_videotoolbox',
+				imageName: 'video_vcodec',
+				imageOffset: 0,
+				description: '苹果硬件加速编码器',
+				codecName: 'h264_videotoolbox',
+				parameters: [
+					{
+						mode: "combo", parameter: 'profile:v', display: "规格",
+						items: [ 自动, baseline, main, main10, extended ],
+					},
+					{
+						mode: "combo", parameter: "level", display: "级别",
+						items: [ ...h264Level ]
+					},
+					{
+						mode: "combo", parameter: "pix_fmt", display: "像素格式",
+						items: [ 自动, videotoolbox_vld, nv12, yuv420p ]
+					},
+				],
+				ratecontrol: [
+					{
+						...ABR,
+						...vbitrateSlider
+					},
+					{
+						...Q,
+						...q100slider
 					},
 				]
 			},
@@ -2069,7 +2206,7 @@ const vcodecs: VCodec[] = [
 						...qsvPresetSlider,
 					},
 					{
-						mode: "combo", parameter: 'profile', display: '规格',
+						mode: "combo", parameter: 'profile:v', display: '规格',
 						items: [ 自动, main, main10, mainsp ]
 					},
 					{

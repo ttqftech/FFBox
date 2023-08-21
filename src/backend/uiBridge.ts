@@ -251,10 +251,10 @@ function getRouter(): Router {
 		}
 		const file = ctx.request.files.file /*as formidable.File*/ as any;
 		const body = ctx.request.body;
-		console.log(getTimeString(new Date()), '收到文件', file.name);
+		console.log(getTimeString(new Date()), '收到文件', file.originalFilename);
 		const destPath = uploadDir + '/' + body.name;
 		try {
-			fs.renameSync(file.path, destPath);
+			fs.renameSync(file.filepath, destPath);
 			console.log(getTimeString(new Date()), '文件已缓存至', destPath);
 			ctx.response.status = 200;
 		} catch (error) {

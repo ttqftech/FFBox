@@ -206,7 +206,7 @@ export const useAppStore = defineStore('app', {
 			}
 			const params: OutputParams = JSON.parse(JSON.stringify(这.globalParams));
 			params.input.files.push({
-				filePath: path,
+				filePath: path ? path.replace(/\\/g, '/') : undefined,
 			});
 			const result = currentBridge.taskAdd(baseName, params);
 			return result;
@@ -424,11 +424,39 @@ export const useAppStore = defineStore('app', {
 				// 	message: `成功连接到服务器 ${args.serverName}`,
 				// 	level: NotificationLevel.ok,
 				// });
+
+				entity.on('ffmpegVersion', (data) => {
+					handleFFmpegVersion(server, data.content);
+				});
+				entity.on('workingStatusUpdate', (data) => {
+					handleWorkingStatusUpdate(server, data.value);
+				});
+				entity.on('tasklistUpdate', (data) => {
+					handleTasklistUpdate(server, data.content);
+					这.recalcChangedParams();
+				});
+				entity.on('taskUpdate', (data) => {
+					handleTaskUpdate(server, data.id, data.content);
+					这.recalcChangedParams();
+				});
+				entity.on('cmdUpdate', (data) => {
+					handleCmdUpdate(server, data.id, data.content);
+				});
+				entity.on('progressUpdate', (data) => {
+					handleProgressUpdate(server, data.id, data.content, 这.functionLevel);
+				});
+				entity.on('taskNotification', (data) => {
+					handleTaskNotification(server, data.id, data.content, data.level);
+				});
+
 				这.updateGlobalTask(server);
 				entity.getTaskList();
 			});
 			entity.on('disconnected', () => {
 				console.log(`已断开服务器 ${server.entity.ip} 的连接`);
+				for (const eventName of ['ffmpegVersion', 'workingStatusUpdate', 'tasklistUpdate', 'taskUpdate', 'cmdUpdate', 'progressUpdate', 'taskNotification'] as any[]) {
+					entity.removeAllListeners(eventName);
+				}
 				// mainVue.$store.commit('pushMsg',{
 				// 	message: `已断开服务器 ${args.serverName} 的连接`,
 				// 	level: NotificationLevel.warning,
@@ -440,30 +468,6 @@ export const useAppStore = defineStore('app', {
 				// 	message: `服务器 ${args.serverName} 连接出错，建议检查网络连接或防火墙`,
 				// 	level: NotificationLevel.error,
 				// });
-			});
-
-			entity.on('ffmpegVersion', (data) => {
-				handleFFmpegVersion(server, data.content);
-			});
-			entity.on('workingStatusUpdate', (data) => {
-				handleWorkingStatusUpdate(server, data.value);
-			});
-			entity.on('tasklistUpdate', (data) => {
-				handleTasklistUpdate(server, data.content);
-				这.recalcChangedParams();
-			});
-			entity.on('taskUpdate', (data) => {
-				handleTaskUpdate(server, data.id, data.content);
-				这.recalcChangedParams();
-			});
-			entity.on('cmdUpdate', (data) => {
-				handleCmdUpdate(server, data.id, data.content);
-			});
-			entity.on('progressUpdate', (data) => {
-				handleProgressUpdate(server, data.id, data.content, 这.functionLevel);
-			});
-			entity.on('taskNotification', (data) => {
-				handleTaskNotification(server, data.id, data.content, data.level);
 			});
 		},
 		/**
