@@ -32,6 +32,9 @@ export default {
 			set(key: string, value: any) {
 				return window.jsb.ipcRenderer.invoke('electron-store', 'set', key, JSON.parse(JSON.stringify(value)));
 			},
+			delete(key: string) {
+				return window.jsb.ipcRenderer.invoke('electron-store', 'delete', key);
+			},
 		}
 	},
 

@@ -136,7 +136,7 @@ const onDrop = (event: DragEvent) => {	// 此函数触发四次 taskList update�
 				@pause-or-remove="appStore.pauseNremove(task.id)"/>
 		</div>
 		<div v-if="hasFFmpeg" class="dropfilesdiv" @click="appStore.selectedTask = new Set()">
-			<div class="dropfilesimage" @click="debugLauncher" :style="{ 'backgroundImage': `url(src/assets/mainArea/drop_files.png)` }" />
+			<div class="dropfilesimage" @click="debugLauncher" :class="dragging ? 'imgDragging' : 'imgNormal'" />
 		</div>
 		<div v-else class="noffmpeg">
 			<div class="box">
@@ -175,7 +175,6 @@ const onDrop = (event: DragEvent) => {	// 此函数触发四次 taskList update�
 			min-height: 80px;
 			flex-grow: 1;
 			.dropfilesimage {
-				/* background-image: url(/images/mainArea/drop_files.png); */
 				background-size: contain;
 				background-position: center;
 				background-repeat: no-repeat;
@@ -183,6 +182,12 @@ const onDrop = (event: DragEvent) => {	// 此函数触发四次 taskList update�
 				width: 100%;
 				max-height: 200px;
 				height: 100%;
+			}
+			.imgNormal {
+				background-image: url(/src/assets/mainArea/drop_files.png);
+			}
+			.imgDragging {
+				background-image: url(/src/assets/mainArea/drop_files_ok.png);
 			}
 		}
 		.noffmpeg {

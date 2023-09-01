@@ -3,12 +3,12 @@ import { onMounted, ref, watch } from 'vue'
 // import Tooltip from './Tooltip/Tooltip';
 import Tooltip from '@renderer/components/Tooltip/Tooltip';
 
-import { BaseComboItem } from '@common/types';
+import { BasicMenuOption } from '@common/params/types';
 
 interface Props {
 	title: string;
 	text: string;
-	list: Array<BaseComboItem>;
+	list: BasicMenuOption[];
 	readonly?: boolean;
 	deletable?: boolean;
 	onChange?: (value: string) => any;
@@ -278,7 +278,7 @@ function flattenElement(element: Element) {
 						<!-- <div class="combomenu-item-img" style="background-image: url(image/star.png);"></div> -->
 						{{ listitem.lName }}
 						<button v-if="deletable" class="combomenu-item-delete" aria-label="删除此项" @click="handleMenuDeleteClick($event, index)">
-							<img src="@renderer/assets/mainArea/paraBox/×.svg" alt="">
+							<img src="@renderer/assets/mainArea/paraBox/×.svg?url" alt="">
 						</button>
 					</div>
 				</menu>

@@ -39,6 +39,9 @@ onMounted(() => {
 		const task = server.data.tasks[taskId];
 		handleDownloadProgress(task, params);
 	});
+
+	// 加载预设列表
+	appStore.loadPresetList();
 });
 </script>
 

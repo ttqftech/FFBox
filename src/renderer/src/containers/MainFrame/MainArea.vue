@@ -95,7 +95,7 @@ const handleReconnectClicked = async () => {
 						</div>
 						<div class="buttonBox">
 							<Button
-								:role="ButtonType.Primary"
+								:type="ButtonType.Primary"
 								size="large"
 								:disabled="appStore.currentServer?.entity.status === ServiceBridgeStatus.Connecting"
 								@click="handleReconnectClicked"

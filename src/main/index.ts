@@ -280,11 +280,13 @@ class ElectronApp {
 			this.createService();
 		});
 
-		ipcMain.handle('electron-store', (event, type: 'get' | 'set', key: string, value?: string) => {
+		ipcMain.handle('electron-store', (event, type: 'get' | 'set' | 'delete', key: string, value?: string) => {
 			if (type === 'get') {
 				return this.electronStore.get(key);
-			} else {
+			} else if (type === 'set') {
 				return this.electronStore.set(key, value);
+			} else {
+				return this.electronStore.delete(key);
 			}
 		});
 	}

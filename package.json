@@ -12,7 +12,7 @@
     "vite:main": "vite build --config ./config/vite.main.ts",
     "vite:renderer": "vite build --config ./config/vite.renderer.ts",
     "vite:preload": "vite build --config ./config/vite.preload.ts",
-    "pkg:backend": "pkg --config ./config/pkg.config.json ./app/backend/index.js",
+    "pkg:backend": "pkg --config ./config/pkg.config.json ./app/backend/index.cjs",
     "package": "electron-builder"
   },
   "author": "",

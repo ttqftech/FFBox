@@ -38,6 +38,8 @@ interface StoreState {
 	currentServerId: string;
 	selectedTask: Set<number>,
 	globalParams: OutputParams;
+	presetName: string | undefined;
+	availablePresets: string[];
 	downloadMap: Map<string, { serverId: string, taskId: number }>;
 	functionLevel: number;
 }
@@ -73,6 +75,8 @@ export const useAppStore = defineStore('app', {
 			currentServerId: undefined,
 			selectedTask: new Set(),
 			globalParams: JSON.parse(JSON.stringify(defaultParams)),
+			presetName: '',
+			availablePresets: [],
 			downloadMap: new Map(),
 			functionLevel: 50,
 		};
@@ -265,8 +269,9 @@ export const useAppStore = defineStore('app', {
 		/**
 		 * 修改全局参数后调用
 		 * 函数将修改后的全局参数应用到当前选择的任务项，然后保存到本地磁盘
+		 * 对于用户操作，将预设参数置为未保存
 		 */
-		applyParameters() {
+		applyParameters(isUserInteraction = true) {
 			const 这 = useAppStore();
 			// 更改到一些不匹配的值后会导致 getFFmpegParaArray 出错，但是修正代码就在后面，因此仅需忽略它，让它继续运行下去，不要急着更新
 			// let currentServer = state.servers[state.currentServerName];
@@ -293,7 +298,6 @@ export const useAppStore = defineStore('app', {
 			// 存盘
 			clearTimeout((window as any).saveAllParaTimer);
 			(window as any).saveAllParaTimer = setTimeout(() => {
-				let electronStore = nodeBridge.electronStore;
 				if (nodeBridge.env === 'electron') {
 					nodeBridge.electronStore.set('input', 这.globalParams.input);
 					nodeBridge.electronStore.set('video', 这.globalParams.video);
@@ -302,10 +306,14 @@ export const useAppStore = defineStore('app', {
 					console.log('参数已保存');
 				}
 			}, 700);
-		
+
+			// 变更预设参数
+			if (isUserInteraction) {
+				这.presetName = '';
+			}
 		},
 		/**
-		 * 检查有多少参数是非“不重新编码”的，以此更改界面显示形式
+		 * 检查有多少参数是非“不重新编码”的，以此更改界面显示形式（paramsVisibility）
 		 * 在服务器初次加载和修改参数时调用
 		 */
 		recalcChangedParams() {
@@ -360,6 +368,65 @@ export const useAppStore = defineStore('app', {
 				audio: (['none', 'input', 'all'] as any)[paramsVisibility.audio],
 			};
 			// console.log('recalcChangedParams', 这.taskViewSettings.paramsVisibility);
+		},
+		/**
+		 * 按名称载入预设并更新配置（含所选任务配置）
+		 */
+		loadPreset(name: string) {
+			const 这 = useAppStore();
+			if (name === '默认配置') {
+				return new Promise((resolve) => {
+					这.globalParams = JSON.parse(JSON.stringify(defaultParams));
+					这.presetName = name;
+					这.applyParameters(false);
+					resolve(undefined);
+				})
+			} else {
+				return nodeBridge.electronStore.get(`presets.${name}`).then((params) => {
+					if (params) {
+						这.globalParams.input = params.input;
+						这.globalParams.video = params.video;
+						这.globalParams.audio = params.audio;
+						这.globalParams.output = params.output;
+					}
+					这.presetName = name;
+					这.applyParameters(false);
+				});
+			}
+		},
+		savePreset(name: string) {
+			const 这 = useAppStore();
+			return nodeBridge.electronStore.set(`presets.${name}`, 这.globalParams).then(() => {
+				这.presetName = name;
+				这.loadPresetList();
+			});
+		},
+		editPreset(oldName: string, newName: string) {
+			const 这 = useAppStore();
+			async function f() {
+				const oldPreset = await nodeBridge.electronStore.get(`presets.${oldName}`);
+				nodeBridge.electronStore.set(`presets.${newName}`, oldPreset);
+				nodeBridge.electronStore.delete(`presets.${oldName}`);
+				这.presetName = newName;
+				这.loadPresetList();
+			}
+			return f();
+		},
+		deletePreset(name: string) {
+			const 这 = useAppStore();
+			return nodeBridge.electronStore.delete(`presets.${name}`).then(() => {
+				这.presetName = '';
+				这.loadPresetList();
+			});
+		},
+		/**
+		 * 通过 electronStore.get('presets') 得到的 key 更新当前可用的预设菜单
+		 */
+		loadPresetList() {
+			const 这 = useAppStore();
+			nodeBridge.electronStore.get('presets').then((presets) => {
+				这.availablePresets = Object.keys(presets);
+			});
 		},
 		// #endregion 参数处理
 		// #region 通知处理

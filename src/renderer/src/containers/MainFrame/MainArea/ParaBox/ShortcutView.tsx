@@ -1,8 +1,10 @@
 import { FunctionalComponent, ref, VNodeRef } from 'vue';
+import { $ref } from 'vue/macros'
 import { useAppStore } from '@renderer/stores/appStore';
 import style from './index.module.less';
 import Msgbox from '@renderer/components/Msgbox/Msgbox';
 import Button, { ButtonType } from '@renderer/components/Button/Button';
+import RadioList from './components/RadioList.vue'
 import IconPreview from '@renderer/assets/video.svg';
 
 interface Props {}
@@ -10,12 +12,16 @@ interface Props {}
 const ShortcutView: FunctionalComponent<Props> = (props) => {
 	const appStore = useAppStore();
 	const containerRef = ref<VNodeRef>(null);
+	// let radioValue = $ref<string>('值2');
+	// setInterval(() => {
+	// 	radioValue.value = `${Math.random()}`;
+	// }, 1000);
 
-	const handleChange = (mode: any, sName: string, value: any) => {
-		// @ts-ignore
-		appStore.globalParams.input[sName] = value;
-		appStore.applyParameters();
-	}
+	// const handleChange = (mode: any, sName: string, value: any) => {
+	// 	// @ts-ignore
+	// 	appStore.globalParams.input[sName] = value;
+	// 	appStore.applyParameters();
+	// }
 	const msg = () => {
 		Msgbox({
 			container: document.body,
@@ -36,11 +42,32 @@ const ShortcutView: FunctionalComponent<Props> = (props) => {
 			]
 		})
 	}
+	const radioListList = [
+		{ value: '默认配置' },
+		...appStore.availablePresets.map((name) => ({
+			value: name,
+			editable: true,
+			deletable: true,
+		})),
+		{ value: '', editable: true },
+	];
 	return (
 		<div class={style.container} ref={containerRef}>
-			此处新增 RadioList 组件，像任务参数上的 cmd 切换按钮那样（自带一个不可删除的默认项）
-			右边有新增按钮
-			<Button onClick={msg} type={1}>按钮按钮</Button>
+			{/* <Button onClick={() => handleChange(`${Math.random()}`)} type={1}>{appStore.presetName}</Button> */}
+			<RadioList
+				list={radioListList}
+				value={appStore.presetName}
+				placeholder="未保存设定"
+				onChange={(value) => appStore.loadPreset(`${value}`)}
+				onDelete={(value) => appStore.deletePreset(`${value}`)}
+				onEdit={(oldValue, newValue) => {
+					if (oldValue) {
+						appStore.editPreset(oldValue, newValue);
+					} else {
+						appStore.savePreset(newValue);
+					}
+				}}
+			/>
 		</div>
 	);
 };
