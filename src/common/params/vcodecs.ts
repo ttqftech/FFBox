@@ -2809,6 +2809,9 @@ const generator = {
 				ret.push(videoParams.vcodec);
 			}
 		} // 如果编码为自动，则不设置 vcodec 参数，返回空 Array
+		if (videoParams.custom) {
+			ret.push(...videoParams.custom.split(' '));
+		}
 		return ret;
 	},
 	// 获取 ratecontrol 方面的参数，主要是给 taskitem 用

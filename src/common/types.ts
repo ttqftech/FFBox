@@ -1,5 +1,5 @@
 // import { ServiceBridge } from '@renderer/bridge/serviceBridge';
-// import { FFmpeg } from '@main/service/FFmpegInvoke';
+import type { FFmpeg } from '@backend/FFmpegInvoke';
 
 export interface FFBoxServiceInterface {
 	initFFmpeg(): void;
@@ -60,6 +60,7 @@ export type OutputParams_input = {
 } & {
 	files: Array<InputFile>;
 	hwaccel: string;
+	custom?: string;
 };
 
 export type OutputParams_video = {
@@ -70,6 +71,7 @@ export type OutputParams_video = {
 	ratecontrol: string;
 	ratevalue: number;
 	detail: Record<string, any>;
+	custom?: string;
 }
 
 export type OutputParams_audio = {
@@ -79,6 +81,7 @@ export type OutputParams_audio = {
 	ratevalue: number;
 	vol: number;
 	detail: Record<string, any>;
+	custom?: string;
 };
 
 export type OutputParams_output = {
@@ -87,6 +90,7 @@ export type OutputParams_output = {
 	filename: string;
 	begin?: string;
 	end?: string;
+	custom?: string;
 };
 
 export interface InputFile {
@@ -176,9 +180,9 @@ export interface Task {
 }
 
 export interface ServiceTask extends Task {
-	// ffmpeg: FFmpeg | null;
+	ffmpeg: FFmpeg | null;
 	// TODO
-	ffmpeg: any | null;
+	// ffmpeg: any | null;
 	remoteTask: boolean;	// 本地/远程任务对于 service 来说，对输出文件名的处理方式不同；对于 UI 来说，只需要判断 IP 是否为 localhost 即决定是下载还是直接打开了
 }
 

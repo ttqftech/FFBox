@@ -6,6 +6,8 @@ import Msgbox from '@renderer/components/Msgbox/Msgbox';
 import Button, { ButtonType } from '@renderer/components/Button/Button';
 import RadioList from './components/RadioList.vue'
 import IconPreview from '@renderer/assets/video.svg';
+import Popup from '@renderer/components/Popup/Popup';
+import { NotificationLevel } from '@common/types';
 
 interface Props {}
 
@@ -63,7 +65,14 @@ const ShortcutView: FunctionalComponent<Props> = (props) => {
 				onEdit={(oldValue, newValue) => {
 					if (oldValue) {
 						appStore.editPreset(oldValue, newValue);
-					} else {
+					} else if (newValue) {
+						if (newValue === '默认配置') {
+							Popup({
+								message: '不能这样起名哦，会出 bug 的~',
+								level: NotificationLevel.error,
+							});
+							return;
+						}
 						appStore.savePreset(newValue);
 					}
 				}}

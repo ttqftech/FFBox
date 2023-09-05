@@ -219,10 +219,16 @@ const generator = {
 			ret.push('-')
 			// ret.push('-benchmark')   // 可有可无
 		}
+		if (outputParams.custom) {
+			ret.push(...outputParams.custom.split(' '));
+		}
 		return ret;
 	},
 	getInputParam: function (inputParams: OutputParams_input, withQuotes = false) {
 		let ret = [];
+		if (inputParams.custom) {
+			ret.push(...inputParams.custom.split(' '));
+		}
 		if (inputParams.hwaccel.length && inputParams.hwaccel !== '不使用') {
 			ret.push('-hwaccel');
 			let hwaccel = hwaccels.find((value) => {

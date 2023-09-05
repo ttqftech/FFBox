@@ -298,13 +298,11 @@ export const useAppStore = defineStore('app', {
 			// 存盘
 			clearTimeout((window as any).saveAllParaTimer);
 			(window as any).saveAllParaTimer = setTimeout(() => {
-				if (nodeBridge.env === 'electron') {
-					nodeBridge.electronStore.set('input', 这.globalParams.input);
-					nodeBridge.electronStore.set('video', 这.globalParams.video);
-					nodeBridge.electronStore.set('audio', 这.globalParams.audio);
-					nodeBridge.electronStore.set('output', 这.globalParams.output);
-					console.log('参数已保存');
-				}
+				nodeBridge.localStorage.set('input', 这.globalParams.input);
+				nodeBridge.localStorage.set('video', 这.globalParams.video);
+				nodeBridge.localStorage.set('audio', 这.globalParams.audio);
+				nodeBridge.localStorage.set('output', 这.globalParams.output);
+				console.log('参数已保存');
 			}, 700);
 
 			// 变更预设参数
@@ -382,7 +380,7 @@ export const useAppStore = defineStore('app', {
 					resolve(undefined);
 				})
 			} else {
-				return nodeBridge.electronStore.get(`presets.${name}`).then((params) => {
+				return nodeBridge.localStorage.get(`presets.${name}`).then((params) => {
 					if (params) {
 						这.globalParams.input = params.input;
 						这.globalParams.video = params.video;
@@ -396,7 +394,7 @@ export const useAppStore = defineStore('app', {
 		},
 		savePreset(name: string) {
 			const 这 = useAppStore();
-			return nodeBridge.electronStore.set(`presets.${name}`, 这.globalParams).then(() => {
+			return nodeBridge.localStorage.set(`presets.${name}`, 这.globalParams).then(() => {
 				这.presetName = name;
 				这.loadPresetList();
 			});
@@ -404,9 +402,9 @@ export const useAppStore = defineStore('app', {
 		editPreset(oldName: string, newName: string) {
 			const 这 = useAppStore();
 			async function f() {
-				const oldPreset = await nodeBridge.electronStore.get(`presets.${oldName}`);
-				nodeBridge.electronStore.set(`presets.${newName}`, oldPreset);
-				nodeBridge.electronStore.delete(`presets.${oldName}`);
+				const oldPreset = await nodeBridge.localStorage.get(`presets.${oldName}`);
+				nodeBridge.localStorage.set(`presets.${newName}`, oldPreset);
+				nodeBridge.localStorage.delete(`presets.${oldName}`);
 				这.presetName = newName;
 				这.loadPresetList();
 			}
@@ -414,7 +412,7 @@ export const useAppStore = defineStore('app', {
 		},
 		deletePreset(name: string) {
 			const 这 = useAppStore();
-			return nodeBridge.electronStore.delete(`presets.${name}`).then(() => {
+			return nodeBridge.localStorage.delete(`presets.${name}`).then(() => {
 				这.presetName = '';
 				这.loadPresetList();
 			});
@@ -424,8 +422,12 @@ export const useAppStore = defineStore('app', {
 		 */
 		loadPresetList() {
 			const 这 = useAppStore();
-			nodeBridge.electronStore.get('presets').then((presets) => {
-				这.availablePresets = Object.keys(presets);
+			nodeBridge.localStorage.get('presets').then((presets) => {
+				try {
+					这.availablePresets = Object.keys(presets);
+				} catch (error) {
+					nodeBridge.localStorage.set('presets', {});
+				}
 			});
 		},
 		// #endregion 参数处理

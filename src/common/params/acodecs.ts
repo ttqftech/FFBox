@@ -1437,6 +1437,9 @@ const generator = {
 				ret.push(volSlider.valueToParam(audioParams.vol));
 			}
 		}
+		if (audioParams.custom) {
+			ret.push(...audioParams.custom.split(' '));
+		}
 		return ret;
 	},
 	// 获取 ratecontrol 方面的参数，主要是给 taskitem 用

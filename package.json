@@ -1,6 +1,6 @@
 {
   "name": "FFBox",
-  "version": "4.0.0-alpha",
+  "version": "4.0.0-beta",
   "description": "",
   "main": "app/main/index.cjs",
   "scripts": {
@@ -42,7 +42,6 @@
   "dependencies": {
     "@vitejs/plugin-vue-jsx": "^3.0.0",
     "crypto-js": "^4.1.1",
-    "electron-store": "^8.1.0",
     "events": "^3.3.0",
     "koa": "^2.14.1",
     "koa-body": "^6.0.0",

@@ -40,8 +40,15 @@ onMounted(() => {
 		handleDownloadProgress(task, params);
 	});
 
-	// 加载预设列表
+	// 加载配置
 	appStore.loadPresetList();
+	(async () => {
+		const gp = appStore.globalParams;
+		gp.input = await nodeBridge.localStorage.get('input') || gp.input;
+		gp.video = await nodeBridge.localStorage.get('video') || gp.video;
+		gp.audio = await nodeBridge.localStorage.get('audio') || gp.audio;
+		gp.output = await nodeBridge.localStorage.get('output') || gp.output;
+	})();
 });
 </script>
 

@@ -1,5 +1,5 @@
 import { app, shell, BrowserWindow, ipcMain, Menu } from 'electron';
-import ElectronStore from 'electron-store';
+// import ElectronStore from 'electron-store';
 import { exec } from 'child_process';
 import * as path from 'path';
 import { TransferStatus } from '@common/types';
@@ -10,7 +10,7 @@ import { getOs } from './utils';
 
 class ElectronApp {
 	mainWindow: BrowserWindow | null = null;
-	electronStore: ElectronStore;
+	// electronStore: ElectronStore;
 	service: ProcessInstance | null = null;
 	blockWindowClose = true;
 
@@ -178,7 +178,7 @@ class ElectronApp {
 		const menu = Menu.buildFromTemplate(menuTemplate as any);
 		Menu.setApplicationMenu(menu);
 
-		this.electronStore = new ElectronStore();
+		// this.electronStore = new ElectronStore();
 	}
 
 	createService(): Promise<void> {
@@ -280,15 +280,15 @@ class ElectronApp {
 			this.createService();
 		});
 
-		ipcMain.handle('electron-store', (event, type: 'get' | 'set' | 'delete', key: string, value?: string) => {
-			if (type === 'get') {
-				return this.electronStore.get(key);
-			} else if (type === 'set') {
-				return this.electronStore.set(key, value);
-			} else {
-				return this.electronStore.delete(key);
-			}
-		});
+		// ipcMain.handle('electron-store', (event, type: 'get' | 'set' | 'delete', key: string, value?: string) => {
+		// 	if (type === 'get') {
+		// 		return this.electronStore.get(key);
+		// 	} else if (type === 'set') {
+		// 		return this.electronStore.set(key, value);
+		// 	} else {
+		// 		return this.electronStore.delete(key);
+		// 	}
+		// });
 	}
 }
 

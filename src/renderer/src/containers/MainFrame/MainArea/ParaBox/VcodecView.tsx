@@ -72,7 +72,7 @@ const VcodecView: FunctionalComponent<Props> = (props) => {
 		return vencoder?.parameters || [];
 	});
 
-	const handleChange = (mode: any, sName: string, value: any) => {
+	const handleChange = (sName: string, value: any) => {
 		// @ts-ignore
 		appStore.globalParams.video[sName] = value;
 		appStore.applyParameters();
@@ -101,23 +101,23 @@ const VcodecView: FunctionalComponent<Props> = (props) => {
 			}
 		}
 	};
-	const handleDetailChange = (mode: any, sName: string, value: any) => {
+	const handleDetailChange = (sName: string, value: any) => {
 		// @ts-ignore
 		appStore.globalParams.video.detail[sName] = value;
 		appStore.applyParameters();
 	};
 	return (
 		<div class={style.container}>
-			<Combobox title="视频编码" text={appStore.globalParams.video.vcodec} list={vcodecs} onChange={(value: string) => handleChange('combo', 'vcodec', value)} />
+			<Combobox title="视频编码" text={appStore.globalParams.video.vcodec} list={vcodecs} onChange={(value: string) => handleChange('vcodec', value)} />
 			{['禁用视频', '不重新编码'].indexOf(appStore.globalParams.video.vcodec) === -1 && (
 				<>
 					{appStore.globalParams.video.vcodec !== '自动' && (
-						<Combobox title="编码器" text={appStore.globalParams.video.vencoder} list={vencodersList.value} onChange={(value: string) => handleChange('combo', 'vencoder', value)} />
+						<Combobox title="编码器" text={appStore.globalParams.video.vencoder} list={vencodersList.value} onChange={(value: string) => handleChange('vencoder', value)} />
 					)}
-					<Combobox title="分辨率" text={appStore.globalParams.video.resolution} list={resolution} onChange={(value: string) => handleChange('combo', 'resolution', value)} />
-					<Combobox title="输出帧速" text={appStore.globalParams.video.framerate} list={framerate} onChange={(value: string) => handleChange('combo', 'framerate', value)} />
+					<Combobox title="分辨率" text={appStore.globalParams.video.resolution} list={resolution} onChange={(value: string) => handleChange('resolution', value)} />
+					<Combobox title="输出帧速" text={appStore.globalParams.video.framerate} list={framerate} onChange={(value: string) => handleChange('framerate', value)} />
 					{rateControlsList.value.length ? (
-						<Combobox title="码率控制" text={appStore.globalParams.video.ratecontrol} list={rateControlsList.value} onChange={(value: string) => handleChange('combo', 'ratecontrol', value)} />
+						<Combobox title="码率控制" text={appStore.globalParams.video.ratecontrol} list={rateControlsList.value} onChange={(value: string) => handleChange('ratecontrol', value)} />
 					) : null}
 					{ratecontrolSlider.value && (
 						<Slider
@@ -127,7 +127,7 @@ const VcodecView: FunctionalComponent<Props> = (props) => {
 							step={ratecontrolSlider.value.step}
 							valueToText={ratecontrolSlider.value.valueToText}
 							valueProcess={ratecontrolSlider.value.valueProcess}
-							onChange={(value: number) => handleChange('slider', 'ratevalue', value)}
+							onChange={(value: number) => handleChange('ratevalue', value)}
 						/>
 					)}
 					{parametersList.value.map((parameter) => {
@@ -140,7 +140,7 @@ const VcodecView: FunctionalComponent<Props> = (props) => {
 									step={parameter.step}
 									valueToText={parameter.valueToText}
 									valueProcess={parameter.valueProcess}
-									onChange={(value: number) => handleDetailChange('slider', parameter.parameter, value)}
+									onChange={(value: number) => handleDetailChange(parameter.parameter, value)}
 								/>
 							);
 						} else if (parameter.mode === 'combo') {
@@ -149,13 +149,14 @@ const VcodecView: FunctionalComponent<Props> = (props) => {
 									title={parameter.display}
 									text={appStore.globalParams.video.detail[parameter.parameter]}
 									list={parameter.items}
-									onChange={(value: string) => handleDetailChange('combo', parameter.parameter, value)}
+									onChange={(value: string) => handleDetailChange(parameter.parameter, value)}
 								/>
 							);
 						}
 					})}
 				</>
 			)}
+			<Inputbox title="自定义参数" value={appStore.globalParams.video.custom} onChange={(value: string) => handleChange('custom', value)} long={true} />
 		</div>
 	);
 };
