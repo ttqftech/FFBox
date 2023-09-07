@@ -216,10 +216,10 @@ export class ServiceBridge extends (EventEmitter as new () => TypedEventEmitter<
 		this.sendWs(data);
 	}
 
-	public deleteNotification(taskId: number, index: number) {
+	public deleteNotification(notificationId: number) {
 		let data: FFBoxServiceFunctionApi = {
 			function: 'deleteNotification',
-			args: [taskId, index],
+			args: [notificationId],
 		}
 		this.sendWs(data);
 	}

@@ -1,12 +1,7 @@
 <script setup lang="ts">
-import { computed, StyleValue, watch } from 'vue';
+import { computed, watch } from 'vue';
 import { useAppStore } from '@renderer/stores/appStore';
-import { Server as ServerData, WorkingStatus } from '@common/types';
-import IconX from '@renderer/assets/titleBar/×.svg?component';
-import IconAdd from '@renderer/assets/titleBar/add.svg?component';
-import IconMinimize from '@renderer/assets/titleBar/minimize.svg?component';
-import IconMaximize from '@renderer/assets/titleBar/maximize.svg?component';
-import IconClose from '@renderer/assets/titleBar/close.svg?component';
+import { WorkingStatus } from '@common/types';
 import nodeBridge from '@renderer/bridges/nodeBridge';
 
 const appStore = useAppStore();
@@ -40,21 +35,6 @@ watch(
 		);
 	}
 );
-
-// 最小化按钮点击响应
-const handleMinimizeClicked = () => {
-	window.jsb.ipcRenderer.send('minimize');
-};
-
-// 窗口模式按钮点击响应
-const handleWindowmodeClicked = () => {
-	window.jsb.ipcRenderer.send('windowmode');
-};
-
-// 关闭按钮
-const handleCloseClicked = () => {
-	window.jsb.ipcRenderer.send('close');
-};
 
 // 点击标签页
 const handleTabClicked = (serverId: string) => {
@@ -90,20 +70,6 @@ const handleTabCloseClicked = (serverId: string, event: MouseEvent) => {
 				</div>
 			</TransitionGroup>
 		</div>
-		<div class="buttonArea">
-			<button class="normalButton" aria-label="添加服务器" @click="appStore.addServer()">
-				<IconAdd />
-			</button>
-			<button class="normalButton" aria-label="最小化窗口" @click="handleMinimizeClicked">
-				<IconMinimize />
-			</button>
-			<button class="normalButton" aria-label="最大化或还原窗口" @click="handleWindowmodeClicked">
-				<IconMaximize />
-			</button>
-			<button class="redButton" aria-label="关闭窗口" @click="handleCloseClicked">
-				<IconClose />
-			</button>
-		</div>
 	</div>
 
 </template>
@@ -112,8 +78,7 @@ const handleTabCloseClicked = (serverId: string, event: MouseEvent) => {
 	.titlebar {
 		position: relative;
 		height: 36px;
-		padding-left: 92px;
-		display: flex;
+		padding: 0 176px 0 92px;
 		// background-color: hwb(220 25% 10%);
 		background-color: hwb(220 92% 4%);
 		box-shadow: 0 -32px 32px -16px hwb(0 0% 100% / 0.02) inset,
@@ -232,43 +197,6 @@ const handleTabCloseClicked = (serverId: string, event: MouseEvent) => {
 			.tabanimate-leave-active {
 				overflow: hidden;
 				transition: transform linear 0.2s; // 这个 transition 会被上面的定义覆盖，但需要定义时长让 Vue 控制消失
-			}
-		}
-		.buttonArea {
-			// height: 100%;
-			padding-bottom: 8px;
-			flex: 0 0 auto;
-			button {
-				width: 44px;
-				height: 100%;
-				display: inline-flex;
-				justify-content: center;
-				align-items: center;
-				border: none;
-				outline: none;
-				background: none;
-				svg {
-					fill: hwb(0 30% 70%);
-					width: 10px;
-					height: 10px;
-				}
-			}
-			.normalButton:hover {
-				background-color: hwb(0 0% 100% / 0.10);
-			}
-			.normalButton:active {
-				box-shadow: 0 1px 2px hwb(0 0% 100% / 0.3) inset;
-				transform: translateY(0.5px);
-			}
-			.redButton:hover {
-				background-color: hwb(0 15% 0% / 0.8);
-				svg {
-					fill: white;
-				}
-			}
-			.redButton:active {
-				box-shadow: 0 2px 4px hwb(0 0% 100% / 0.6) inset;
-				transform: translateY(0.5px);
 			}
 		}
 	}

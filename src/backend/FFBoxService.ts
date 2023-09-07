@@ -2,7 +2,7 @@ import CryptoJS from 'crypto-js';
 import { EventEmitter } from 'events';
 import os from 'os';
 import fs from 'fs';
-import { ServiceTask, TaskStatus, OutputParams, FFBoxServiceEvent, NotificationLevel, FFmpegProgress, WorkingStatus, FFBoxServiceInterface } from '@common/types';
+import { ServiceTask, TaskStatus, OutputParams, FFBoxServiceEvent, Notification, NotificationLevel, FFmpegProgress, WorkingStatus, FFBoxServiceInterface } from '@common/types';
 import { getFFmpegParaArray, getFFmpegParaArrayOutputPath } from '@common/getFFmpegParaArray';
 import { generator as fGenerator } from '@common/params/formats';
 import { defaultParams } from '@common/defaultParams';
@@ -19,11 +19,13 @@ export interface FFBoxServerEvent {
 }
 
 export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<FFBoxServiceEvent & FFBoxServerEvent>) implements FFBoxServiceInterface {
-	private tasklist: Array<ServiceTask> = [];
-	private taskId = 0;
+	private tasklist: ServiceTask[] = [];
+	private latestTaskId = 0;
 	private workingStatus: WorkingStatus = WorkingStatus.stopped;
 	private ffmpegVersion = '';
 	private globalTask: ServiceTask;
+	private notifications: Notification[] = [];
+	private latestNotificationId = 0;
 	private functionLevel = 20;
 
 	constructor() {
@@ -88,7 +90,7 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 	 * @emits tasklistUpdate
 	 */
 	public taskAdd(fileBaseName: string, outputParams: OutputParams): Promise<number> {
-		const id = this.taskId++;
+		const id = this.latestTaskId++;
 		// 目前只处理单输入的情况
 		const filePath = outputParams.input.files[0].filePath;
 		console.log(getTimeString(new Date()), `新增任务：${fileBaseName}（${filePath ? '本地' : '网络'}）。id：${id}。`);
@@ -133,8 +135,8 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 			task.before.acodec = input.acodec || '-';
 			task.before.abitrate = parseInt(input.abitrate || '-1');
 			this.emit('taskUpdate', {
-				id,
-				content: convertAnyTaskToTask(task),
+				taskId: id,
+				task: convertAnyTaskToTask(task),
 			});
 		});
 		ffmpeg.on('critical', ({ content: errors }) => {
@@ -143,7 +145,6 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 				reason += value;
 			});
 			this.setNotification(id, filePath + '：' + reason, NotificationLevel.warning);
-			this.emit('taskNotification', { id, content: filePath + '：' + reason, level: NotificationLevel.warning });
 			setTimeout(() => {
 				this.taskDelete(id);
 			}, 100);
@@ -182,8 +183,8 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 		task.paraArray = getFFmpegParaArray(task.after, true, undefined, undefined, task.outputFile);
 		this.setNotification(id, `任务「${task.fileBaseName}」输入文件上传完成`, NotificationLevel.info);
 		this.emit('taskUpdate', {
-			id,
-			content: convertAnyTaskToTask(task),
+			taskId: id,
+			task: convertAnyTaskToTask(task),
 		});
 	}
 
@@ -259,8 +260,8 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 			task.status = TaskStatus.TASK_FINISHED;
 			this.setNotification(id, `任务「${task.fileBaseName}」已转码完成`, NotificationLevel.ok);
 			this.emit('taskUpdate', {
-				id,
-				content: convertAnyTaskToTask(task),
+				taskId: id,
+				task: convertAnyTaskToTask(task),
 			});
 
 			this.queueAssign(Object.keys(this.tasklist).findIndex((key) => parseInt(key) === id) + 1);
@@ -278,7 +279,7 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 				}
 			}
 			this.emit('progressUpdate', {
-				id,
+				taskId: id,
 				content: task.progressLog,
 			});
 		});
@@ -296,8 +297,8 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 			task.status = TaskStatus.TASK_ERROR;
 			this.setNotification(id, '任务「' + task.fileBaseName + '」转码失败。' + [...errors].join('') + '请到任务的命令行输出面板查看详细原因。', NotificationLevel.error);
 			this.emit('taskUpdate', {
-				id,
-				content: convertAnyTaskToTask(task),
+				taskId: id,
+				task: convertAnyTaskToTask(task),
 			});
 			this.queueAssign(Object.keys(this.tasklist).findIndex((key) => parseInt(key) === id) + 1);
 		});
@@ -306,8 +307,8 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 			task.status = TaskStatus.TASK_ERROR;
 			this.setNotification(id, '任务「' + task.fileBaseName + '」异常终止。请到任务的命令行输出面板查看详细原因。', NotificationLevel.error);
 			this.emit('taskUpdate', {
-				id,
-				content: convertAnyTaskToTask(task),
+				taskId: id,
+				task: convertAnyTaskToTask(task),
 			});
 			this.queueAssign(Object.keys(this.tasklist).findIndex((key) => parseInt(key) === id) + 1);
 		});
@@ -318,8 +319,8 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 		task.progressLog.lastStarted = new Date().getTime() / 1000;
 		task.ffmpeg = newFFmpeg;
 		this.emit('taskUpdate', {
-			id,
-			content: convertAnyTaskToTask(task),
+			taskId: id,
+			task: convertAnyTaskToTask(task),
 		});
 	}
 
@@ -343,8 +344,8 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 		task.progressLog.lastPaused = new Date().getTime() / 1000;
 		task.progressLog.elapsed += task.progressLog.lastPaused - task.progressLog.lastStarted;
 		this.emit('taskUpdate', {
-			id,
-			content: convertAnyTaskToTask(task),
+			taskId: id,
+			task: convertAnyTaskToTask(task),
 		});
 		if (startFromBehind) {
 			this.queueAssign(Object.keys(this.tasklist).findIndex((key) => parseInt(key) === id) + 1);
@@ -377,8 +378,8 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 		task.progressLog.lastStarted = nowRealTime;
 		task.ffmpeg!.resume();
 		this.emit('taskUpdate', {
-			id,
-			content: convertAnyTaskToTask(task),
+			taskId: id,
+			task: convertAnyTaskToTask(task),
 		});
 	}
 
@@ -412,8 +413,8 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 				task.status = TaskStatus.TASK_STOPPED;
 				task.ffmpeg = null;
 				this.emit('taskUpdate', {
-					id,
-					content: convertAnyTaskToTask(task),
+					taskId: id,
+					task: convertAnyTaskToTask(task),
 				});
 				this.queueCheck();
 			});
@@ -424,8 +425,8 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 			task.ffmpeg!.forceKill(() => {
 				task.ffmpeg = null;
 				this.emit('taskUpdate', {
-					id,
-					content: convertAnyTaskToTask(task),
+					taskId: id,
+					task: convertAnyTaskToTask(task),
 				});
 				this.queueCheck();
 			});
@@ -436,8 +437,8 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 		}
 		this.queueCheck();
 		this.emit('taskUpdate', {
-			id,
-			content: convertAnyTaskToTask(task),
+			taskId: id,
+			task: convertAnyTaskToTask(task),
 		});
 	}
 
@@ -459,8 +460,8 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 			return;
 		}
 		this.emit('taskUpdate', {
-			id,
-			content: convertAnyTaskToTask(task),
+			taskId: id,
+			task: convertAnyTaskToTask(task),
 		});
 	}
 
@@ -566,16 +567,9 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 	 * 删除相应通知
 	 * @emits taskUpdate
 	 */
-	public deleteNotification(taskId: number, index: number): void {
-		const task = this.tasklist[taskId];
-		if (!task) {
-			throw Error(`任务不存在！任务 id：${taskId}`);
-		}
-		task.notifications.splice(index, 1);
-		this.emit('taskUpdate', {
-			id: taskId,
-			content: convertAnyTaskToTask(task),
-		});
+	public deleteNotification(notificationId: number): void {
+		delete this.notifications[notificationId];
+		this.emit('notificationUpdate', { notificationId });
 	}
 
 	/**
@@ -618,7 +612,7 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 			}
 		}
 		this.emit('cmdUpdate', {
-			id,
+			taskId: id,
 			content,
 			append,
 		});
@@ -626,22 +620,23 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 
 	/**
 	 * 任务通知，emit 事件并存储到任务中
-	 * @param id
+	 * @param taskId
 	 * @param content
 	 * @param level
 	 */
-	private setNotification(id: number, content: string, level: NotificationLevel): void {
-		this.emit('taskNotification', {
-			id,
-			content,
-			level,
-		});
-		const task = this.tasklist[id];
-		task.notifications.push({
+	private setNotification(taskId: number, content: string, level: NotificationLevel): void {
+		const notificationId = this.latestNotificationId++;
+		const notification = {
 			time: new Date().getTime(),
+			taskId,
 			content,
 			level,
+		};
+		this.emit('notificationUpdate', {
+			notificationId,
+			notification,
 		});
+		this.notifications[notificationId] = notification;
 	}
 
 	public activate(machineCode: string, activationCode: string): boolean {
@@ -672,8 +667,8 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 			task.status = TaskStatus.TASK_ERROR;
 			task.ffmpeg = null;
 			this.emit('taskUpdate', {
-				id,
-				content: convertAnyTaskToTask(task),
+				taskId: id,
+				task: convertAnyTaskToTask(task),
 			});
 			this.queueAssign(Object.keys(this.tasklist).findIndex((key) => parseInt(key) === id) + 1);
 		});

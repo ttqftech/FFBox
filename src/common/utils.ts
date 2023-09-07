@@ -1,7 +1,8 @@
 /* eslint-disable no-fallthrough */
 // #region 格式转换区
 
-import { OutputParams, ServiceTask, Task, TaskStatus, TransferStatus, UITask } from '@common/types';
+import { OutputParams, ServiceTask, Task, TaskStatus, TransferStatus } from '@common/types';
+import { UITask } from '@renderer/types';
 
 /**
  * 传入 "xxx kbps"，返回比特率（Kbps）
@@ -320,7 +321,7 @@ export function getInitialTask(fileBaseName: string, outputParams?: OutputParams
 		},
 		cmdData: '',
 		errorInfo: [],
-		notifications: [],
+		// notifications: [],
 		outputFile: '',
 	}
 	if (outputParams) {
@@ -388,7 +389,7 @@ export function convertAnyTaskToTask(task: ServiceTask | UITask): Task {
 		progressLog: task.progressLog,
 		cmdData: task.cmdData,
 		errorInfo: task.errorInfo,
-		notifications: task.notifications,
+		// notifications: task.notifications,
 		outputFile: task.outputFile,
 	};
 }

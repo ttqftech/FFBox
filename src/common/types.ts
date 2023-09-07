@@ -1,4 +1,3 @@
-// import { ServiceBridge } from '@renderer/bridge/serviceBridge';
 import type { FFmpeg } from '@backend/FFmpegInvoke';
 
 export interface FFBoxServiceInterface {
@@ -24,11 +23,11 @@ export interface FFBoxServiceInterface {
 export interface FFBoxServiceEventParam {
 	ffmpegVersion: { content: string };
 	workingStatusUpdate: { value: WorkingStatus };
-	tasklistUpdate: { content: Array<number> };
-	taskUpdate: { id: number; content: Task };
-	cmdUpdate: { id: number; content: string; append: boolean };
-	progressUpdate: { id: number; content: any };
-	taskNotification: { id: number; content: string; level: NotificationLevel };
+	tasklistUpdate: { content: number[] };
+	taskUpdate: { taskId: number; task: Task };
+	cmdUpdate: { taskId: number; content: string; append: boolean };
+	progressUpdate: { taskId: number; content: any };	// 全量？
+	notificationUpdate: { notificationId: number; notification?: Notification };	// 增量（notification 未定义则为删除）
 }
 
 export type FFBoxServiceEvent = {
@@ -134,6 +133,7 @@ export enum NotificationLevel {
 
 export interface Notification {
 	time: number;
+	taskId: number;
 	content: string;
 	level: NotificationLevel;
 }
@@ -175,7 +175,7 @@ export interface Task {
 	};
 	cmdData: string;
 	errorInfo: Array<string>;
-	notifications: Array<Notification>;
+	// notifications: Array<Notification>;
 	outputFile: string;		// 对于本地任务，表示生成文件的绝对路径；对于远程任务，省略文件夹名 mergeUploaded 后生成。如无则为 ''
 }
 
@@ -186,54 +186,10 @@ export interface ServiceTask extends Task {
 	remoteTask: boolean;	// 本地/远程任务对于 service 来说，对输出文件名的处理方式不同；对于 UI 来说，只需要判断 IP 是否为 localhost 即决定是下载还是直接打开了
 }
 
-export interface UITask extends Task {
-	dashboard: {
-		progress: number;
-		bitrate: number;
-		speed: number;
-		time: number;
-		frame: number;
-		size: number;
-		transferred: number;
-		transferSpeed: number;
-	};
-	dashboard_smooth: {
-		progress: number;
-		bitrate: number;
-		speed: number;
-		time: number;
-		frame: number;
-		size: number;
-		transferred: number;
-		transferSpeed: number;
-	};
-	dashboardTimer: number;
-	transferStatus: TransferStatus;
-	transferProgressLog: {
-		transferred: SingleProgressLog;
-		total: number;
-		// 涉及到的时间单位均为 s
-		// lastStarted: number;
-		// elapsed: number;		// 暂停才更新一次，因此记录的并不是实时的任务时间
-		// lastPaused: number;		// 既用于暂停后恢复时计算速度，也用于统计任务耗时
-	};
-}
-
 export enum WorkingStatus {
 	paused = -1,
 	stopped = 0,
 	running = 1,
-}
-
-export interface Server {
-	id: string;			// 仅供前端一次性使用
-	name: string;		// 默认为空
-	nickName?: string;	// 暂不支持
-	tasks: Array<UITask>;
-	ffmpegVersion: string;
-	workingStatus: WorkingStatus;
-	progress: number;	// 由每个任务更新时计算出来
-	overallProgressTimerID: any;
 }
 
 export interface NormalApiWrapper<T> {

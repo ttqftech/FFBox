@@ -1,13 +1,13 @@
 import { VNodeRef } from 'vue';
 import { defineStore } from 'pinia';
 import CryptoJS from 'crypto-js';
-import { NotificationLevel, OutputParams, TaskStatus, TransferStatus, WorkingStatus } from '@common/types';
+import { Notification, NotificationLevel, OutputParams, TaskStatus, TransferStatus, WorkingStatus } from '@common/types';
 import { Server } from '@renderer/types';
 import { defaultParams } from "@common/defaultParams";
 import { ServiceBridge, ServiceBridgeStatus } from '@renderer/bridges/serviceBridge'
 import { getInitialUITask, randomString, replaceOutputParams } from '@common/utils';
 import path from '@common/path';
-import { handleCmdUpdate, handleFFmpegVersion, handleProgressUpdate, handleTasklistUpdate, handleTaskNotification, handleTaskUpdate, handleWorkingStatusUpdate } from './eventsHandler';
+import { handleCmdUpdate, handleFFmpegVersion, handleProgressUpdate, handleTasklistUpdate, handleNotificationUpdate, handleTaskUpdate, handleWorkingStatusUpdate } from './eventsHandler';
 import nodeBridge from '@renderer/bridges/nodeBridge';
 import { dashboardTimer } from '@renderer/common/dashboardCalc';
 import Popup from '@renderer/components/Popup/Popup';
@@ -16,6 +16,7 @@ const { trimExt } = path;
 
 interface StoreState {
 	// 界面类
+	showInfoCenter: boolean;
 	paraSelected: number,
 	draggerPos: number,
 	taskViewSettings: {
@@ -32,8 +33,10 @@ interface StoreState {
 		},
 	}
 	showGlobalParams: boolean,
+	unreadNotificationCount: number,
 	componentRefs: { [key: string]: VNodeRef | Element },
 	// 非界面类
+	notifications: Notification[],
 	servers: Server[];
 	currentServerId: string;
 	selectedTask: Set<number>,
@@ -53,6 +56,7 @@ export const useAppStore = defineStore('app', {
 		return {
 			// 所有这些属性都将自动推断其类型
 			// 界面类
+			showInfoCenter: false,
 			paraSelected: 1,
 			draggerPos: 0.6,
 			taskViewSettings: {
@@ -69,8 +73,10 @@ export const useAppStore = defineStore('app', {
 				},
 			},
 			showGlobalParams: true,
+			unreadNotificationCount: 0,
 			componentRefs: {},
 			// 非界面类
+			notifications: [],
 			servers: [],
 			currentServerId: undefined,
 			selectedTask: new Set(),
@@ -432,6 +438,20 @@ export const useAppStore = defineStore('app', {
 		},
 		// #endregion 参数处理
 		// #region 通知处理
+		pushMsg(message: string, level: NotificationLevel) {
+			const 这 = useAppStore();
+			Popup({ message, level });
+			这.notifications.push({
+				time: new Date().getTime(),
+				taskId: -1,
+				content: message,
+				level,
+			})
+		},
+		setUnreadNotifationCount(clear = false) {
+			const 这 = useAppStore();
+			这.unreadNotificationCount = clear ? 0 : 这.unreadNotificationCount + 1;
+		},
 		// #endregion 通知处理
 		// #region 服务器处理
 		/**
@@ -448,6 +468,7 @@ export const useAppStore = defineStore('app', {
 					id: id,
 					name: '未连接',
 					tasks: [],
+					notifications: [],
 					ffmpegVersion: '',
 					workingStatus: WorkingStatus.stopped,
 					progress: 0,
@@ -489,10 +510,7 @@ export const useAppStore = defineStore('app', {
 			entity.on('connected', () => {
 				server.data.name = ip === 'localhost' ? '本地服务器' : ip;
 				console.log(`成功连接到服务器 ${server.entity.ip}`);
-				// mainVue.$store.commit('pushMsg',{
-				// 	message: `成功连接到服务器 ${args.serverName}`,
-				// 	level: NotificationLevel.ok,
-				// });
+				这.pushMsg(`成功连接到服务器 ${server.data.name}`, NotificationLevel.ok);
 
 				entity.on('ffmpegVersion', (data) => {
 					handleFFmpegVersion(server, data.content);
@@ -505,17 +523,17 @@ export const useAppStore = defineStore('app', {
 					这.recalcChangedParams();
 				});
 				entity.on('taskUpdate', (data) => {
-					handleTaskUpdate(server, data.id, data.content);
+					handleTaskUpdate(server, data.taskId, data.task);
 					这.recalcChangedParams();
 				});
 				entity.on('cmdUpdate', (data) => {
-					handleCmdUpdate(server, data.id, data.content);
+					handleCmdUpdate(server, data.taskId, data.content);
 				});
 				entity.on('progressUpdate', (data) => {
-					handleProgressUpdate(server, data.id, data.content, 这.functionLevel);
+					handleProgressUpdate(server, data.taskId, data.content, 这.functionLevel);
 				});
-				entity.on('taskNotification', (data) => {
-					handleTaskNotification(server, data.id, data.content, data.level);
+				entity.on('notificationUpdate', (data) => {
+					handleNotificationUpdate(server, data.notificationId, data.notification);
 				});
 
 				这.updateGlobalTask(server);
@@ -526,17 +544,11 @@ export const useAppStore = defineStore('app', {
 				for (const eventName of ['ffmpegVersion', 'workingStatusUpdate', 'tasklistUpdate', 'taskUpdate', 'cmdUpdate', 'progressUpdate', 'taskNotification'] as any[]) {
 					entity.removeAllListeners(eventName);
 				}
-				// mainVue.$store.commit('pushMsg',{
-				// 	message: `已断开服务器 ${args.serverName} 的连接`,
-				// 	level: NotificationLevel.warning,
-				// });
+				这.pushMsg(`已断开服务器 ${server.data.name} 的连接`, NotificationLevel.warning);
 			});
 			entity.on('error', () => {
 				console.log(`服务器 ${server.entity.ip} 连接出错，建议检查网络连接或防火墙`);
-				// mainVue.$store.commit('pushMsg',{
-				// 	message: `服务器 ${args.serverName} 连接出错，建议检查网络连接或防火墙`,
-				// 	level: NotificationLevel.error,
-				// });
+				这.pushMsg(`服务器 ${server.data.name} 连接出错，建议检查网络连接或防火墙`, NotificationLevel.error);
 			});
 		},
 		/**

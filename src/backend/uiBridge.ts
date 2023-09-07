@@ -183,7 +183,7 @@ function mountEventFromService(): void {
 		"taskUpdate",
 		"cmdUpdate",
 		"progressUpdate",
-		"taskNotification",
+		"notificationUpdate",
 	]
 	for (const event of eventsEnum) {
 		ffboxService.on(event, (payload: FFBoxServiceEventParam[keyof FFBoxServiceEventParam]) => {

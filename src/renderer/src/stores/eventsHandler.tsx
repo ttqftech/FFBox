@@ -1,8 +1,9 @@
 import nodeBridge from "@renderer/bridges/nodeBridge";
-import { NotificationLevel, Task, TaskStatus, TransferStatus, UITask, WorkingStatus } from "@common/types";
-import { Server } from '@renderer/types';
+import { Notification, Task, TaskStatus, TransferStatus, WorkingStatus } from "@common/types";
+import { Server, UITask } from '@renderer/types';
 import { getInitialUITask, mergeTaskFromService } from "@common/utils";
 import { dashboardTimer, overallProgressTimer } from "@renderer/common/dashboardCalc";
+import { useAppStore } from "./appStore";
 import Popup from "@renderer/components/Popup/Popup";
 import Msgbox from "@renderer/components/Msgbox/Msgbox";
 import IconExitConfirm from "@renderer/assets/exitConfirm.svg";
@@ -122,13 +123,18 @@ export function handleProgressUpdate(server: Server, id: number, progressLog: Ta
 /**
  * 增量更新 notifications
  */
-export function handleTaskNotification(server: Server, id: number, content: string, level: NotificationLevel) {
-    server.data.tasks[id].notifications.push({ content, level, time: new Date().getTime() });
-    Popup({
-        message: content,
-        level: level,
-    });
-    this.$store.commit('setUnreadNotification', false);
+export function handleNotificationUpdate(server: Server, notificationId: number, notification?: Notification) {
+    const 这 = useAppStore();
+    if (notification) {
+        server.data.notifications[notificationId] = notification;
+        Popup({
+            message: notification.content,
+            level: notification.level,
+        });
+        这.setUnreadNotifationCount();
+    } else {
+        delete server.data.notifications[notificationId];
+    }
 };
 
 // #endregion

@@ -1,5 +1,6 @@
-import { SingleProgressLog, TransferStatus, UITask, Server } from "@common/types";
-import { parseTimeString } from "@common/utils";
+import { SingleProgressLog, TransferStatus } from '@common/types';
+import { parseTimeString } from '@common/utils';
+import { ServerData, UITask } from '@renderer/types'
 
 export function getOutputDuration(task: UITask): number {
 	let duration = task.before.duration;
@@ -31,7 +32,7 @@ export function getOutputDuration(task: UITask): number {
  * 计算整体进度的 timer，根据计算结果修改 currentServer.progress
  * （progressBar 的修改由 titlebar.vue 负责）
  */
-export function overallProgressTimer(currentServer: Server) {
+export function overallProgressTimer(currentServer: ServerData) {
 	let tasks = currentServer.tasks;
 	let totalTime = 0.000001;
 	let totalProcessedTime = 0;

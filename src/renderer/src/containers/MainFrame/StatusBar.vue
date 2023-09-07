@@ -13,6 +13,10 @@ const versionStyle = computed(() => {
 		return { top: '10px' };
 	}
 })
+const handleInfoCenterButtonClicked = () => {
+	appStore.showInfoCenter = !appStore.showInfoCenter;
+	appStore.setUnreadNotifationCount(true);
+}
 
 </script>
 
@@ -22,7 +26,9 @@ const versionStyle = computed(() => {
 			<div>
 				<div class="version" :style="versionStyle">FFBox：{{ version }}<br />FFmpeg：{{ appStore.currentServer?.data.ffmpegVersion || '-' }}</div>
 			</div>
-			<div><IconInfo />167</div>
+			<div @click="handleInfoCenterButtonClicked">
+				<IconInfo />{{ appStore.unreadNotificationCount }}
+			</div>
 		</div>
 	</div>
 </template>

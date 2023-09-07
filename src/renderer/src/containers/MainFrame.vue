@@ -1,18 +1,15 @@
 <script setup lang="ts">
-import { MenuItemConstructorOptions, MenuItem } from 'electron';
+import { computed } from 'vue';
 import { useAppStore } from '@renderer/stores/appStore';
 import TitleBar from './MainFrame/TitleBar.vue';
 import ActionBar from './MainFrame/ActionBar.vue';
 import MainArea from './MainFrame/MainArea.vue';
 import StatusBar from './MainFrame/StatusBar.vue';
+import InfoCenter from './MainFrame/InfoCenter.vue';
+import FixedButtons from './MainFrame/FixedButtons.vue';
 
 // const menu = undefined;
 const appStore = useAppStore();
-
-// let currentServer: Server = this.$store.getters.currentServer;
-// if (!currentServer) {
-// 	return 'startbutton-gray';
-// }
 
 </script>
 
@@ -23,9 +20,8 @@ const appStore = useAppStore();
 		<MainArea></MainArea>
 		<StatusBar></StatusBar>
 	</div>
-	<div class="bigicon">
-		<img :src="'./images/icon_256_transparent.png'" />
-	</div>
+	<InfoCenter></InfoCenter>
+	<FixedButtons></FixedButtons>
 </template>
 
 <style lang="less" scoped>
@@ -40,19 +36,5 @@ const appStore = useAppStore();
 		// ActionBar
 		// MainArea
 		// StatusBar
-	}
-	.bigicon {
-		position: absolute;
-		top: 8px;
-		left: 8px;
-		width: 76px;
-		height: 76px;
-		background-color: hwb(0 98% 2%);
-		border-radius: 8px;
-		box-shadow: 0 2px 6px hwb(0 0% 100% / 0.2);
-		img {
-			width: 100%;
-			height: 100%;
-		}
 	}
 </style>
