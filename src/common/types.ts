@@ -10,8 +10,6 @@ export interface FFBoxServiceInterface {
 	taskPause(id: number, startFromBehind?: boolean): void;
 	taskResume(id: number): void;
 	taskReset(id: number): void;
-	getTaskList(): void;
-	getTask(id: number): void;
 	queueAssign(startFrom?: number): void;
 	queuePause(): void;
 	deleteNotification(taskId: number, index: number): void;
@@ -25,8 +23,8 @@ export interface FFBoxServiceEventParam {
 	workingStatusUpdate: { value: WorkingStatus };
 	tasklistUpdate: { content: number[] };
 	taskUpdate: { taskId: number; task: Task };
-	cmdUpdate: { taskId: number; content: string; append: boolean };
-	progressUpdate: { taskId: number; content: any };	// 全量？
+	cmdUpdate: { taskId: number; content: string; append: boolean };	// 由 append 确定是增量还是全量更新
+	progressUpdate: { taskId: number; content: any };	// 暂时为全量更新，因后端限制了总量为 5 条
 	notificationUpdate: { notificationId: number; notification?: Notification };	// 增量（notification 未定义则为删除）
 }
 

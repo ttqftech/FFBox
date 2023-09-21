@@ -119,8 +119,8 @@ export class ServiceBridge extends (EventEmitter as new () => TypedEventEmitter<
 
 	public taskAdd(fileBaseName: string, outputParams?: OutputParams): Promise<number> {
 		return new Promise((resolve, reject) => {
-			fetch(`http://${this.ip}:${this.port}/task/add`, {
-				method: 'post',
+			fetch(`http://${this.ip}:${this.port}/task`, {
+				method: 'put',
 				body: JSON.stringify({ fileBaseName, outputParams }),
 				headers: new Headers({
 					'Content-Type': 'application/json'
@@ -179,22 +179,6 @@ export class ServiceBridge extends (EventEmitter as new () => TypedEventEmitter<
 	public taskReset(id: number) {
 		let data: FFBoxServiceFunctionApi = {
 			function: 'taskReset',
-			args: [id],
-		}
-		this.sendWs(data);
-	}
-
-	public getTaskList() {
-		let data: FFBoxServiceFunctionApi = {
-			function: 'getTaskList',
-			args: [],
-		}
-		this.sendWs(data);
-	}
-
-	public getTask(id: number) {
-		let data: FFBoxServiceFunctionApi = {
-			function: 'getTask',
 			args: [id],
 		}
 		this.sendWs(data);

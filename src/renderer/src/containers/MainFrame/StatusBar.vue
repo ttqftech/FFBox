@@ -13,6 +13,13 @@ const versionStyle = computed(() => {
 		return { top: '10px' };
 	}
 })
+const FFBoxVersionText = computed(() => {
+	if (appStore.currentServer?.data.version === version || !appStore.currentServer?.data.version) {
+		return version;
+	} else {
+		return `${version} | ${appStore.currentServer?.data.version}`;
+	}
+});
 const handleInfoCenterButtonClicked = () => {
 	appStore.showInfoCenter = !appStore.showInfoCenter;
 	appStore.setUnreadNotifationCount(true);
@@ -24,7 +31,7 @@ const handleInfoCenterButtonClicked = () => {
 	<div class="statusbar">
 		<div class="left">
 			<div>
-				<div class="version" :style="versionStyle">FFBox：{{ version }}<br />FFmpeg：{{ appStore.currentServer?.data.ffmpegVersion || '-' }}</div>
+				<div class="version" :style="versionStyle">FFBox：{{ FFBoxVersionText }}<br />FFmpeg：{{ appStore.currentServer?.data.ffmpegVersion || '-' }}</div>
 			</div>
 			<div @click="handleInfoCenterButtonClicked">
 				<IconInfo />{{ appStore.unreadNotificationCount }}

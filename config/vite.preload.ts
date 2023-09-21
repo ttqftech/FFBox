@@ -31,4 +31,7 @@ export default defineConfig({
 			'@common': path.resolve('src/common'),
 		},
 	},
+	define: {
+		buildInfo: process.env.buildInfo, // 需要在执行 vite 之前通过编译脚本注入 buildInfo
+	},
 })

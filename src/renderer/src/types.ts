@@ -41,6 +41,7 @@ export interface ServerData {
 	tasks: UITask[];
 	notifications: Notification[];
 	ffmpegVersion: string;
+	version?: string;
 	workingStatus: WorkingStatus;
 	progress: number;	// 由每个任务更新时计算出来
 	overallProgressTimerID: any;

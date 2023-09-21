@@ -9,6 +9,7 @@ import koaMount from 'koa-mount';
 import fs from 'fs';
 import os from 'os';
 import { FFBoxServiceEventApi, FFBoxServiceEventParam, FFBoxServiceFunctionApi } from '@common/types';
+import { version } from '@common/constants';
 import { FFBoxService } from './FFBoxService';
 import { getTimeString } from '@common/utils';
 
@@ -66,6 +67,7 @@ const uiBridge = {
 			logDev(getTimeString(new Date()), '收到请求：', ctx.request.url);
 			ctx.response.set('Access-Control-Allow-Origin', '*');
 			ctx.response.set('Access-Control-Allow-Headers', 'Content-Type');
+			ctx.response.set('Access-Control-Allow-Methods', 'GET, POST, PUT');
 			if (ctx.request.method === 'OPTIONS') {
 				ctx.response.status = 200;
 				// ctx.response.message = '冇找到啊';
@@ -218,6 +220,20 @@ function mountEventFromService(): void {
 function getRouter(): Router {
 	const router = new Router();
 
+	// 获取 FFBoxService 版本
+	router.get('/version', async function (ctx) {
+		const result = version;
+		ctx.response.status = 200;
+		ctx.response.body = result;
+	});
+
+	// 获取服务器通知
+	router.get('/notification', async function (ctx) {
+		const result = ffboxService.notifications;
+		ctx.response.status = 200;
+		ctx.response.body = result;
+	});
+
 	// 检查文件是否已缓存
 	// 已缓存返回奇数
 	router.post('/upload/check/', async function (ctx) {
@@ -264,7 +280,7 @@ function getRouter(): Router {
 	});
 
 	// 因为需要返回 id 所以特意改用 http request 实现的 taskAdd
-	router.post('/task/add', async function (ctx) {
+	router.put('/task', async function (ctx) {
 		if (!ctx.request.body) {
 			// 非法请求
 			ctx.response.status = 400;
@@ -272,6 +288,20 @@ function getRouter(): Router {
 		}
 		const body = ctx.request.body;
 		const result = await ffboxService!.taskAdd(body.fileBaseName, body.outputParams);
+		ctx.response.status = 200;
+		ctx.response.body = result;
+	});
+
+	// 获取任务 ID 列表
+	router.get('/task', async function (ctx) {
+		const result = Object.keys(ffboxService.tasklist).map(Number);
+		ctx.response.status = 200;
+		ctx.response.body = result;
+	});
+
+	// 获取单个任务信息
+	router.get('/task/:id', async function (ctx) {
+		const result = ffboxService.tasklist[+ctx.params.id];
 		ctx.response.status = 200;
 		ctx.response.body = result;
 	});

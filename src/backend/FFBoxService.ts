@@ -19,12 +19,12 @@ export interface FFBoxServerEvent {
 }
 
 export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<FFBoxServiceEvent & FFBoxServerEvent>) implements FFBoxServiceInterface {
-	private tasklist: ServiceTask[] = [];
+	public tasklist: ServiceTask[] = [];
 	private latestTaskId = 0;
 	private workingStatus: WorkingStatus = WorkingStatus.stopped;
 	private ffmpegVersion = '';
 	private globalTask: ServiceTask;
-	private notifications: Notification[] = [];
+	public notifications: Notification[] = [];
 	private latestNotificationId = 0;
 	private functionLevel = 20;
 
@@ -443,17 +443,17 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 	}
 
 	/**
-	 * 获取任务 ID 列表
+	 * 向所有客户端更新任务 ID 列表
 	 */
-	public getTaskList(): void {
+	private updateTaskList(): void {
 		this.emit('tasklistUpdate', { content: Object.keys(this.tasklist).map(Number) });
 	}
 
 	/**
-	 * 获取单个任务
+	 * 向所有客户端更新单个任务
 	 * @param id 任务 id
 	 */
-	public getTask(id: number): void {
+	private updateTask(id: number): void {
 		const task = this.tasklist[id];
 		if (!task) {
 			console.warn('尝试读取不存在的任务：' + id);
@@ -589,7 +589,7 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 			} else {
 				task.paraArray = getFFmpegParaArray(task.after, true);
 			}
-			this.getTask(id);
+			this.updateTask(id);
 		}
 	}
 

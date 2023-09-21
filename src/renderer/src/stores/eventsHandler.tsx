@@ -36,6 +36,7 @@ export function handleWorkingStatusUpdate(server: Server, workingStatus: Working
     }
 };
 export function handleTasklistUpdate(server: Server, content: Array<number>) {
+    const 这 = useAppStore();
     const serverData = server.data;
     let localI = 0;
     let remoteI = 0;
@@ -70,7 +71,7 @@ export function handleTasklistUpdate(server: Server, content: Array<number>) {
     serverData.tasks = Object.assign(newTaskList, {'-1': serverData.tasks[-1]});
     // 依次获取所有新增任务的信息
     for (const newTaskId of newTaskIds) {
-        server.entity.getTask(newTaskId);
+        这.updateTask(server, newTaskId);
     }
 };
 /**
@@ -78,7 +79,12 @@ export function handleTasklistUpdate(server: Server, content: Array<number>) {
  */
 export function handleTaskUpdate(server: Server, id: number, content: Task) {
     const serverData = server.data;
-    let task = mergeTaskFromService(serverData.tasks[id], content);
+    const localTask = serverData.tasks[id];
+    if (!localTask) {
+        // 本地不存在此任务，则新增
+        serverData.tasks[id] = getInitialUITask('');
+    }
+    const task = mergeTaskFromService(serverData.tasks[id], content);
     serverData.tasks[id] = task;
     // timer 相关处理
     if (task.status === TaskStatus.TASK_RUNNING && !task.dashboardTimer) {

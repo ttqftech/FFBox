@@ -1,3 +1,7 @@
+/**
+ * 此文件无用
+ */
+
 process.env.NODE_ENV = 'production';
 
 const webpack = require('webpack');

@@ -68,4 +68,7 @@ export default defineConfig({
 	// server: {
 	// 	host: '0.0.0.0',
 	// },
+	define: {
+		buildInfo: process.env.buildInfo, // 需要在执行 vite 之前通过编译脚本注入 buildInfo
+	},
 });

@@ -129,9 +129,7 @@ export const useAppStore = defineStore('app', {
 								uploadFile(id, hash, file);
 							}
 						})
-					}).catch((err) => {
-						console.error('网络请求出错', err);
-					})
+					});
 				})
 			}
 			function uploadFile(id: number, hash: string, file: File) {
@@ -222,12 +220,34 @@ export const useAppStore = defineStore('app', {
 			return result;
 		},
 		/**
-		 * 获取 service 中 task id 为 -1 的 globalTask 更新到本地
+		 * 获取 service 的 taskList 更新到本地
 		 */
-		updateGlobalTask(server: Server) {
-			let newTask = getInitialUITask('');
-			server.data.tasks[-1] = newTask;
-			server.entity.getTask(-1);
+		updateTaskList(server: Server) {
+			const 这 = useAppStore();
+			fetch(`http://${server.entity.ip}:${server.entity.port}/task`, {
+				method: 'get',
+			}).then((response) => {
+				response.text().then((text) => {
+					let content = JSON.parse(text) as number[];
+					handleTasklistUpdate(server, content);
+					这.recalcChangedParams();
+				});
+			});
+		},
+		/**
+		 * 获取 service 的 task 更新到本地
+		 */
+		updateTask(server: Server, taskId: number) {
+			const 这 = useAppStore();
+			fetch(`http://${server.entity.ip}:${server.entity.port}/task/${taskId}`, {
+				method: 'get',
+			}).then((response) => {
+				response.text().then((text) => {
+					let content = JSON.parse(text);
+					handleTaskUpdate(server, taskId, content);
+					这.recalcChangedParams();
+				});
+			});
 		},
 		/**
 		 * 修改已选任务项后调用
@@ -438,6 +458,20 @@ export const useAppStore = defineStore('app', {
 		},
 		// #endregion 参数处理
 		// #region 通知处理
+		/**
+		 * 获取 service 的 notifications 更新到本地
+		 */
+		updateNotifications(server: Server) {
+			const 这 = useAppStore();
+			fetch(`http://${server.entity.ip}:${server.entity.port}/notification`, {
+				method: 'get',
+			}).then((response) => {
+				response.text().then((text) => {
+					let content = JSON.parse(text);
+					server.data.notifications = content;
+				});
+			});
+		},
 		pushMsg(message: string, level: NotificationLevel) {
 			const 这 = useAppStore();
 			Popup({ message, level });
@@ -455,6 +489,19 @@ export const useAppStore = defineStore('app', {
 		// #endregion 通知处理
 		// #region 服务器处理
 		/**
+		 * 获取 service 的 notifications 更新到本地
+		 */
+		updateServerVersion(server: Server) {
+			const 这 = useAppStore();
+			fetch(`http://${server.entity.ip}:${server.entity.port}/version`, {
+				method: 'get',
+			}).then((response) => {
+				response.text().then((text) => {
+					server.data.version = text;
+				});
+			});
+		},
+		/**
 		 * 添加服务器标签页
 		 */
 		addServer() {
@@ -470,6 +517,7 @@ export const useAppStore = defineStore('app', {
 					tasks: [],
 					notifications: [],
 					ffmpegVersion: '',
+					version: '',
 					workingStatus: WorkingStatus.stopped,
 					progress: 0,
 					overallProgressTimerID: NaN,
@@ -536,8 +584,12 @@ export const useAppStore = defineStore('app', {
 					handleNotificationUpdate(server, data.notificationId, data.notification);
 				});
 
-				这.updateGlobalTask(server);
-				entity.getTaskList();
+				这.updateServerVersion(server);
+				// 这.updateGlobalTask(server);
+				这.updateTask(server, -1);
+				这.updateTaskList(server);
+				// entity.updateTaskList();
+				这.updateNotifications(server);
 			});
 			entity.on('disconnected', () => {
 				console.log(`已断开服务器 ${server.entity.ip} 的连接`);

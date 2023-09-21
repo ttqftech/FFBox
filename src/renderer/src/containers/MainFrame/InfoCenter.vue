@@ -99,22 +99,25 @@ const handleDelete = (serverId: string, notificationId: number) => {
 			height: 100%;
 			background: linear-gradient(to bottom, hwb(0 97% 3%), hwb(0 95% 5%));
 			box-shadow: 0 0 32px 8px hwb(0 10% 90% / 0.5);
+			-webkit-app-region: none;
 			.title {
 				position: absolute;
 				top: 10px;
-				left: 50%;
-				transform: translateX(-50%);
+				left: 0;
+				right: 0;
 				font-size: 22px;
+				font-weight: normal;
+				text-align: center;
 				color: #2255ee;
 				margin: 0;
-				font-weight: normal;
+				-webkit-app-region: drag;
 			}
 			.crossline {
 				position: absolute;
 				top: 48px;
 				height: 1px;
-				left: 5%;
-				right: 5%;
+				left: 48px;
+				right: 48px;
 				background: linear-gradient(90deg, rgba(128, 128, 128, 0.1), rgba(128, 128, 128, 0.4), rgba(128, 128, 128, 0.1));
 			}
 			.box {

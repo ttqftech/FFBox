@@ -23,7 +23,7 @@
       //     "<node_internals>/**"
       // ],
       // "timeout": 60000,
-      "preLaunchTask": "启动 vite:backend 脚本 (dev)",
+      "preLaunchTask": "编译后端（dev）",
     },
     {
       "name": "编译调试后端 (webpack)",

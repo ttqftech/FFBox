@@ -2,9 +2,9 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"label": "启动 vite:backend 脚本 (dev)",
-			"type": "npm",
-			"script": "vite:backend",
+			"label": "编译后端（dev）",
+			"type": "shell",
+			"command": "node scripts/build-backend.mjs",
 			"isBackground": false,
 			"options": {
 				"env": {

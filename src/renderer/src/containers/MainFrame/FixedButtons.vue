@@ -69,6 +69,7 @@ const handleCloseClicked = () => {
 		padding-bottom: 8px;
 		text-align: right;
 		z-index: 100;
+		-webkit-app-region: none;
 		button {
 			width: 44px;
 			height: 100%;
