@@ -5,6 +5,7 @@ import * as path from 'path';
 import { TransferStatus } from '@common/types';
 import ProcessInstance from '@common/processInstance';
 import { getOs } from './utils';
+import osBridge from './osBridge';
 // import { electronApp, optimizer, is } from '@electron-toolkit/utils';
 // import { FFBoxService } from './service/FFBoxService';
 
@@ -213,11 +214,6 @@ class ElectronApp {
 			this.mainWindow!.close();
 		});
 
-		// 获取主窗口 Hwnd
-		ipcMain.on('getHwnd', () => {
-			this.mainWindow!.webContents.send('hwnd', this.mainWindow!.getNativeWindowHandle());
-		});
-
 		// 打开 url
 		ipcMain.on('jumpToUrl', (event, url: string) => {
 			switch (getOs()) {
@@ -279,6 +275,13 @@ class ElectronApp {
 		ipcMain.on('startService', () => {
 			this.createService();
 		});
+
+		// osBridge 系列
+		ipcMain.on('setBlurBehindWindow', () => {
+			osBridge.setBlurBehindWindow(this.mainWindow);
+		});
+		ipcMain.on('triggerSystemMenu', () => osBridge.triggerSystemMenu());
+		ipcMain.on('triggerSnapLayout', () => osBridge.triggerSnapLayout());
 
 		// ipcMain.handle('electron-store', (event, type: 'get' | 'set' | 'delete', key: string, value?: string) => {
 		// 	if (type === 'get') {

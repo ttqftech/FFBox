@@ -1,9 +1,6 @@
-import nodeBridge from "./nodeBridge";
-import { ChildProcess } from "child_process";
-import { spawnInvoker } from "@common/spawnInvoker";
-
-// let spawn = nodeBridge.spawn;
-let ipcRenderer = nodeBridge.ipcRenderer;
+import { ChildProcess } from 'child_process';
+import { BrowserWindow } from 'electron';
+import { spawnInvoker } from '@common/spawnInvoker';
 
 let helper: ChildProcess | undefined = undefined;
 
@@ -32,13 +29,6 @@ function callHelper<T>(func: (helper: ChildProcess) => Promise<T> | T): Promise<
 			}
 		}
 
-		// 检查 nodeBridge
-		// TODO isElectron 不可用
-		// @ts-ignore
-		if (!nodeBridge.isElectron) {
-			reject('非 electron 环境');
-			return;
-		}
 		// 检查 helper 是否存活
 		if (helper) {
 			callCorrespondingFunction(helper);
@@ -79,25 +69,28 @@ function callHelper<T>(func: (helper: ChildProcess) => Promise<T> | T): Promise<
 }
 
 export default {
-	setBlurBehindWindow(turnON: boolean = true): Promise<void> {
+	setBlurBehindWindow(mainWindow: BrowserWindow, turnON: boolean = true): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
-			if (!ipcRenderer) {
-				return reject();
-			}
-			let hwnd: number;
-			ipcRenderer.on('hwnd', (event, data: Buffer) => {
-				hwnd = data[0] + data[1] * 2**8 + data[2] * 2**16 + data[3] * 2**24;
-				console.log(`本窗口 hwnd：` + hwnd);
-				callHelper((helper) => {
-					// console.log('helper', helper);
-					helper.stdin!.write(`2${turnON ? '1' : '0'}${hwnd.toString().padStart(8, '0')}`);
-				}).then(() => {
-					resolve();
-				}).catch((err) => {
-					reject(err);
-				})
-			})
-			ipcRenderer.send('getHwnd');			
-		})
-	}
+			const hWndBuffer = mainWindow!.getNativeWindowHandle();
+			const hWnd = hWndBuffer[0] + hWndBuffer[1] * 2**8 + hWndBuffer[2] * 2**16 + hWndBuffer[3] * 2**24;
+			callHelper((helper) => {
+				// console.log('helper', helper);
+				helper.stdin!.write(`2${turnON ? '1' : '0'}${hWnd.toString().padStart(8, '0')}`);
+			}).then(() => {
+				resolve();
+			}).catch((err) => {
+				reject(err);
+			});
+		});
+	},
+	triggerSystemMenu(): Promise<void> {
+		return callHelper((helper) => {
+			helper.stdin!.write(`30${'0'.padStart(8, '0')}`);
+		});
+	},
+	triggerSnapLayout(): Promise<void> {
+		return callHelper((helper) => {
+			helper.stdin!.write(`30${'1'.padStart(8, '0')}`);
+		});
+	},
 }

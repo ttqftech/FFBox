@@ -22,6 +22,9 @@ const FFBoxVersionText = computed(() => {
 });
 const handleInfoCenterButtonClicked = () => {
 	appStore.showInfoCenter = !appStore.showInfoCenter;
+	if (appStore.showInfoCenter) {
+		appStore.showMenuCenter = 0;
+	}
 	appStore.setUnreadNotifationCount(true);
 }
 

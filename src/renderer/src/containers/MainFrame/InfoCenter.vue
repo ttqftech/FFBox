@@ -85,13 +85,14 @@ const handleDelete = (serverId: string, notificationId: number) => {
 
 <style lang="less" scoped>
 	.mask {
-		position: fixed;
+		position: absolute;
 		left: 0;
 		top: 0;
-		width: 100vw;
-		height: calc(100vh - 24px);
+		width: 100%;
+		height: 100%;
 		background-color: hwb(0 10% 90% / 0.3);
 		overflow: hidden;
+		z-index: 2;
 		.container {
 			position: absolute;
 			top: 0;

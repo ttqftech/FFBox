@@ -214,4 +214,16 @@ export default {
 	startService(): void {
 		window.jsb?.ipcRenderer?.send('startService');
 	},
+
+	setBlurBehindWindow(): void {
+		window.jsb?.ipcRenderer?.send('setBlurBehindWindow');
+	},
+
+	triggerSystemMenu(): void {
+		window.jsb?.ipcRenderer?.send('triggerSystemMenu');
+	},
+
+	triggerSnapLayout(): void {
+		window.jsb?.ipcRenderer?.send('triggerSnapLayout');
+	},
 }

@@ -16,6 +16,7 @@ const { trimExt } = path;
 
 interface StoreState {
 	// 界面类
+	showMenuCenter: 0 | 1 | 2; // 0：关闭　1：开启菜单栏　2：全开
 	showInfoCenter: boolean;
 	paraSelected: number,
 	draggerPos: number,
@@ -56,6 +57,7 @@ export const useAppStore = defineStore('app', {
 		return {
 			// 所有这些属性都将自动推断其类型
 			// 界面类
+			showMenuCenter: 0,
 			showInfoCenter: false,
 			paraSelected: 1,
 			draggerPos: 0.6,
