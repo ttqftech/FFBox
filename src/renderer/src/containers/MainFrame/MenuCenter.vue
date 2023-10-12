@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useAppStore } from '@renderer/stores/appStore';
+import showMenu from '@renderer/components/Menu/Menu';
 
 const menuTemplate = [
 	{
@@ -38,6 +39,9 @@ const menuTemplate = [
 const appStore = useAppStore();
 
 const selectedMenuIndex = ref(-1);
+const topMenuRef = ref<HTMLDivElement>(null);
+const currentOpenedMenuRef = ref();
+const topMenuButtonsMousemoveListener = ref();
 
 const menuCenterPadStyle = computed(() => {
 	if (appStore.showMenuCenter === 0) {
@@ -93,6 +97,60 @@ const menuCenterContainerStyle = computed(() => {
 watch(() => appStore.showMenuCenter, () => {
 	selectedMenuIndex.value = -1;
 });
+watch(selectedMenuIndex, (index, oldIndex) => {
+	const selectedMenu = menuTemplate[index];
+	if (selectedMenu) {
+		if (oldIndex === -1) {
+			// 新打开菜单时，记录顶部菜单按钮位置，并在 body 上挂载鼠标移动监听
+			const rects: DOMRect[] = [];
+			for (const topMenuButton of topMenuRef.value.children) {
+				rects.push(topMenuButton.getBoundingClientRect());
+			}
+			topMenuButtonsMousemoveListener.value = (ev: MouseEvent) => {
+				for (const [key, topMenuButtonRect] of Object.entries(rects)) {
+					if (
+						ev.pageX > topMenuButtonRect.x && ev.pageX < topMenuButtonRect.x + topMenuButtonRect.width &&
+						ev.pageY > topMenuButtonRect.y && ev.pageY < topMenuButtonRect.y + topMenuButtonRect.height
+					) {
+						selectedMenuIndex.value = Number(key);
+					}
+				}
+			}
+			document.body.addEventListener('mousemove', topMenuButtonsMousemoveListener.value);
+		}
+
+		const elem = topMenuRef.value.children[selectedMenuIndex.value];
+		const rect = elem.getBoundingClientRect();
+		currentOpenedMenuRef.value?.close();
+		currentOpenedMenuRef.value = showMenu({
+			menu: selectedMenu.submenu.map((item) => ({
+				...item,
+				type: item.type === 'separator' ? 'separator' : 'normal',
+				...([undefined, 'normal', 'checkbox', 'radio'].includes(item.type) ? { value: 'value' in item ? item.value : item.label } : {})
+			})) as any,
+			// defaultSelectedValue?: any;
+			// container: containerRef.value,
+			triggerRect: { xMin: rect.x, yMin: rect.y, xMax: rect.x + rect.width, yMax: rect.y + rect.height },	// 触发菜单的控件的坐标，用于计算菜单弹出方向和大小
+			onCancel: () => { selectedMenuIndex.value = -1; },
+			onItemClick: (event, value, checked) => {
+				console.log(event, value, checked);
+				selectedMenuIndex.value = -1;
+			},
+			onKeyDown: (event: KeyboardEvent) => {
+				if (event.key === 'ArrowLeft') {
+					selectedMenuIndex.value = selectedMenuIndex.value === 0 ? menuTemplate.length - 1 : selectedMenuIndex.value - 1;
+				} else if (event.key === 'ArrowRight') {
+					selectedMenuIndex.value = selectedMenuIndex.value === menuTemplate.length - 1 ? 0 : selectedMenuIndex.value + 1;
+				}
+			},
+		});
+	} else {
+		if (oldIndex !== -1) {
+			document.body.removeEventListener('mousemove', topMenuButtonsMousemoveListener.value);
+			currentOpenedMenuRef.value = undefined;
+		}
+	}
+});
 
 const handleTopMenuHover = (index: number) => {
 	if (appStore.showMenuCenter === 1) {
@@ -106,11 +164,12 @@ const handleTopMenuHover = (index: number) => {
 	<div class="pad" :style="menuCenterPadStyle">
 	</div>
 	<div class="container" :style="menuCenterContainerStyle">
-		<div class="topMenu">
+		<div class="topMenu" ref="topMenuRef">
 			<div
 				v-for="(menu, index) in menuTemplate"
 				:class="`menu ${selectedMenuIndex === index ? 'menuSelected' : ''}`"
 				@mouseenter="(e) => handleTopMenuHover(index)"
+				@click="(e) => selectedMenuIndex = index"
 			>
 				{{ menu.label }}
 			</div>
