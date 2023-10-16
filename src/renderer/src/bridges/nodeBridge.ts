@@ -226,4 +226,16 @@ export default {
 	triggerSnapLayout(): void {
 		window.jsb?.ipcRenderer?.send('triggerSnapLayout');
 	},
+	
+	setApplicationMenu(menu: any): void {
+		window.jsb?.ipcRenderer?.send('setApplicationMenu', JSON.stringify(menu));
+	},
+
+	showOpenDialog(options?: Electron.OpenDialogOptions): Promise<string[]> {
+		return window.jsb?.ipcRenderer?.invoke('showOpenDialog', options);
+	},
+
+	zoomPage(type: 'in' | 'out' | 'reset') {
+		window.jsb?.ipcRenderer?.send('zoomPage', type);
+	}
 }

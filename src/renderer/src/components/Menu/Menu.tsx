@@ -16,7 +16,7 @@ export type MenuItem = {
 	tooltip?: string;
 	subMenu: MenuItem[];
 	disabled?: boolean;
-	key: number; // 仅供内部使用
+	key?: number; // 仅供内部使用
 } | {
 	type: 'checkbox' | 'radio';
 	value: any;
@@ -38,7 +38,6 @@ export interface MenuOptions {
 };
 
 const showMenu = function (options?: MenuOptions) {
-	console.log('showMenu', options);
 	const handleClose = () => {
 		DOMContainer.removeChild(DOMNode);
 		render(null, DOMNode);

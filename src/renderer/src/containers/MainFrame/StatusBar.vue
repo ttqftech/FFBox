@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import { useAppStore } from '@renderer/stores/appStore';
 import { version } from '@common/constants'
+import { showEnvironmentInfo } from '@renderer/components/misc/EnvironmentInfo';
 import IconInfo from '@renderer/assets/statusBar/info.svg?component';
-import { computed } from 'vue';
 
 const appStore = useAppStore();
 
@@ -34,7 +35,7 @@ const handleInfoCenterButtonClicked = () => {
 	<div class="statusbar">
 		<div class="left">
 			<div>
-				<div class="version" :style="versionStyle">FFBox：{{ FFBoxVersionText }}<br />FFmpeg：{{ appStore.currentServer?.data.ffmpegVersion || '-' }}</div>
+				<div class="version" :style="versionStyle" @click="showEnvironmentInfo">FFBox：{{ FFBoxVersionText }}<br />FFmpeg：{{ appStore.currentServer?.data.ffmpegVersion || '-' }}</div>
 			</div>
 			<div @click="handleInfoCenterButtonClicked">
 				<IconInfo />{{ appStore.unreadNotificationCount }}

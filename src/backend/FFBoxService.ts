@@ -199,7 +199,7 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 		console.log(getTimeString(new Date()), `删除任务：${task.fileBaseName}。id：${id}。`);
 		if (!task) {
 			throw Error(`任务不存在！任务 id：${id}`);
-		} else if (!task || !(task.status === TaskStatus.TASK_INITIALIZING || task.status === TaskStatus.TASK_STOPPED)) {
+		} else if (!task || !([TaskStatus.TASK_INITIALIZING, TaskStatus.TASK_FINISHED, TaskStatus.TASK_STOPPED, TaskStatus.TASK_ERROR].includes(task.status))) {
 			throw Error(`状态机执行异常！任务 id：${id}，操作：删除`);
 		}
 		task.status = TaskStatus.TASK_DELETED;

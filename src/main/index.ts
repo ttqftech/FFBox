@@ -1,10 +1,10 @@
-import { app, shell, BrowserWindow, ipcMain, Menu } from 'electron';
+import { app, dialog, BrowserWindow, ipcMain, Menu, shell } from 'electron';
 // import ElectronStore from 'electron-store';
 import { exec } from 'child_process';
 import * as path from 'path';
 import { TransferStatus } from '@common/types';
 import ProcessInstance from '@common/processInstance';
-import { getOs } from './utils';
+import { convertFFBoxMenuToElectronMenuTemplate, getOs } from './utils';
 import osBridge from './osBridge';
 // import { electronApp, optimizer, is } from '@electron-toolkit/utils';
 // import { FFBoxService } from './service/FFBoxService';
@@ -70,7 +70,7 @@ class ElectronApp {
 			maximizable: true,
 			center: true,
 			// transparent: true,
-			frame: false,
+			// frame: false,
 			hasShadow: true,
 			// titleBarOverlay: {
 			// 	color: '#444444'
@@ -143,40 +143,12 @@ class ElectronApp {
 		});	
 
 		// 应用菜单
-		const menuTemplate = [
-			{
-				label: 'FFBox (A)',
-				submenu: [
-					{ label: '访问官网', click: () => mainWindow.webContents.send('menu', 'FFBox.访问官网') },
-					{ label: '访问源码' },
-					{ label: '检查更新' },
-					{ type: 'separator' },
-					{ label: 'FFBox v4.0' },
-				],
-			},
-			{
-				label: '任务 (T)',
-				submenu: [
-					{ label: '添加任务' },
-					{ label: '停止所有任务' },
-					{ label: '强行停止所有任务' },
-					{ label: '删除所有未在运行的任务' },
-					{ type: 'separator' },
-					{ label: '开始执行队列' },
-					{ label: '暂停执行队列' },
-				],
-			},
-			{
-				label: '视图 (V)',
-				submenu: [
-					{ label: '放大' },
-					{ label: '缩小' },
-					{ label: '重置缩放' },
-				],
-			},
-		];
+		const initialMenuTemplate = [
+			{ label: 'FFBox' },
+			{ label: '加载中' }
+		]
 		
-		const menu = Menu.buildFromTemplate(menuTemplate as any);
+		const menu = Menu.buildFromTemplate(initialMenuTemplate as any);
 		Menu.setApplicationMenu(menu);
 
 		// this.electronStore = new ElectronStore();
@@ -277,11 +249,31 @@ class ElectronApp {
 		});
 
 		// osBridge 系列
-		ipcMain.on('setBlurBehindWindow', () => {
-			osBridge.setBlurBehindWindow(this.mainWindow);
-		});
+		ipcMain.on('setBlurBehindWindow', () => osBridge.setBlurBehindWindow(this.mainWindow));
 		ipcMain.on('triggerSystemMenu', () => osBridge.triggerSystemMenu());
 		ipcMain.on('triggerSnapLayout', () => osBridge.triggerSnapLayout());
+
+		// 应用菜单更新
+		ipcMain.on('setApplicationMenu', (event, menuStr: string) => {
+			const menuTemplate = convertFFBoxMenuToElectronMenuTemplate(menuStr, this.mainWindow.webContents);
+			const menu = Menu.buildFromTemplate(menuTemplate as any);
+			Menu.setApplicationMenu(menu);	
+		});
+
+		// 打开“打开文件”对话框
+		ipcMain.handle('showOpenDialog', (event, options: Electron.OpenDialogOptions) => {
+			return new Promise(resolve => {
+				dialog.showOpenDialog(this.mainWindow, options).then((result) => {
+					resolve(result.canceled ? [] : result.filePaths);
+				});
+			});
+		});
+		  
+		// 界面放大缩小
+		ipcMain.on('zoomPage', (event, type: 'in' | 'out' | 'reset') => {
+			const finalZoomLevel = type === 'reset' ? 0 : this.mainWindow.webContents.zoomLevel + (type === 'in' ? 1 : -1);
+			this.mainWindow.webContents.setZoomLevel(finalZoomLevel);
+		});
 
 		// ipcMain.handle('electron-store', (event, type: 'get' | 'set' | 'delete', key: string, value?: string) => {
 		// 	if (type === 'get') {

@@ -4,6 +4,7 @@ import type { MenuOptions, MenuItem } from './Menu';
 // @ts-ignore
 import { MenuItem as v_MenuItem, MenuOptions as v_MenuOptions } from './Menu.tsx';
 import Tooltip from '@renderer/components/Tooltip/Tooltip';
+import Checkbox from '@renderer/components/Checkbox/Checkbox.vue';
 
 interface InnerMenu {
 	menu: MenuItem[];
@@ -18,7 +19,7 @@ type Props = MenuOptions & {
     onClose: () => void;	// 由本组件调用，外部将本组件销毁
 }
 
-const props = defineProps<v_Props>() as Props;
+const props = defineProps<v_Props>() as any as Props;
 
 const menuElemRefs = ref([]);
 
@@ -50,15 +51,15 @@ const flattenedMenus = computed(() => {
 		}
 	}
 	const ret = allMenus.filter((menu) => openedSubMenus.value.includes(menu.menuIndex));
-	console.log('flattenedMenus', ret);
+	// console.log('flattenedMenus', ret);
 	return ret;
 }, {
-	onTrack(event) {
-		console.log('track', event);
-	},
-	onTrigger(event) {
-		console.log('trigger', event);
-	},
+	// onTrack(event) {
+	// 	console.log('track', event);
+	// },
+	// onTrigger(event) {
+	// 	console.log('trigger', event);
+	// },
 });
 
 const getMenuItemVforKey = (menuItem: MenuItem, index: number) => {
@@ -74,6 +75,9 @@ const getMenuItemClassName = (menuItem: MenuItem) => {
 		return 'menuSeparator';
 	} else {
 		let retStr = ['menuItem'];
+		if (menuItem.disabled) {
+			retStr.push('menuItemDisabled');
+		}
 		// 优先显示选中，再显示悬浮
 		if ('value' in menuItem && props.selectedValue === menuItem.value) {
 			retStr.push('menuItemSelected');
@@ -343,9 +347,9 @@ onUnmounted(() => {
 				<div v-if="menuItem.type !== 'separator'" class="label">
 					{{ menuItem.label }}
 				</div>
-				<button v-if="false" class="iconArea">
-					<img src="@renderer/assets/mainArea/paraBox/×.svg?url" alt="">
-				</button>
+				<div v-if="menuItem.type === 'checkbox'" class="iconArea">
+					<Checkbox v-if="menuItem.type === 'checkbox'" :checked="menuItem.checked" />
+				</div>
 				<button v-if="false" class="opArea" @click="handleMenuItemOpClick($event, menuItem)">
 					<img src="@renderer/assets/mainArea/paraBox/×.svg?url" alt="">
 				</button>
@@ -389,8 +393,8 @@ onUnmounted(() => {
 				.label {
 					position: absolute;
 					top: 0;
-					left: 28px;
-					right: 28px;
+					left: 30px;
+					right: 30px;
 					line-height: 32px;
 				}
 				.iconArea {
@@ -399,6 +403,9 @@ onUnmounted(() => {
 					left: 0;
 					width: 28px;
 					height: 32px;
+					display: flex;
+					justify-content: center;
+					align-items: center;
 				}
 				.opArea {
 					position: absolute;
@@ -407,6 +414,9 @@ onUnmounted(() => {
 					width: 28px;
 					height: 32px;
 				}
+			}
+			.menuItemDisabled {
+				opacity: 0.3;
 			}
 			.menuItemSelected {
 				background: hwb(210 60% 0%);
