@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
 // import Tooltip from './Tooltip/Tooltip';
-import Tooltip from '@renderer/components/Tooltip/Tooltip';
+// import Tooltip from '@renderer/components/Tooltip/Tooltip';
 
 import { BasicMenuOption } from '@common/params/types';
+import showMenu from '@renderer/components/Menu/Menu';
 
 interface Props {
 	title: string;
@@ -20,37 +21,50 @@ const props = defineProps<Props>();
 const focused = ref(false);
 const comboOpened = ref(false);
 const inputText = ref('-');
-const currentIndex = ref(-1);
-const comboPosition = ref<Partial<{
-	left: string;
-	top: string;
-	bottom: string;
-	height: string;
-	width: string;
-}>>({});
+// const currentIndex = ref(-1);
 
 const selectorRef = ref<Element>(null);
-const menuRef = ref<Element>(null);
+const menuRef = ref<ReturnType<typeof showMenu>>(null);
 
-// 处理输入框
+// 输入框点击打开菜单
 const handleClick = () => {
-	calcComboPosition();
+	const selectorRect = selectorRef.value.getBoundingClientRect();
+	menuRef.value = showMenu({
+		menu: props.list.map((menuOption) => (
+			{ type: 'normal', label: menuOption.lName, value: menuOption.sName, tooltip: menuOption.description }
+		)),
+		type: 'select',
+		selectedValue: props.text,
+		triggerRect: { xMin: selectorRect.x, yMin: selectorRect.y, xMax: selectorRect.x + selectorRect.width, yMax: selectorRect.y + selectorRect.height },
+		onSelect: (event, value, checked) => {
+			inputText.value = value;
+			props.onChange(value);
+			comboOpened.value = false;
+		},
+		onClose: () => {
+			comboOpened.value = false;
+			menuRef.value = null;
+		},
+		returnFocus: (e: Event) => {
+			selectorRef.value.firstElementChild!.focus();
+		},
+	});
 
 	// 计算默认项
-	currentIndex.value = props.list.findIndex((value, index) => {
-		if (value.sName === props.text) {
-			return true;
-		}
-	});
+	// currentIndex.value = props.list.findIndex((value, index) => {
+	// 	if (value.sName === props.text) {
+	// 		return true;
+	// 	}
+	// });
 
 	selectorRef.value.firstElementChild!.focus();
 	comboOpened.value = true;
 	// Vue.nextTick(() => {
-	setTimeout(() => {
-		menuRef.value.firstElementChild!.children[currentIndex.value].scrollIntoView({
-			behavior: "auto", block: "nearest", inline: "nearest"
-		});
-	}, 0);
+	// setTimeout(() => {
+	// 	menuRef.value.firstElementChild!.children[currentIndex.value].scrollIntoView({
+	// 		behavior: "auto", block: "nearest", inline: "nearest"
+	// 	});
+	// }, 0);
 	// });
 };
 
@@ -58,18 +72,18 @@ const handleBlur = (event: FocusEvent) => {
 	// 鼠标按下菜单中的元素时，首先触发输入框的 onBlur，然后才触发菜单的 onMouseDown
 	// onBlur 发生时，activeElement 是 body，需要在 nextTick 读取才能读到正确的被激活的元素
 	// 只要这个元素是菜单元素中的任意一项，就忽略这次失焦行为，避免影响菜单的 onClick 事件
-	setTimeout(() => {
-		let allowedActiveElement = flattenElement(menuRef.value);
-		let findResult = allowedActiveElement.find((element) => {
-			return element === document.activeElement;
-		});
-		if (!findResult) {
-			focused.value = false;
-			comboOpened.value = false;
-		} else {
-			selectorRef.value.firstElementChild!.focus();
-		}
-	}, 0);
+	// setTimeout(() => {
+	// 	let allowedActiveElement = flattenElement(menuRef.value);
+	// 	const findResult = allowedActiveElement.find((element) => {
+	// 		return element === document.activeElement;
+	// 	});
+	// 	if (!findResult) {
+	// 		focused.value = false;
+	// 		comboOpened.value = false;
+	// 	} else {
+	// 		selectorRef.value.firstElementChild!.focus();
+	// 	}
+	// }, 0);
 };
 
 const handleFocus = (event: FocusEvent) => {
@@ -78,173 +92,90 @@ const handleFocus = (event: FocusEvent) => {
 
 const handleInput = (event: InputEvent) => {
 	let newValue = (event.target as HTMLInputElement).value;
-	currentIndex.value = props.list.findIndex((value, index) => {
-		return value.sName == newValue;
-	});
+	// currentIndex.value = props.list.findIndex((value, index) => {
+	// 	return value.sName == newValue;
+	// });
 	(props.onChange || (() => {}))(newValue);
 };
 
 const handleKeydown = (event: KeyboardEvent) => {
-	let selectionChaged = true;
-	switch (event.key) {
-		case 'ArrowUp':
-			if (currentIndex.value > 0) {
-				currentIndex.value--;
-			} else {
-				currentIndex.value = props.list.length - 1;
+	if (['ArrowUp', 'ArrowDown', 'Home', 'End', 'Enter', 'Escape'].includes(event.key)) {
+		if (menuRef.value) {
+			menuRef.value.triggerKeyboardEvent(event);
+			event.preventDefault();
+		} else {
+			if (['ArrowUp', 'ArrowDown', 'Enter'].includes(event.key)) {
+				handleClick();	// 未打开菜单情况下通过这些按键可打开菜单
+			} else if (!['Home', 'End'].includes(event.key)) {
+				event.preventDefault();
 			}
-			break;
-		case 'ArrowDown':
-			if (currentIndex.value < props.list.length - 1) {
-				currentIndex.value++;
-			} else {
-				currentIndex.value = 0;
-			}
-			break;
-		case 'Home':
-			currentIndex.value = 0;
-			break;
-		case 'End':
-			currentIndex.value = props.list.length - 1;
-			break;
-		case 'Enter':
-		case 'Escape':
-			comboOpened.value = false;
-		default:
-			selectionChaged = false;
-			break;
-	}
-	if (selectionChaged) {
-		event.preventDefault();
-		inputText.value = props.list[currentIndex.value].sName;
-		props.onChange(inputText.value);
-		if (!comboOpened.value) {
-			comboOpened.value = true;
-			calcComboPosition();
 		}
-		// Vue.nextTick(() => {
-		setTimeout(() => {
-			// 若 !comboOpened，此处没有 child，所以等 nextTick 处理
-			menuRef.value.firstElementChild!.children[currentIndex.value].scrollIntoView({
-				behavior: "auto", block: "nearest", inline: "nearest"
-			});
-		}, 0);
-		// })
 	}
+	// let selectionChaged = true;
+	// switch (event.key) {
+	// 	case 'ArrowUp':
+	// 		if (currentIndex.value > 0) {
+	// 			currentIndex.value--;
+	// 		} else {
+	// 			currentIndex.value = props.list.length - 1;
+	// 		}
+	// 		break;
+	// 	case 'ArrowDown':
+	// 		if (currentIndex.value < props.list.length - 1) {
+	// 			currentIndex.value++;
+	// 		} else {
+	// 			currentIndex.value = 0;
+	// 		}
+	// 		break;
+	// 	case 'Home':
+	// 		currentIndex.value = 0;
+	// 		break;
+	// 	case 'End':
+	// 		currentIndex.value = props.list.length - 1;
+	// 		break;
+	// 	case 'Enter':
+	// 	case 'Escape':
+	// 		comboOpened.value = false;
+	// 	default:
+	// 		selectionChaged = false;
+	// 		break;
+	// }
+	// if (selectionChaged) {
+	// 	event.preventDefault();
+	// 	inputText.value = props.list[currentIndex.value].sName;
+	// 	props.onChange(inputText.value);
+	// 	if (!comboOpened.value) {
+	// 		comboOpened.value = true;
+	// 		calcComboPosition();
+	// 	}
+	// 	// Vue.nextTick(() => {
+	// 	setTimeout(() => {
+	// 		// 若 !comboOpened，此处没有 child，所以等 nextTick 处理
+	// 		menuRef.value.firstElementChild!.children[currentIndex.value].scrollIntoView({
+	// 			behavior: "auto", block: "nearest", inline: "nearest"
+	// 		});
+	// 	}, 0);
+	// 	// })
+	// }
 };
 
 // 处理菜单
-const handleMenuClick = (index: number) => {
-	let newValue = props.list[index].sName;
-	inputText.value = newValue;
-	props.onChange(newValue);
-	comboOpened.value = false;
-	Tooltip.hide();
-};
-
-const handleMenuMouseEnter = (event: MouseEvent, index: number) => {
-	if (!props.list[index].description) {
-		return;
-	}
-	let position = {};
-	let target = event.target as HTMLElement;
-	let targetRect = target.getBoundingClientRect();
-	// 计算水平方向
-	if (parseInt(comboPosition.value.left) + event.target!.offsetWidth / 2 < document.documentElement.clientWidth / 2) {
-		position = {
-			...position,
-			left: `${targetRect.left + targetRect.width + 16}px`,
-		}
-	} else {
-		position = {
-			...position,
-			right: `calc(100% - ${targetRect.left - 16}px)`,
-		}
-	}
-	// 计算垂直方向（若 item 垂直位置在窗口上方，那么指定 top，否则指定 bottom）
-	if (targetRect.top + targetRect.height / 2 < document.documentElement.clientHeight / 2) {
-		position = {
-			...position,
-			top: `${targetRect.top}px`,
-		}
-	} else {
-		position = {
-			...position,
-			bottom: `calc(100% - ${targetRect.top + targetRect.height}px)`
-		}
-	}
-	Tooltip.show({
-		text: props.list[index].description,
-		position,
-	})
-};
-
-const handleMenuMouseLeave = () => {
-	Tooltip.hide();
-};
-
-const handleMenuDeleteClick = (event: MouseEvent, index: number) => {
-	event.stopPropagation();
-	(props.onDelete || (() => {}))(index);
-};
-
-const calcComboPosition = () => {
-	// 暂时写死的高度
-	const titlebarHeight = 28;
-	const menuItemHeight = 40;
-	const statusbarHeight = 24;
-
-	let ScreenWidth = document.documentElement.clientWidth;			// 使用 window.innerWidth 也行
-	let ScreenHeight = document.documentElement.clientHeight;
-	let finalPosition = {};
-	let target = selectorRef.value;
-
-	let listHeight = menuItemHeight * props.list.length;
-	let selectorUpperTop = target.getBoundingClientRect().top;
-	let selectorLowerTop = selectorUpperTop + target.offsetHeight;
-	let upperSpace = selectorUpperTop - titlebarHeight;
-	let lowerSpace = ScreenHeight - selectorLowerTop - statusbarHeight;
-	
-	// 计算水平位置
-	finalPosition = { left: `${target.getBoundingClientRect().left - 39}px` };
-	
-	// 计算垂直位置
-	if (upperSpace >= lowerSpace) {
-		// 上方空间更大，往上弹出
-		if (listHeight <= upperSpace) {
-			finalPosition = { ...finalPosition, height: `${listHeight}px`, bottom: `${ScreenHeight - upperSpace}px` };
-		} else {
-			finalPosition = { ...finalPosition, height: `${upperSpace - titlebarHeight}px`, top: `${titlebarHeight}px` };
-		}
-	} else {
-		// 下方空间更大，往下弹出
-		if (listHeight <= lowerSpace) {
-			finalPosition = { ...finalPosition, height: `${listHeight}px`, top: `${ScreenHeight - lowerSpace}px` };
-		} else {
-			finalPosition = { ...finalPosition, height: `${lowerSpace - statusbarHeight}px`, bottom: `${statusbarHeight}px` };
-		}
-	}
-
-	// 确定位置
-	comboPosition.value = finalPosition;
-};
+// const handleMenuClick = (index: number) => {
+// 	let newValue = props.list[index].sName;
+// 	inputText.value = newValue;
+// 	props.onChange(newValue);
+// 	comboOpened.value = false;
+// 	Tooltip.hide();
+// };
 
 // 监听 props 中的 text，并在其更新时依此更新 data 中的 inputText（与输入框双向绑定）
 watch(() => props.text, (newValue, oldValue) => {
 	inputText.value = newValue;
-})
+});
 
 onMounted(() => {
 	inputText.value = props.text;
-})
-
-function flattenElement(element: Element) {
-	let ret = [element];
-	for (const child of element.children) {
-		ret.push(...flattenElement(child));
-	}
-	return ret;
-}
+});
 
 </script>
 
@@ -262,27 +193,6 @@ function flattenElement(element: Element) {
 				@keydown="handleKeydown"
 			>
 			<div class="combobox-selector-img"></div>
-		</div>
-		<div class="combomenu" ref="menuRef">
-			<transition name="comboanimate">
-				<menu class="combomenu-list" v-if="comboOpened" :style="comboPosition">
-					<div
-						v-for="(listitem, index) in list"
-						:key="listitem.sName"
-						class="combomenu-item"
-						:class="{ combomenuItemSelected: index === currentIndex }"
-						:tabindex="index" @click="handleMenuClick(index)"
-						@mouseenter="handleMenuMouseEnter($event, index)"
-						@mouseleave="handleMenuMouseLeave()"
-					>
-						<!-- <div class="combomenu-item-img" style="background-image: url(image/star.png);"></div> -->
-						{{ listitem.lName }}
-						<button v-if="deletable" class="combomenu-item-delete" aria-label="删除此项" @click="handleMenuDeleteClick($event, index)">
-							<img src="@renderer/assets/mainArea/paraBox/×.svg?url" alt="">
-						</button>
-					</div>
-				</menu>
-			</transition>
 		</div>
 	</div>
 </template>

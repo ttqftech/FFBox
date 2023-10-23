@@ -70,7 +70,7 @@ class ElectronApp {
 			maximizable: true,
 			center: true,
 			// transparent: true,
-			// frame: false,
+			frame: false,
 			hasShadow: true,
 			// titleBarOverlay: {
 			// 	color: '#444444'

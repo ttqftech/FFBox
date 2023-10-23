@@ -11,8 +11,9 @@ const appStore = useAppStore();
 
 const selectedMenuIndex = ref(-1);
 const topMenuRef = ref<HTMLDivElement>(null);
-const currentOpenedMenuRef = ref();
-const topMenuButtonsMousemoveListener = ref();
+const currentOpenedMenuRef = ref<ReturnType<typeof showMenu>>();
+// const topMenuButtonsMousemoveListener = ref();
+const topMenuButtonsMousemoveElems = ref<HTMLDivElement[]>([]);
 
 const finalMenu = computed(() => {
 	const ret: MenuItem[] = [
@@ -20,19 +21,29 @@ const finalMenu = computed(() => {
 			type: 'submenu',
 			label: 'FFBox (A)',
 			subMenu: [
-				{ type: 'normal', label: '访问官网', value: '访问官网', onClick: () => nodeBridge.jumpToUrl('http://ffbox.ttqf.tech') },
-				{ type: 'normal', label: '访问源码', value: '访问源码', onClick: () => nodeBridge.jumpToUrl('https://github.com/ttqftech/FFBox') },
+				{ type: 'submenu', label: '访问官网', subMenu: [
+					{ type: 'normal', label: 'FFBox 官网', value: 'FFBox 官网', onClick: () => nodeBridge.jumpToUrl('http://ffbox.ttqf.tech') },
+					{ type: 'normal', label: '作者个人网站', value: '作者个人网站', onClick: () => nodeBridge.jumpToUrl('http://ttqf.tech') },
+				] },
+				{ type: 'submenu', label: '访问源码', subMenu: [
+					{ type: 'normal', label: 'github 仓库', value: 'github 仓库', onClick: () => nodeBridge.jumpToUrl('https://github.com/ttqftech/FFBox') },
+					{ type: 'normal', label: 'gitee 仓库', value: 'gitee 仓库', onClick: () => nodeBridge.jumpToUrl('https://gitee.com/ttqf/FFBox') },
+					{ type: 'submenu', label: '子菜单', subMenu: [
+						{ type: 'normal', label: 'FFBox v4.0', value: 'FFBox', tooltip: '显示环境信息', onClick: () => showEnvironmentInfo() },
+					] },
+				] },
 				{ type: 'separator' },
-				{ type: 'normal', label: 'FFBox v4.0', value: 'FFBox', onClick: () => showEnvironmentInfo() },
+				{ type: 'normal', label: 'FFBox v4.0', value: 'FFBox', tooltip: '显示环境信息', onClick: () => showEnvironmentInfo() },
 			],
 		},
 		{
 			type: 'submenu',
 			label: '服务器 (S)',
 			subMenu: [
-				{ type: 'normal', label: '添加服务器', value: '添加服务器', onClick: () => appStore.addServer() },
-				{ type: 'normal', label: '关闭当前服务器页面', value: '关闭当前服务器页面', disabled: !(appStore.currentServer?.entity.ip !== 'localhost'), onClick: () => appStore.removeServer(appStore.currentServerId) },
-				{ type: 'normal', label: '关闭所有服务器页面', value: '关闭所有服务器页面', onClick: () => {
+				{ type: 'normal', label: '添加服务器', value: '添加服务器', tooltip: '添加服务器标签页',
+					disabled: appStore.servers.length && appStore.servers[appStore.servers.length - 1].entity.status === ServiceBridgeStatus.Idle, onClick: () => appStore.addServer() },
+				{ type: 'normal', label: '关闭当前服务器页面', value: '关闭当前服务器页面', tooltip: '断开当前服务器连接并关闭标签页', disabled: !(appStore.currentServer?.entity.ip !== 'localhost'), onClick: () => appStore.removeServer(appStore.currentServerId) },
+				{ type: 'normal', label: '关闭所有服务器页面', value: '关闭所有服务器页面', tooltip: '断开所有服务器连接（不包括本地服务器）并关闭标签页', onClick: () => {
 					for (const server of appStore.servers) {
 						if (server.entity.ip !== 'localhost') {
 							appStore.removeServer(server.data.id);
@@ -40,7 +51,7 @@ const finalMenu = computed(() => {
 					}
 				} },
 				{ type: 'separator' },
-				{ type: 'normal', label: '刷新当前服务器信息', value: '刷新当前服务器信息', onClick: () => {
+				{ type: 'normal', label: '刷新当前服务器信息', value: '刷新当前服务器信息', tooltip: '刷新服务器版本、任务列表、通知列表等信息', onClick: () => {
 					const server = appStore.currentServer as any;
 					appStore.updateServerVersion(server);
 					// appStore.updateGlobalTask(server);
@@ -55,18 +66,26 @@ const finalMenu = computed(() => {
 			type: 'submenu',
 			label: '任务 (T)',
 			subMenu: appStore.currentServer?.entity.status === ServiceBridgeStatus.Connected ? [
-				{ type: 'normal', label: '添加任务', value: '添加任务', onClick: () => {
-					nodeBridge.showOpenDialog({ properties: ['multiSelections'], }).then((result) => {
-						alert('未实现');
-					})
+				{ type: 'normal', label: '添加任务', value: '添加任务', tooltip: '向当前服务器添加任务', onClick: () => {
+					const elem = document.createElement('input');
+					elem.type = 'file';
+					elem.multiple = true;
+					document.body.appendChild(elem);
+					// elem.click();
+					const ev = new MouseEvent('click');
+					elem.dispatchEvent(ev);
+					document.body.removeChild(elem);
+					elem.onchange = () => {
+						appStore.addTasks(elem.files);
+					}
 				} },
-				{ type: 'normal', label: '停止所有任务', value: '停止所有任务', onClick: () => {
+				{ type: 'normal', label: '停止所有任务', value: '停止所有任务', tooltip: '将当前服务器所有运行中、已暂停的任务进行软停止操作', onClick: () => {
 					for (const [id, task] of Object.entries(appStore.currentServer?.data.tasks) || []) {
 						if (task.status === TaskStatus.TASK_RUNNING || task.status === TaskStatus.TASK_PAUSED)
 						appStore.currentServer.entity.taskReset(+id);
 					}
 				} },
-				{ type: 'normal', label: '删除所有未在运行的任务', value: '删除所有未在运行的任务', onClick: () => {
+				{ type: 'normal', label: '删除所有未在运行的任务', value: '删除所有未在运行的任务', tooltip: '将当前服务器所有已完成、已停止、出错的任务删除', onClick: () => {
 					for (const [id, task] of Object.entries(appStore.currentServer.data.tasks)) {
 						if ([TaskStatus.TASK_FINISHED, TaskStatus.TASK_STOPPED, TaskStatus.TASK_ERROR].includes(task.status)) {
 							appStore.currentServer.entity.taskDelete(+id);
@@ -88,9 +107,9 @@ const finalMenu = computed(() => {
 			type: 'submenu',
 			label: '视图 (V)',
 			subMenu: [
-				{ type: 'normal', label: '放大', value: '放大', onClick: () => nodeBridge.zoomPage('in') },
-				{ type: 'normal', label: '缩小', value: '缩小', onClick: () => nodeBridge.zoomPage('out') },
-				{ type: 'normal', label: '重置缩放', value: '重置缩放', onClick: () => nodeBridge.zoomPage('reset') },
+				{ type: 'normal', label: '放大', value: '放大', onClick: () => nodeBridge.zoomPage('in'), tooltip: '全局界面放大' },
+				{ type: 'normal', label: '缩小', value: '缩小', onClick: () => nodeBridge.zoomPage('out'), tooltip: '全局界面缩小' },
+				{ type: 'normal', label: '重置缩放', value: '重置缩放', onClick: () => nodeBridge.zoomPage('reset'), tooltip: '全局界面缩放重置' },
 				{ type: 'separator' },
 				{ type: 'checkbox', label: '通知中心', value: '通知中心', checked: appStore.showInfoCenter, onClick: () => {
 					if (appStore.showInfoCenter) {
@@ -170,8 +189,16 @@ const menuCenterContainerStyle = computed(() => {
 })
 
 // 切换菜单中心时关闭已打开菜单
-watch(() => appStore.showMenuCenter, () => {
+watch(() => appStore.showMenuCenter, (value) => {
 	selectedMenuIndex.value = -1;
+	// if (value === 0) {
+	// 	setTimeout(() => {
+	// 		console.log('关了', value, selectedMenuIndex.value, currentOpenedMenuRef.value);
+	// 		if (currentOpenedMenuRef.value) {
+	// 			currentOpenedMenuRef.value.close();
+	// 		}
+	// 	}, 500);
+	// }
 });
 // 监听已打开菜单序号，控制显示悬浮菜单
 watch(selectedMenuIndex, (index, oldIndex) => {
@@ -179,24 +206,49 @@ watch(selectedMenuIndex, (index, oldIndex) => {
 	if (selectedMenu) {
 		if (oldIndex === -1) {
 			// 新打开菜单时，记录顶部菜单按钮位置，并在 body 上挂载鼠标移动监听
-			const rects: DOMRect[] = [];
-			for (const topMenuButton of topMenuRef.value.children) {
-				rects.push(topMenuButton.getBoundingClientRect());
-			}
-			topMenuButtonsMousemoveListener.value = (ev: MouseEvent) => {
-				for (const [key, topMenuButtonRect] of Object.entries(rects)) {
-					if (
-						ev.pageX > topMenuButtonRect.x && ev.pageX < topMenuButtonRect.x + topMenuButtonRect.width &&
-						ev.pageY > topMenuButtonRect.y && ev.pageY < topMenuButtonRect.y + topMenuButtonRect.height
-					) {
-						selectedMenuIndex.value = Number(key);
-					}
+			// const rects: DOMRect[] = [];
+			// for (const topMenuButton of topMenuRef.value.children) {
+			// 	rects.push(topMenuButton.getBoundingClientRect());
+			// }
+			// topMenuButtonsMousemoveListener.value = (ev: MouseEvent) => {
+			// 	for (const [key, topMenuButtonRect] of Object.entries(rects)) {
+			// 		if (
+			// 			ev.pageX > topMenuButtonRect.x && ev.pageX < topMenuButtonRect.x + topMenuButtonRect.width &&
+			// 			ev.pageY > topMenuButtonRect.y && ev.pageY < topMenuButtonRect.y + topMenuButtonRect.height
+			// 		) {
+			// 			selectedMenuIndex.value = Number(key);
+			// 		}
+			// 	}
+			// }
+			// document.body.addEventListener('mousemove', topMenuButtonsMousemoveListener.value);
+			// 新打开菜单时，记录顶部菜单按钮位置，并在 body 上的此位置添加置顶元素
+			if (appStore.showMenuCenter === 1) {
+				const rects: DOMRect[] = [];
+				for (const topMenuButton of topMenuRef.value.children) {
+					rects.push(topMenuButton.getBoundingClientRect());
+				}
+				// topMenuButtonsMousemoveListener.value = 0;
+				for (const [key, rect] of Object.entries(rects)) {
+					const elem = document.createElement('div');
+					elem.style.setProperty('position', 'fixed');
+					elem.style.setProperty('left', `${rect.left}px`);
+					elem.style.setProperty('top', `${rect.top}px`);
+					elem.style.setProperty('width', `${rect.width}px`);
+					elem.style.setProperty('height', `${rect.height}px`);
+					elem.style.setProperty('outline', `red 1px solid`);
+					elem.style.setProperty('z-index', `100`);
+					elem.setAttribute('data-index', key);
+					elem.addEventListener('mousemove', (ev: MouseEvent) => {
+						const index = +(ev.target as HTMLDivElement).getAttribute('data-index');
+						selectedMenuIndex.value = index;
+					});
+					document.body.appendChild(elem);
+					topMenuButtonsMousemoveElems.value.push(elem);
 				}
 			}
-			document.body.addEventListener('mousemove', topMenuButtonsMousemoveListener.value);
 		}
 
-		const elem = topMenuRef.value.children[selectedMenuIndex.value];
+		const elem = topMenuRef.value.children[index];
 		const rect = elem.getBoundingClientRect();
 		currentOpenedMenuRef.value?.close();
 		if (selectedMenu.type !== 'submenu') {
@@ -204,14 +256,28 @@ watch(selectedMenuIndex, (index, oldIndex) => {
 		}
 		currentOpenedMenuRef.value = showMenu({
 			menu: selectedMenu.subMenu,
+			type: 'action',
 			// defaultSelectedValue?: any;
 			// container: containerRef.value,
 			triggerRect: { xMin: rect.x, yMin: rect.y, xMax: rect.x + rect.width, yMax: rect.y + rect.height },	// 触发菜单的控件的坐标，用于计算菜单弹出方向和大小
-			onCancel: () => { selectedMenuIndex.value = -1; },
-			onItemClick: (event, value, checked) => {
-				console.log(event, value, checked);
+			// disableMask: appStore.showMenuCenter === 1,
+			onClose: () => {
+				// 如果是切换菜单，此处两值就不相等，则不继续关闭其他内容
+				if (index === selectedMenuIndex.value) {
+					selectedMenuIndex.value = -1;
+					if (appStore.showMenuCenter === 1) {
+						appStore.showMenuCenter = 0;
+					}
+				}
+			},
+			onSelect: (event, value, checked) => {
 				handleMenuItemClicked(event, value);
 				selectedMenuIndex.value = -1;
+				if (appStore.showMenuCenter === 1) {
+					// 菜单组件会停止 mouseup 的冒泡，因此此处再触发一次关闭大按钮菜单
+					const ev = new MouseEvent('mouseup');
+					document.dispatchEvent(ev);
+				}
 			},
 			onKeyDown: (event: KeyboardEvent) => {
 				if (event.key === 'ArrowLeft') {
@@ -223,8 +289,13 @@ watch(selectedMenuIndex, (index, oldIndex) => {
 		});
 	} else {
 		if (oldIndex !== -1) {
-			document.body.removeEventListener('mousemove', topMenuButtonsMousemoveListener.value);
+			// document.body.removeEventListener('mousemove', topMenuButtonsMousemoveListener.value);
+			currentOpenedMenuRef.value?.close();
 			currentOpenedMenuRef.value = undefined;
+			for (const elem of topMenuButtonsMousemoveElems.value) {
+				document.body.removeChild(elem);
+			}
+			topMenuButtonsMousemoveElems.value.splice(0, Number.MAX_SAFE_INTEGER);
 		}
 	}
 });
@@ -260,6 +331,11 @@ const handleMenuItemClicked = (event: Event, value: any) => {
 	}
 };
 
+// const handleMenuMaskMouseUp = () => {
+// 	console.log('handleMenuMaskMouseUp');
+// 	currentOpenedMenuRef.value.close();
+// };
+
 onMounted(() => {
 	// 挂载菜单点击监控
 	nodeBridge.ipcRenderer?.removeAllListeners('menuItemClicked');
@@ -274,12 +350,13 @@ onMounted(() => {
 	<div class="pad" :style="menuCenterPadStyle">
 	</div>
 	<div class="container" :style="menuCenterContainerStyle">
+		<!-- <div v-if="appStore.showMenuCenter === 1" class="menuMask" @mouseup="handleMenuMaskMouseUp"></div> -->
 		<div class="topMenu" ref="topMenuRef">
 			<div
 				v-for="(menu, index) in finalMenu"
 				:class="`menu ${selectedMenuIndex === index ? 'menuSelected' : ''}`"
 				@mouseenter="(e) => handleTopMenuHover(index)"
-				@click="(e) => selectedMenuIndex = index"
+				@mousedown="(e) => selectedMenuIndex = index"
 			>
 				{{ 'label' in menu && menu.label }}
 			</div>
@@ -336,6 +413,13 @@ onMounted(() => {
 				box-shadow: 0 1px 4px hwb(220 25% 10% / 0.5);
 				color: white;
 			}
+		}
+		.menuMask {
+			position: fixed;
+			left: 0;
+			top: 0;
+			width: 100vh;
+			height: 100vh;
 		}
 	}
 </style>

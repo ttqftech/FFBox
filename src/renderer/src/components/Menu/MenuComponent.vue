@@ -5,6 +5,8 @@ import type { MenuOptions, MenuItem } from './Menu';
 import { MenuItem as v_MenuItem, MenuOptions as v_MenuOptions } from './Menu.tsx';
 import Tooltip from '@renderer/components/Tooltip/Tooltip';
 import Checkbox from '@renderer/components/Checkbox/Checkbox.vue';
+import Radio from '@renderer/components/Radio/Radio.vue';
+import IconRight from './right.svg?component';
 
 interface InnerMenu {
 	menu: MenuItem[];
@@ -24,6 +26,7 @@ const props = defineProps<v_Props>() as any as Props;
 const menuElemRefs = ref([]);
 
 const openedSubMenus = ref<number[]>([0]);
+const openedSubMenuItemPos = ref<{[key: number]: { xMin: number, yMin: number, xMax: number, yMax: number }}>({});
 const currentHoveredItem = ref<MenuItem>(undefined);
 
 // 将所有子菜单打平，这样就能使用一个 v-for 渲染所有菜单
@@ -61,6 +64,14 @@ const flattenedMenus = computed(() => {
 	// 	console.log('trigger', event);
 	// },
 });
+
+const getMenuMaskStyle = () => {
+	if (props.disableMask) {
+		return {
+			pointerEvents: 'none',
+		}
+	}
+}
 
 const getMenuItemVforKey = (menuItem: MenuItem, index: number) => {
 	if ('label' in menuItem) {	// normal | checkbox | radio
@@ -101,24 +112,36 @@ const getMenuPosition = (menu: InnerMenu) => {
 	const menuItemHeight = 32;
 	const menuSeparatorHeight = 9;
 	const menuPaddingY = 6;
-	const _triggerRect = props.triggerRect || { xMin: 0, yMin: 0, xMax: 320, yMax: 0 };
+	const _triggerRect = openedSubMenuItemPos.value[menu.menuIndex] || props.triggerRect || { xMin: 0, yMin: 0, xMax: 320, yMax: 0 };
+	const isHorizontal = openedSubMenuItemPos.value[menu.menuIndex] !== undefined;
 
 	let ScreenWidth = document.documentElement.clientWidth;			// 使用 window.innerWidth 也行
 	let ScreenHeight = document.documentElement.clientHeight;
 	let listHeight = menu.menu.reduce((prev, curr) => prev + (curr.type === 'separator' ? menuSeparatorHeight : menuItemHeight), 0) + menuPaddingY * 2;
 	
+	let finalPosition: CSSProperties = {};
 	// 计算水平位置
-	const finalWidth = Math.max(240, _triggerRect.xMax - _triggerRect.xMin);
-	const centralX = Math.max(finalWidth / 2, Math.min((_triggerRect.xMax + _triggerRect.xMin) / 2, ScreenWidth - finalWidth / 2));
+	if (isHorizontal) {
+		// 向右弹出
+		const finalLeft = Math.min(_triggerRect.xMax, ScreenWidth - 240 );
+		finalPosition = {
+			left: `${finalLeft}px`,
+			width: `240px`,
+		};
+	} else {
+		// 上下弹出
+		const finalWidth = Math.max(240, _triggerRect.xMax - _triggerRect.xMin);
+		const centralX = Math.max(finalWidth / 2, Math.min((_triggerRect.xMax + _triggerRect.xMin) / 2, ScreenWidth - finalWidth / 2));
+		finalPosition = {
+			left: `${centralX - finalWidth / 2}px`,
+			width: `${finalWidth}px`,
+		};
+	}
 
-	let finalPosition: CSSProperties = {
-		left: `${centralX - finalWidth / 2}px`,
-		width: `${finalWidth}px`,
-	};
 
 	// 计算垂直位置
-	let upperSpace = _triggerRect.yMin;
-	let lowerSpace = ScreenHeight - _triggerRect.yMax;
+	let upperSpace = isHorizontal ? _triggerRect.yMax : _triggerRect.yMin;
+	let lowerSpace = ScreenHeight - (isHorizontal ? _triggerRect.yMin : _triggerRect.yMax);
 	if (upperSpace >= lowerSpace) {
 		// 上方空间更大，往上弹出
 		if (listHeight <= upperSpace) {
@@ -166,19 +189,22 @@ const getMenuAndItemByValue = (value: any) => {
 };
 
 const handleMaskClick = (e: MouseEvent) => {
+	console.log('handleMaskClick');
 	props.onCancel(e);
+	// e.stopPropagation();
+};
+const handleMenuMouseUp = (e: MouseEvent) => {
 	e.stopPropagation();
-};
+}
 
-const handleMenuItemClick = (e: MouseEvent, menuItem: MenuItem) => {
+const handleSelect = (e: MouseEvent | KeyboardEvent, menuItem: MenuItem, stopPropagation = true) => {
 	if ('value' in menuItem) {
-		props.onItemClick(e, menuItem.value, menuItem.type !== 'normal' ? menuItem.checked : undefined);
+		props.onSelect(e, menuItem.value, menuItem.type !== 'normal' ? menuItem.checked : undefined);
 	}
-	e.stopPropagation();	// 防止冒泡到 mask
-};
-
-const handleMenuItemOpClick = (e: MouseEvent, menuItem: MenuItem) => {
-
+	// 鼠标 click 时为真，防止冒泡到 mask；键盘操作时为假，允许外层关闭菜单
+	// if (stopPropagation) {
+	// 	e.stopPropagation();
+	// }
 };
 
 const handleMenuItemMouseEnter = (e: MouseEvent, menuItem: MenuItem, menu: InnerMenu) => {
@@ -223,35 +249,33 @@ const handleMenuItemMouseLeave = () => {
 	currentHoveredItem.value = undefined;
 };
 
-// const handleMenuItemKeydown = (e: KeyboardEvent, menuItem: MenuItem) => {
-// };
-
 const handleMenuItemFocused = (e: FocusEvent, menuItem: MenuItem) => {
 	currentHoveredItem.value = menuItem;
+	(props.returnFocus || (() => {}))(e);
 };
 
 watch(currentHoveredItem, (newItem, oldItem) => {
-	console.log('currentHoveredItem', newItem);
+	// console.log('currentHoveredItem', newItem);
 	if (newItem !== undefined) {
-		const { menu } = getMenuByItem(toRaw(newItem));
-		// 计算子菜单打开状态——找到所有父亲
+		const { menu, indexInFlattened, indexInMenu } = getMenuByItem(toRaw(newItem));
 		const newOpenedKeys = [menu.menuIndex];
-		let newOpenedSubMenus = openedSubMenus.value;
 		let current = menu;
+		// 打开的菜单为 [...所有父亲, 当前菜单]
 		while (current.parent) {
-			current = menu.parent;
-			newOpenedKeys.unshift(menu.menuIndex);
+			current = current.parent;
+			newOpenedKeys.unshift(current.menuIndex);
 		}
 		if (newItem.type === 'submenu') {
-			// 保持父菜单的打开状态，打开字菜单
+			// 打开的菜单为 [...所有父亲, 当前菜单, 子菜单]
 			newOpenedKeys.push(newItem.key);
-			newOpenedSubMenus = newOpenedKeys;
-		} else {
-			// 仅保持父菜单的打开状态
-			newOpenedSubMenus = newOpenedKeys;
+			// 记录子菜单项的位置
+			const menuElem = menuElemRefs.value[indexInFlattened] as HTMLDivElement;
+			const menuItemElem = menuElem.children[indexInMenu];
+			const menuItemElemRect = menuItemElem.getBoundingClientRect();
+			openedSubMenuItemPos.value[newItem.key] = { xMin: menuItemElemRect.x, yMin: menuItemElemRect.y, xMax: menuItemElemRect.x + menuItemElemRect.width, yMax: menuItemElemRect.y + menuItemElemRect.height };
 		}
-		if (JSON.stringify(newOpenedSubMenus) !== JSON.stringify(openedSubMenus.value)) {
-			openedSubMenus.value = newOpenedSubMenus;
+		if (JSON.stringify(newOpenedKeys) !== JSON.stringify(openedSubMenus.value)) {
+			openedSubMenus.value = newOpenedKeys;
 		}
 	}
 	if (newItem === undefined && oldItem !== undefined) {
@@ -265,11 +289,15 @@ const keydownListener = (e: KeyboardEvent) => {
 		props.onCancel(e);
 	}
 	let menuItem = toRaw(currentHoveredItem.value);
+	// 动作
+	if (e.key === 'Enter') {
+		handleSelect(e, menuItem, false);
+	}
 	if (!menuItem) {
-		// 上下方向，反向移动一位，以便后面检测上下方向的代码移到正确位置
-		if (e.key === 'ArrowDown') {
+		// 未 hover 时，上下方向，反向移动一位，以便后面检测上下方向的代码移到正确位置
+		if (e.key === 'ArrowDown' || e.key === 'Home') {
 			menuItem = flattenedMenus.value[0].menu[flattenedMenus.value[0].menu.length - 1];
-		} else if (e.key === 'ArrowUp') {
+		} else if (e.key === 'ArrowUp' || e.key === 'End') {
 			menuItem = flattenedMenus.value[0].menu[0];
 		} else {
 			// 其他按键冒泡到上层
@@ -297,13 +325,22 @@ const keydownListener = (e: KeyboardEvent) => {
 			}			
 		} while (currentIndex !== indexInMenu);	// 找了一圈没找到则退出循环
 		menuElem.children[currentIndex].focus();
+		if (props.type === 'select') {
+			handleSelect(e, menu.menu[currentIndex]);
+		}
+	}
+	if (e.key === 'Home' || e.key === 'End') {
+		// 找到菜单 DOM
+		const menuElem = menuElemRefs.value[indexInFlattened] as HTMLDivElement;
+		const index = e.key === 'Home' ? 0 : menuElem.children.length - 1;
+		menuElem.children[index].focus();
+		if (props.type === 'select') {
+			handleSelect(e, menu.menu[index]);
+		}
 	}
 	// 检测左右方向，若本菜单有动作，则不冒泡到上层；否则向上触发
 	if (e.key === 'ArrowLeft') {
 		if (menu.parent) {
-			// 关闭当前子菜单
-			const indexInOpened = openedSubMenus.value.findIndex((menuIndex) => menuIndex === menu.menuIndex);
-			openedSubMenus.value.splice(indexInOpened, 1);
 			// 焦点回到父级的进入子菜单的项
 			const parentDOM = menuElemRefs.value[menu.parent.menuIndex] as HTMLDivElement;
 			const menuItemIndex = menu.parent.menu.findIndex((menuItem) => menuItem.type === 'submenu' && menuItem.key === menu.menuIndex)
@@ -313,46 +350,69 @@ const keydownListener = (e: KeyboardEvent) => {
 		}
 	} else if (e.key === 'ArrowRight') {
 		if (menuItem.type === 'submenu') {
-			// 打开新的子菜单
-			openedSubMenus.value.push(menuItem.key);
+			// 焦点进入子菜单的 props 选中项或第一项
+			const childDOM = menuElemRefs.value[menuItem.key];
+			const activeIndex = menuItem.subMenu.findIndex((menuItem) => 'value' in menuItem && menuItem.value === props.selectedValue);
+			childDOM.children[activeIndex !== -1 ? activeIndex : 0].focus();
 		} else {
 			props.onKeyDown(e);
 		}
 	}
 }
+
+const closeMenuMaskMouseDownListener = (e: MouseEvent) => {
+	if (props.onCancel(e) !== false) {
+		// setTimeout(() => {
+		// 	const elem = document.elementFromPoint(e.pageX, e.pageY);
+		// 	elem.dispatchEvent(e);
+		// }, 0);
+	}
+};
+
 onMounted(() => {
 	currentHoveredItem.value = getMenuAndItemByValue(props.selectedValue)?.menuItem;
-	document.body.addEventListener('keydown', keydownListener);
+	if (!props.returnFocus) {
+		document.addEventListener('keydown', keydownListener);
+	}
 });
 onUnmounted(() => {
-	document.body.removeEventListener('keydown', keydownListener);
+	if (!props.returnFocus) {
+		document.removeEventListener('keydown', keydownListener);
+	}
+	Tooltip.hide();
 })
+
+defineExpose({
+	triggerKeyboardEvent: (event: KeyboardEvent) => {
+		keydownListener(event);
+	},
+});
 
 </script>
 
 <template>
-	<div class="mask" ref="menuRef" @click="handleMaskClick">
-		<menu v-for="(menu, index) in flattenedMenus" class="menu" :style="getMenuPosition(menu)" :ref="(el) => menuElemRefs[index] = el">
+	<div class="mask" ref="menuRef" :class="props.disableMask ? 'maskDisabledOnly' : undefined" @click="handleMaskClick">
+		<menu v-for="(menu, index) in flattenedMenus" class="menu" :style="getMenuPosition(menu)" :ref="(el) => menuElemRefs[index] = el" @mouseup="handleMenuMouseUp">
 			<div
 				v-for="(menuItem, index) in menu.menu"
 				:key="getMenuItemVforKey(menuItem, index)"
 				:class="getMenuItemClassName(menuItem)"
 				:tabindex="menuItem.type == 'separator' ? -1 : 0"
-				@click="handleMenuItemClick($event, menuItem)"
+				@mouseup="handleSelect($event, menuItem)"
 				@mouseenter="handleMenuItemMouseEnter($event, menuItem, menu)"
 				@mouseleave="handleMenuItemMouseLeave()"
 				@focus="handleMenuItemFocused($event, menuItem)"
 			>
-				<!-- <div class="combomenu-item-img" style="background-image: url(image/star.png);"></div> -->
 				<div v-if="menuItem.type !== 'separator'" class="label">
 					{{ menuItem.label }}
 				</div>
-				<div v-if="menuItem.type === 'checkbox'" class="iconArea">
+				<div v-if="menuItem.type === 'checkbox' || menuItem.type === 'radio'" class="iconArea">
 					<Checkbox v-if="menuItem.type === 'checkbox'" :checked="menuItem.checked" />
+					<Radio v-if="menuItem.type === 'radio'" :checked="menuItem.checked" />
 				</div>
-				<button v-if="false" class="opArea" @click="handleMenuItemOpClick($event, menuItem)">
-					<img src="@renderer/assets/mainArea/paraBox/×.svg?url" alt="">
-				</button>
+				<div v-if="menuItem.type === 'submenu'" class="iconRightArea">
+					<IconRight />
+				</div>
 			</div>
 		</menu>
 	</div>
@@ -407,6 +467,20 @@ onUnmounted(() => {
 					justify-content: center;
 					align-items: center;
 				}
+				.iconRightArea {
+					position: absolute;
+					top: 0;
+					right: 0;
+					width: 28px;
+					height: 32px;
+					svg {
+						position: absolute;
+						left: 25%;
+						top: 25%;
+						width: 50%;
+						height: 50%;
+					}
+				}
 				.opArea {
 					position: absolute;
 					top: 0;
@@ -432,6 +506,12 @@ onUnmounted(() => {
 				margin: 4px 0;
 				background-color: #EEE;
 			}
+		}
+	}
+	.maskDisabledOnly {
+		pointer-events: none;
+		&>* {
+			pointer-events: initial;
 		}
 	}
 

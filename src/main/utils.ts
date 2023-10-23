@@ -27,6 +27,7 @@ export function convertFFBoxMenuToElectronMenuTemplate(menuStr: string, webConte
 				id: value,
 				label,
 				type: inputMenuItem.type,
+				toolTip: inputMenuItem.toolTip,
 				click: (event: Event) => webContents.send('menuItemClicked', value),
 				submenu: inputMenuItem.subMenu ? dfs(inputMenuItem.subMenu) as any : undefined,
 			};

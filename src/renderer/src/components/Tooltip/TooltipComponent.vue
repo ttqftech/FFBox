@@ -45,16 +45,16 @@ const props = defineProps<Props>();
 		}
 
 		#tooltip-box {
-			padding: 12px;
+			padding: 10px 12px;
 			background: hsl(0, 0%, 98%);
 			will-change: transform, opacity;
 			border: hsl(0, 0%, 67%) 1px solid;
-			border-radius: 12px;
+			border-radius: 10px;
 			box-shadow: 0px 4px 8px hsla(0, 0%, 0%, 0.3);
 			z-index: 5;
 		}
 			#tooltip-message {
-				font-size: 16px;
+				font-size: 14px;
 				line-height: 1.3em;
 				text-align: left;
 			}

@@ -2,6 +2,7 @@
 import { computed, ref, VNodeRef } from 'vue';
 import { useAppStore } from '@renderer/stores/appStore';
 import nodeBridge from '@renderer/bridges/nodeBridge';
+import { ServiceBridgeStatus } from '@renderer/bridges/serviceBridge';
 import IconAdd from '@renderer/assets/fixedButtons/add.svg?component';
 import IconBack from '@renderer/assets/fixedButtons/back.svg?component';
 import IconMinimize from '@renderer/assets/fixedButtons/minimize.svg?component';
@@ -22,7 +23,15 @@ const bigIconStyle = computed(() => {
 	}
 });
 
-const fourthButtonType = computed(() => appStore.showInfoCenter || appStore.showMenuCenter === 2 ? 'back' : 'addServer');
+const fourthButtonType = computed(() => {
+	if (appStore.showInfoCenter || appStore.showMenuCenter === 2) {
+		return 'back';
+	} else {
+		if (appStore.servers[appStore.servers.length - 1]?.entity.status !== ServiceBridgeStatus.Idle) {
+			return 'addServer';
+		}
+	}
+});
 
 // 大图标按钮
 const handleBigIconMousedown = (e: MouseEvent) => {
@@ -92,7 +101,7 @@ const handleCloseClicked = () => {
 
 <template>
 	<div class="buttonArea">
-		<button class="normalButton" aria-label="添加服务器" @click="handleFourthButtonClicked">
+		<button v-if="fourthButtonType" class="normalButton" aria-label="添加服务器" @click="handleFourthButtonClicked">
 			<IconAdd v-if="fourthButtonType === 'addServer'" />
 			<IconBack v-else-if="fourthButtonType === 'back'" />
 		</button>
@@ -126,8 +135,9 @@ const handleCloseClicked = () => {
 		z-index: 100;
 		-webkit-app-region: none;
 		button {
+			position: relative;
 			width: 44px;
-			height: 100%;
+			height: 30px;
 			display: inline-flex;
 			justify-content: center;
 			align-items: center;
@@ -135,9 +145,12 @@ const handleCloseClicked = () => {
 			outline: none;
 			background: none;
 			svg {
-				fill: hwb(0 30% 70%);
+				position: absolute;
+				left: 17px;
+				top: 10px;
 				width: 10px;
 				height: 10px;
+				fill: hwb(0 30% 70%);
 			}
 		}
 		.normalButton:hover {
