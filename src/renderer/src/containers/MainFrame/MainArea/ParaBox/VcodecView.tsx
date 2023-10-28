@@ -15,7 +15,7 @@ const VcodecView: FunctionalComponent<Props> = (props) => {
 	const vencodersList = computed(() => {
 		const sName_vcodec = appStore.globalParams.video.vcodec;
 		if (sName_vcodec !== '禁用视频' && sName_vcodec !== '自动' && sName_vcodec !== '不重新编码') {
-			const vcodec = vcodecs.find((codec) => codec.sName == sName_vcodec);
+			const vcodec = vcodecs.find((codec) => codec.value == sName_vcodec);
 			return vcodec?.encoders || [];
 		} else {
 			return []
@@ -23,7 +23,7 @@ const VcodecView: FunctionalComponent<Props> = (props) => {
 	});
 	const rateControlsList = computed(() => {
 		const sName_vencoder = appStore.globalParams.video.vencoder;
-		const vencoder = vencodersList.value.find((encoder) => encoder.sName == sName_vencoder);
+		const vencoder = vencodersList.value.find((encoder) => encoder.value == sName_vencoder);
 		return vencoder?.ratecontrol || [];
 	});
 	// 根据当前选择的码率控制器显示具体使用何种 slider
@@ -33,16 +33,16 @@ const VcodecView: FunctionalComponent<Props> = (props) => {
 			return null;
 		}
 		const sName_ratecontrol = appStore.globalParams.video.ratecontrol
-		let index = rList.findIndex((value) => value.sName === sName_ratecontrol);
+		let index = rList.findIndex((item) => item.value === sName_ratecontrol);
 		// 切换编码器后没有原来的码率控制模式了
 		if (index == -1) {
 			index = 0
-			appStore.globalParams.video.ratecontrol = rList[0].sName;
+			appStore.globalParams.video.ratecontrol = rList[0].value;
 			appStore.applyParameters();
 		}
 		const slider = rList[index];
 		let display;
-		switch (slider.sName) {
+		switch (slider.value) {
 			case 'CRF':
 				display = 'CRF'
 				break;
@@ -68,7 +68,7 @@ const VcodecView: FunctionalComponent<Props> = (props) => {
 	});
 	const parametersList = computed(() => {
 		const sName_vencoder = appStore.globalParams.video.vencoder;
-		const vencoder = vencodersList.value.find((value) => value.sName == sName_vencoder);
+		const vencoder = vencodersList.value.find((item) => item.value == sName_vencoder);
 		return vencoder?.parameters || [];
 	});
 
@@ -85,10 +85,10 @@ const VcodecView: FunctionalComponent<Props> = (props) => {
 			// 更改 vcodec 或 vencoder 后检查子组件的设置
 			for (const parameter of parametersList.value) {
 				if (parameter.mode === 'combo') {
-					const index = parameter.items.findIndex((value) => value.sName == appStore.globalParams.video.detail[parameter.parameter]);
+					const index = parameter.items.findIndex((item) => item.value == appStore.globalParams.video.detail[parameter.parameter]);
 					if (index == -1) {
 						console.log(`参数 ${parameter.parameter} 与列表数据不匹配，重置为默认值`);
-						appStore.globalParams.video.detail[parameter.parameter] = parameter.items[0].sName;
+						appStore.globalParams.video.detail[parameter.parameter] = parameter.items[0].value;
 						appStore.applyParameters();
 					}
 				} else if (parameter.mode == 'slider') {

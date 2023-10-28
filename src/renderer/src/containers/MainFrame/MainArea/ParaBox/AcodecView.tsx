@@ -15,7 +15,7 @@ const AcodecView: FunctionalComponent<Props> = (props) => {
 	const aencodersList = computed(() => {
 		const sName_acodec = appStore.globalParams.audio.acodec;
 		if (sName_acodec !== '禁用音频' && sName_acodec !== '自动' && sName_acodec !== '不重新编码') {
-			const acodec = acodecs.find((codec) => codec.sName == sName_acodec);
+			const acodec = acodecs.find((codec) => codec.value == sName_acodec);
 			return acodec?.encoders || [];
 		} else {
 			return []
@@ -23,7 +23,7 @@ const AcodecView: FunctionalComponent<Props> = (props) => {
 	});
 	const rateControlsList = computed(() => {
 		const sName_aencoder = appStore.globalParams.audio.aencoder;
-		const aencoder = aencodersList.value.find((encoder) => encoder.sName == sName_aencoder);
+		const aencoder = aencodersList.value.find((encoder) => encoder.value == sName_aencoder);
 		return aencoder?.ratecontrol || [];
 	});
 	// 根据当前选择的码率控制器显示具体使用何种 slider
@@ -33,16 +33,16 @@ const AcodecView: FunctionalComponent<Props> = (props) => {
 			return null;
 		}
 		const sName_ratecontrol = appStore.globalParams.audio.ratecontrol
-		let index = rList.findIndex((value) => value.sName === sName_ratecontrol);
+		let index = rList.findIndex((item) => item.value === sName_ratecontrol);
 		// 切换编码器后没有原来的码率控制模式了
 		if (index == -1) {
 			index = 0
-			appStore.globalParams.video.ratecontrol = rList[0].sName;
+			appStore.globalParams.video.ratecontrol = rList[0].value;
 			appStore.applyParameters();
 		}
 		const slider = rList[index];
 		let display;
-		switch (slider.sName) {
+		switch (slider.value) {
 			case 'CBR/ABR':
 				display = '码率'
 				break;
@@ -62,7 +62,7 @@ const AcodecView: FunctionalComponent<Props> = (props) => {
 	});
 	const parametersList = computed(() => {
 		const sName_aencoder = appStore.globalParams.audio.aencoder;
-		const aencoder = aencodersList.value.find((value) => value.sName == sName_aencoder);
+		const aencoder = aencodersList.value.find((item) => item.value == sName_aencoder);
 		return aencoder?.parameters || [];
 	});
 
@@ -79,10 +79,10 @@ const AcodecView: FunctionalComponent<Props> = (props) => {
 			// 更改 acodec 或 aencoder 后检查子组件的设置
 			for (const parameter of parametersList.value) {
 				if (parameter.mode === 'combo') {
-					const index = parameter.items.findIndex((value) => value.sName == appStore.globalParams.audio.detail[parameter.parameter]);
+					const index = parameter.items.findIndex((item) => item.value == appStore.globalParams.audio.detail[parameter.parameter]);
 					if (index == -1) {
 						console.log(`参数 ${parameter.parameter} 与列表数据不匹配，重置为默认值`);
-						appStore.globalParams.audio.detail[parameter.parameter] = parameter.items[0].sName;
+						appStore.globalParams.audio.detail[parameter.parameter] = parameter.items[0].value;
 						appStore.applyParameters();
 					}
 				} else if (parameter.mode == 'slider') {

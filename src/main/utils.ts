@@ -31,14 +31,8 @@ export function convertFFBoxMenuToElectronMenuTemplate(menuStr: string, webConte
 				click: (event: Event) => webContents.send('menuItemClicked', value),
 				submenu: inputMenuItem.subMenu ? dfs(inputMenuItem.subMenu) as any : undefined,
 			};
-			// if ('submenu' in inputMenuItem) {
-			// 	const menu = dfs(inputMenuItem.submenu);
-			// 	outputMenuItem.submenu = menu;
-			// }
 			output.push(outputMenuItem);
 		}
-		// console.log('buildFrom', output);
-		// const menu = Menu.buildFromTemplate(output as any);
 		return output;
 	}
 	const outputObj = dfs(inputObj);

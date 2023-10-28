@@ -59,14 +59,14 @@ const EffectView: FunctionalComponent<Props> = (props) => {
 			selectedValue: '子菜单项 2',
 		})
 	}
-	console.log('render');
+	// console.log('render');
 
 	return (
 		<div class={style.container}>
 			<p style="text-align: center;">此功能暂未开发<br />请关注 https://FFBox.ttqf.tech/ 以获取版本更新</p>
 			{/* <Button onClick={add}>{count.value?.a}</Button> */}
-			<button onClick={add}>{count.value?.a}</button>
-			<Button onClick={men}>菜单</Button>
+			{/* <button onClick={add}>{count.value?.a}</button> */}
+			{/* <Button onClick={men}>菜单</Button> */}
 		</div>
 	);
 };

@@ -38,7 +38,6 @@ export interface MenuOptions {
 	selectedValue?: any;
 	container?: HTMLElement;	// 指定外侧容器，如不指定则默认全屏展示
 	triggerRect?: { xMin: number, yMin: number, xMax: number, yMax: number };	// 触发菜单的控件的坐标，用于计算菜单弹出方向和大小
-	disableMask?: boolean;
 	onSelect?: (event: Event, value: any, checked?: boolean) => void | boolean;
 	onCancel?: (event: Event) => void | false;	// mask 点击的情况会触发 onCancel，若返回 false 则不关闭菜单
 	onClose?: () => void;
@@ -48,12 +47,17 @@ export interface MenuOptions {
 
 const showMenu = function (options?: MenuOptions) {
 	const type = options.type || 'action';
+	let unmounted = false;
 	const handleClose = () => {
 		// 同一次 render 内第二次调用 handleClose 时，需判断是否已经被卸载
-		if (document.contains(DOMNode)) {
-			DOMContainer.removeChild(DOMNode);
-			render(null, DOMNode);
+		if (!unmounted) {
+			vnode.component.exposed.preClose();
 			(options.onClose || (() => {}))();
+			unmounted = true;
+			setTimeout(() => {
+				DOMContainer.removeChild(DOMNode);
+				render(null, DOMNode);
+			}, 150);
 		}
 	};
 	const handleItemSelect = (event: Event, value: any, checked?: boolean) => {

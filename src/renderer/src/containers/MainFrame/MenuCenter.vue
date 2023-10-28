@@ -12,7 +12,6 @@ const appStore = useAppStore();
 const selectedMenuIndex = ref(-1);
 const topMenuRef = ref<HTMLDivElement>(null);
 const currentOpenedMenuRef = ref<ReturnType<typeof showMenu>>();
-// const topMenuButtonsMousemoveListener = ref();
 const topMenuButtonsMousemoveElems = ref<HTMLDivElement[]>([]);
 
 const finalMenu = computed(() => {
@@ -85,7 +84,7 @@ const finalMenu = computed(() => {
 						appStore.currentServer.entity.taskReset(+id);
 					}
 				} },
-				{ type: 'normal', label: '删除所有未在运行的任务', value: '删除所有未在运行的任务', tooltip: '将当前服务器所有已完成、已停止、出错的任务删除', onClick: () => {
+				{ type: 'normal', label: '删除所有未在运行任务', value: '删除所有未在运行任务', tooltip: '将当前服务器所有已完成、已停止、出错的任务删除', onClick: () => {
 					for (const [id, task] of Object.entries(appStore.currentServer.data.tasks)) {
 						if ([TaskStatus.TASK_FINISHED, TaskStatus.TASK_STOPPED, TaskStatus.TASK_ERROR].includes(task.status)) {
 							appStore.currentServer.entity.taskDelete(+id);
@@ -191,36 +190,12 @@ const menuCenterContainerStyle = computed(() => {
 // 切换菜单中心时关闭已打开菜单
 watch(() => appStore.showMenuCenter, (value) => {
 	selectedMenuIndex.value = -1;
-	// if (value === 0) {
-	// 	setTimeout(() => {
-	// 		console.log('关了', value, selectedMenuIndex.value, currentOpenedMenuRef.value);
-	// 		if (currentOpenedMenuRef.value) {
-	// 			currentOpenedMenuRef.value.close();
-	// 		}
-	// 	}, 500);
-	// }
 });
 // 监听已打开菜单序号，控制显示悬浮菜单
 watch(selectedMenuIndex, (index, oldIndex) => {
 	const selectedMenu = finalMenu.value[index];
 	if (selectedMenu) {
 		if (oldIndex === -1) {
-			// 新打开菜单时，记录顶部菜单按钮位置，并在 body 上挂载鼠标移动监听
-			// const rects: DOMRect[] = [];
-			// for (const topMenuButton of topMenuRef.value.children) {
-			// 	rects.push(topMenuButton.getBoundingClientRect());
-			// }
-			// topMenuButtonsMousemoveListener.value = (ev: MouseEvent) => {
-			// 	for (const [key, topMenuButtonRect] of Object.entries(rects)) {
-			// 		if (
-			// 			ev.pageX > topMenuButtonRect.x && ev.pageX < topMenuButtonRect.x + topMenuButtonRect.width &&
-			// 			ev.pageY > topMenuButtonRect.y && ev.pageY < topMenuButtonRect.y + topMenuButtonRect.height
-			// 		) {
-			// 			selectedMenuIndex.value = Number(key);
-			// 		}
-			// 	}
-			// }
-			// document.body.addEventListener('mousemove', topMenuButtonsMousemoveListener.value);
 			// 新打开菜单时，记录顶部菜单按钮位置，并在 body 上的此位置添加置顶元素
 			if (appStore.showMenuCenter === 1) {
 				const rects: DOMRect[] = [];
@@ -235,7 +210,6 @@ watch(selectedMenuIndex, (index, oldIndex) => {
 					elem.style.setProperty('top', `${rect.top}px`);
 					elem.style.setProperty('width', `${rect.width}px`);
 					elem.style.setProperty('height', `${rect.height}px`);
-					elem.style.setProperty('outline', `red 1px solid`);
 					elem.style.setProperty('z-index', `100`);
 					elem.setAttribute('data-index', key);
 					elem.addEventListener('mousemove', (ev: MouseEvent) => {
@@ -257,10 +231,7 @@ watch(selectedMenuIndex, (index, oldIndex) => {
 		currentOpenedMenuRef.value = showMenu({
 			menu: selectedMenu.subMenu,
 			type: 'action',
-			// defaultSelectedValue?: any;
-			// container: containerRef.value,
 			triggerRect: { xMin: rect.x, yMin: rect.y, xMax: rect.x + rect.width, yMax: rect.y + rect.height },	// 触发菜单的控件的坐标，用于计算菜单弹出方向和大小
-			// disableMask: appStore.showMenuCenter === 1,
 			onClose: () => {
 				// 如果是切换菜单，此处两值就不相等，则不继续关闭其他内容
 				if (index === selectedMenuIndex.value) {
@@ -289,7 +260,6 @@ watch(selectedMenuIndex, (index, oldIndex) => {
 		});
 	} else {
 		if (oldIndex !== -1) {
-			// document.body.removeEventListener('mousemove', topMenuButtonsMousemoveListener.value);
 			currentOpenedMenuRef.value?.close();
 			currentOpenedMenuRef.value = undefined;
 			for (const elem of topMenuButtonsMousemoveElems.value) {
@@ -331,11 +301,6 @@ const handleMenuItemClicked = (event: Event, value: any) => {
 	}
 };
 
-// const handleMenuMaskMouseUp = () => {
-// 	console.log('handleMenuMaskMouseUp');
-// 	currentOpenedMenuRef.value.close();
-// };
-
 onMounted(() => {
 	// 挂载菜单点击监控
 	nodeBridge.ipcRenderer?.removeAllListeners('menuItemClicked');
@@ -350,7 +315,6 @@ onMounted(() => {
 	<div class="pad" :style="menuCenterPadStyle">
 	</div>
 	<div class="container" :style="menuCenterContainerStyle">
-		<!-- <div v-if="appStore.showMenuCenter === 1" class="menuMask" @mouseup="handleMenuMaskMouseUp"></div> -->
 		<div class="topMenu" ref="topMenuRef">
 			<div
 				v-for="(menu, index) in finalMenu"
