@@ -308,19 +308,17 @@ export const useAppStore = defineStore('app', {
 			const data = 这.currentServer?.data;
 			if (data) {
 				// 收集需要批量更新的输出参数，交给 service
-				let needToUpdateIds: Array<number> = [];
+				let needToUpdateIds: number[] = [];
 				for (const id of 这.selectedTask) {
 					let task = data.tasks[id];
 					task.after = replaceOutputParams(这.globalParams, task.after);
 					needToUpdateIds.push(id);
 				}
-				// paraArray 由 service 算出后回填本地
-				// 更新方式是 taskUpdate
-				entity.setParameter(needToUpdateIds, 这.globalParams);
-				// for (const indexNid of Object.values(needToUpdateIds)) {
-				// 	let task = currentServer.tasks[indexNid];
-				// 	task.paraArray = result[indexNid];
-				// }
+				if (needToUpdateIds.length) {
+					// paraArray 由 service 算出后回填本地
+					// 更新方式是 taskUpdate
+					entity.setParameter(needToUpdateIds, 这.globalParams);
+				}
 			}
 
 			// 存盘

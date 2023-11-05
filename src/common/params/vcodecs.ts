@@ -2397,28 +2397,34 @@ const resolution: MenuItem[] = [
 
 const framerate: MenuItem[] = [
 	{ type: 'normal', label: '不改变', value: '不改变', tooltip: '按源平均帧率输出' },
-	{ type: 'normal', label: '1920', value: '1920', tooltip: '1920p' },
-	{ type: 'normal', label: '960', value: '960', tooltip: '960p' },
-	{ type: 'normal', label: '480', value: '480', tooltip: '480p' },
-	{ type: 'normal', label: '240', value: '240', tooltip: '240p' },
-	{ type: 'normal', label: '144', value: '144', tooltip: '144p' },
-	{ type: 'normal', label: '120', value: '120', tooltip: '120p' },
-	{ type: 'normal', label: '90', value: '90', tooltip: '90p' },
-	{ type: 'normal', label: '75', value: '75', tooltip: '75p' },
-	{ type: 'normal', label: '60', value: '60', tooltip: '60p（常见屏幕刷新率）' },
-	{ type: 'normal', label: '50', value: '50', tooltip: '50p' },
-	{ type: 'normal', label: '30', value: '30', tooltip: '30p' },
-	{ type: 'normal', label: '29.97', value: '29.97', tooltip: '邪教（NTSC 帧频）' },
-	{ type: 'normal', label: '25', value: '25', tooltip: '25p（PAL 帧频）' },
-	{ type: 'normal', label: '24', value: '24', tooltip: '24p（常见电影制作标准）' },
-	{ type: 'normal', label: '23.976', value: '23.976', tooltip: '邪教' },
-	{ type: 'normal', label: '15', value: '15', tooltip: '15p' },
-	{ type: 'normal', label: '12', value: '12', tooltip: '12p' },
-	{ type: 'normal', label: '10', value: '10', tooltip: '卡成 PPT' },
-	{ type: 'normal', label: '5', value: '5', tooltip: '卡成 WPS Presentation' },
-	{ type: 'normal', label: '3', value: '3', tooltip: '三帧极致' },
-	{ type: 'normal', label: '2', value: '2', tooltip: '二帧流畅' },
-	{ type: 'normal', label: '1', value: '1', tooltip: '一帧能玩' },
+	{ type: 'submenu', label: '常见帧率', subMenu: [
+		{ type: 'normal', label: '1920', value: '1920', tooltip: '1920p' },
+		{ type: 'normal', label: '960', value: '960', tooltip: '960p' },
+		{ type: 'normal', label: '480', value: '480', tooltip: '480p' },
+		{ type: 'normal', label: '240', value: '240', tooltip: '240p' },
+		{ type: 'normal', label: '144', value: '144', tooltip: '144p' },
+		{ type: 'normal', label: '120', value: '120', tooltip: '120p' },
+		{ type: 'normal', label: '90', value: '90', tooltip: '90p' },
+		{ type: 'normal', label: '75', value: '75', tooltip: '75p' },
+		{ type: 'normal', label: '60', value: '60', tooltip: '60p（常见屏幕刷新率）' },
+		{ type: 'normal', label: '50', value: '50', tooltip: '50p' },
+		{ type: 'normal', label: '30', value: '30', tooltip: '30p' },
+		{ type: 'normal', label: '29.97', value: '29.97', tooltip: '邪教（NTSC 帧频）' },
+		{ type: 'normal', label: '25', value: '25', tooltip: '25p（PAL 帧频）' },
+		{ type: 'normal', label: '24', value: '24', tooltip: '24p（常见电影制作标准）' },
+		{ type: 'normal', label: '23.976', value: '23.976', tooltip: '邪教' },
+		{ type: 'normal', label: '15', value: '15', tooltip: '15p' },
+		{ type: 'normal', label: '12', value: '12', tooltip: '12p' },
+		{ type: 'normal', label: '10', value: '10', tooltip: '卡成 PPT' },
+		{ type: 'normal', label: '5', value: '5', tooltip: '卡成 WPS Presentation' },
+		{ type: 'normal', label: '3', value: '3', tooltip: '三帧极致' },
+		{ type: 'normal', label: '2', value: '2', tooltip: '二帧流畅' },
+		{ type: 'normal', label: '1', value: '1', tooltip: '一帧能玩' },
+	] },
+	{ type: 'submenu', label: '隔行扫描', tooltip: '上场优先的隔行扫描<br />注意 ffmpeg 将先处理帧率，再将每帧扩展为上下场，因此您无法使用此方法进行常规的逐行转隔行处理', subMenu: [
+		{ type: 'normal', label: '60i', value: '60i', tooltip: '场频 60，帧频 30' },
+		{ type: 'normal', label: '50i', value: '50i', tooltip: '场频 50，帧频 25' },
+	] },
 ];
 
 
@@ -2426,6 +2432,7 @@ const generator = {
 	getVideoParam: function (videoParams: OutputParams_video) {
 		const ret = [];
 		let strict2 = false;
+		let flags = '';
 		if (videoParams.vcodec === '禁用视频') {
 			ret.push('-vn');
 		} else if (videoParams.vcodec === '不重新编码') {
@@ -2495,8 +2502,19 @@ const generator = {
 					ret.push(videoParams.resolution);
 				}
 				if (videoParams.framerate != '不改变') {
-					ret.push('-r');
-					ret.push(videoParams.framerate);
+					if (videoParams.framerate.includes('i') && videoParams.framerate.match(/^\d+(.\d+)?i?$/)) {
+						const fieldrate = Number(videoParams.framerate.match(/^(\d+(.\d+)?)/)[0]);
+						ret.push('-r');
+						ret.push(fieldrate / 2);	
+						flags += '+ilme+ildct';
+					} else {
+						ret.push('-r');
+						ret.push(videoParams.framerate);
+					}
+				}
+				if (flags) {
+					ret.push('-flags:v');
+					ret.push(flags);
 				}
 			} else if (vcodec) {
 				// 用户手动填入的 vencoder

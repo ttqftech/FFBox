@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { useAppStore } from '@renderer/stores/appStore';
 import { computed, ref } from 'vue';
+import { getFFmpegParaArray } from '@common/getFFmpegParaArray';
+import { useAppStore } from '@renderer/stores/appStore';
 import ShortcutView from './ParaBox/ShortcutView';
 import InputView from './ParaBox/InputView';
 import VcodecView from './ParaBox/VcodecView';
@@ -14,7 +15,6 @@ import IconSidebarAudio from '@renderer/assets/mainArea/paraBox/parabox_audio.sv
 import IconSidebarEffect from '@renderer/assets/mainArea/paraBox/parabox_effect.svg?component';
 import IconSidebarOutput from '@renderer/assets/mainArea/paraBox/parabox_output.svg?component';
 import IconUpArrow from '@renderer/assets/mainArea/paraBox/uparrow.svg?component';
-import { getFFmpegParaArray } from '@common/getFFmpegParaArray';
 
 const sidebarIcons = [IconSidebarFavorite, IconSidebarInput, IconSidebarVideo, IconSidebarAudio, IconSidebarEffect, IconSidebarOutput];
 const sidebarTexts = ['快捷', '输入', '视频', '音频', '效果', '输出'];
@@ -146,7 +146,7 @@ const getButtonColorStyle = (index: number) => ({ color: appStore.paraSelected =
 			transform: translateX(30px);
 		}
 		.animationRight-enter-active, .animationRight-leave-active {
-			transition: opacity 0.3s, transform 0.4s cubic-bezier(0.2, 1.25, 0.3, 1);
+			transition: opacity 0.3s, transform 0.5s cubic-bezier(0.2, 1.25, 0.3, 1);
 		}
 		.animationRight-enter-to, .animationRight-leave-from {
 			/* z-index: 1; */

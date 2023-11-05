@@ -33,7 +33,7 @@ const selectorStyle = computed(() => {
 		}
 	}
 	return ret;
-})
+});
 
 const handleBlur = (event: FocusEvent) => {
 	focused.value = false;
@@ -49,10 +49,11 @@ const handleInput = (event: KeyboardEvent) => {
 	(props.onChange || (() => {}))(inputText.value);
 };
 
-watch(() => props.value, (newValue, oldValue) => {		// props 的 text 只有单向数据流，因此新增 data 的 inputText 做双向绑定和事件监听
+// 监听 props 中的 text，并在其更新时依此更新 data 中的 inputText（与输入框双向绑定）
+watch(() => props.value, (newValue, oldValue) => {
 	inputText.value = newValue;
 });
-watch(inputText, (newValue, oldValue) => {		// props 的 text 只有单向数据流，因此新增 data 的 inputText 做双向绑定和事件监听
+watch(inputText, (newValue, oldValue) => {
 	if (props.validator) {
 		invalidMsg.value = props.validator(newValue ?? '');
 	} else {

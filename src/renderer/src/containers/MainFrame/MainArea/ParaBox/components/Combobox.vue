@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 // import Tooltip from './Tooltip/Tooltip';
 // import Tooltip from '@renderer/components/Tooltip/Tooltip';
 
@@ -11,6 +11,8 @@ interface Props {
 	list: MenuItem[];
 	readonly?: boolean;
 	deletable?: boolean;
+	validator?: (value: string) => string;
+	inputFixer?: (value: string) => string;
 	onChange?: (value: string) => any;
 	onDelete?: (index: number) => any;
 }
@@ -20,10 +22,28 @@ const props = defineProps<Props>();
 const focused = ref(false);
 const comboOpened = ref(false);
 const inputText = ref('-');
-// const currentIndex = ref(-1);
+const invalidMsg = ref<string>(undefined);
 
 const selectorRef = ref<Element>(null);
 const menuRef = ref<ReturnType<typeof showMenu>>(null);
+
+const selectorStyle = computed(() => {
+	const ret: any = {};
+	if (invalidMsg.value) {
+		ret.border = '#E66 1px solid';
+		ret.boxShadow = '0 0 12px hsla(0, 100%, 60%, 0.3), 0px 4px 8px rgba(0, 0, 0, 0.05)';
+		if (focused.value) {
+			ret.background = '#FEE';
+		} else {
+			ret.background = '#F7E7E7';
+		}
+	} else {
+		if (focused.value || comboOpened.value) {
+			ret.background = 'white';
+		}
+	}
+	return ret;
+});
 
 // 输入框点击打开菜单
 const handleClick = () => {
@@ -36,7 +56,7 @@ const handleClick = () => {
 		onSelect: (event, value, checked) => {
 			inputText.value = value;
 			props.onChange(value);
-			comboOpened.value = false;
+			menuRef.value.setSelectedValue(value);	// 更改值后主动反馈至菜单
 		},
 		onClose: () => {
 			comboOpened.value = false;
@@ -73,8 +93,11 @@ const handleFocus = (event: FocusEvent) => {
 };
 
 const handleInput = (event: InputEvent) => {
+	if (props.inputFixer) {
+		inputText.value = props.inputFixer(event.target.value);
+	}
 	let newValue = (event.target as HTMLInputElement).value;
-	// menuRef.value.setCurrentSelectedValue(newValue);
+	menuRef.value.setSelectedValue(newValue);
 	(props.onChange || (() => {}))(newValue);
 };
 
@@ -96,6 +119,13 @@ const handleKeydown = (event: KeyboardEvent) => {
 watch(() => props.text, (newValue, oldValue) => {
 	inputText.value = newValue;
 });
+watch(inputText, (newValue, oldValue) => {
+	if (props.validator) {
+		invalidMsg.value = props.validator(newValue ?? '');
+	} else {
+		invalidMsg.value = undefined;
+	}
+}, { immediate: true });
 
 onMounted(() => {
 	inputText.value = props.text;
@@ -106,7 +136,7 @@ onMounted(() => {
 <template>
 	<div class="combobox">
 		<div class="combobox-title">{{ title }}</div>
-		<div class="combobox-selector" ref="selectorRef" :style="{ background: focused || comboOpened ? 'white' : '' }" @click="handleClick">
+		<div class="combobox-selector" ref="selectorRef" :style="selectorStyle" @click="handleClick">
 			<input
 				type="text"
 				v-model="inputText"

@@ -3,6 +3,7 @@ import { vcodecs, resolution, framerate } from '@common/params/vcodecs';
 import Combobox from './components/Combobox.vue';
 import Inputbox from './components/Inputbox.vue';
 import Slider from './components/Slider.vue';
+import { framerateValidator } from './components/validatorAndFixer';
 import { useAppStore } from '@renderer/stores/appStore';
 import style from './index.module.less';
 
@@ -115,7 +116,7 @@ const VcodecView: FunctionalComponent<Props> = (props) => {
 						<Combobox title="编码器" text={appStore.globalParams.video.vencoder} list={vencodersList.value} onChange={(value: string) => handleChange('vencoder', value)} />
 					)}
 					<Combobox title="分辨率" text={appStore.globalParams.video.resolution} list={resolution} onChange={(value: string) => handleChange('resolution', value)} />
-					<Combobox title="输出帧速" text={appStore.globalParams.video.framerate} list={framerate} onChange={(value: string) => handleChange('framerate', value)} />
+					<Combobox title="输出帧速" text={appStore.globalParams.video.framerate} list={framerate} validator={framerateValidator} onChange={(value: string) => handleChange('framerate', value)} />
 					{rateControlsList.value.length ? (
 						<Combobox title="码率控制" text={appStore.globalParams.video.ratecontrol} list={rateControlsList.value} onChange={(value: string) => handleChange('ratecontrol', value)} />
 					) : null}

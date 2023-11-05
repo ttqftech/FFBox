@@ -1,18 +1,33 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
+import { TaskStatus, WorkingStatus } from '@common/types';
 import { useAppStore } from '@renderer/stores/appStore';
 import { ServiceBridgeStatus } from '@renderer/bridges/serviceBridge';
 import showMenu, { MenuItem } from '@renderer/components/Menu/Menu';
 import nodeBridge from '@renderer/bridges/nodeBridge';
 import { showEnvironmentInfo } from '@renderer/components/misc/EnvironmentInfo'
-import { TaskStatus, WorkingStatus } from '@common/types';
+import SponsorPanel from './MenuCenter/SponsorPanel.vue';
+import LocalSettings from './MenuCenter/LocalSettings.vue';
+import IconSidebarSponsor from '@renderer/assets/menuCenter/sponsor.svg?component';
+import IconSidebarSettings from '@renderer/assets/menuCenter/settings.svg?component';
+import IconSidebarVideo from '@renderer/assets/mainArea/paraBox/parabox_video.svg?component';
+import IconSidebarAudio from '@renderer/assets/mainArea/paraBox/parabox_audio.svg?component';
+import IconSidebarEffect from '@renderer/assets/mainArea/paraBox/parabox_effect.svg?component';
+import IconSidebarOutput from '@renderer/assets/mainArea/paraBox/parabox_output.svg?component';
 
 const appStore = useAppStore();
+
+const sidebarIcons = [IconSidebarSponsor, IconSidebarSettings, IconSidebarVideo, IconSidebarAudio, IconSidebarEffect, IconSidebarOutput];
+const sidebarTexts = ['支持作者', '设置', '视频', '音频', '效果', '输出'];
+const sidebarColors = ['hwb(45 0% 5%)', 'hwb(195 0% 10%)', 'hwb(285 10% 5%)', 'hwb(120 0% 15%)', 'hwb(315 0% 0%)', 'hwb(0 30% 0%)'];
+const animationName = ref('animationUp');
 
 const selectedMenuIndex = ref(-1);
 const topMenuRef = ref<HTMLDivElement>(null);
 const currentOpenedMenuRef = ref<ReturnType<typeof showMenu>>();
 const topMenuButtonsMousemoveElems = ref<HTMLDivElement[]>([]);
+
+const selectedPanelIndex = ref(-1);	// 待打开面板再载入，节省资源
 
 const finalMenu = computed(() => {
 	const ret: MenuItem[] = [
@@ -187,9 +202,12 @@ const menuCenterContainerStyle = computed(() => {
 	}
 })
 
-// 切换菜单中心时关闭已打开菜单
+const getButtonColorStyle = (index: number) => ({ color: selectedPanelIndex.value === index ? sidebarColors[index] : 'hwb(0 50% 50%)' });
+
+// 切换菜单中心时关闭已打开菜单，切换到侧边栏第一个面板
 watch(() => appStore.showMenuCenter, (value) => {
 	selectedMenuIndex.value = -1;
+	selectedPanelIndex.value = 0;
 });
 // 监听已打开菜单序号，控制显示悬浮菜单
 watch(selectedMenuIndex, (index, oldIndex) => {
@@ -301,6 +319,11 @@ const handleMenuItemClicked = (event: Event, value: any) => {
 	}
 };
 
+const handleParaButtonClicked = (index: number) => {
+	animationName.value = index < selectedPanelIndex.value ? 'animationUp' : 'animationDown';
+	selectedPanelIndex.value = index;
+}
+
 onMounted(() => {
 	// 挂载菜单点击监控
 	nodeBridge.ipcRenderer?.removeAllListeners('menuItemClicked');
@@ -325,6 +348,27 @@ onMounted(() => {
 				{{ 'label' in menu && menu.label }}
 			</div>
 		</div>
+		<div class="lrCenter">
+			<div>
+				<div class="selectors">
+					<button v-for="index in [0, 1]" :key="index" :aria-label="sidebarTexts[index] + '参数'" @click="handleParaButtonClicked(index)">
+						<component :is="sidebarIcons[index]" :style="getButtonColorStyle(index)" />
+						<span :style="getButtonColorStyle(index)">{{ sidebarTexts[index] }}</span>
+					</button>
+				</div>
+				<div class="content">
+					<Transition :name="animationName">
+						<SponsorPanel v-if="selectedPanelIndex === 0" />
+					</Transition>
+					<Transition :name="animationName">
+						<LocalSettings v-if="selectedPanelIndex === 1" />
+					</Transition>
+				</div>
+			</div>
+		</div>
+		<h1 class="title">{{ sidebarTexts[selectedPanelIndex] }}</h1>
+		<!-- <div class="hline"></div> -->
+		<!-- <div class="vline"></div> -->
 	</div>
 </template>
 
@@ -385,5 +429,178 @@ onMounted(() => {
 			width: 100vh;
 			height: 100vh;
 		}
+	}
+	// 切换动画（向上）
+	.animationUp-enter-from {
+		/* z-index: 0; */
+		opacity: 0;
+		transform: translateY(-30px);
+	}
+	.animationUp-enter-active, .animationUp-leave-active {
+		transition: opacity 0.3s, transform 0.5s cubic-bezier(0.2, 1.25, 0.3, 1);
+	}
+	.animationUp-enter-to, .animationUp-leave-from {
+		/* z-index: 1; */
+		opacity: 1;
+		transform: translateY(0);
+	}
+	.animationUp-leave-active {
+		transition: opacity 0.3s, transform 0.3s cubic-bezier(0.5, 0, 1, 1);
+	}
+	.animationUp-leave-to {
+		opacity: 0;
+		transform: translateY(30px);
+	}
+	// 切换动画（向下）
+	.animationDown-enter-from {
+		/* z-index: 0; */
+		opacity: 0;
+		transform: translateY(30px);
+	}
+	.animationDown-enter-active, .animationDown-leave-active {
+		transition: opacity 0.3s, transform 0.5s cubic-bezier(0.2, 1.25, 0.3, 1);
+	}
+	.animationDown-enter-to, .animationDown-leave-from {
+		/* z-index: 1; */
+		opacity: 1;
+		transform: translateY(0);
+	}
+	.animationDown-leave-active {
+		transition: opacity 0.3s, transform 0.3s cubic-bezier(0.5, 0, 1, 1);
+	}
+	.animationDown-leave-to {
+		opacity: 0;
+		transform: translateY(-30px);
+	}
+	.lrCenter {
+		position: absolute;
+		top: 96px;
+		left: 0;
+		right: 0;
+		// left: calc(15% - 80px);
+		// right: calc(15% - 80px);
+		bottom: 0px;
+		display: flex;
+		justify-content: center;
+		margin: auto;
+		&>div {
+			position: relative;
+			width: calc(70vw + 160px);
+			flex: 0 0 auto;
+			.selectors {
+				position: absolute;
+				left: 0;
+				top: 0;
+				bottom: 0;
+				width: 128px;
+				padding: 4px 4px;
+				overflow: auto;
+				box-shadow: 0.5px 0.5px 1px 0px hwb(0deg 98% 2%),
+							20px 20px 20px 0px hwb(0 0% 100% / 0.02),
+							6px 6px 6px 0px hwb(0 0% 100% / 0.02);
+				// box-shadow: 12px 0 12px -12px hwb(0 50% 50% / 1);
+				button {
+					text-align: center;
+					width: 120px;
+					height: 40px;
+					padding: 0;
+					background-color: transparent;
+					border: none;
+					border-radius: 8px;
+					transition: width 0.3s ease;
+					&:hover {
+						background-color: hwb(0 100% 0% / 0.4);
+						// box-shadow: 0px 2px 2px rgba(127,127,127,0.5);
+						// box-shadow: 0 0 4px 2px hwb(0 0% 100% / 0.05);
+						box-shadow: 0 0 1px 0.5px hwb(0deg 100% 0%),
+									0 1.5px 4px 0 hwb(0deg 0% 100% / 0.15),
+									0 1px 0.5px 0px hwb(0deg 100% 0%) inset;
+					}
+					&:active {
+						background-color: transparent;
+						box-shadow: 0 0 2px 1px hwb(0 0% 100% / 0.05), // 外部阴影
+									0 6px 12px hwb(0 0% 100% / 0.1) inset; // 内部凹陷阴影
+						transform: translateY(0.25px);
+					}
+					svg {
+						width: 24px;
+						height: 24px;
+						vertical-align: middle;
+						filter: drop-shadow(0 0 0px hwb(0 100% 0% / 1)) drop-shadow(0 1px 1px hwb(0 0% 100% / 0.1));
+					}
+					span {
+						display: inline-block;
+						// width: 32px;
+						vertical-align: -4.5px;
+						padding-left: 4px;
+						letter-spacing: 2px;
+						white-space: nowrap;
+						overflow: hidden;
+						transition: width 0.3s ease, padding 0.3s ease;
+						filter: drop-shadow(0 -0.5px 0px hwb(0 100% 0% / 1)) drop-shadow(0 1px 1px hwb(0 0% 100% / 0.1));
+					}
+					// @media only screen and (max-width: 600px) {
+					// 	width: 50px;
+					// 	span {
+					// 		// display: none;
+					// 		width: 0px;
+					// 		padding: 0px;
+					// 	}
+					// }
+				}
+			}
+			.content {
+				position: absolute;
+				left: 144px;
+				right: 0;
+				top: 0;
+				bottom: 0;
+				&>* {
+					position: absolute;
+					width: 100%;
+					height: 100%;
+					overflow: auto;
+					&::-webkit-scrollbar {
+						width: 10px;
+						background: transparent;
+					}
+					&::-webkit-scrollbar-thumb {
+						border-radius: 10px;
+						background: rgba(128, 128, 128, 0.2);
+					}
+					&::-webkit-scrollbar-track {
+						border-radius: 10px;
+						background: rgba(128, 128, 128, 0.1);
+					}
+				}
+			}
+		}
+	}
+	.title {
+		position: absolute;
+		top: 32px;
+		left: calc(15% - 80px + 144px);
+		right: calc(15% - 80px);
+		font-size: 22px;
+		text-align: center;
+		color: #2255ee;
+	}
+	.hline {
+		position: absolute;
+		top: 84px;
+		left: calc(15% - 80px + 144px);
+		right: calc(15% - 80px);
+		height: 1px;
+		background: linear-gradient(90deg, rgba(128, 128, 128, 0.1), rgba(128, 128, 128, 0.4), rgba(128, 128, 128, 0.1));
+	}
+	.vline {
+		position: absolute;
+		top: 84px;
+		bottom: 8px;
+		left: calc(15% - 80px + 144px);
+		width: 1px;
+		// background: linear-gradient(0deg, rgba(128, 128, 128, 0.1), rgba(128, 128, 128, 0.4), rgba(128, 128, 128, 0.1));
+		background: hwb(0 50% 50% / 0.3);
+		box-shadow: 1px 1px 6px hwb(0 50% 50% / 1);
 	}
 </style>

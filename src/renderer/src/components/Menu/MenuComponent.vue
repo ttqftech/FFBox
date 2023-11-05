@@ -27,6 +27,7 @@ const menuElemRefs = ref([]);
 const openedSubMenus = ref<number[]>([]);
 const openedSubMenuItemPos = ref<{[key: number]: { xMin: number, yMin: number, xMax: number, yMax: number }}>({});	// key：menuIndex / key　value：menuItem 的位置
 const currentHoveredItem = ref<MenuItem>(undefined);
+const currentSelectedItem = ref<MenuItem>(undefined);
 
 // 将所有子菜单打平，这样就能使用一个 v-for 渲染所有菜单
 const flattenedMenus = computed(() => {
@@ -56,17 +57,10 @@ const flattenedMenus = computed(() => {
 	for (const menu of allMenus) {
 		ret[menu.menuIndex] = menu;
 	}
-	// console.log('flattenedMenus', ret);
 	return ret;
-}, {
-	// onTrack(event) {
-	// 	console.log('track', event);
-	// },
-	// onTrigger(event) {
-	// 	console.log('trigger', event);
-	// },
 });
 
+// 过滤掉不显示的子菜单的子菜单
 const flattenedMenusFiltered = computed(() => {
 	const ret: InnerMenu[] = [];
 	for (const menu of flattenedMenus.value) {
@@ -75,7 +69,7 @@ const flattenedMenusFiltered = computed(() => {
 		}
 	}
 	return ret;
-})
+});
 
 const getMenuItemVforKey = (menuItem: MenuItem, index: number) => {
 	if ('label' in menuItem) {	// normal | checkbox | radio
@@ -94,7 +88,7 @@ const getMenuItemClassName = (menuItem: MenuItem) => {
 			retStr.push('menuItemDisabled');
 		}
 		// 优先显示选中，再显示悬浮
-		if ('value' in menuItem && props.selectedValue === menuItem.value) {
+		if ('value' in menuItem && currentSelectedItem.value === menuItem.value) {
 			retStr.push('menuItemSelected');
 		} else {
 			if (toRaw(currentHoveredItem.value) === menuItem) {
@@ -143,7 +137,6 @@ const getMenuPosition = (menu: InnerMenu) => {
 		};
 	}
 
-
 	// 计算垂直位置
 	let upperSpace = isHorizontal ? _triggerRect.yMax : _triggerRect.yMin;
 	let lowerSpace = ScreenHeight - (isHorizontal ? _triggerRect.yMin : _triggerRect.yMax);
@@ -165,34 +158,6 @@ const getMenuPosition = (menu: InnerMenu) => {
 
 	// 确定位置
 	return finalPosition;
-};
-
-const calcSubMenuPosition = (menuIndex: number) => {
-	// 已计算位置，则直接跳过
-	if (openedSubMenuItemPos.value[menuIndex]) {
-		return;
-	}
-	// 当前菜单父级 MenuItem 未计算位置，则通过 menuIndex 找到父级菜单
-	// 然后检查这个父级菜单的父级 MenuItem 有无计算位置。若有，则直接找 menuItem，找到 DOM，计算出结果
-	// 否则递归进入父级菜单
-	const menu = flattenedMenus.value[menuIndex];
-	const parentMenu = menu.parent;
-	if (!parentMenu) {
-		// 当菜单是顶层菜单时，没有父级菜单。getMenuPosition 会直接使用 triggerRect
-		return;
-	}
-	if (!openedSubMenuItemPos.value[parentMenu.menuIndex]) {
-		// 父级菜单的父级 MenuItem 未计算位置
-		calcSubMenuPosition(parentMenu.menuIndex);
-	}
-	// 父级菜单的父级 MenuItem 已计算位置，故直接在父级菜单找到 MenuItem，找到 DOM，计算结果
-	const parentIndexInFlattened = parentMenu.menuIndex;
-	// const parentIndexInFlattened = flattenedMenus.value.findIndex((menu) => menu.menuIndex === parentMenu.menuIndex);
-	const parentIndexInMenu = parentMenu.menu.findIndex((menuItem) => 'key' in menuItem && menuItem.key === menuIndex);
-	const menuElem = menuElemRefs.value[parentIndexInFlattened] as HTMLDivElement;
-	const menuItemElem = menuElem.children[parentIndexInMenu];
-	const menuItemElemRect = menuItemElem.getBoundingClientRect();
-	openedSubMenuItemPos.value[menuIndex] = { xMin: menuItemElemRect.x, yMin: menuItemElemRect.y, xMax: menuItemElemRect.x + menuItemElemRect.width, yMax: menuItemElemRect.y + menuItemElemRect.height };
 };
 
 const getMenuByItem = (menuItem: MenuItem) => {
@@ -221,40 +186,74 @@ const getMenuAndItemByValue = (value: any) => {
 	}
 };
 
-const handleSelect = (e: MouseEvent | KeyboardEvent, menuItem: MenuItem) => {
-	if ('value' in menuItem) {
-		props.onSelect(e, menuItem.value, menuItem.type !== 'normal' ? menuItem.checked : undefined);
+// 计算子菜单的显示位置，并更新 openedSubMenuItemPos
+const calcSubMenuPosition = (menuIndex: number) => {
+	// 已计算位置，则直接跳过
+	if (openedSubMenuItemPos.value[menuIndex]) {
+		return;
 	}
+	// 当前菜单父级 MenuItem 未计算位置，则通过 menuIndex 找到父级菜单
+	// 然后检查这个父级菜单的父级 MenuItem 有无计算位置。若有，则直接找 menuItem，找到 DOM，计算出结果
+	// 否则递归进入父级菜单
+	const menu = flattenedMenus.value[menuIndex];
+	const parentMenu = menu.parent;
+	if (!parentMenu) {
+		// 当菜单是顶层菜单时，没有父级菜单。getMenuPosition 会直接使用 triggerRect
+		return;
+	}
+	if (!openedSubMenuItemPos.value[parentMenu.menuIndex]) {
+		// 父级菜单的父级 MenuItem 未计算位置
+		calcSubMenuPosition(parentMenu.menuIndex);
+	}
+	// 父级菜单的父级 MenuItem 已计算位置，故直接在父级菜单找到 MenuItem，找到 DOM，计算结果
+	const parentIndexInFlattened = parentMenu.menuIndex;
+	// const parentIndexInFlattened = flattenedMenus.value.findIndex((menu) => menu.menuIndex === parentMenu.menuIndex);
+	const parentIndexInMenu = parentMenu.menu.findIndex((menuItem) => 'key' in menuItem && menuItem.key === menuIndex);
+	const menuElem = menuElemRefs.value[parentIndexInFlattened] as HTMLDivElement;
+	const menuItemElem = menuElem.children[parentIndexInMenu];
+	const menuItemElemRect = menuItemElem.getBoundingClientRect();
+	openedSubMenuItemPos.value[menuIndex] = { xMin: menuItemElemRect.x, yMin: menuItemElemRect.y, xMax: menuItemElemRect.x + menuItemElemRect.width, yMax: menuItemElemRect.y + menuItemElemRect.height };
 };
 
-const handleMenuItemMouseEnter = (e: MouseEvent, menuItem: MenuItem, menu: InnerMenu) => {
+// hover 到项目上时，使用此函数计算 tooltip 显示位置并展示
+const showTooltip = (menuItem: MenuItem) => {
 	// 计算 tooltip 打开位置
 	if (menuItem.type !== 'separator' && menuItem.tooltip) {
+		const { menu, indexInFlattened, indexInMenu } = getMenuByItem(menuItem);
 		let position = {};
-		let target = e.target as HTMLElement;
-		let targetRect = target.getBoundingClientRect();
+		const menuElem = menuElemRefs.value[indexInFlattened] as HTMLDivElement;
+		if (!menuElem) {
+			return;	// 操作特别快时，由 watch(currentHoveredItem) 延迟触发该函数时，菜单可能已经被销毁
+		}
+		const menuItemElem = menuElem.children[indexInMenu];
+		const menuItemElemRect = menuItemElem.getBoundingClientRect();
+		const screenWidth = document.documentElement.clientWidth;			// 使用 window.innerWidth 也行
+		const screenHeight = document.documentElement.clientHeight;
 		// 计算水平方向
-		if (props.triggerRect?.xMin + e.target!.offsetWidth / 2 < document.documentElement.clientWidth / 2) {
+		const leftSpace = menuItemElemRect.left;
+		const rightSpace = screenWidth - menuItemElemRect.left - menuItemElemRect.width;
+		if (leftSpace > rightSpace || menuItem.type === 'submenu' && menuItem.subMenu.length) {
+			// 左侧空间更大，或者有子菜单时，在左侧弹出
 			position = {
 				...position,
-				left: `${targetRect.left + targetRect.width + 16}px`,
+				right: `calc(100% - ${menuItemElemRect.left - 12}px)`,
 			};
 		} else {
 			position = {
 				...position,
-				right: `calc(100% - ${targetRect.left - 16}px)`,
+				left: `${menuItemElemRect.left + menuItemElemRect.width + 12}px`,
 			};
 		}
 		// 计算垂直方向（若 item 垂直位置在窗口上方，那么指定 top，否则指定 bottom）
-		if (targetRect.top + targetRect.height / 2 < document.documentElement.clientHeight / 2) {
+		if (menuItemElemRect.top + menuItemElemRect.height / 2 < screenHeight / 2) {
 			position = {
 				...position,
-				top: `${targetRect.top}px`,
+				top: `${menuItemElemRect.top}px`,
 			};
 		} else {
 			position = {
 				...position,
-				bottom: `calc(100% - ${targetRect.top + targetRect.height}px)`
+				bottom: `calc(100% - ${menuItemElemRect.top + menuItemElemRect.height}px)`
 			};
 		}
 		Tooltip.show({
@@ -262,9 +261,18 @@ const handleMenuItemMouseEnter = (e: MouseEvent, menuItem: MenuItem, menu: Inner
 			position,
 		});
 	}
-	currentHoveredItem.value = menuItem;
-};	
+}
 
+// 鼠标选择、键盘 Enter，或菜单为 select 模式时键盘移动焦点时均触发此函数，向上层报告
+const handleSelect = (e: MouseEvent | KeyboardEvent, menuItem: MenuItem) => {
+	if ('value' in menuItem) {
+		props.onSelect(e, menuItem.value, menuItem.type !== 'normal' ? menuItem.checked : undefined);
+	}
+};
+
+const handleMenuItemMouseEnter = (e: MouseEvent, menuItem: MenuItem, menu: InnerMenu) => {
+	currentHoveredItem.value = menuItem;
+};
 const handleMenuItemMouseLeave = () => {
 	currentHoveredItem.value = undefined;
 };
@@ -274,6 +282,7 @@ const handleMenuItemFocused = (e: FocusEvent, menuItem: MenuItem) => {
 	(props.returnFocus || (() => {}))(e);
 };
 
+// 根据当前 hover 项确定子菜单的打开状态、tooltip 的显隐
 watch(currentHoveredItem, (newItem, oldItem) => {
 	// console.log('currentHoveredItem', newItem);
 	if (newItem !== undefined) {
@@ -297,8 +306,12 @@ watch(currentHoveredItem, (newItem, oldItem) => {
 		if (JSON.stringify(newOpenedKeys) !== JSON.stringify(openedSubMenus.value)) {
 			openedSubMenus.value = newOpenedKeys;
 		}
+		setTimeout(() => {
+			// 初次加载时，menuElemRefs 未准备好，因此添加 setTimeout 应对此情况
+			showTooltip(toRaw(newItem));
+		}, 0);
 	}
-	if (newItem === undefined && oldItem !== undefined) {
+	if ((newItem === undefined || !('tooltip' in newItem)) && oldItem !== undefined) {
 		Tooltip.hide();
 	}
 	// 	menuRef.value.firstElementChild!.children[currentIndex.value].scrollIntoView({
@@ -306,6 +319,7 @@ watch(currentHoveredItem, (newItem, oldItem) => {
 	// 	});
 });
 
+// 键盘操作响应
 const keydownListener = (e: KeyboardEvent) => {
 	// 关闭菜单
 	if (e.key === 'Escape') {
@@ -375,40 +389,52 @@ const keydownListener = (e: KeyboardEvent) => {
 		if (menuItem.type === 'submenu') {
 			// 焦点进入子菜单的 props 选中项或第一项
 			const childDOM = menuElemRefs.value[menuItem.key];
-			const activeIndex = menuItem.subMenu.findIndex((menuItem) => 'value' in menuItem && menuItem.value === props.selectedValue);
-			childDOM.children[activeIndex !== -1 ? activeIndex : 0].focus();
+			const activeIndex = menuItem.subMenu.findIndex((menuItem) => 'value' in menuItem && menuItem.value === currentSelectedItem.value);
+			const finalIndex = activeIndex !== -1 ? activeIndex : 0;
+			childDOM.children[finalIndex].focus();
+			if (props.type === 'select') {
+				handleSelect(e, menuItem.subMenu[finalIndex]);
+			}
 		} else {
 			(props.onKeyDown || (() => {}))(e);
 		}
 	}
 }
 
+/**
+ * 组件初始化时：
+ * 1. 更改 currentHoveredItem 和 currentSelectedItem，进而在 nextTick 确定子菜单的打开状态、tooltip 的显示
+ * 2. 根据 returnFocus 确定是否添加全局键盘监听归还焦点
+ * 3. openedSubMenus 打开第一个菜单
+ * 4. （好像不需要）自下而上计算子菜单的打开状态
+ * 5. 在 nextTick 子菜单 DOM 准备好后计算显示位置
+ * 6. 在 5. 后对选中项进行对焦
+ */
 onMounted(() => {
 	currentHoveredItem.value = getMenuAndItemByValue(props.selectedValue)?.menuItem;
+	currentSelectedItem.value = props.selectedValue;
 	if (!props.returnFocus) {
 		document.addEventListener('keydown', keydownListener);
 	}
 	openedSubMenus.value = [0];	// 需在 mounted 后才打开第一个菜单，这样就有动画
-	// 查找所有菜单项中 selectedValue 所在的面板
-	let correspondingMenu: InnerMenu;
-	for (const menu of flattenedMenus.value) {
-		const correspondingMenuItem = menu.menu.find((menuItem) => 'value' in menuItem && menuItem.value === props.selectedValue);
-		if (correspondingMenuItem) {
-			correspondingMenu = menu;
-			break;
-		}
-	}
-	if (correspondingMenu) {
-		const newOpenedKeys = [correspondingMenu.menuIndex];
-		let current = correspondingMenu;
-		while (current.parent) {
-			current = correspondingMenu.parent;
-			newOpenedKeys.unshift(current.menuIndex);
-		}
-		openedSubMenus.value = newOpenedKeys;
+	const res = getMenuAndItemByValue(props.selectedValue);
+	if (res) {
+		const { menu, menuItem } = res;
+		// const newOpenedKeys = [menu.menuIndex];
+		// let current = menu;
+		// while (current.parent) {
+		// 	current = menu.parent;
+		// 	newOpenedKeys.unshift(current.menuIndex);
+		// }
+		// openedSubMenus.value = newOpenedKeys;
 		// 父到子计算每一节点的显示位置（需等待打开第一个菜单之后才计算）
 		setTimeout(() => {
-			calcSubMenuPosition(correspondingMenu.menuIndex);
+			calcSubMenuPosition(menu.menuIndex);
+			// 激活对应项以自动滚动到该位置
+			const { indexInFlattened, indexInMenu } = getMenuByItem(menuItem);
+			const menuElem = menuElemRefs.value[indexInFlattened] as HTMLDivElement;
+			const menuItemElem = menuElem.children[indexInMenu];
+			menuItemElem.focus();
 		}, 0);
 	}
 });
@@ -423,10 +449,13 @@ defineExpose({
 	triggerKeyboardEvent: (event: KeyboardEvent) => {
 		keydownListener(event);
 	},
+	setSelectedValue: (value: any) => {
+		currentSelectedItem.value = value;
+	},
 	preClose: () => {
 		// 关闭前给个机会展示退出动画
 		openedSubMenus.value = [];
-	}
+	},
 });
 
 </script>
@@ -516,7 +545,7 @@ defineExpose({
 				border-radius: 4px;
 				font-size: 14px;
 				line-height: 40px;
-				outline: none;
+				// outline: none;
 				.label {
 					position: absolute;
 					top: 0;

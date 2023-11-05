@@ -87,6 +87,9 @@ const showMenu = function (options?: MenuOptions) {
 	const handleKeyboardEvent = (event: KeyboardEvent) => {
 		vnode.component.exposed.triggerKeyboardEvent(event);
 	}
+	const setSelectedValue = (value: any) => {
+		vnode.component.exposed.setSelectedValue(value);
+	}
 	const _options = {
 		...options,
 		onClose: handleClose,
@@ -103,6 +106,7 @@ const showMenu = function (options?: MenuOptions) {
 		vnode,
 		close: handleClose,
 		triggerKeyboardEvent: handleKeyboardEvent,
+		setSelectedValue: setSelectedValue,
 	};
 };
 
