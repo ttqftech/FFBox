@@ -640,7 +640,7 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 	}
 
 	public activate(machineCode: string, activationCode: string): boolean {
-		const fixedCode = 'be6729be8279be40';
+		const fixedCode = 'd324c697ebfc42b7';
 		const key = machineCode + fixedCode;
 		const decrypted = CryptoJS.AES.decrypt(activationCode, key);
 		const decryptedString = CryptoJS.enc.Utf8.stringify(decrypted);

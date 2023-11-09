@@ -5,9 +5,12 @@ import { onMounted } from 'vue'
 import { useAppStore } from '@renderer/stores/appStore';
 import { handleDownloadStatusChange, handleDownloadProgress, handleCloseConfirm } from '@renderer/stores/eventsHandler';
 import { TransferStatus } from '@common/types';
+import { Server } from './types';
+import { buildNumber, version } from '@common/constants';
+import { randomString } from '@common/utils';
+import Popup from './components/Popup/Popup';
 import MainFrame from './containers/MainFrame.vue';
 import nodeBridge from './bridges/nodeBridge';
-import { Server } from './types';
 
 onMounted(() => {
 	const appStore = useAppStore();
@@ -40,14 +43,28 @@ onMounted(() => {
 		handleDownloadProgress(task, params);
 	});
 
-	// 加载配置
+	// 初始化或加载配置
 	appStore.loadPresetList();
 	(async () => {
 		const gp = appStore.globalParams;
-		gp.input = await nodeBridge.localStorage.get('input') || gp.input;
-		gp.video = await nodeBridge.localStorage.get('video') || gp.video;
-		gp.audio = await nodeBridge.localStorage.get('audio') || gp.audio;
-		gp.output = await nodeBridge.localStorage.get('output') || gp.output;
+		const storedBuildNumber = await nodeBridge.localStorage.get('version.buildNumber');
+		if (!storedBuildNumber || storedBuildNumber != buildNumber) {
+			Popup({
+				message: `欢迎使用 FFBox ${version}！`,
+				level: 0,
+			});
+			nodeBridge.localStorage.set('version.buildNumber', buildNumber);
+			// 生成随机机器码
+			let machineCode = randomString(16, '0123456789abcdef');
+			nodeBridge.localStorage.set('userinfo.machineCode', machineCode);
+			appStore.machineCode = machineCode;
+		} else {
+			appStore.machineCode = await nodeBridge.localStorage.get('userinfo.machineCode');
+			gp.input = await nodeBridge.localStorage.get('input') || gp.input;
+			gp.video = await nodeBridge.localStorage.get('video') || gp.video;
+			gp.audio = await nodeBridge.localStorage.get('audio') || gp.audio;
+			gp.output = await nodeBridge.localStorage.get('output') || gp.output;
+		}
 	})();
 });
 </script>

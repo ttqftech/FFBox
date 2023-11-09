@@ -21,8 +21,9 @@ const MsgboxComponent: FunctionalComponent<Props> = (props) => {
 	);
 
 	const handleKeyPress = (e: KeyboardEvent) => {
-		console.log('handleKeyPress', e);
-		if (e.key === 'Escape') {
+		if (props.buttons.length === 1 && (e.key === 'Escape' || e.key === 'Enter')) {
+			handleButtonClick(props.buttons[0]);
+		} else if (e.key === 'Escape') {
 			const button = props.buttons.find((button) => button.role === 'cancel');
 			if (button) {
 				handleButtonClick(button);

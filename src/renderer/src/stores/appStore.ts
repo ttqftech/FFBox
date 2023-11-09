@@ -45,6 +45,7 @@ interface StoreState {
 	presetName: string | undefined;
 	availablePresets: string[];
 	downloadMap: Map<string, { serverId: string, taskId: number }>;
+	machineCode: string,
 	functionLevel: number;
 }
 
@@ -86,6 +87,7 @@ export const useAppStore = defineStore('app', {
 			presetName: '',
 			availablePresets: [],
 			downloadMap: new Map(),
+			machineCode: '',
 			functionLevel: 50,
 		};
 	},
@@ -613,6 +615,29 @@ export const useAppStore = defineStore('app', {
 		},
 		// #endregion 服务器处理
 		// #region 其他
+		async activate(userInput: string, callback: (result: number | false) => any) {
+			const 这 = useAppStore();
+			let cryptoJS = nodeBridge.cryptoJS;
+			if (nodeBridge.env === 'electron') {
+				/**
+				 * 客户端和管理端均使用机器码 + 固定码共 32 位作为 key
+				 * 管理端使用这个 key 对 functionLevel 加密，得到的加密字符串由用户输入到 userInput 中去
+				 * 客户端将 userInput 使用 key 解密，如果 userInput 不是瞎编的，那么就能解出正确的 functionLevel
+				 */
+				const machineCode = await (nodeBridge.localStorage.get('userinfo.machineCode') || '') as string;
+				const fixedCode = 'd324c697ebfc42b7';
+				const key = machineCode + fixedCode;
+				const decrypted = cryptoJS.AES.decrypt(userInput, key)
+				const decryptedString = cryptoJS.enc.Utf8.stringify(decrypted);
+				if (parseInt(decryptedString).toString() === decryptedString) {
+					这.functionLevel = parseInt(decryptedString);
+					这.currentServer.entity.activate(machineCode, userInput);
+					callback(parseInt(decryptedString))
+				} else {
+					callback(false);
+				}
+			}
+		},
 		// #endregion 其他
 	},
 });

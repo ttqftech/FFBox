@@ -10,16 +10,12 @@ import SponsorPanel from './MenuCenter/SponsorPanel.vue';
 import LocalSettings from './MenuCenter/LocalSettings.vue';
 import IconSidebarSponsor from '@renderer/assets/menuCenter/sponsor.svg?component';
 import IconSidebarSettings from '@renderer/assets/menuCenter/settings.svg?component';
-import IconSidebarVideo from '@renderer/assets/mainArea/paraBox/parabox_video.svg?component';
-import IconSidebarAudio from '@renderer/assets/mainArea/paraBox/parabox_audio.svg?component';
-import IconSidebarEffect from '@renderer/assets/mainArea/paraBox/parabox_effect.svg?component';
-import IconSidebarOutput from '@renderer/assets/mainArea/paraBox/parabox_output.svg?component';
 
 const appStore = useAppStore();
 
-const sidebarIcons = [IconSidebarSponsor, IconSidebarSettings, IconSidebarVideo, IconSidebarAudio, IconSidebarEffect, IconSidebarOutput];
-const sidebarTexts = ['支持作者', '设置', '视频', '音频', '效果', '输出'];
-const sidebarColors = ['hwb(45 0% 5%)', 'hwb(195 0% 10%)', 'hwb(285 10% 5%)', 'hwb(120 0% 15%)', 'hwb(315 0% 0%)', 'hwb(0 30% 0%)'];
+const sidebarIcons = [IconSidebarSettings, IconSidebarSponsor];
+const sidebarTexts = ['设置', '支持作者'];
+const sidebarColors = ['hwb(195 0% 10%)', 'hwb(315 0% 0%)', 'hwb(285 10% 5%)', 'hwb(120 0% 15%)', 'hwb(45 0% 5%)', 'hwb(0 30% 0%)'];
 const animationName = ref('animationUp');
 
 const selectedMenuIndex = ref(-1);
@@ -38,13 +34,11 @@ const finalMenu = computed(() => {
 				{ type: 'submenu', label: '访问官网', subMenu: [
 					{ type: 'normal', label: 'FFBox 官网', value: 'FFBox 官网', onClick: () => nodeBridge.jumpToUrl('http://ffbox.ttqf.tech') },
 					{ type: 'normal', label: '作者个人网站', value: '作者个人网站', onClick: () => nodeBridge.jumpToUrl('http://ttqf.tech') },
+					{ type: 'normal', label: 'FFmpeg 官网', value: 'FFmpeg 官网', onClick: () => nodeBridge.jumpToUrl('https://ffmpeg.org') },
 				] },
 				{ type: 'submenu', label: '访问源码', subMenu: [
 					{ type: 'normal', label: 'github 仓库', value: 'github 仓库', onClick: () => nodeBridge.jumpToUrl('https://github.com/ttqftech/FFBox') },
 					{ type: 'normal', label: 'gitee 仓库', value: 'gitee 仓库', onClick: () => nodeBridge.jumpToUrl('https://gitee.com/ttqf/FFBox') },
-					{ type: 'submenu', label: '子菜单', subMenu: [
-						{ type: 'normal', label: 'FFBox v4.0', value: 'FFBox', tooltip: '显示环境信息', onClick: () => showEnvironmentInfo() },
-					] },
 				] },
 				{ type: 'separator' },
 				{ type: 'normal', label: 'FFBox v4.0', value: 'FFBox', tooltip: '显示环境信息', onClick: () => showEnvironmentInfo() },
@@ -186,7 +180,7 @@ const menuCenterContainerStyle = computed(() => {
 	if (appStore.showMenuCenter === 0) {
 		return {
 			width: '84px',
-			height: '63px',
+			height: '36px',
 		}
 	} else if (appStore.showMenuCenter === 1) {
 		return {
@@ -251,7 +245,7 @@ watch(selectedMenuIndex, (index, oldIndex) => {
 			type: 'action',
 			triggerRect: { xMin: rect.x, yMin: rect.y, xMax: rect.x + rect.width, yMax: rect.y + rect.height },	// 触发菜单的控件的坐标，用于计算菜单弹出方向和大小
 			onClose: () => {
-				// 如果是切换菜单，此处两值就不相等，则不继续关闭其他内容
+				// 如果是切换菜单（或者是选择了项目触发了 onSelect），此处两值就不相等，则不继续关闭其他内容
 				if (index === selectedMenuIndex.value) {
 					selectedMenuIndex.value = -1;
 					if (appStore.showMenuCenter === 1) {
@@ -263,9 +257,11 @@ watch(selectedMenuIndex, (index, oldIndex) => {
 				handleMenuItemClicked(event, value);
 				selectedMenuIndex.value = -1;
 				if (appStore.showMenuCenter === 1) {
-					// 菜单组件会停止 mouseup 的冒泡，因此此处再触发一次关闭大按钮菜单
+					// 菜单组件会停止 mouseup 的冒泡，因此此处再触发一次发送到大按钮关闭菜单栏
 					const ev = new MouseEvent('mouseup');
 					document.dispatchEvent(ev);
+					// 如果是通过键盘触发的，那么就不是通过大按钮的 mouseup 关闭菜单，而是手动关闭
+					appStore.showMenuCenter = 0;
 				}
 			},
 			onKeyDown: (event: KeyboardEvent) => {
@@ -330,6 +326,24 @@ onMounted(() => {
 	nodeBridge.ipcRenderer?.on('menuItemClicked', (event, value: any) => {
 		handleMenuItemClicked(event, value);
 	});
+	// 挂载 Alt 键响应
+	const keydownListener = (event: KeyboardEvent) => {
+		if (event.key === 'Alt' && appStore.showMenuCenter === 0) {
+			appStore.showMenuCenter = 1;
+		} else if (event.altKey) {
+			const index = [65, 83, 84, 86].indexOf(event.keyCode);
+			if (index > -1) {
+				selectedMenuIndex.value = index;
+			}
+		}
+	}
+	const keyupListener = (event: KeyboardEvent) => {
+		if (event.key === 'Alt' && appStore.showMenuCenter === 1 && selectedMenuIndex.value === -1) {
+			appStore.showMenuCenter = 0;
+		}
+	}
+	document.addEventListener('keydown', keydownListener);
+	document.addEventListener('keyup', keyupListener);
 });
 
 </script>
@@ -338,6 +352,7 @@ onMounted(() => {
 	<div class="pad" :style="menuCenterPadStyle">
 	</div>
 	<div class="container" :style="menuCenterContainerStyle">
+		<div class="topDragger"></div>
 		<div class="topMenu" ref="topMenuRef">
 			<div
 				v-for="(menu, index) in finalMenu"
@@ -358,10 +373,10 @@ onMounted(() => {
 				</div>
 				<div class="content">
 					<Transition :name="animationName">
-						<SponsorPanel v-if="selectedPanelIndex === 0" />
+						<LocalSettings v-if="selectedPanelIndex === 0" />
 					</Transition>
 					<Transition :name="animationName">
-						<LocalSettings v-if="selectedPanelIndex === 1" />
+						<SponsorPanel v-if="selectedPanelIndex === 1" />
 					</Transition>
 				</div>
 			</div>
@@ -394,6 +409,14 @@ onMounted(() => {
 		overflow: hidden;
 		transition: all 0.5s cubic-bezier(0.1, 1.2, 0.5, 1);
 		-webkit-app-region: none;
+		.topDragger {
+			position: absolute;
+			left: 0;
+			top: 0;
+			right: 0;
+			height: 92px;
+			-webkit-app-region: drag;
+		}
 		.topMenu {
 			position: absolute;
 			left: 85px;
@@ -401,6 +424,7 @@ onMounted(() => {
 			width: 362px;
 			height: 28px;
 			font-size: 14px;
+			-webkit-app-region: none;
 			.menu {
 				display: inline-block;
 				padding: 0 16px;

@@ -2,11 +2,12 @@
 import { ref } from 'vue';
 import InputAutoSize from './InputAutoSize.vue';
 
-interface Props {
+export interface Props {
 	list: {
 		value: string | number;
 		deletable?: boolean;
 		editable?: boolean;
+		disabled?: boolean;
 	}[];
 	value: string | number;
 	placeholder?: string;
@@ -18,6 +19,17 @@ interface Props {
 const props = defineProps<Props>();
 
 const editingValue = ref();
+
+const getButtonStyle = (item: Props['list'][number]) => {
+	let classText = 'item';
+	if (item.value === props.value) {
+		classText += ' itemSelected';
+	}
+	if (item.disabled) {
+		classText += ' itemDisabled';
+	}
+	return classText;
+}
 
 const handleItemClick = (item: Props['list'][number], index: number) => {
 	if (item.value !== props.value) {
@@ -40,7 +52,7 @@ const handleConfirm = (item: Props['list'][number], value: string, index: number
 		<button
 			v-for="(item, index) in props.list"
 			:key="item.value"
-			:class="`item ${item.value === props.value ? 'itemSelected' : ''}`"
+			:class="getButtonStyle(item)"
 			@mousedown="() => handleItemClick(item, index)"
 		>
 			<InputAutoSize
@@ -157,6 +169,10 @@ const handleConfirm = (item: Props['list'][number], value: string, index: number
 			box-shadow: 0 0 2px 1px hwb(0 0% 100% / 0.05), // 外部阴影
 						0 3px 6px hwb(0 0% 100% / 0.1) inset; // 内部凹陷阴影
 			border-left: #49e 3px solid;
+		}
+		.itemDisabled {
+			color: #66666677;
+			pointer-events: none;
 		}
 	}
 

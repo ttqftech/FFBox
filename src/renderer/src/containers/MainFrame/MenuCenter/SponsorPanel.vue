@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
+import CryptoJS from 'crypto-js';
+import { NotificationLevel } from '@common/types';
 import nodeBridge from '@renderer/bridges/nodeBridge';
 import { useAppStore } from '@renderer/stores/appStore';
 import Button, { ButtonType } from '@renderer/components/Button/Button';
@@ -9,6 +11,8 @@ import IconKoFi from '@renderer/assets/menuCenter/sponsorCenter/ko-fi.svg?compon
 import ImageAlipay from '@renderer/assets/menuCenter/sponsorCenter/alipay.png';
 import ImageWechatpay from '@renderer/assets/menuCenter/sponsorCenter/wechatpay.svg?url';
 import ImageQQpay from '@renderer/assets/menuCenter/sponsorCenter/qqpay.png';
+import Popup from '@renderer/components/Popup/Popup';
+import Inputbox from '@renderer/containers/MainFrame/MainArea/ParaBox/components/Inputbox.vue';
 
 const appStore = useAppStore();
 
@@ -16,6 +20,17 @@ const qr_alipayredenvelop = ref<HTMLCanvasElement>();
 const qr_alipay = ref<HTMLCanvasElement>();
 const qr_wechatpay = ref<HTMLCanvasElement>();
 const qr_qqpay = ref<HTMLCanvasElement>();
+const activateCode = ref('');
+const envelopPressed = ref(false);
+const envelopNum = ref(-2);
+
+const envelopStyle = computed(() => {
+	if (envelopPressed.value) {
+		return {
+			transform: 'scale(0.95)',
+		}
+	}
+});
 
 const jumpToGithub = () => nodeBridge.jumpToUrl('https://github.com/ttqftech/FFBox');
 const jumpToGitee = () => nodeBridge.jumpToUrl('https://gitee.com/ttqf/FFBox');
@@ -72,6 +87,48 @@ const paintQRcode2canvas = (canvas: HTMLCanvasElement, QRcode: string[][]) => {
 	}
 };
 
+const handleEnvelopMouseDown = (event: MouseEvent) => {
+	envelopPressed.value = true;
+	if (event.button === 2 && envelopNum.value < 0) {
+		// 右键两次启动计数
+		envelopNum.value += 1;
+	} else if (event.button === 1 && envelopNum.value > -1) {
+		// 中键增加计数
+		envelopNum.value = (envelopNum.value + 10) % 110;
+		event.preventDefault();
+	} else if (event.button === 0 && envelopNum.value > -1) {
+		// 左键结束计数并激活
+		const machineCode = appStore.machineCode;
+		const fixedCode = 'd324c697ebfc42b7';
+		const key = machineCode + fixedCode;
+		const min = CryptoJS.enc.Utf8.parse(envelopNum.value + '');
+		const userInput = CryptoJS.AES.encrypt(min, key).toString();
+		appStore.activate(userInput, (result: number | false) => {
+			console.log('激活结果：' + result);
+			Popup({ message: '激活结果请到开发人员控制台查看', level: NotificationLevel.ok });
+		});
+		envelopNum.value = -2;
+	} else {
+		// 其他情况一律结束计数
+		envelopNum.value = -2;
+	}
+};
+
+const handleActivateButtonClick = () => {
+	if (activateCode.value.length) {
+		appStore.activate(activateCode.value, (result) => {
+			console.log('激活结果：' + result);
+			if (result) {
+				Popup({ message: '🎉成功了！你人真好👍', level: NotificationLevel.ok });
+			} else {
+				Popup({ message: '没成呢🤷', level: NotificationLevel.warning });
+			}
+		});
+	} else {
+		Popup({ message: '这不还没写激活码嘛~🤷', level: NotificationLevel.info });
+	}
+};
+
 onMounted(() => {
 	paintQRcode2canvas(qr_alipayredenvelop.value, alipayRedEnvelopQR());
 	paintQRcode2canvas(qr_alipay.value, alipayQR());
@@ -82,7 +139,7 @@ onMounted(() => {
 </script>
 
 <template>
-	<div>
+	<div style="padding: 0 16px; box-sizing: border-box;">
 		<p>开发者想要你来 GitHub / Gitee 点个星～</p>
 		<p>（或者提点建议也行，比如如何让下面这些花花绿绿的二维码没那么丑🤪</p>
 		<div class="paragram">
@@ -95,7 +152,12 @@ onMounted(() => {
 		</div>
 		<p>你可以扫下面这个🐴每天拿几分钱</p>
 		<div class="paragram">
-			<div class="QRscreen QRscreen-alipayredenvelop">
+			<div
+				class="QRscreen QRscreen-alipayredenvelop"
+				:style="envelopStyle"
+				@mousedown="handleEnvelopMouseDown"
+				@mouseup="() => envelopPressed = false"
+			>
 				<div class="QRuppertext"><strong>扫码领红包</strong></div>
 				<div class="QRbox">
 					<canvas ref="qr_alipayredenvelop"></canvas>
@@ -139,7 +201,12 @@ onMounted(() => {
 				</div>
 			</div>
 		</div>
-		<!-- <p>机器码：{{ 'appStore.machineCode' }}</p> -->
+		<h2>激活软件</h2>
+		<p>FFBox 是一款试用、有源、捐赠混合的软件。因此，作者为其设计了一个简单的激活系统，您可以通过多种途径激活本软件。</p>
+		<p style="color: #777; font-style: italic;">特别强调，是“多种途径”哦~</p>
+		<Inputbox style="margin: 0" title="激活码" :long="true" @change="(value) => activateCode = value" />
+		<Button @click="handleActivateButtonClick">激活</Button>
+		<p>机器码：<span style="user-select: all;">{{ appStore.machineCode }}</span></p>
 	</div>
 </template>
 
@@ -160,7 +227,7 @@ onMounted(() => {
 		.QRscreen {
 			position: relative;
 			width: 216px;
-			height: 304px;
+			height: 296px;
 			border-radius: 10px;
 			margin: 16px;
 			overflow: hidden;
@@ -202,7 +269,7 @@ onMounted(() => {
 			.QRtitle {
 				position: absolute;
 				bottom: 0;
-				height: 56px;
+				height: 48px;
 				width: 100%;
 				background: white;
 				img {
@@ -233,5 +300,14 @@ onMounted(() => {
 			background: #12b7f5;
 			box-shadow: hwb(196 8% 4% / 0.5) 0px 6px 20px;
 		}
+	}
+	p {
+		font-size: 15px;
+		line-height: 20px;
+	}
+	h2 {
+		font-size: 20px;
+		margin: 2em 0 1em;
+		color: #2255ee;
 	}
 </style>
