@@ -2409,10 +2409,8 @@ const framerate: MenuItem[] = [
 		{ type: 'normal', label: '60', value: '60', tooltip: '60p（常见屏幕刷新率）' },
 		{ type: 'normal', label: '50', value: '50', tooltip: '50p' },
 		{ type: 'normal', label: '30', value: '30', tooltip: '30p' },
-		{ type: 'normal', label: '29.97', value: '29.97', tooltip: '邪教（NTSC 帧频）' },
 		{ type: 'normal', label: '25', value: '25', tooltip: '25p（PAL 帧频）' },
 		{ type: 'normal', label: '24', value: '24', tooltip: '24p（常见电影制作标准）' },
-		{ type: 'normal', label: '23.976', value: '23.976', tooltip: '邪教' },
 		{ type: 'normal', label: '15', value: '15', tooltip: '15p' },
 		{ type: 'normal', label: '12', value: '12', tooltip: '12p' },
 		{ type: 'normal', label: '10', value: '10', tooltip: '卡成 PPT' },
@@ -2424,6 +2422,26 @@ const framerate: MenuItem[] = [
 	{ type: 'submenu', label: '隔行扫描', tooltip: '上场优先的隔行扫描<br />注意 ffmpeg 将先处理帧率，再将每帧扩展为上下场，因此您无法使用此方法进行常规的逐行转隔行处理', subMenu: [
 		{ type: 'normal', label: '60i', value: '60i', tooltip: '场频 60，帧频 30' },
 		{ type: 'normal', label: '50i', value: '50i', tooltip: '场频 50，帧频 25' },
+	] },
+	{ type: 'submenu', label: '慎用帧率', tooltip: '', subMenu: [
+		{ type: 'submenu', label: 'NTSC 邪教帧率', tooltip: '由美国国家电视标准委员会（NTSC）推出的相关帧率标准', subMenu: [
+			{ type: 'submenu', label: '重要信息 1', tooltip: '在 NTSC 早期标准（1941）中，帧率为 30 帧/秒。<br />在后来的标准（1953）中，色度信号的引入容易导致音频信号与视频信号发生串扰，故将帧率降低 0.1%，即降低到 29.97 帧/秒。<br />wikipedia<br />In December 1953, the FCC unanimously approved what is now called the NTSC color television standard (later defined as RS-170a). The compatible color standard retained full backward compatibility with then-existing black-and-white television sets. Color information was added to the black-and-white image by introducing a color subcarrier of precisely 315/88 MHz (usually described as 3.579545 MHz±10 Hz). The precise frequency was chosen so that horizontal line-rate modulation components of the chrominance signal fall exactly in between the horizontal line-rate modulation components of the luminance signal, such that the chrominance signal could easily be filtered out of the luminance signal on new television sets, and that it would be minimally visible in existing televisions. Due to limitations of frequency divider circuits at the time the color standard was promulgated, the color subcarrier frequency was constructed as composite frequency assembled from small integers, in this case 5×7×9/(8×11) MHz. The horizontal line rate was reduced to approximately 15,734 lines per second (3.579545×2/455 MHz = 9/572 MHz) from 15,750 lines per second, and the frame rate was reduced to 30/1.001 ≈ 29.970 frames per second (the horizontal line rate divided by 525 lines/frame) from 30 frames per second. These changes amounted to 0.1 percent and were readily tolerated by then-existing television receivers.', subMenu: [
+				{ type: 'submenu', label: '重要信息 2', tooltip: '该方案为旧时代工程师在对应时代受电气特性限制为黑白电视与彩色电视所实现的兼容性设计。<br />请注意，使用 NTSC 标准的美国电台已于 2021-07-13 全数进行了切换，即不再有电台使用该标准。<br />故除非有极其特殊的场合，均不应再大规模应用该帧率。', subMenu: [
+					{ type: 'submenu', label: '重要信息 3', tooltip: '非整数倍的帧率在非线性编辑软件中往往容易产生问题，如跳帧或重复帧、素材偏移或无法对齐等。<br />您使用了 FFBox，代表了您已使用数字形式进行多媒体信息的处理，无需按照模拟信号时代的标准处理素材。', subMenu: [
+						{ type: 'submenu', label: '重要信息 4', tooltip: '如果您使用的是部分日本相机品牌（如索尼、佳能等）制造的微单相机，或部分中国相机品牌（如大疆），您可能会发现相机中仅有 29.97 帧/秒相关的选项，或者界面上显示为 30 帧/秒但实际摄录帧率为 29.97 帧/秒的情况。<br />这种情况是厂商设计有误所致，往往会对后期素材的剪辑工作流造成严重影响。<br />您可尝试联系厂商修复此问题，或自行编写相机操作系统刷入机身以解决此问题。', subMenu: [
+							{ type: 'submenu', label: '重要信息 5', tooltip: '如果无法进行此操作，建议将素材先以某种方式处理成 30 帧/秒相关的倍数再进行后续操作。', subMenu: [
+								{ type: 'submenu', label: '重要信息 6', tooltip: '如您已知悉上述重要提示，并执意要使用此类帧率，请选择。', subMenu: [
+									{ type: 'normal', label: '29.97', value: '29.97', tooltip: '29.97p' },
+									{ type: 'normal', label: '23.976', value: '23.976', tooltip: '23.976p' },
+									{ type: 'normal', label: '59.94', value: '59.94', tooltip: '59.94p' },
+									{ type: 'normal', label: '119.88', value: '119.88', tooltip: '119.88p' },
+								] },
+							] },
+						] },
+					] },
+				] },
+			] },
+		] },
 	] },
 ];
 

@@ -201,11 +201,11 @@ const onDrop = (event: DragEvent) => {	// 此函数触发四次 taskList update�
 			align-items: center;
 			.box {
 				border-radius: 8px;
-				background-color: hwb(0 97% 3% / 0.8);
-				box-shadow: 0 3px 2px -2px hwb(0 100% 0%) inset,	// 上亮光
-						0 16px 32px 0px hwb(0 0% 100% / 0.02),
-						0 6px 6px 0px hwb(0 0% 100% / 0.02),
-						0 0 0 1px hwb(0deg 100% 0% / 0.9);	// 包边
+				background-color: hwb(var(--bg97) / 0.8);
+				box-shadow: 0 3px 2px -2px hwb(var(--highlight)) inset,	// 上亮光
+							0 16px 32px 0px hwb(var(--hoverShadow) / 0.02),
+							0 6px 6px 0px hwb(var(--hoverShadow) / 0.02),
+							0 0 0 1px hwb(var(--highlight) / 0.9);	// 包边
 				display: flex;
 				justify-content: center;
 				align-items: center;
@@ -237,7 +237,7 @@ const onDrop = (event: DragEvent) => {	// 此函数触发四次 taskList update�
 						margin-block-end: 0.5em;
 					}
 					a {
-						color: #33c;
+						color: var(--titleText);
 						cursor: pointer;
 					}
 				}

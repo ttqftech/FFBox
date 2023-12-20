@@ -21,7 +21,7 @@ const startButtonText = computed(() => {
 </script>
 
 <template>
-	<div class="actionbar">
+	<div class="actionbar" :data-color_theme="appStore.frontendSettings.colorTheme">
 		<div class="left">
 				<!-- <button class="startbutton startbutton-gray" @click="appStore.initTemp()">➕添加</button> -->
 			</div>
@@ -39,10 +39,10 @@ const startButtonText = computed(() => {
 		flex: 0 0 auto;
 		display: flex;
 		justify-content: space-between;
-		background-color: hwb(220 97% 3%);
-		box-shadow: 0 3px 2px -2px hwb(0 100% 0%) inset,
-					0 20px 20px 0px hwb(0 0% 100% / 0.02),
-					0 6px 6px 0px hwb(0 0% 100% / 0.02);
+		background-color: hwb(var(--bg97));
+		box-shadow: 0 3px 2px -2px hwb(var(--highlight)) inset,
+					0 20px 20px 0px hwb(var(--hoverShadow) / 0.02),
+					0 6px 6px 0px hwb(var(--hoverShadow) / 0.02);
 		z-index: 1;
 		-webkit-app-region: drag;
 		&>* {
@@ -84,46 +84,94 @@ const startButtonText = computed(() => {
 				background: -webkit-linear-gradient(-90deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
 			}
 		}
+	}
+
+	// 主题
+	.actionbar[data-color_theme="themeLight"] {
 		.startbutton-green {
-			background: linear-gradient(180deg, hsl(120, 80%, 65%), hsl(120, 60%, 50%));
-			box-shadow: 0px -1px 1px 0px rgba(255, 255, 255, 0.3),
-						0px 1px 1px 0px rgba(16, 16, 16, 0.15),
-						0px 2px 6px 0px rgba(0, 0, 0, 0.15),
-						0px 4px 16px -4px hsl(120, 80%, 65%);
+			background: linear-gradient(180deg, hwb(120 40% 10%), hwb(120 20% 20%));
+			box-shadow: 0px -1px 1px 0px rgba(255, 255, 255, 0.3),	// 去除上方阴影
+						0px 1px 1px 0px rgba(16, 16, 16, 0.15),	// 按钮厚度
+						0px 2px 6px 0px rgba(0, 0, 0, 0.1),	// 按钮阴影
+						0px 4px 16px -4px hwb(120 40% 10%);	// 按钮发光和远距阴影
 		}
 		.startbutton-green:active {
-			background: linear-gradient(180deg, hsl(120, 65%, 35%), hsl(120, 60%, 50%));
+			background: linear-gradient(180deg, hwb(120 10% 40%), hwb(120 20% 20%));
 		}
 		.startbutton-green:hover {
 			box-shadow: 0px -1px 1px 0px rgba(255, 255, 255, 0.3),
 						0px 1px 1px 0px rgba(16, 16, 16, 0.15),
-						0px 2px 6px 0px rgba(0, 0, 0, 0.15),
-						0px 4px 24px 0px hsl(120, 80%, 65%);
+						0px 2px 6px 0px rgba(0, 0, 0, 0.1),
+						0px 4px 24px 0px hwb(120 40% 10%);
 		}
 		.startbutton-yellow {
-			background: linear-gradient(180deg, hsl(54, 80%, 65%), hsl(54, 60%, 50%));
-			box-shadow: 0px -1px 1px 0px rgba(255, 255, 255, 0.3),
-						0px 1px 1px 0px rgba(16, 16, 16, 0.15),
-						0px 2px 6px 0px rgba(0, 0, 0, 0.15),
-						0px 4px 16px -4px hsl(54, 80%, 65%);
+			background: linear-gradient(180deg, hwb(54 35% 5%), hwb(54 15% 15%));
+			box-shadow: 0px -1px 1px 0px rgba(255, 255, 255, 0.3),	// 去除上方阴影
+						0px 1px 1px 0px rgba(16, 16, 16, 0.15),	// 按钮厚度
+						0px 2px 6px 0px rgba(0, 0, 0, 0.1),	// 按钮阴影
+						0px 4px 16px -4px hwb(54 35% 5%);	// 按钮发光和远距阴影
 		}
 		.startbutton-yellow:active {
-			background: linear-gradient(180deg, hsl(54, 65%, 35%), hsl(54, 60%, 50%));
+			background: linear-gradient(180deg, hwb(54 5% 35%), hwb(54 15% 15%));
 		}
 		.startbutton-yellow:hover {
 			box-shadow: 0px -1px 1px 0px rgba(255, 255, 255, 0.3),
 						0px 1px 1px 0px rgba(16, 16, 16, 0.15),
-						0px 2px 6px 0px rgba(0, 0, 0, 0.15),
-						0px 4px 24px 0px hsl(54, 80%, 65%);
+						0px 2px 6px 0px rgba(0, 0, 0, 0.1),
+						0px 4px 24px 0px hwb(54 35% 5%);
 		}
 		.startbutton-gray {
-			color: hwb(0 40% 60%);
+			color: hwb(0 60% 40%);
 			text-shadow: none;
 			opacity: 0.8;
-			background: linear-gradient(180deg, hsl(0, 0%, 98%), hsl(0, 0%, 92%));
+			background: linear-gradient(180deg, hwb(0 96% 4%), hwb(0 88% 12%));
 			box-shadow: 0px -1px 1px 0px rgba(255, 255, 255, 0.3),	// 上高光
 						0px 1px 1px 0px rgba(16, 16, 16, 0.15),	// 下立体
-						0px 2px 6px 0px rgba(0, 0, 0, 0.15);	// 下阴影
+						0px 2px 6px 0px rgba(0, 0, 0, 0.1);	// 下阴影
+			pointer-events: none;
+		}
+	}
+	.actionbar[data-color_theme="themeDark"] {
+		.startbutton-green {
+			background: linear-gradient(180deg, hwb(120 20% 10%), hwb(120 10% 30%));
+			box-shadow: 0px -1px 1px 0px rgba(255, 255, 255, 0.3),	// 去除上方阴影
+						0px 1px 1px 0px rgba(16, 16, 16, 0.15),	// 按钮厚度
+						0px 2px 6px 0px rgba(0, 0, 0, 0.1),	// 按钮阴影
+						0px 4px 16px -4px hwb(120 40% 10%);	// 按钮发光和远距阴影
+		}
+		.startbutton-green:active {
+			background: linear-gradient(180deg, hwb(120 5% 50%), hwb(120 10% 30%));
+		}
+		.startbutton-green:hover {
+			box-shadow: 0px -1px 1px 0px rgba(255, 255, 255, 0.3),
+						0px 1px 1px 0px rgba(16, 16, 16, 0.15),
+						0px 2px 6px 0px rgba(0, 0, 0, 0.1),
+						0px 4px 24px 0px hwb(120 20% 10%);
+		}
+		.startbutton-yellow {
+			background: linear-gradient(180deg, hwb(54 15% 5%), hwb(54 5% 25%));
+			box-shadow: 0px -1px 1px 0px rgba(255, 255, 255, 0.3),	// 去除上方阴影
+						0px 1px 1px 0px rgba(16, 16, 16, 0.15),	// 按钮厚度
+						0px 2px 6px 0px rgba(0, 0, 0, 0.1),	// 按钮阴影
+						0px 4px 16px -4px hwb(54 15% 5%);	// 按钮发光和远距阴影
+		}
+		.startbutton-yellow:active {
+			background: linear-gradient(180deg, hwb(54 5% 50%), hwb(54 5% 25%));
+		}
+		.startbutton-yellow:hover {
+			box-shadow: 0px -1px 1px 0px rgba(255, 255, 255, 0.3),
+						0px 1px 1px 0px rgba(16, 16, 16, 0.15),
+						0px 2px 6px 0px rgba(0, 0, 0, 0.1),
+						0px 4px 24px 0px hwb(54 15% 5%);
+		}
+		.startbutton-gray {
+			color: hwb(0 60% 40%);
+			text-shadow: none;
+			opacity: 0.8;
+			background: linear-gradient(180deg, hwb(0 20% 80%), hwb(0 16% 84%));
+			box-shadow: 0px -1px 1px 0px rgba(255, 255, 255, 0.3),	// 上高光
+						0px 1px 1px 0px rgba(16, 16, 16, 0.15),	// 下立体
+						0px 2px 6px 0px rgba(0, 0, 0, 0.1);	// 下阴影
 			pointer-events: none;
 		}
 	}

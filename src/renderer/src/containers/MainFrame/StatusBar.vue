@@ -28,11 +28,19 @@ const handleInfoCenterButtonClicked = () => {
 	}
 	appStore.setUnreadNotifationCount(true);
 }
+// const handleThemeButtonClicked = () => {
+// 	if (appStore.frontendSettings.colorTheme === 'themeDark') {
+// 		appStore.frontendSettings.colorTheme = 'themeLight';
+// 	} else {
+// 		appStore.frontendSettings.colorTheme = 'themeDark';
+// 	}
+// 	appStore.applyFrontendSettings(true);
+// }
 
 </script>
 
 <template>
-	<div class="statusbar">
+	<div class="statusbar" :data-color_theme="appStore.frontendSettings.colorTheme">
 		<div class="left">
 			<div>
 				<div class="version" :style="versionStyle" @click="showEnvironmentInfo">FFBox：{{ FFBoxVersionText }}<br />FFmpeg：{{ appStore.currentServer?.data.ffmpegVersion || '-' }}</div>
@@ -40,6 +48,7 @@ const handleInfoCenterButtonClicked = () => {
 			<div @click="handleInfoCenterButtonClicked">
 				<IconInfo />{{ appStore.unreadNotificationCount }}
 			</div>
+			<!-- <div @click="handleThemeButtonClicked">{{ appStore.frontendSettings.colorTheme }}</div> -->
 		</div>
 	</div>
 </template>
@@ -50,7 +59,7 @@ const handleInfoCenterButtonClicked = () => {
 		height: 24px;
 		flex: 0 0 auto;
 		padding: 0 4px;
-		background-color: hwb(220 25% 10%);
+		background-color: var(--primaryColor);
 		color: white;
 		/* box-shadow: 0 3px 2px -2px hwb(0deg 100% 0%) inset; */
 		font-size: 14px;

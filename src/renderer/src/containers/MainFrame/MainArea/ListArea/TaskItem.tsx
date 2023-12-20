@@ -129,28 +129,28 @@ export const TaskItem: FunctionalComponent<Props> = (props) => {
 	const graphBitrateStyle = computed(() => {
 		let value = Math.log(task.dashboard_smooth.bitrate / 62.5) / Math.log(8) / 4;		// 62.5K, 500K, 4M, 32M, 256M
 		value = Math.min(Math.max(value, 0), 1);
-		return `background: conic-gradient(#36D 0%, #36D ${value * 75}%, #DDD ${value * 75}%, #DDD 75%, transparent 75%)`;
+		return `background: conic-gradient(var(--primaryColor) 0%, var(--primaryColor) ${value * 75}%, hwb(var(--opposite80) / 0.1) ${value * 75}%, hwb(var(--opposite80) / 0.1) 75%, transparent 75%)`;
 	});
 	const graphSpeedStyle = computed(() => {
 		let value = Math.log(task.dashboard_smooth.speed / 0.04) / Math.log(5) / 6;			// 0.04, 0.2, 1, 5, 25, 125, 625
 		value = Math.min(Math.max(value, 0), 1);
-		return `background: conic-gradient(#36D 0%, #36D ${value * 75}%, #DDD ${value * 75}%, #DDD 75%, transparent 75%)`;
+		return `background: conic-gradient(var(--primaryColor) 0%, var(--primaryColor) ${value * 75}%, hwb(var(--opposite80) / 0.1) ${value * 75}%, hwb(var(--opposite80) / 0.1) 75%, transparent 75%)`;
 	});
 	const graphTransferSpeedStyle = computed(() => {
 		let value = Math.log(task.dashboard_smooth.transferSpeed / 62.5) / Math.log(10) / 4;	// 62.5K, 500K, 4M, 32M, 256M, 512M, 1024M
 		value = Math.min(Math.max(value, 0), 1);
-		return `background: conic-gradient(#36D 0%, #36D ${value * 75}%, #DDD ${value * 75}%, #DDD 75%, transparent 75%)`;
+		return `background: conic-gradient(var(--primaryColor) 0%, var(--primaryColor) ${value * 75}%, hwb(var(--opposite80) / 0.1) ${value * 75}%, hwb(var(--opposite80) / 0.1) 75%, transparent 75%)`;
 	});
 	// 线性 style 部分
 	const graphTimeStyle = computed(() => {
 		const valueOdd = Math.min(task.dashboard_smooth.time % 2, 1);
 		const valueEven = Math.max(task.dashboard_smooth.time % 2 - 1, 0);
-		return `background: linear-gradient(to right, #DDD 0%, #DDD ${valueEven * 100}%, #36D ${valueEven * 100}%, #36D ${valueOdd * 100}%, #DDD ${valueOdd * 100}%, #DDD 100%, transparent 100%)`;
+		return `background: linear-gradient(to right, hwb(var(--opposite80) / 0.1) 0%, hwb(var(--opposite80) / 0.1) ${valueEven * 100}%, var(--primaryColor) ${valueEven * 100}%, var(--primaryColor) ${valueOdd * 100}%, hwb(var(--opposite80) / 0.1) ${valueOdd * 100}%, hwb(var(--opposite80) / 0.1) 100%, transparent 100%)`;
 	});
 	const graphFrameStyle = computed(() => {
 		const valueOdd = Math.min(task.dashboard_smooth.frame % 2, 1);
 		const valueEven = Math.max(task.dashboard_smooth.frame % 2 - 1, 0);
-		return `background: linear-gradient(to right, #DDD 0%, #DDD ${valueEven * 100}%, #36D ${valueEven * 100}%, #36D ${valueOdd * 100}%, #DDD ${valueOdd * 100}%, #DDD 100%, transparent 100%)`;
+		return `background: linear-gradient(to right, hwb(var(--opposite80) / 0.1) 0%, hwb(var(--opposite80) / 0.1) ${valueEven * 100}%, var(--primaryColor) ${valueEven * 100}%, var(--primaryColor) ${valueOdd * 100}%, hwb(var(--opposite80) / 0.1) ${valueOdd * 100}%, hwb(var(--opposite80) / 0.1) 100%, transparent 100%)`;
 	});
 
 	const overallProgress = computed(() => task.transferStatus === 'normal' ? task.dashboard_smooth.progress : task.dashboard_smooth.transferred / task.transferProgressLog.total);
@@ -202,8 +202,8 @@ export const TaskItem: FunctionalComponent<Props> = (props) => {
 	const taskBackgroundStyle = computed(() => {
 		if (props.selected) {
 			return {
-				background: 'hsl(210, 100%, 90%)',
-				border: 'hsl(210, 100%, 80%) 1px solid',
+				background: 'hwb(var(--menuItemHovered))',
+				border: 'hwb(var(--menuItemSelected)) 1px solid',
 			};
 		} else {
 			return {};
@@ -283,7 +283,14 @@ export const TaskItem: FunctionalComponent<Props> = (props) => {
 				}}
 			/> */}
 			<div class={style.taskWrapper2}>
-				<div class={style.task} style={{ height: `${taskHeight.value}px` }} onMouseenter={handleMouseEnter} onMouseleave={() => Tooltip.hide()} onDblclick={handleTaskDblClicked}>
+				<div
+					class={style.task}
+					style={{ height: `${taskHeight.value}px` }}
+					data-color_theme={appStore.frontendSettings.colorTheme}
+					onMouseenter={handleMouseEnter}
+					onMouseleave={() => Tooltip.hide()}
+					onDblclick={handleTaskDblClicked}
+				>
 					<div class={style.backgroundWhite} style={taskBackgroundStyle.value} />
 					<div class={`${style.backgroundProgress} ${style.progressBlue}`} style={{ ...taskBackgroundProgressStyle.value, opacity: task.status === TaskStatus.TASK_INITIALIZING ? 1: 0}} />
 					<div class={`${style.backgroundProgress} ${style.progressGreen}`} style={{ ...taskBackgroundProgressStyle.value, opacity: [TaskStatus.TASK_RUNNING, TaskStatus.TASK_FINISHING].includes(task.status) ? 1: 0}} />

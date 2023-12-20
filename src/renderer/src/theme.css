@@ -1,0 +1,94 @@
+.themeLight {
+    color: hsl(0, 0%, 20%);
+    /* 背景色系 */
+    --bg100: 0 100% 0%;
+    --bg99: 0 99% 1%;
+    --bg98: 0 98% 2%;
+    --bg97: 0 97% 3%;
+    --bg96: 0 96% 4%;
+    --bg95: 0 95% 5%;
+    --bg94: 0 94% 6%;
+    --bg93: 0 93% 7%;
+    --bg92: 0 92% 8%;
+    --bg91: 0 91% 9%;
+    --bg90: 0 90% 10%;
+    /* 反向色系（ff f7 e7：Inputbox 等组件的激活与非激活状态　66 33：两个级别的浅色文字） */
+    --ff: #FFFFFF;
+    --f7: #F7F7F7;
+    --e7: #E7E7E7;
+    --66: #666;
+    --33: #333;
+    /* 组件的上高光 */
+    --highlight: 0 100% 0%;
+    /* hoverLightBg/hoverShadow：组件的亮部和暗部 */
+    --hoverLightBg: 0 100% 0%;
+    --hoverShadow: 0 0% 100%;
+    /* opposite：搭配透明度使用，简单的黑白反转 */
+    --opposite: 0 0% 100%;
+    --opposite80: 0 20% 80%;
+    /* Inputbox、Combobox */
+    --errorBorder: #E77;
+    --errorBgHover: #F7E7E7;
+    --errorBgActive: #FEE;
+    /* 其他 */
+    --paraBoxButtonDropFilterSvg: drop-shadow(0 0 0px hwb(0 100% 0% / 1)) drop-shadow(0 1px 1px hwb(0 0% 100% / 0.15));
+    --paraBoxButtonDropFilterText: drop-shadow(0 -0.5px 0px hwb(0 100% 0% / 1)) drop-shadow(0 1px 1px hwb(0 0% 100% / 0.15));
+    --menuItemLight: 210 90% 2%;
+    --menuItemHovered: 210 80% 0%;
+    --menuItemSelected: 210 60% 0%;
+    --primaryColor: hwb(220 25% 10%);
+    --titleText: #25e;
+}
+
+.themeDark {
+    color: #EEE;
+    /* 背景色系 */
+    /* --bg100: 0 17.5% 82.5%;
+    --bg99: 0 16.0% 84.0%;
+    --bg98: 0 14.5% 85.5%;
+    --bg97: 0 13.0% 87.0%;
+    --bg96: 0 11.5% 88.5%;
+    --bg95: 0 10.0% 90.0%;
+    --bg94: 0 8.5% 91.5%;
+    --bg93: 0 7.0% 93.0%;
+    --bg92: 0 5.5% 94.5%;
+    --bg91: 0 4.0% 96.0%;
+    --bg90: 0 2.5% 97.5%; */
+    --bg100: 0 20.0% 80.0%;
+    --bg99: 0 18.5% 81.5%;
+    --bg98: 0 17.0% 83.0%;
+    --bg97: 0 15.5% 84.5%;
+    --bg96: 0 14.0% 86.0%;
+    --bg95: 0 12.5% 87.5%;
+    --bg94: 0 11.0% 89.0%;
+    --bg93: 0 9.5% 90.5%;
+    --bg92: 0 8.0% 92.0%;
+    --bg91: 0 6.5% 93.5%;
+    --bg90: 0 5.0% 95.0%;
+    /* 反向色系（ff f7 e7：Inputbox 等组件的激活与非激活状态　66 33：两个级别的浅色文字） */
+    --ff: black;
+    --f7: #222;
+    --e7: #333;
+    --66: #B7B7B7;
+    --33: #DDD;
+    /* 组件的上高光 */
+    --highlight: 0 25% 75%;
+    /* hoverLightBg/hoverShadow：组件的亮部和暗部　opposite：搭配透明度使用，简单的黑白反转 */
+    --hoverLightBg: 0 20% 80%;
+    --hoverShadow: 0 0% 100%;
+    /* opposite：搭配透明度使用，简单的黑白反转 */
+    --opposite: 0 100% 0%;
+    --opposite80: 0 80% 20%;
+    /* Inputbox */
+    --errorBorder: #D66;
+    --errorBg: #472727;
+    --errorBgActive: #522;
+    /* 其他 */
+    --paraBoxButtonDropFilterSvg: drop-shadow(0 2px 2px hwb(0 100% 0% / 0.1));
+    --paraBoxButtonDropFilterText: drop-shadow(0 2px 2px hwb(0 100% 0% / 0.1));
+    --menuItemLight: 210 30% 50%;
+    --menuItemHovered: 210 20% 60%;
+    --menuItemSelected: 210 10% 30%;
+    --primaryColor: hwb(220 15% 20%);
+    --titleText: #37f;
+}

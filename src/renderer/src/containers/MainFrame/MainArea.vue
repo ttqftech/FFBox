@@ -116,7 +116,7 @@ const handleReconnectClicked = async () => {
 		position: relative;
 		width: 100%;
 		// height: 24px;
-		background-color: hwb(0 92% 8%);
+		background-color: hwb(var(--bg92));
 		flex: 1 1 auto;
 		overflow-y: auto;
 		.upperArea {
@@ -177,11 +177,11 @@ const handleReconnectClicked = async () => {
 						align-items: center;
 						border-radius: 8px;
 						padding-right: 20px;
-						background-color: hwb(0 97% 3% / 0.8);
-						box-shadow: 0 3px 2px -2px hwb(0 100% 0%) inset,	// 上亮光
-								0 16px 32px 0px hwb(0 0% 100% / 0.02),
-								0 6px 6px 0px hwb(0 0% 100% / 0.02),
-								0 0 0 1px hwb(0deg 100% 0% / 0.9);	// 包边
+						background-color: hwb(var(--bg97) / 0.8);
+						box-shadow: 0 3px 2px -2px hwb(var(--highlight)) inset,	// 上亮光
+									0 16px 32px 0px hwb(var(--hoverShadow) / 0.02),
+									0 6px 6px 0px hwb(var(--hoverShadow) / 0.02),
+									0 0 0 1px hwb(var(--highlight) / 0.9);	// 包边
 						will-change: transform, opacity;
 						transition: transform cubic-bezier(0.33, 1, 1, 1) 0.3s, opacity linear 0.2s;
 					}
@@ -198,7 +198,7 @@ const handleReconnectClicked = async () => {
 					width: 100%;
 					height: 100%;
 					backdrop-filter: blur(2px);
-					background-color: hwb(0 95% 5% / 0.6);
+					background-color: hwb(var(--bg95) / 0.6);
 				}
 				.disconnectBox {
 					position: relative;
@@ -214,11 +214,11 @@ const handleReconnectClicked = async () => {
 						align-items: center;
 						width: 400px;
 						border-radius: 8px;
-						background-color: hwb(0 97% 3% / 0.8);
-						box-shadow: 0 3px 2px -2px hwb(0 100% 0%) inset,	// 上亮光
-								0 16px 32px 0px hwb(0 0% 100% / 0.02),
-								0 6px 6px 0px hwb(0 0% 100% / 0.02),
-								0 0 0 1px hwb(0deg 100% 0% / 0.9);	// 包边
+						background-color: hwb(var(--bg97) / 0.8);
+						box-shadow: 0 3px 2px -2px hwb(var(--highlight)) inset,	// 上亮光
+									0 16px 32px 0px hwb(var(--hoverShadow) / 0.02),
+									0 6px 6px 0px hwb(var(--hoverShadow) / 0.02),
+									0 0 0 1px hwb(var(--highlight) / 0.9);	// 包边
 						will-change: transform, opacity;
 						transition: transform cubic-bezier(0.33, 1, 1, 1) 0.3s, opacity linear 0.2s;
 						@keyframes rotation {

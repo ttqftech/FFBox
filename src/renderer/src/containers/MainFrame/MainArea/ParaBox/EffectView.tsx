@@ -44,6 +44,8 @@ const EffectView: FunctionalComponent<Props> = (props) => {
 			<div style={{ width: '100%', margin: '1em 0' }}>
 				<Button onClick={jumpToFFmpegFilteringGuide}>🚩 FFmpeg 滤镜指南</Button>
 				<Button onClick={jumpToFFmpegFiltersDocumentation}>📖 FFmpeg 滤镜文档</Button>
+				{/* <Button type={ButtonType.Danger}>呀哈哈</Button>
+				<Button type={ButtonType.Primary}>呀哈哈</Button> */}
 			</div>
 			{/* <button onClick={add}>{count.value?.a}</button> */}
 			{/* <Button onClick={men}>菜单</Button> */}

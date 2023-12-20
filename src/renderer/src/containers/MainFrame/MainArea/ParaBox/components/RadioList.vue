@@ -4,21 +4,22 @@ import InputAutoSize from './InputAutoSize.vue';
 
 export interface Props {
 	list: {
-		value: string | number;
+		value: any;
+		caption?: string;
 		deletable?: boolean;
 		editable?: boolean;
 		disabled?: boolean;
 	}[];
-	value: string | number;
+	value: any;
 	placeholder?: string;
-	onDelete?: (value: string | number, index: number) => any;
+	onDelete?: (value: any, index: number) => any;
 	onEdit?: (oldValue: string, newValue: string, index: number) => any;
-	onChange?: (value: string | number, index: number) => any;
+	onChange?: (value: any, index: number) => any;
 }
 
 const props = defineProps<Props>();
 
-const editingValue = ref();
+const editingIndex = ref();
 
 const getButtonStyle = (item: Props['list'][number]) => {
 	let classText = 'item';
@@ -36,13 +37,13 @@ const handleItemClick = (item: Props['list'][number], index: number) => {
 		props.onChange(item.value, index);
 	}
 };
-const handleLabelClick = (item: Props['list'][number]) => {
-	if (item.editable) {
-		editingValue.value = item.value;
+const handleLabelClick = (item: Props['list'][number], index: number) => {
+	if (item.editable && item.caption == undefined) {
+		editingIndex.value = index;
 	}
 }
 const handleConfirm = (item: Props['list'][number], value: string, index: number) => {
-	editingValue.value = undefined;
+	editingIndex.value = undefined;
 	props.onEdit(`${item.value}`, value, index);
 }
 </script>
@@ -56,23 +57,23 @@ const handleConfirm = (item: Props['list'][number], value: string, index: number
 			@mousedown="() => handleItemClick(item, index)"
 		>
 			<InputAutoSize
-				v-if="editingValue === item.value"
+				v-if="editingIndex === index"
 				:value="`${item.value}`"
 				:onBlur="(value) => handleConfirm(item, value, index)"
-				:onPressEnter="(value) => handleConfirm(item, value, index)"
+				:onPressEnter="() => editingIndex = undefined"
 			/>
 			<span
-				v-if="editingValue !== item.value"
-				@click="handleLabelClick(item)"
+				v-if="editingIndex !== index || item.caption"
+				@click="handleLabelClick(item, index)"
 				:style="item.value ? {} : { opacity: 0.5 }"
 			>
-				{{ item.value === '' ? placeholder : item.value }}
+				{{ item.caption || (item.value === '' ? placeholder : item.value) }}
 			</span>
 			<button
 				v-if="item.deletable"
 				class="combomenu-item-delete"
 				aria-label="删除此项"
-				@click="() => (props.onDelete || (() => {}))(`${item.value}`, index)"
+				@click="() => (console.log('delete'), (props.onDelete || (() => {}))(`${item.value}`, index))"
 			>
 				<img src="@renderer/assets/mainArea/paraBox/×.svg?url" alt="">
 			</button>
@@ -92,7 +93,6 @@ const handleConfirm = (item: Props['list'][number], value: string, index: number
 		min-height: 120px;
 		padding: 16px;
 		gap: 6px;
-		color: #666;
 		isolation: isolate;
 		.item {
 			// width: 40px;
@@ -105,10 +105,11 @@ const handleConfirm = (item: Props['list'][number], value: string, index: number
 			font-size: 13px;
 			line-height: 30px;
 			white-space: nowrap;
-			background-color: hwb(0deg 99% 1% / 0.8);
+			color: inherit;
+			background-color: hwb(var(--bg99) / 0.8);
 			border-radius: 4px;
-			box-shadow: 0 0 1px 0.5px hwb(0deg 99% 1%),
-						0 1.5px 3px 0 hwb(0deg 0% 100% / 0.2);
+			box-shadow: 0 0 1px 0.5px hwb(var(--highlight)),
+						0 1.5px 3px 0 hwb(var(--hoverShadow) / 0.2);
 			border-left: transparent 3px solid;
 			transition: all 0.3s cubic-bezier(0, 1.5, 0.3, 1);
 			&:not(.itemSelected):hover::after {
@@ -120,7 +121,7 @@ const handleConfirm = (item: Props['list'][number], value: string, index: number
 				height: 100%;
 				border-radius: inherit;
 				// background: hwb(0 100% 0% / 0.2);
-				box-shadow: 0 0 2px hwb(0 0% 100% / 0.2);
+				box-shadow: 0 0 2px hwb(var(--hoverShadow) / 0.2);
 				z-index: 1;
 			}
 			* {
@@ -148,13 +149,13 @@ const handleConfirm = (item: Props['list'][number], value: string, index: number
 				z-index: 2;
 				user-select: none;
 				&:hover {
-					box-shadow: 0 0 3px hwb(0 0% 100% / 0.1);
-					background: hwb(0 100% 0% / 0.5);
+					box-shadow: 0 0 3px hwb(var(--hoverShadow) / 0.1);
+					background: hwb(var(--hoverLightBg) / 0.5);
 					opacity: 1;
 				}
 				&:active {
-					box-shadow: 0 0 2px 1px hwb(0 0% 100% / 0.05), // 外部阴影
-								0 6px 12px hwb(0 0% 100% / 0.15) inset; // 内部凹陷阴影
+					box-shadow: 0 0 2px 1px hwb(var(--hoverShadow) / 0.05), // 外部阴影
+								0 6px 12px hwb(var(--hoverShadow) / 0.15) inset; // 内部凹陷阴影
 					transform: translateY(0.5px);
 					// opacity: 0.7;
 				}
@@ -164,14 +165,14 @@ const handleConfirm = (item: Props['list'][number], value: string, index: number
 			}
 		}
 		.itemSelected {
-			background-color: hwb(0deg 97% 3% / 0.8);
+			background-color: hwb(var(--bg97) / 0.8);
 			border-radius: 3px 4px 4px 3px;
-			box-shadow: 0 0 2px 1px hwb(0 0% 100% / 0.05), // 外部阴影
-						0 3px 6px hwb(0 0% 100% / 0.1) inset; // 内部凹陷阴影
+			box-shadow: 0 0 2px 1px hwb(var(--hoverShadow) / 0.05), // 外部阴影
+						0 3px 6px hwb(var(--hoverShadow) / 0.1) inset; // 内部凹陷阴影
 			border-left: #49e 3px solid;
 		}
 		.itemDisabled {
-			color: #66666677;
+			color: #77777777;
 			pointer-events: none;
 		}
 	}

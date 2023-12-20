@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { ref, VNodeRef } from 'vue';
+import { useAppStore } from '@renderer/stores/appStore';
+
+const appStore = useAppStore();
 
 interface Props {
 	title: string;
@@ -80,7 +83,7 @@ const handleKeypress = (event: KeyboardEvent) => {
 </script>
 
 <template>
-	<div class="slider">
+	<div class="slider" :data-color_theme="appStore.frontendSettings.colorTheme">
 		<div class="slider-title">{{ props.title }}</div>
 		<div class="slider-module" @mousedown="handleDragStart">
 			<div class="slider-module-track"></div>
@@ -92,14 +95,13 @@ const handleKeypress = (event: KeyboardEvent) => {
 	</div>
 </template>
 
-<style scoped>
+<style lang="less" scoped>
 	.slider {
 		position: relative;
 		width: calc(100% - 16px);
 		height: 56px;
 		margin: 4px 24px;
 		transition: all 0.5s;
-	}
 		.slider-title {
 			position: absolute;
 			left: 0;
@@ -115,13 +117,11 @@ const handleKeypress = (event: KeyboardEvent) => {
 			width: calc(100% - 88px - 88px - 32px);
 			height: 100%;
 			font-size: 14px;
-		}
 			.slider-module-track {
 				position: absolute;
 				top: 17px;
 				width: 100%;
 				height: 6px;
-				background: #FFF;
 				border-radius: 8px;
 				box-shadow: 0px 2px 2px 0px rgba(0, 0, 0, 0.15) inset;
 			}
@@ -181,11 +181,11 @@ const handleKeypress = (event: KeyboardEvent) => {
 				top: -8px;
 				width: 4px;
 				height: 4px;
-				background: white;
 				border-radius: 4px;
 				box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.2) inset;
 				z-index: -10;
 			}
+		}
 		.slider-text {
 			position: absolute;
 			right: 0px;
@@ -195,5 +195,24 @@ const handleKeypress = (event: KeyboardEvent) => {
 			font-size: 14px;
 			text-align: center;
 		}
-	
+	}
+
+	// 主题
+	.slider[data-color_theme="themeLight"] {
+		.slider-module-track {
+			background: #FFF;
+		}
+		.slider-module-mark:before {
+			background: #FFF;
+		}
+	}
+	.slider[data-color_theme="themeDark"] {
+		.slider-module-track {
+			background: #444;
+		}
+		.slider-module-mark:before {
+			background: #777;
+		}
+	}
+
 </style>

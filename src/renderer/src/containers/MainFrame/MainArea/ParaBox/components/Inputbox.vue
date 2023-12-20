@@ -20,16 +20,16 @@ const invalidMsg = ref<string>(undefined);
 const selectorStyle = computed(() => {
 	const ret: any = {};
 	if (invalidMsg.value) {
-		ret.border = '#E66 1px solid';
+		ret.border = 'var(--errorBorder) 1px solid';
 		ret.boxShadow = '0 0 12px hsla(0, 100%, 60%, 0.3), 0px 4px 8px rgba(0, 0, 0, 0.05)';
 		if (focused.value) {
-			ret.background = '#FEE';
+			ret.background = 'var(--errorBgActive)';
 		} else {
-			ret.background = '#F7E7E7';
+			ret.background = 'var(--errorBg)';
 		}
 	} else {
 		if (focused.value) {
-			ret.background = 'white';
+			ret.background = 'var(--ff)';
 		}
 	}
 	return ret;
@@ -98,16 +98,16 @@ onMounted(() => {
 			right: 0;
 			margin: 15px 0;
 			border-radius: 24px;
-			background: #F7F7F7;
+			background: var(--f7);
 			border: #AAA 1px solid;
 			box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
 			transition: box-shadow 0.2s linear, border 0.2s linear;
 		}
 		.inputbox-selector:hover {
-			background: white;
+			background: var(--ff);
 		}
 		.inputbox-selector:active {
-			background: #E7E7E7;
+			background: var(--e7);
 		}
 			.inputbox-selector>input {
 				position: absolute;

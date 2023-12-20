@@ -25,7 +25,7 @@ const props = defineProps<v_Props>() as any as Props;
 
 const menuElemRefs = ref([]);
 const openedSubMenus = ref<number[]>([]);
-const openedSubMenuItemPos = ref<{[key: number]: { xMin: number, yMin: number, xMax: number, yMax: number }}>({});	// key：menuIndex / key　value：menuItem 的位置
+const openedSubMenuItemPos = ref<{[key: number]: { xMin: number, yMin: number, xMax: number, yMax: number, preferDirection: 'l' | 'r' }}>({});	// key：menuIndex / key　value：menuItem 的位置　preferDirection：子菜单倾向向哪个方向打开
 const currentHoveredItem = ref<MenuItem>(undefined);
 const currentSelectedItem = ref<MenuItem>(undefined);
 
@@ -112,7 +112,7 @@ const getMenuPosition = (menu: InnerMenu) => {
 	const menuPaddingY = 6;
 	const minWidth = 220;
 	const _triggerRect = openedSubMenuItemPos.value[menu.menuIndex] || props.triggerRect || { xMin: 0, yMin: 0, xMax: minWidth, yMax: 0 };
-	const isHorizontal = openedSubMenuItemPos.value[menu.menuIndex] !== undefined;
+	const isHorizontal = openedSubMenuItemPos.value[menu.menuIndex] !== undefined;	// 第一个菜单使用上下弹出
 
 	let ScreenWidth = document.documentElement.clientWidth;			// 使用 window.innerWidth 也行
 	let ScreenHeight = document.documentElement.clientHeight;
@@ -121,8 +121,9 @@ const getMenuPosition = (menu: InnerMenu) => {
 	let finalPosition: CSSProperties = {};
 	// 计算水平位置
 	if (isHorizontal) {
-		// 向右弹出
-		const finalLeft = Math.min(_triggerRect.xMax, ScreenWidth - minWidth );
+		// 左右弹出
+		const direction = ('preferDirection' in _triggerRect && _triggerRect.preferDirection === 'l') ? 'l' : 'r';
+		const finalLeft = direction === 'r' ? Math.min(_triggerRect.xMax, ScreenWidth - minWidth ) : Math.max(_triggerRect.xMin - minWidth, 0);
 		finalPosition = {
 			left: `${finalLeft}px`,
 			width: `${minWidth}px`,
@@ -212,7 +213,13 @@ const calcSubMenuPosition = (menuIndex: number) => {
 	const menuElem = menuElemRefs.value[parentIndexInFlattened] as HTMLDivElement;
 	const menuItemElem = menuElem.children[parentIndexInMenu];
 	const menuItemElemRect = menuItemElem.getBoundingClientRect();
-	openedSubMenuItemPos.value[menuIndex] = { xMin: menuItemElemRect.x, yMin: menuItemElemRect.y, xMax: menuItemElemRect.x + menuItemElemRect.width, yMax: menuItemElemRect.y + menuItemElemRect.height };
+	openedSubMenuItemPos.value[menuIndex] = {
+		xMin: menuItemElemRect.x,
+		yMin: menuItemElemRect.y,
+		xMax: menuItemElemRect.x + menuItemElemRect.width,
+		yMax: menuItemElemRect.y + menuItemElemRect.height,
+		preferDirection: 'r',
+	};
 };
 
 // hover 到项目上时，使用此函数计算 tooltip 显示位置并展示
@@ -232,16 +239,18 @@ const showTooltip = (menuItem: MenuItem) => {
 		// 计算水平方向
 		const leftSpace = menuItemElemRect.left;
 		const rightSpace = screenWidth - menuItemElemRect.left - menuItemElemRect.width;
-		if (leftSpace > rightSpace || menuItem.type === 'submenu' && menuItem.subMenu.length) {
+		if (openedSubMenuItemPos.value[indexInFlattened]?.preferDirection === 'l' || leftSpace < 220) {
+		// if (leftSpace > rightSpace || menuItem.type === 'submenu' && menuItem.subMenu.length) {
 			// 左侧空间更大，或者有子菜单时，在左侧弹出
+			// 当前菜单是在上一级菜单左侧打开时，或者左侧空间太小时，在右侧弹出
 			position = {
 				...position,
-				right: `calc(100% - ${menuItemElemRect.left - 12}px)`,
+				left: `${menuItemElemRect.left + menuItemElemRect.width + 12}px`,
 			};
 		} else {
 			position = {
 				...position,
-				left: `${menuItemElemRect.left + menuItemElemRect.width + 12}px`,
+				right: `calc(100% - ${menuItemElemRect.left - 12}px)`,
 			};
 		}
 		// 计算垂直方向（若 item 垂直位置在窗口上方，那么指定 top，否则指定 bottom）
@@ -301,10 +310,27 @@ watch(currentHoveredItem, (newItem, oldItem) => {
 			const menuElem = menuElemRefs.value[indexInFlattened] as HTMLDivElement;
 			const menuItemElem = menuElem.children[indexInMenu];
 			const menuItemElemRect = menuItemElem.getBoundingClientRect();
-			openedSubMenuItemPos.value[newItem.key] = { xMin: menuItemElemRect.x, yMin: menuItemElemRect.y, xMax: menuItemElemRect.x + menuItemElemRect.width, yMax: menuItemElemRect.y + menuItemElemRect.height };
+			// openedSubMenuItemPos.value[newItem.key] = { xMin: menuItemElemRect.x, yMin: menuItemElemRect.y, xMax: menuItemElemRect.x + menuItemElemRect.width, yMax: menuItemElemRect.y + menuItemElemRect.height };
+			const menu = flattenedMenus.value[indexInFlattened];
+			// const parentMenu = menu.parent;
+			const currentPreferDirection = menu ? (openedSubMenuItemPos.value[menu.menuIndex]?.preferDirection || 'r') : 'r';
+			openedSubMenuItemPos.value[newItem.key] = {
+				xMin: menuItemElemRect.x,
+				yMin: menuItemElemRect.y,
+				xMax: menuItemElemRect.x + menuItemElemRect.width,
+				yMax: menuItemElemRect.y + menuItemElemRect.height,
+				preferDirection: currentPreferDirection === 'r'
+					? (menuItemElemRect.x + menuItemElemRect.width * 1.5 > window.innerWidth ? 'l' : 'r')
+					: (menuItemElemRect.x < menuItemElemRect.width * 0.5 ? 'r' : 'l'),
+			};
 		}
 		if (JSON.stringify(newOpenedKeys) !== JSON.stringify(openedSubMenus.value)) {
 			openedSubMenus.value = newOpenedKeys;
+			for (const key of Object.keys(openedSubMenuItemPos.value)) {
+				if (!newOpenedKeys.includes(+key)) {
+					delete openedSubMenuItemPos.value[+key];
+				}
+			} 
 		}
 		setTimeout(() => {
 			// 初次加载时，menuElemRefs 未准备好，因此添加 setTimeout 应对此情况
@@ -489,7 +515,7 @@ defineExpose({
 						<Radio v-if="menuItem.type === 'radio'" :checked="menuItem.checked" />
 					</div>
 					<div v-if="menuItem.type === 'submenu'" class="iconRightArea">
-						<IconRight />
+						<IconRight :style="openedSubMenuItemPos[menuItem.key]?.preferDirection === 'l' ? { transform: 'rotate(180deg)' } : undefined" />
 					</div>
 				</div>
 			</menu>
@@ -516,7 +542,7 @@ defineExpose({
 			font-size: 0;
 			text-align: left;
 			overflow-y: auto;
-			background: hwb(0 98% 2%);
+			background: hwb(var(--bg98));
 			box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.3);
 			-webkit-app-region: none;
 			&::-webkit-scrollbar {
@@ -589,10 +615,10 @@ defineExpose({
 				opacity: 0.3;
 			}
 			.menuItemSelected {
-				background: hwb(210 60% 0%);
+				background: hwb(var(--menuItemSelected));
 			}
 			.menuItemHovered {
-				background: hwb(210 80% 0%);
+				background: hwb(var(--menuItemHovered));
 			}
 			.menuSeparator {
 				display: inline-block;
@@ -600,7 +626,7 @@ defineExpose({
 				width: 100%;
 				height: 1px;
 				margin: 4px 0;
-				background-color: #EEE;
+				background-color: #77777733;
 			}
 		}
 		.menuAnimate-enter-from, .menuAnimate-leave-to {

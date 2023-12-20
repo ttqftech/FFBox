@@ -22,17 +22,17 @@
 		height: 100%;
 		box-sizing: border-box;
 		border-radius: 3px;
-		background-color: hwb(0deg 98% 2%);
-		box-shadow: 0 0 1px 2px hwb(0deg 98% 2%),
-					0 2px 6px 0 hwb(0deg 0% 100% / 0.2);
+		background-color: hwb(var(--bg98));
+		box-shadow: 0 0 1px 2px hwb(var(--bg98)),	// 柔边
+					0 2px 6px 0 hwb(0deg 0% 100% / 0.2);	// 阴影
 		transition: height 0.5s, background-color 0.3s;
 		pointer-events: all;
 		&:hover, &:has(~ .cmdArea:hover) {
 			transition: background-color 0.2s cubic-bezier(0, 2, 0.3, 1);
-			background: hwb(210 90% 2%);
+			background: hwb(var(--menuItemHovered));
 		}
 		&:active {
-			border: hsl(210, 100%, 80%) 1px solid;
+			border: hwb(var(--menuItemActive)) 1px solid;
 		}
 	}
 	.backgroundProgress {
@@ -42,31 +42,6 @@
 		height: 100%;
 		border-radius: 2px;
 		// will-change: width, opacity;
-	}
-	.progressBlue {
-		background: linear-gradient(180deg, hwb(225 80% 0% / 0.7), hwb(225 60% 0% / 0.7));
-		box-shadow: 0 4px 12px 0 hwb(225 40% 20% / 0.4),
-					0 0px 1px 0.75px hwb(225 80% 0%) inset;
-	}
-	.progressGreen {
-		background: linear-gradient(180deg, hwb(120 80% 0% / 0.7), hwb(120 60% 0% / 0.7));
-		box-shadow: 0 4px 12px 0 hwb(120 40% 20% / 0.4),
-					0 0px 1px 0.75px hwb(120 80% 0%) inset;
-	}
-	.progressYellow {
-		background: linear-gradient(180deg, hwb(50 75% 0% / 0.7), hwb(50 55% 0% / 0.7));
-		box-shadow: 0 4px 12px 0 hwb(50 40% 20% / 0.4),
-					0 0px 1px 0.75px hwb(50 80% 0%) inset;
-	}
-	.progressRed {
-		background: linear-gradient(180deg, hwb(0 75% 0% / 0.7), hwb(0 55% 0% / 0.7));
-		box-shadow: 0 4px 12px 0 hwb(0 40% 20% / 0.4),
-					0 0px 1px 0.75px hwb(0 80% 0%) inset;
-	}
-	.progressGray {
-		background: linear-gradient(180deg, hwb(0 93% 7% / 0.7), hwb(0 87% 13% / 0.7));
-		box-shadow: 0 4px 12px 0 hwb(0 50% 50% / 0.2),
-					0 0px 1px 0.5px hwb(0 50% 50% / 0.1) inset;
 	}
 	.previewIcon {
 		position: absolute;
@@ -319,7 +294,6 @@
 			.switch {
 				width: 40px;
 				height: 100%;
-				color: #666;
 				.item {
 					width: 40px;
 					height: 28px;
@@ -330,10 +304,11 @@
 					border: none;
 					font-size: 12px;
 					line-height: 28px;
-					background-color: hwb(0deg 99% 1% / 0.8);
+					color: var(--66);
+					background-color: hwb(var(--bg99) / 0.8);
 					border-radius: 2px 0 0 2px;
-					box-shadow: 0 0 1px 0.5px hwb(0deg 99% 1%),
-								0 1.5px 3px 0 hwb(0deg 0% 100% / 0.2);
+					box-shadow: 0 0 1px 0.5px hwb(var(--bg99)),	// 柔边
+								0 1.5px 3px 0 hwb(0 0% 100% / 0.2);
 					border-left: transparent 3px solid;
 					transition: all 0.3s cubic-bezier(0, 1.5, 0.3, 1);
 					user-select: none;
@@ -349,7 +324,7 @@
 					}
 				}
 				.itemSelected {
-					background-color: hwb(0deg 97% 3% / 0.8);
+					background-color: hwb(var(--bg97) / 0.8);
 					border-radius: 2px 0 0 2px;
 					box-shadow: 0 0 2px 1px hwb(0 0% 100% / 0.05), // 外部阴影
 								0 3px 6px hwb(0 0% 100% / 0.1) inset; // 内部凹陷阴影
@@ -361,12 +336,12 @@
 				height: 100%;
 				textarea {
 					border: none;
-					background: hwb(0 96% 4% / 0.6);
+					background: hwb(var(--bg96) / 0.6);
 					outline: none;
 					width: calc(100% - 4px);
 					height: calc(100% - 4px);
 					resize: none;
-					color: #333;
+					color: var(--33);
 					font-family: Consolas,monaco,"黑体","苹方-简","苹方",Roboto;
 					font-weight: 400;
 					font-size: 12px;
@@ -375,7 +350,7 @@
 					box-shadow: 0 0 1px 1px hwb(0 0% 100% / 0.05), // 外部阴影
 								0 3px 6px hwb(0 0% 100% / 0.02) inset; // 内部凹陷阴影
 					&:hover {
-						background: hwb(0 97% 3% / 0.8);
+						background: hwb(var(--bg97) / 0.8);
 						box-shadow: 0 0 1px 1px hwb(210deg 0% 0% / 0.5), // 外部阴影
 									0 3px 6px hwb(0 0% 100% / 0.02) inset; // 内部凹陷阴影
 					}
@@ -416,9 +391,9 @@
 		transition: background-color 0.3s;
 		&:hover {
 			transition: none;
-			background: hwb(210 90% 2%);
+			background: hwb(var(--menuItemLight));
 			border-radius: 2px;
-			box-shadow: 0 0 12px 6px hwb(210 90% 2%) inset,
+			box-shadow: 0 0 12px 6px hwb(var(--menuItemLight)) inset,
 						0 1px 2px 0 hwb(0 0% 100% / 0.1);
 		}
 		&:active {
@@ -443,5 +418,66 @@
 				background-position-y: -32px;
 			}
 		}
+	}
+}
+
+// 主题
+.task[data-color_theme="themeLight"] {
+	.progressBlue {
+		background: linear-gradient(180deg, hwb(225 80% 0% / 0.7), hwb(225 60% 0% / 0.7));
+		box-shadow: 0 4px 12px 0 hwb(225 40% 20% / 0.4),
+					0 0px 1px 0.75px hwb(225 80% 0%) inset;
+	}
+	.progressGreen {
+		background: linear-gradient(180deg, hwb(120 70% 0% / 0.7), hwb(120 50% 0% / 0.7));
+		box-shadow: 0 4px 12px 0 hwb(120 40% 20% / 0.4),
+					0 0px 1px 0.75px hwb(120 80% 0%) inset;
+	}
+	.progressYellow {
+		background: linear-gradient(180deg, hwb(50 60% 0% / 0.7), hwb(50 40% 0% / 0.7));
+		box-shadow: 0 4px 12px 0 hwb(50 40% 20% / 0.4),
+					0 0px 1px 0.75px hwb(50 80% 0%) inset;
+	}
+	.progressRed {
+		background: linear-gradient(180deg, hwb(0 75% 0% / 0.7), hwb(0 55% 0% / 0.7));
+		box-shadow: 0 4px 12px 0 hwb(0 40% 20% / 0.4),
+					0 0px 1px 0.75px hwb(0 80% 0%) inset;
+	}
+	.progressGray {
+		background: linear-gradient(180deg, hwb(0 93% 7% / 0.7), hwb(0 87% 13% / 0.7));
+		box-shadow: 0 4px 12px 0 hwb(0 50% 50% / 0.2),
+					0 0px 1px 0.5px hwb(0 50% 50% / 0.1) inset;
+	}
+}
+
+.task[data-color_theme="themeDark"] {
+	text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.3);
+	.progressBlue {
+		background: linear-gradient(180deg, hwb(225 20% 30% / 0.7), hwb(225 25% 15% / 0.7));
+		box-shadow: 0 4px 12px 0 hwb(225 40% 20% / 0.3),
+					0 0px 1px 0.75px hwb(225 80% 0% / 0.5) inset;
+	}
+	.progressGreen {
+		background: linear-gradient(180deg, hwb(120 10% 30% / 0.7), hwb(120 15% 20% / 0.7));
+		box-shadow: 0 4px 12px 0 hwb(120 40% 20% / 0.3),
+					0 0px 1px 0.75px hwb(120 80% 0% / 0.5) inset;
+	}
+	.progressYellow {
+		background: linear-gradient(180deg, hwb(50 0% 25% / 0.7), hwb(50 5% 15% / 0.7));
+		box-shadow: 0 4px 12px 0 hwb(50 40% 20% / 0.3),
+					0 0px 1px 0.75px hwb(50 80% 0% / 0.5) inset;
+	}
+	.progressRed {
+		background: linear-gradient(180deg, hwb(0 20% 30% / 0.7), hwb(0 25% 15% / 0.7));
+		box-shadow: 0 4px 12px 0 hwb(0 40% 20% / 0.3),
+					0 0px 1px 0.75px hwb(0 80% 0% / 0.5) inset;
+	}
+	.progressGray {
+		background: linear-gradient(180deg, hwb(0 35% 65% / 0.7), hwb(0 25% 75% / 0.7));
+		box-shadow: 0 4px 12px 0 hwb(0 50% 50% / 0.15),
+					0 0px 1px 0.5px hwb(0 50% 50% / 0.1) inset;
+	}
+	.cmdArea .code textarea {
+		background: hwb(var(--bg96) / 0.4);
 	}
 }

@@ -108,7 +108,7 @@ const handleKeyup = (event: KeyboardEvent) => {
 			width: 88px;
 			margin: 15px 0;
 			border-radius: 24px;
-			background: #F7F7F7;
+			background: var(--f7);
 			border: #CCC 1px solid;
 			box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.1) inset;
 		}

@@ -32,7 +32,10 @@ interface StoreState {
 			video: 'all' | 'input' | 'none',
 			audio: 'all' | 'input' | 'none',
 		},
-	}
+	},
+	frontendSettings: {
+		colorTheme: string,
+	},
 	showGlobalParams: boolean,
 	unreadNotificationCount: number,
 	componentRefs: { [key: string]: VNodeRef | Element },
@@ -74,6 +77,9 @@ export const useAppStore = defineStore('app', {
 					video: 'none',
 					audio: 'none',
 				},
+			},
+			frontendSettings: {
+				colorTheme: 'themeDark',
 			},
 			showGlobalParams: true,
 			unreadNotificationCount: 0,
@@ -432,7 +438,9 @@ export const useAppStore = defineStore('app', {
 			async function f() {
 				const oldPreset = await nodeBridge.localStorage.get(`presets.${oldName}`);
 				nodeBridge.localStorage.set(`presets.${newName}`, oldPreset);
-				nodeBridge.localStorage.delete(`presets.${oldName}`);
+				if (newName !== oldName) {
+					nodeBridge.localStorage.delete(`presets.${oldName}`);
+				}
 				这.presetName = newName;
 				这.loadPresetList();
 			}
@@ -638,6 +646,27 @@ export const useAppStore = defineStore('app', {
 				}
 			}
 		},
+		/**
+		 * 修改前端设置后调用
+		 * 函数将修改后的全局参数应用到当前选择的任务项，然后保存到本地磁盘
+		 * 对于用户操作，进行存盘
+		 */
+		applyFrontendSettings(isUserInteraction: boolean) {
+			const 这 = useAppStore();
+
+			if (isUserInteraction) {
+				// 存盘
+				clearTimeout((window as any).saveAllParaTimer);
+				(window as any).saveAllParaTimer = setTimeout(() => {
+					nodeBridge.localStorage.set('frontendSettings', 这.frontendSettings);
+					console.log('设置已保存');
+				}, 700);
+			}
+
+			document.body.className = 这.frontendSettings.colorTheme;
+			// document.body.setAttribute('data-color_theme', 这.frontendSettings.colorTheme);
+		},
+		
 		// #endregion 其他
 	},
 });

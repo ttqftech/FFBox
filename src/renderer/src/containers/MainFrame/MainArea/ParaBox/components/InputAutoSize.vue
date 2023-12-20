@@ -1,4 +1,5 @@
 <script setup lang="ts">
+// 该组件原理为在 input 后放置一个不可见不占位的 div 用于实时测量文本宽度，并作用于 input 中
 import { CSSProperties, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 interface Props {
@@ -13,6 +14,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const divRef = ref();
+const inputRef = ref<HTMLInputElement>();
 const ro = ref<ResizeObserver>();
 const text = ref<string>();
 const size = ref<CSSProperties>({
@@ -49,6 +51,7 @@ onMounted(() => {
 		refreshSize();
 	});
 	ro.value.observe(divRef.value);
+	inputRef.value.focus();
 	// nextTick(refreshSize); 已在 ResizeObserver 处理
 });
 onBeforeUnmount(() => {
@@ -66,6 +69,7 @@ watch(() => props.value, (a, b) => {
 	<div>
 		<input
 			:style="{ fontSize: 'inherit', ...props.style, ...size }"
+			ref="inputRef"
 			type="text"
 			@keydown="handleKeyDown"
 			@input="handleInput"

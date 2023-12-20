@@ -6,12 +6,10 @@
 	line-height: 100%;
 	font-size: 14px;
 	text-align: center;
-	background: linear-gradient(180deg, hwb(0 99% 1%), hwb(0 94% 6%));
-	box-shadow: 0 0 1px 0.5px hwb(0 99% 1%),	// 柔和边缘
-				0 1px 3px 0 hwb(30 0% 100% / 0.3);	// 外部阴影
+	background: linear-gradient(180deg, hwb(var(--bg99)), hwb(var(--bg94)));
 	// letter-spacing: 4px;
 	// text-indent: 2px;
-	color: hwb(0 20% 80%);
+	color: var(--33);
 	font-family: inherit;
 	border-radius: 8px;
 	border: none;
@@ -20,17 +18,31 @@
 	&:not(&:nth-last-child(1)) {
 		margin-right: 16px;
 	}
-	&:hover {
-		box-shadow: 0 0 1px 0.5px hwb(0 99% 1%),	// 柔和边缘
-					0 0 0 0.5px hwb(0 100% 0%) inset,	// 包边
-					0 1px 4px 0 hwb(30 0% 100% / 0.4),	// 外部阴影
-	}
 	&:active {
 		transition: none;
-		background-color: hwb(0 97% 3%);
-		box-shadow: 0 0px 2px 0.5px hwb(0 0% 100% / 0.15), // 外部阴影
-					0 8px 12px hwb(0 0% 100% / 0.1) inset; // 内部凹陷阴影
+		background-color: hwb(var(--bg97));
+		box-shadow: 0 0px 2px 0.5px hwb(var(--hoverShadow) / 0.15), // 外部阴影
+					0 8px 12px hwb(var(--hoverShadow) / 0.1) inset; // 内部凹陷阴影
 		transform: translateY(0.5px);
+	}
+}
+.button[data-color_theme="themeLight"] {
+	box-shadow: 0 0 1px 0.5px hwb(var(--bg99)),	// 柔和边缘
+				0 1px 3px 0 hwb(var(--hoverShadow) / 0.3);	// 外部阴影
+	&:hover {
+		box-shadow: 0 0 1px 0.5px hwb(var(--bg99)),	// 柔和边缘
+					0 0 0 0.5px hwb(var(--highlight)) inset,	// 包边
+					0 1px 4px 0 hwb(var(--hoverShadow) / 0.4),	// 外部阴影
+	}
+}
+.button[data-color_theme="themeDark"] {
+	box-shadow: 0 0 1px 0.5px hwb(var(--bg99)),	// 柔和边缘
+				0 0 0 0.5px hwb(var(--highlight) / 0.5) inset,	// 包边
+				0 1px 3px 0 hwb(var(--hoverShadow) / 0.3);	// 外部阴影
+	&:hover {
+		box-shadow: 0 0 1px 0.5px hwb(var(--bg99)),	// 柔和边缘
+					0 0 0 0.75px hwb(var(--highlight)) inset,	// 包边
+					0 1px 4px 0 hwb(var(--hoverShadow) / 0.4),	// 外部阴影
 	}
 }
 .small {
@@ -48,12 +60,12 @@
 	text-indent: 1px;
 	letter-spacing: 2px;
 }
-.primary {
+.primary[data-color_theme="themeLight"] {
 	background: linear-gradient(180deg, hwb(210 45% 5%), hwb(210 25% 10%));
 	color: #FDFDFD;
 	&:hover {
 		background: linear-gradient(180deg, hwb(210 45% 0%), hwb(210 25% 5%));
-		box-shadow: 0 0 1px 0.5px hwb(210 99% 1%),	// 柔和边缘
+		box-shadow: 0 0 1px 0.5px hwb(var(--bg99)),	// 柔和边缘
 					0 0 0 0.5px hwb(210 50% 0%) inset,	// 包边
 					0 1px 4px 0 hwb(210 0% 50% / 0.4),	// 外部阴影
 	}
@@ -62,12 +74,40 @@
 					0 4px 6px hwb(210 0% 100% / 0.2) inset; // 内部凹陷阴影
 	}
 }
-.danger {
+.primary[data-color_theme="themeDark"] {
+	background: linear-gradient(180deg, hwb(210 30% 5%), hwb(210 15% 25%));
+	color: #FDFDFD;
+	&:hover {
+		background: linear-gradient(180deg, hwb(210 30% 0%), hwb(210 15% 20%));
+		box-shadow: 0 0 1px 0.5px hwb(var(--bg99)),	// 柔和边缘
+					0 0 0 0.5px hwb(210 50% 0%) inset,	// 包边
+					0 1px 4px 0 hwb(210 0% 50% / 0.4),	// 外部阴影
+	}
+	&:active {
+		box-shadow: 0 0px 2px 0.5px hwb(210 0% 100% / 0.15), // 外部阴影
+					0 4px 6px hwb(210 0% 100% / 0.2) inset; // 内部凹陷阴影
+	}
+}
+.danger[data-color_theme="themeLight"] {
 	background: linear-gradient(180deg, hwb(0 45% 5%), hwb(0 25% 10%));
 	color: #FDFDFD;
 	&:hover {
 		background: linear-gradient(180deg, hwb(0 45% 0%), hwb(0 25% 5%));
-		box-shadow: 0 0 1px 0.5px hwb(0 99% 1%),	// 柔和边缘
+		box-shadow: 0 0 1px 0.5px hwb(var(--bg99)),	// 柔和边缘
+					0 0 0 0.5px hwb(0 50% 0%) inset,	// 包边
+					0 1px 4px 0 hwb(0 0% 50% / 0.4),	// 外部阴影
+	}
+	&:active {
+		box-shadow: 0 0px 2px 0.5px hwb(0 0% 100% / 0.15), // 外部阴影
+					0 4px 6px hwb(0 0% 100% / 0.2) inset; // 内部凹陷阴影
+	}
+}
+.danger[data-color_theme="themeDark"] {
+	background: linear-gradient(180deg, hwb(0 30% 5%), hwb(0 15% 25%));
+	color: #FDFDFD;
+	&:hover {
+		background: linear-gradient(180deg, hwb(0 30% 0%), hwb(0 15% 20%));
+		box-shadow: 0 0 1px 0.5px hwb(var(--bg99)),	// 柔和边缘
 					0 0 0 0.5px hwb(0 50% 0%) inset,	// 包边
 					0 1px 4px 0 hwb(0 0% 50% / 0.4),	// 外部阴影
 	}

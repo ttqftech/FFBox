@@ -101,7 +101,7 @@ const handleButtonClick = (button: Button) => {
 			min-width: 200px;
 			padding: 16px;
 			border-radius: 8px;
-			background-color: hwb(0 97% 3% / 0.8);
+			background-color: hwb(var(--bg97) / 0.8);
 			box-shadow: 0 3px 2px -2px hwb(0 100% 0%) inset,	// 上亮光
 					0 16px 32px 0px hwb(0 0% 100% / 0.02),
 					0 6px 6px 0px hwb(0 0% 100% / 0.02),
@@ -161,7 +161,7 @@ const handleButtonClick = (button: Button) => {
 					// }
 					&:active {
 						transition: none;
-						background-color: hwb(0deg 97% 3%);
+						background-color: hwb(var(--bg97));
 						box-shadow: 0 0px 2px 0.5px hwb(0deg 0% 100% / 0.15), // 外部阴影
 									0 8px 12px hwb(0deg 0% 100% / 0.1) inset; // 内部凹陷阴影
 						transform: translateY(0.5px);

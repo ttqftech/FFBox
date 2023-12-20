@@ -16,10 +16,14 @@ import IconSidebarEffect from '@renderer/assets/mainArea/paraBox/parabox_effect.
 import IconSidebarOutput from '@renderer/assets/mainArea/paraBox/parabox_output.svg?component';
 import IconUpArrow from '@renderer/assets/mainArea/paraBox/uparrow.svg?component';
 
+const appStore = useAppStore();
 const sidebarIcons = [IconSidebarFavorite, IconSidebarInput, IconSidebarVideo, IconSidebarAudio, IconSidebarEffect, IconSidebarOutput];
 const sidebarTexts = ['快捷', '输入', '视频', '音频', '效果', '输出'];
-const sidebarColors = ['hwb(45 0% 5%)', 'hwb(195 0% 10%)', 'hwb(285 10% 5%)', 'hwb(120 0% 15%)', 'hwb(315 0% 0%)', 'hwb(0 30% 0%)'];
-const appStore = useAppStore();
+const sidebarColors = computed(() => 
+	appStore.frontendSettings.colorTheme === 'themeLight'
+		? ['hwb(45 0% 5%)', 'hwb(195 0% 10%)', 'hwb(285 10% 0%)', 'hwb(120 0% 20%)', 'hwb(315 10% 5%)', 'hwb(0 30% 0%)']
+		: ['hwb(45 0% 5%)', 'hwb(195 5% 5%)', 'hwb(285 25% 0%)', 'hwb(120 0% 15%)', 'hwb(315 20% 5%)', 'hwb(0 30% 0%)']
+);
 const deviderRef = ref<Element>(null);
 const animationName = ref('animationLeft');
 
@@ -58,7 +62,7 @@ const handleParaButtonClicked = (index: number) => {
 	appStore.paraSelected = index;
 }
 
-const getButtonColorStyle = (index: number) => ({ color: appStore.paraSelected === index ? sidebarColors[index] : 'hwb(0 50% 50%)' });
+const getButtonColorStyle = (index: number) => ({ color: appStore.paraSelected === index ? sidebarColors.value[index] : 'hwb(0 50% 50%)' });
 
 </script>
 
@@ -113,8 +117,7 @@ const getButtonColorStyle = (index: number) => ({ color: appStore.paraSelected =
 		width: 100%;
 		min-height: 28px;
 		// height: 40%;
-		background-color: hwb(0 30% 0%);
-		background-color: hwb(0 94% 6%);
+		background-color: hwb(var(--bg94));
 		box-shadow: 0px 0px 8px hwb(0 0% 100% / 0.05), // 远距离上阴影
 					0px 1px 1px hwb(0 100% 0% / 0.25) inset; // 内部上阴影
 		overflow: hidden;
@@ -164,7 +167,7 @@ const getButtonColorStyle = (index: number) => ({ color: appStore.paraSelected =
 			position: relative;
 			height: 30px;
 			flex: 0 0 auto;
-			background-color: hwb(0 97% 3%);
+			background-color: hwb(var(--bg97));
 			box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.02), // 远距离下阴影
 						0px -2px 1px -1px rgba(0, 0, 0, 0.1) inset; // 内部下阴影
 			overflow: hidden;
@@ -184,20 +187,20 @@ const getButtonColorStyle = (index: number) => ({ color: appStore.paraSelected =
 						border: none;
 						transition: width 0.3s ease;
 						&:hover {
-							background-color: hwb(0 100% 0% / 0.5);
-							box-shadow: 0 0 4px 2px hwb(0 0% 100% / 0.05);
+							background-color: hwb(var(--hoverLightBg) / 0.5);
+							box-shadow: 0 0 4px 2px hwb(var(--hoverShadow) / 0.05);
 						}
 						&:active {
 							background-color: transparent;
-							box-shadow: 0 0 2px 1px hwb(0 0% 100% / 0.05), // 外部阴影
-										0 6px 12px hwb(0 0% 100% / 0.1) inset; // 内部凹陷阴影
+							box-shadow: 0 0 2px 1px hwb(var(--hoverShadow) / 0.05), // 外部阴影
+										0 6px 12px hwb(var(--hoverShadow) / 0.1) inset; // 内部凹陷阴影
 							transform: translateY(0.25px);
 						}
 						svg {
 							width: 24px;
 							height: 24px;
 							vertical-align: middle;
-							filter: drop-shadow(0 0 0px hwb(0 100% 0% / 1)) drop-shadow(0 1px 1px hwb(0 0% 100% / 0.1));
+							filter: var(--paraBoxButtonDropFilterSvg);
 						}
 						span {
 							display: inline-block;
@@ -208,7 +211,7 @@ const getButtonColorStyle = (index: number) => ({ color: appStore.paraSelected =
 							white-space: nowrap;
 							overflow: hidden;
 							transition: width 0.3s ease, padding 0.3s ease;
-							filter: drop-shadow(0 -0.5px 0px hwb(0 100% 0% / 1)) drop-shadow(0 1px 1px hwb(0 0% 100% / 0.1));
+							filter: var(--paraBoxButtonDropFilterText);
 						}
 						@media only screen and (max-width: 600px) {
 							width: 50px;
@@ -234,13 +237,13 @@ const getButtonColorStyle = (index: number) => ({ color: appStore.paraSelected =
 					border: none;
 					transition: width 0.3s ease;
 					&:hover {
-						background-color: hwb(0 100% 0% / 0.5);
-						box-shadow: 0 0 4px 2px hwb(0 0% 100% / 0.05);
+						background-color: hwb(var(--hoverLightBg) / 0.5);
+						box-shadow: 0 0 4px 2px hwb(var(--hoverShadow) / 0.05);
 					}
 					&:active {
 						background-color: transparent;
-						box-shadow: 0 0 2px 1px hwb(0 0% 100% / 0.05), // 外部阴影
-									0 6px 12px hwb(0 0% 100% / 0.1) inset; // 内部凹陷阴影
+						box-shadow: 0 0 2px 1px hwb(var(--hoverShadow) / 0.05), // 外部阴影
+									0 6px 12px hwb(var(--hoverShadow) / 0.1) inset; // 内部凹陷阴影
 						transform: translateY(0.25px);
 					}
 					span {
@@ -254,7 +257,7 @@ const getButtonColorStyle = (index: number) => ({ color: appStore.paraSelected =
 						overflow: hidden;
 						color: #777;
 						transition: width 0.3s ease, padding 0.3s ease;
-						filter: drop-shadow(0 0 0px hwb(0 100% 0% / 1)) drop-shadow(0 1px 1px hwb(0 0% 100% / 0.1));
+						filter: var(--paraBoxButtonDropFilterText);
 					}
 					svg {
 						width: 20px;
@@ -281,13 +284,13 @@ const getButtonColorStyle = (index: number) => ({ color: appStore.paraSelected =
 				transition: opacity 0.2s ease;
 				textarea {
 					border: none;
-					background: hwb(0 96% 4% / 0.6);
+					background: hwb(var(--bg96) / 0.6);
 					outline: none;
 					box-sizing: border-box;
 					width: 100%;
 					height: 100%;
 					resize: none;
-					color: #333;
+					color: var(--33);
 					font-family: Consolas,monaco,"黑体","苹方-简","苹方",Roboto;
 					font-weight: 400;
 					font-size: 12px;
@@ -296,7 +299,7 @@ const getButtonColorStyle = (index: number) => ({ color: appStore.paraSelected =
 					box-shadow: 0 0 1px 1px hwb(0 0% 100% / 0.05), // 外部阴影
 								0 3px 6px hwb(0 0% 100% / 0.02) inset; // 内部凹陷阴影
 					&:hover {
-						background: hwb(0 97% 3% / 0.8);
+						background: hwb(var(--bg97) / 0.8);
 						box-shadow: 0 0 1px 1px hwb(210deg 0% 0% / 0.5), // 外部阴影
 									0 3px 6px hwb(0 0% 100% / 0.02) inset; // 内部凹陷阴影
 					}

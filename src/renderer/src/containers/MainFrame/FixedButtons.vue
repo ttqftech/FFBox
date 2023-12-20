@@ -150,11 +150,11 @@ const handleCloseClicked = () => {
 				top: 10px;
 				width: 10px;
 				height: 10px;
-				fill: hwb(0 30% 70%);
+				fill: var(--66);
 			}
 		}
 		.normalButton:hover {
-			background-color: hwb(0 0% 100% / 0.10);
+			background-color: hwb(var(--opposite) / 0.10);
 		}
 		.normalButton:active {
 			box-shadow: 0 1px 2px hwb(0 0% 100% / 0.3) inset;
@@ -163,7 +163,7 @@ const handleCloseClicked = () => {
 		.redButton:hover {
 			background-color: hwb(0 15% 0% / 0.8);
 			svg {
-				fill: white;
+				fill: #FFF;
 			}
 		}
 		.redButton:active {
@@ -177,7 +177,7 @@ const handleCloseClicked = () => {
 		left: 8px;
 		width: 76px;
 		height: 76px;
-		background-color: hwb(0 98% 2%);
+		background-color: hwb(0.0 98% 2%);
 		border-radius: 8px;
 		box-shadow: 0 2px 6px hwb(0 0% 100% / 0.2);
 		transition: all 0.3s ease, box-shadow 0s, transform 0s;

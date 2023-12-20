@@ -3,6 +3,7 @@ import { computed, watch } from 'vue';
 import { useAppStore } from '@renderer/stores/appStore';
 import { WorkingStatus } from '@common/types';
 import nodeBridge from '@renderer/bridges/nodeBridge';
+import IconX from '@renderer/assets/titleBar/×.svg?component';
 
 const appStore = useAppStore();
 
@@ -50,7 +51,7 @@ const handleTabCloseClicked = (serverId: string, event: MouseEvent) => {
 </script>
 
 <template>
-	<div class="titlebar">
+	<div class="titlebar" :data-color_theme="appStore.frontendSettings.colorTheme">
 		<div class="tabArea">
 			<TransitionGroup name="tabanimate">
 				<div
@@ -64,7 +65,7 @@ const handleTabCloseClicked = (serverId: string, event: MouseEvent) => {
 						<div class="progress progress-yellow" :style="{...serverStyle[server.data.id].colorStyle, opacity: server.data.workingStatus === WorkingStatus.paused ? 1 : 0}" />
 						<span>{{ serverStyle[server.data.id].text }}</span>
 						<div class="close" v-if="server.entity.ip !== 'localhost'" @click="handleTabCloseClicked(server.data.id, $event)">
-							<img src="../../assets/titleBar/×.svg" alt="" srcset="">
+							<IconX />
 						</div>
 					</div>
 				</div>
@@ -79,10 +80,6 @@ const handleTabCloseClicked = (serverId: string, event: MouseEvent) => {
 		position: relative;
 		height: 36px;
 		padding: 0 176px 0 92px;
-		// background-color: hwb(220 25% 10%);
-		background-color: hwb(220 92% 4%);
-		box-shadow: 0 -32px 32px -16px hwb(0 0% 100% / 0.02) inset,
-					0 -8px 8px -4px hwb(0 0% 100% / 0.02) inset;
 		.tabArea {
 			// height: 100%;
 			// box-sizing: border-box;
@@ -126,14 +123,6 @@ const handleTabCloseClicked = (serverId: string, event: MouseEvent) => {
 						height: 100%;
 						transition: width 0.3s ease-out, opacity 0.2s ease-out;
 					}
-					.progress-green {
-						background: linear-gradient(180deg, hwb(120 80% 0% / 0.9), hwb(120 60% 0% / 0.9));
-						box-shadow: 0 6px 12px hwb(120 30% 30% / 0.33);
-					}
-					.progress-yellow {
-						background: linear-gradient(180deg, hwb(50 80% 0% / 0.9), hwb(50 60% 0% / 0.9));
-						box-shadow: 0 6px 12px hwb(50 30% 30% / 0.33);
-					}
 
 					.close {
 						position: absolute;
@@ -143,39 +132,41 @@ const handleTabCloseClicked = (serverId: string, event: MouseEvent) => {
 						height: 20px;
 						border-radius: 2px;
 						&:hover {
-							box-shadow: 0 1px 4px hwb(0 0% 100% / 0.2),
-										0 4px 2px -2px hwb(0 100% 0% / 0.5) inset;
+							box-shadow: 0 1px 4px hwb(var(--hoverShadow) / 0.2),
+										0 4px 2px -2px hwb(var(--highlight) / 0.5) inset;
 						}
 						&:active {
-							box-shadow: 0 0px 1px hwb(0 0% 100% / 0.2),
-										0 20px 15px -10px hwb(0 0% 100% / 0.15) inset;
+							box-shadow: 0 0px 1px hwb(var(--hoverShadow) / 0.2),
+										0 20px 15px -10px hwb(var(--hoverShadow) / 0.15) inset;
 							transform: translateY(0.25px);
 						}
-						img {
+						svg {
 							width: 100%;
+							height: 100%;
+							fill: var(--66);
 						}
 					}
 				}
 				.selected {
-					background-color: hwb(0 97% 3%);
-					box-shadow: 0 0 6px hwb(0 0% 100% / 0.2),	// 外阴影
-								0 -24px 12px -12px hwb(0 100% 0%) inset,	// 内高光
-								0 4px 2px -2px hwb(0 100% 0% / 0.5) inset;	// 上高光
+					background-color: hwb(var(--bg97));
+					box-shadow: 0 0 6px hwb(var(--hoverShadow) / 0.2),	// 外阴影
+								0 -24px 12px -12px hwb(var(--hoverLightBg)) inset,	// 内高光
+								0 4px 2px -2px hwb(var(--highlight) / 0.6) inset;	// 上高光
 					&:hover {
-						box-shadow: 0 0 6px hwb(0 0% 100% / 0.3),	// 外阴影
-								0 -32px 16px -12px hwb(0 100% 0%) inset,	// 内高光
-								0 4px 2px -2px hwb(0 100% 0% / 0.5) inset;	// 上高光
+						box-shadow: 0 0 6px hwb(var(--hoverShadow) / 0.3),	// 外阴影
+								0 -32px 16px -12px hwb(var(--hoverLightBg)) inset,	// 内高光
+								0 4px 2px -2px hwb(var(--highlight) / 0.6) inset;	// 上高光
 					}
 				}
 				.unselected {
 					background-color: transparent;
 					transform: translateY(1px);
 					opacity: 0.8;
-					box-shadow: 0 0 6px hwb(0 0% 100% / 0.05),	// 外阴影
+					box-shadow: 0 0 6px hwb(var(--hoverShadow) / 0.05),	// 外阴影
 								0 -12px 10px -10px hwb(0 100% 0% / 0.1) inset,	// 内阴影
-								0 4px 2px -2px hwb(0 100% 0% / 0.25) inset;	// 上高光
+								0 4px 2px -2px hwb(var(--highlight) / 0.25) inset;	// 上高光
 					&:hover {
-						background-color: hwb(0 97% 3% / 0.5);
+						background-color: hwb(var(--bg97) / 0.5);
 						opacity: 1;
 					}
 				}
@@ -198,6 +189,40 @@ const handleTabCloseClicked = (serverId: string, event: MouseEvent) => {
 				overflow: hidden;
 				transition: transform linear 0.2s; // 这个 transition 会被上面的定义覆盖，但需要定义时长让 Vue 控制消失
 			}
+		}
+	}
+
+	// 主题
+	.titlebar[data-color_theme="themeLight"] {
+		// background-color: hwb(220 25% 10%);
+		background-color: hwb(220 92% 4%);
+		box-shadow: 0 -32px 32px -16px hwb(var(--hoverShadow) / 0.02) inset,
+					0 -8px 8px -4px hwb(var(--hoverShadow) / 0.02) inset;
+		.tab {
+			.progress-green {
+				background: linear-gradient(180deg, hwb(120 75% 0% / 0.9), hwb(120 60% 0% / 0.9));
+				box-shadow: 0 6px 12px hwb(120 30% 30% / 0.33);
+			}
+			.progress-yellow {
+				background: linear-gradient(180deg, hwb(50 75% 0% / 0.9), hwb(50 55% 0% / 0.9));
+				box-shadow: 0 6px 12px hwb(50 30% 30% / 0.33);
+			}
+		}
+	}
+	.titlebar[data-color_theme="themeDark"] {
+		background-color: hwb(220 4% 90%);
+		box-shadow: 0 -32px 32px -16px hwb(var(--hoverShadow) / 0.02) inset,
+					0 -8px 8px -4px hwb(var(--hoverShadow) / 0.02) inset;
+		.tab {
+			text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.3);
+			.progress-green {
+				background: linear-gradient(180deg, hwb(120 10% 30% / 0.9), hwb(120 15% 20% / 0.9));
+				box-shadow: 0 6px 12px hwb(120 30% 30% / 0.33);
+			}
+			.progress-yellow {
+				background: linear-gradient(180deg, hwb(50 0% 25% / 0.9), hwb(50 5% 15% / 0.9));
+				box-shadow: 0 6px 12px hwb(50 30% 30% / 0.33);
+			}			
 		}
 	}
 </style>

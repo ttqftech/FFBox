@@ -11,6 +11,7 @@
 	width: 100%;
 	height: 100%;
 	overflow: hidden;
+	color: inherit;
 	z-index: 5;
 
 	.background {
@@ -20,7 +21,7 @@
 		width: 100%;
 		height: 100%;
 		will-change: opacity;
-		background-color: hwb(0 90% 10% / 0.3);
+		background-color: hwb(var(--bg90) / 0.3);
 		backdrop-filter: blur(1.5px);
 	}
 	@keyframes bganimation {
@@ -45,11 +46,11 @@
 		min-width: 200px;
 		padding: 16px 24px;
 		border-radius: 8px;
-		background-color: hwb(0 97% 3% / 0.8);
-		box-shadow: 0 3px 2px -2px hwb(0 100% 0%) inset,	// 上亮光
-				0 16px 32px 0px hwb(0 0% 100% / 0.02),
-				0 6px 6px 0px hwb(0 0% 100% / 0.02),
-				0 0 0 1px hwb(0deg 100% 0% / 0.9);	// 包边
+		background-color: hwb(var(--bg97) / 0.8);
+		box-shadow: 0 3px 2px -2px hwb(var(--highlight)) inset,	// 上亮光
+				0 16px 32px 0px hwb(var(--hoverShadow) / 0.02),
+				0 6px 6px 0px hwb(var(--hoverShadow) / 0.02),
+				0 0 0 1px hwb(var(--highlight) / 0.9);	// 包边
 		transition: transform cubic-bezier(0.33, 1, 1, 1) 0.3s, opacity linear 0.2s;
 		z-index: 0;	// 可能是由于 chromium 的 bug，不加这个会导致背景的 backdrop-filter 应用到 box 上
 		&>*:not(:last-child) {

@@ -1,4 +1,5 @@
 import { FunctionalComponent, h } from "vue";
+import { useAppStore } from '@renderer/stores/appStore';
 import style from './Button.module.less';
 
 export interface ButtonProps {
@@ -33,8 +34,10 @@ const getButtonClass = (type?: ButtonType, disabled?: boolean, size?: ButtonProp
 };
 
 const ButtonComponent: FunctionalComponent<ButtonProps> = (props, ctx) => {
+	const appStore = useAppStore();
 	return (
 		<button
+			data-color_theme={appStore.frontendSettings.colorTheme}
 			class={getButtonClass(props.type, props.disabled, props.size)}
 			disabled={props.disabled}
 			onClick={() => props.onClick}

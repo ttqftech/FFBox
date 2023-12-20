@@ -150,7 +150,7 @@ onMounted(() => {
 		<div class="paragram">
 			<Button @click="jumpToKoFi"><IconKoFi />Ko-Fi</Button>
 		</div>
-		<p>你可以扫下面这个🐴每天拿几分钱</p>
+		<p>🍲赛博红包来咯~</p>
 		<div class="paragram">
 			<div
 				class="QRscreen QRscreen-alipayredenvelop"
@@ -237,7 +237,7 @@ onMounted(() => {
 				width: 100%;
 				text-align: center;
 				font-size: 18px;
-				color: white;
+				color: #FFF;
 			}
 			.QRbox {
 				position: absolute;
@@ -248,7 +248,7 @@ onMounted(() => {
 				width: 156px;
 				height: 156px;
 				box-sizing: border-box;
-				background: white;
+				background: #FFF;
 				display: flex;
 				justify-content: center;
 				align-items: center;
@@ -264,14 +264,14 @@ onMounted(() => {
 				width: 100%;
 				text-align: center;
 				font-size: 16px;
-				color: white;
+				color: #FFF;
 			}
 			.QRtitle {
 				position: absolute;
 				bottom: 0;
 				height: 48px;
 				width: 100%;
-				background: white;
+				background: #FFF;
 				img {
 					position: absolute;
 					margin: auto;
@@ -308,6 +308,6 @@ onMounted(() => {
 	h2 {
 		font-size: 20px;
 		margin: 2em 0 1em;
-		color: #2255ee;
+		color: var(--titleText);
 	}
 </style>

@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
+import { useAppStore } from '@renderer/stores/appStore';
+
+const appStore = useAppStore();
 
 interface Props {
     message: string;
@@ -39,7 +42,7 @@ const color = computed(() => {
 		case 3:
 			return '#FFFFFF'
 		default:
-			return '#000000'
+			return 'currentColor'
 	}
 });
 
@@ -82,7 +85,8 @@ watch(() => props.verticalOffset, (newValue) => {
 </script>
 
 <template>
-	<dialog
+	<div
+		:data-color_theme="appStore.frontendSettings.colorTheme"
 		class="popup"
 		@mouseenter="mouseIn = true"
 		@mouseleave="mouseIn = false"
@@ -105,17 +109,18 @@ watch(() => props.verticalOffset, (newValue) => {
 				<div class="popup-message" v-html="message"></div>
 			</div>
 		</Transition>
-	</dialog>
+	</div>
 </template>
 
 
-<style scoped>
+<style lang="less" scoped>
 	.popup {
 		display: block;
 		position: absolute;
 		bottom: 10%;
 		left: 0;
 		right: 0;
+		width: fit-content;
 		max-width: 60%;
 		background: none;
 		border: none;
@@ -123,7 +128,6 @@ watch(() => props.verticalOffset, (newValue) => {
 		padding: 0;
 		transition: transform 0.7s cubic-bezier(0.35, 1.4, 0.2, 0.95);
 		z-index: 10;
-	}
 		.popupanimate-enter-from {
 			opacity: 0;
 			transform: scale(0.5);
@@ -144,33 +148,16 @@ watch(() => props.verticalOffset, (newValue) => {
 		}
 
 		.popup-box {
+			width: fit-content;
 			display: flex;
 			align-items: center;
 			padding: 12px;
-			background: hsl(0, 0%, 98%);
+			background: hwb(var(--bg98));
 			will-change: transform, opacity;
 			border: hsl(0, 0%, 67%) 1px solid;
 			border-radius: 12px;
-			box-shadow: 0px 4px 8px hsla(0, 0%, 0%, 0.3);
-		}
-		.popup-ok {
-			background: linear-gradient(180deg, hsl(120, 80%, 65%), hsl(120, 60%, 50%));
-			border-color: hsl(120, 60%, 40%);
-			box-shadow: 0px 4px 8px hsla(120, 80%, 65%, 0.3);
-			color: white;
-		}
-		.popup-warning {
-			background: linear-gradient(180deg, hsl(45, 100%, 75%), hsl(45, 100%, 65%));
-			border-color: hsl(45, 70%, 60%);
-			box-shadow: 0px 4px 8px rgba(160, 127, 0, 0.3);
-			color: hsl(46, 66%, 15%);
-		}
-		.popup-error {
-			background: hsl(0, 85%, 65%);
-			border-color: hsl(0, 55%, 45%);
-			box-shadow: 0px 4px 8px hsla(0, 100%, 25%, 0.3);
-			color: white;
-		}
+			box-shadow: 0px 4px 8px hwb(0 0% 100% / 0.3);
+
 			.popup-message {
 				display: inline-block;
 				font-size: 16px;
@@ -187,11 +174,55 @@ watch(() => props.verticalOffset, (newValue) => {
 				height: 16px;
 				line-height: 1.3em;
 				opacity: 0.8;
-			}
 				.popup-progress-circle {
 					width: 16px;
 					height: 16px;
 					transform: rotate(-90deg);
 				}
+			}
+		}
+	}
+
+	// 主题
+	.popup[data-color_theme="themeLight"] {
+		.popup-ok {
+			background: linear-gradient(180deg, hwb(120 40% 10%), hwb(120 20% 20%));
+			border-color: hwb(120 15% 35%);
+			box-shadow: 0px 4px 8px hwb(120 10% 35% / 0.4);
+			color: #FFF;
+		}
+		.popup-warning {
+			background: linear-gradient(180deg, hwb(45 50% 0%), hwb(45 30% 0%));
+			border-color: hwb(45 30% 10%);
+			box-shadow: 0px 4px 8px hwb(45 10% 35% / 0.4);
+			color: hsl(46, 66%, 15%);
+		}
+		.popup-error {
+			background: hwb(0 35% 5%);
+			border-color: hwb(0 20% 20%);
+			box-shadow: 0px 4px 8px hwb(0 5% 40% / 0.4);
+			color: #FFF;
+		}
+	}
+	.popup[data-color_theme="themeDark"] {
+		.popup-ok {
+			background: linear-gradient(180deg, hwb(120 30% 15%), hwb(120 10% 25%));
+			border-color: hwb(120 10% 45%);
+			box-shadow: 0px 4px 8px hwb(120 5% 45% / 0.4);
+			color: #FFF;
+		}
+		.popup-warning {
+			background: linear-gradient(180deg, hwb(45 40% 0%), hwb(45 20% 0%));
+			border-color: hwb(45 25% 15%);
+			box-shadow: 0px 4px 8px hwb(45 10% 30% / 0.4);
+			color: hsl(46, 66%, 15%);
+		}
+		.popup-error {
+			background: hwb(0 30% 10%);
+			border-color: hwb(0 20% 30%);
+			box-shadow: 0px 4px 8px hwb(0 5% 40% / 0.4);
+			color: #FFF;
+		}
+	}
 
 </style>

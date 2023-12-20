@@ -98,7 +98,7 @@ const handleDelete = (serverId: string, notificationId: number) => {
 			top: 0;
 			width: 100%;
 			height: 100%;
-			background: linear-gradient(to bottom, hwb(0 97% 3%), hwb(0 95% 5%));
+			background: linear-gradient(to bottom, hwb(var(--bg97)), hwb(var(--bg95)));
 			box-shadow: 0 0 32px 8px hwb(0 10% 90% / 0.5);
 			-webkit-app-region: none;
 			.title {
@@ -109,7 +109,7 @@ const handleDelete = (serverId: string, notificationId: number) => {
 				font-size: 22px;
 				font-weight: normal;
 				text-align: center;
-				color: #2255ee;
+				color: var(--titleText);
 				margin: 0;
 				-webkit-app-region: drag;
 			}
@@ -158,7 +158,7 @@ const handleDelete = (serverId: string, notificationId: number) => {
 						position: relative;
 						padding: 4px 0px;
 						list-style-type: none;
-						border-bottom: #DDD 1px solid;
+						border-bottom: #77777733 1px solid;
 						.statusIcon {
 							position: absolute;
 							left: 8px;
@@ -173,7 +173,7 @@ const handleDelete = (serverId: string, notificationId: number) => {
 						p {
 							font-size: 14px;
 							line-height: 1.4em;
-							color: #555;
+							color: var(--66);
 							margin: 0px 160px 0px 32px;
 							text-align: left;
 						}
@@ -184,7 +184,7 @@ const handleDelete = (serverId: string, notificationId: number) => {
 							transform: translateY(-50%);
 							font-size: 12px;
 							line-height: 1.4em;
-							color: #777;
+							color: var(--66);
 						}
 						.delete {
 							position: absolute;
@@ -202,22 +202,16 @@ const handleDelete = (serverId: string, notificationId: number) => {
 							opacity: 0.5;
 							border-radius: 4px;
 							&:hover {
-								box-shadow: 0 1px 4px hwb(0 0% 100% / 0.2),
-											0 4px 2px -2px hwb(0 100% 0% / 0.5) inset;
+								box-shadow: 0 1px 4px hwb(var(--hoverShadow) / 0.2),
+											0 4px 2px -2px hwb(var(--highlight) / 0.5) inset;
 							}
 							&:active {
-								box-shadow: 0 0px 1px hwb(0 0% 100% / 0.2),
-											0 15px 20px -10px hwb(0 0% 100% / 0.15) inset;
+								box-shadow: 0 0px 1px hwb(var(--hoverShadow) / 0.2),
+											0 15px 20px -10px hwb(var(--hoverShadow) / 0.15) inset;
 								transform: translateY(0.25px);
 							}
-							// &:hover {
-							// 	opacity: 1;
-							// }
-							// &:active {
-							// 	opacity: 0.7;
-							// }
-							img {
-								width: 16px;
+							svg {
+								fill: var(--33);
 							}
 						}
 					}
@@ -227,7 +221,7 @@ const handleDelete = (serverId: string, notificationId: number) => {
 						font-size: 14px;
 						color: #777;
 						list-style-type: none;
-						border-bottom: #DDD 1px solid;
+						border-bottom: #77777733 1px solid;
 					}
 				}
 			}

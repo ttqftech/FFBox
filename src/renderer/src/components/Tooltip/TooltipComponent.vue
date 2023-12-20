@@ -46,7 +46,7 @@ const props = defineProps<Props>();
 
 		#tooltip-box {
 			padding: 10px 12px;
-			background: hsl(0, 0%, 98%);
+			background: hwb(var(--bg98));
 			will-change: transform, opacity;
 			border: hsl(0, 0%, 67%) 1px solid;
 			border-radius: 10px;

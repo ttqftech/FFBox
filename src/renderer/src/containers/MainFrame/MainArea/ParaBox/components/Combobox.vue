@@ -30,16 +30,16 @@ const menuRef = ref<ReturnType<typeof showMenu>>(null);
 const selectorStyle = computed(() => {
 	const ret: any = {};
 	if (invalidMsg.value) {
-		ret.border = '#E66 1px solid';
-		ret.boxShadow = '0 0 12px hsla(0, 100%, 60%, 0.3), 0px 4px 8px rgba(0, 0, 0, 0.05)';
+		ret.border = 'var(--errorBorder) 1px solid';
+		ret.boxShadow = '0 0 12px hsla(0, 100%, 60%, 0.3), 0px 4px 8px hwb(0, 0, 0, 0.05)';
 		if (focused.value) {
-			ret.background = '#FEE';
+			ret.background = 'var(--errorBgActive)';
 		} else {
-			ret.background = '#F7E7E7';
+			ret.background = 'var(--errorBg)';
 		}
 	} else {
-		if (focused.value || comboOpened.value) {
-			ret.background = 'white';
+		if (focused.value) {
+			ret.background = 'var(--ff)';
 		}
 	}
 	return ret;
@@ -174,15 +174,15 @@ onMounted(() => {
 			width: 122px;
 			margin: 15px 0;
 			border-radius: 24px;
-			background: #F7F7F7;
+			background: var(--f7);
 			border: #AAA 1px solid;
 			box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
 		}
 		.combobox-selector:hover {
-			background: white;
+			background: var(--ff);
 		}
 		.combobox-selector:active {
-			background: #E7E7E7;
+			background: var(--e7);
 		}
 			.combobox-selector input {
 				position: absolute;

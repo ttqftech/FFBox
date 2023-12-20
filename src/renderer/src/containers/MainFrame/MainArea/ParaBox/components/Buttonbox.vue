@@ -26,7 +26,7 @@ const props = defineProps<Props>();
 		font: inherit;
 	}
 	.buttonbox:active {
-		background: linear-gradient(180deg, #e7e7e7, #f0f0f0);
+		background: linear-gradient(180deg, var(--e7), #f0f0f0);
 	}
 	.buttonbox:active:before {
 		display: none;

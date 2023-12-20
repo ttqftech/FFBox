@@ -12,9 +12,9 @@ import Popup from './components/Popup/Popup';
 import MainFrame from './containers/MainFrame.vue';
 import nodeBridge from './bridges/nodeBridge';
 
-onMounted(() => {
-	const appStore = useAppStore();
+const appStore = useAppStore();
 
+onMounted(() => {
 	// 初始化本地服务器
 	if (location.href.startsWith('file')) {
 		nodeBridge.startService();
@@ -64,6 +64,9 @@ onMounted(() => {
 			gp.video = await nodeBridge.localStorage.get('video') || gp.video;
 			gp.audio = await nodeBridge.localStorage.get('audio') || gp.audio;
 			gp.output = await nodeBridge.localStorage.get('output') || gp.output;
+
+			appStore.frontendSettings = await nodeBridge.localStorage.get('frontendSettings') || appStore.frontendSettings;
+			appStore.applyFrontendSettings(false);
 		}
 	})();
 });
@@ -73,6 +76,7 @@ onMounted(() => {
 	<MainFrame />
 </template>
 
+<style src="./theme.css"></style>
 <style>
 	html {
 		overflow: hidden;

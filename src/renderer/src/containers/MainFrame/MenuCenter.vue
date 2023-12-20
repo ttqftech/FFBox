@@ -15,7 +15,11 @@ const appStore = useAppStore();
 
 const sidebarIcons = [IconSidebarSettings, IconSidebarSponsor];
 const sidebarTexts = ['设置', '支持作者'];
-const sidebarColors = ['hwb(195 0% 10%)', 'hwb(315 0% 0%)', 'hwb(285 10% 5%)', 'hwb(120 0% 15%)', 'hwb(45 0% 5%)', 'hwb(0 30% 0%)'];
+const sidebarColors = computed(() => 
+	appStore.frontendSettings.colorTheme === 'themeLight'
+		? ['hwb(195 0% 10%)', 'hwb(315 0% 0%)']
+		: ['hwb(195 5% 5%)', 'hwb(315 20% 5%)']
+);
 const animationName = ref('animationUp');
 
 const selectedMenuIndex = ref(-1);
@@ -152,7 +156,7 @@ const menuCenterPadStyle = computed(() => {
 			left: '8px',
 			width: '76px',
 			height: '28px',
-			background: 'linear-gradient(to bottom, hwb(0 97% 3%), hwb(0 95% 5%))',
+			background: 'linear-gradient(to bottom, hwb(var(--bg97)), hwb(var(--bg95)))',
 			opacity: '0',
 			transitionDelay: '0s, 0s, 0s, 0s, 0.2s',
 		}
@@ -162,7 +166,7 @@ const menuCenterPadStyle = computed(() => {
 			left: '8px',
 			width: '440px',
 			height: '28px',
-			background: 'hwb(0 98% 2%)',
+			background: 'hwb(var(--bg98))',
 			opacity: 1,
 		}
 	} else {
@@ -171,7 +175,7 @@ const menuCenterPadStyle = computed(() => {
 			left: '0',
 			width: '100%',
 			height: '100%',
-			background: 'linear-gradient(to bottom, hwb(0 97% 3%), hwb(0 95% 5%))',
+			background: 'linear-gradient(to bottom, hwb(var(--bg97)), hwb(var(--bg95)))',
 			opacity: 1,
 		}
 	}
@@ -196,7 +200,7 @@ const menuCenterContainerStyle = computed(() => {
 	}
 })
 
-const getButtonColorStyle = (index: number) => ({ color: selectedPanelIndex.value === index ? sidebarColors[index] : 'hwb(0 50% 50%)' });
+const getButtonColorStyle = (index: number) => ({ color: selectedPanelIndex.value === index ? sidebarColors.value[index] : 'hwb(0 50% 50%)' });
 
 // 切换菜单中心时关闭已打开菜单，切换到侧边栏第一个面板
 watch(() => appStore.showMenuCenter, (value) => {
@@ -399,6 +403,7 @@ onMounted(() => {
 					width 0.5s cubic-bezier(0.1, 1.2, 0.5, 1),
 					height 0.5s cubic-bezier(0.1, 1.2, 0.5, 1),
 					opacity 0.15s linear;
+					background: 0.15s;
 	}
 	.container {
 		position: absolute;
@@ -431,19 +436,19 @@ onMounted(() => {
 				line-height: 28px;
 				border-radius: 8px;
 				&:not(.menuSelected):hover {
-					box-shadow: 0 1px 4px hwb(0 0% 100% / 0.2),
-								0 4px 2px -2px hwb(0 100% 0% / 0.5) inset;
+					box-shadow: 0 1px 4px hwb(var(--hoverShadow) / 0.2),
+								0 4px 2px -2px hwb(var(--highlight) / 0.5) inset;
 				}
 				&:not(.menuSelected):active {
-					box-shadow: 0 0px 1px hwb(0 0% 100% / 0.2),
-								0 20px 15px -10px hwb(0 0% 100% / 0.15) inset;
+					box-shadow: 0 0px 1px hwb(var(--hoverShadow) / 0.2),
+								0 20px 15px -10px hwb(var(--hoverShadow) / 0.15) inset;
 					transform: translateY(0.25px);
 				}
 			}
 			.menuSelected {
 				background-color: hwb(220 25% 10%);
 				box-shadow: 0 1px 4px hwb(220 25% 10% / 0.5);
-				color: white;
+				color: #FFF;
 			}
 		}
 		.menuMask {
@@ -519,9 +524,9 @@ onMounted(() => {
 				width: 128px;
 				padding: 4px 4px;
 				overflow: auto;
-				box-shadow: 0.5px 0.5px 1px 0px hwb(0deg 98% 2%),
-							20px 20px 20px 0px hwb(0 0% 100% / 0.02),
-							6px 6px 6px 0px hwb(0 0% 100% / 0.02);
+				box-shadow: 0.5px 0.5px 1px 0px hwb(var(--hoverLightBg) / 0.95),
+							20px 20px 20px 0px hwb(var(--hoverShadow) / 0.02),
+							6px 6px 6px 0px hwb(var(--hoverShadow) / 0.02);
 				// box-shadow: 12px 0 12px -12px hwb(0 50% 50% / 1);
 				button {
 					text-align: center;
@@ -533,24 +538,24 @@ onMounted(() => {
 					border-radius: 8px;
 					transition: width 0.3s ease;
 					&:hover {
-						background-color: hwb(0 100% 0% / 0.4);
+						background-color: hwb(var(--hoverLightBg) / 0.4);
 						// box-shadow: 0px 2px 2px rgba(127,127,127,0.5);
 						// box-shadow: 0 0 4px 2px hwb(0 0% 100% / 0.05);
-						box-shadow: 0 0 1px 0.5px hwb(0deg 100% 0%),
-									0 1.5px 4px 0 hwb(0deg 0% 100% / 0.15),
-									0 1px 0.5px 0px hwb(0deg 100% 0%) inset;
+						box-shadow: 0 0 1px 0.5px hwb(var(--hoverLightBg)),
+									0 1.5px 4px 0 hwb(var(--hoverShadow) / 0.15),
+									0 1px 0.5px 0px hwb(var(--hoverLightBg)) inset;	// 上高光
 					}
 					&:active {
 						background-color: transparent;
-						box-shadow: 0 0 2px 1px hwb(0 0% 100% / 0.05), // 外部阴影
-									0 6px 12px hwb(0 0% 100% / 0.1) inset; // 内部凹陷阴影
+						box-shadow: 0 0 2px 1px hwb(var(--hoverShadow) / 0.05), // 外部阴影
+									0 6px 12px hwb(var(--hoverShadow) / 0.1) inset; // 内部凹陷阴影
 						transform: translateY(0.25px);
 					}
 					svg {
 						width: 24px;
 						height: 24px;
 						vertical-align: middle;
-						filter: drop-shadow(0 0 0px hwb(0 100% 0% / 1)) drop-shadow(0 1px 1px hwb(0 0% 100% / 0.1));
+						filter: var(--paraBoxButtonDropFilterSvg);
 					}
 					span {
 						display: inline-block;
@@ -561,7 +566,7 @@ onMounted(() => {
 						white-space: nowrap;
 						overflow: hidden;
 						transition: width 0.3s ease, padding 0.3s ease;
-						filter: drop-shadow(0 -0.5px 0px hwb(0 100% 0% / 1)) drop-shadow(0 1px 1px hwb(0 0% 100% / 0.1));
+						filter: var(--paraBoxButtonDropFilterSvg);
 					}
 					// @media only screen and (max-width: 600px) {
 					// 	width: 50px;
@@ -607,7 +612,7 @@ onMounted(() => {
 		right: calc(15% - 80px);
 		font-size: 22px;
 		text-align: center;
-		color: #2255ee;
+		color: var(--titleText);
 	}
 	.hline {
 		position: absolute;
