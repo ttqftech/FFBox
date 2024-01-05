@@ -6,6 +6,7 @@ import { TransferStatus } from '@common/types';
 import ProcessInstance from '@common/processInstance';
 import { convertFFBoxMenuToElectronMenuTemplate, getOs } from './utils';
 import osBridge from './osBridge';
+import * as mica from './mica';
 // import { electronApp, optimizer, is } from '@electron-toolkit/utils';
 // import { FFBoxService } from './service/FFBoxService';
 
@@ -70,6 +71,7 @@ class ElectronApp {
 			maximizable: true,
 			center: true,
 			// transparent: true,
+			backgroundColor: '#00ffffff',
 			frame: false,
 			hasShadow: true,
 			// titleBarOverlay: {
@@ -112,7 +114,7 @@ class ElectronApp {
 			const url = `http://${process.env['VITE_DEV_SERVER_HOST']}:${process.env['VITE_DEV_SERVER_PORT']}`;
 	
 			mainWindow.loadURL(url);
-			mainWindow.webContents.openDevTools();
+			// mainWindow.webContents.openDevTools();
 		}
 	
 		mainWindow.on('close', (e) => {
@@ -249,7 +251,6 @@ class ElectronApp {
 		});
 
 		// osBridge 系列
-		ipcMain.on('setBlurBehindWindow', () => osBridge.setBlurBehindWindow(this.mainWindow));
 		ipcMain.on('triggerSystemMenu', () => osBridge.triggerSystemMenu());
 		ipcMain.on('triggerSnapLayout', () => osBridge.triggerSnapLayout());
 
@@ -273,6 +274,21 @@ class ElectronApp {
 		ipcMain.on('zoomPage', (event, type: 'in' | 'out' | 'reset') => {
 			const finalZoomLevel = type === 'reset' ? 0 : this.mainWindow.webContents.zoomLevel + (type === 'in' ? 1 : -1);
 			this.mainWindow.webContents.setZoomLevel(finalZoomLevel);
+		});
+
+		// 半透明窗体
+		ipcMain.on('setBlurBehindWindow', (event, on: boolean) => {
+			switch (getOs()) {
+				case 'MacOS':
+					this.mainWindow.setVibrancy(on ? 'window' : 'window');
+					break;
+				case 'Windows':
+					// this.mainWindow.setBackgroundMaterial(on ? 'mica' : 'none');
+					// this.mainWindow.setDarkTheme();
+					// this.mainWindow.setMicaEffect();
+					mica.setBlur(this.mainWindow, on);					
+					break;
+			}
 		});
 
 		// ipcMain.handle('electron-store', (event, type: 'get' | 'set' | 'delete', key: string, value?: string) => {

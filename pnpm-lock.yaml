@@ -74,8 +74,8 @@ devDependencies:
     specifier: ^4.0.0
     version: 4.0.0(vite@4.0.0)(vue@3.3.4)
   electron:
-    specifier: ^23
-    version: 23.3.13
+    specifier: ^24
+    version: 24.8.8
   electron-builder:
     specifier: ^23.6.0
     version: 23.6.0
@@ -780,7 +780,7 @@ packages:
     resolution: {integrity: sha512-ALYone6pm6QmwZoAgeyNksccT9Q4AWZQ6PvfwR37GT6r6FWUPguq6sUmNGSMV2Wr761oQoBxwGGa6DR5o1DC9g==, tarball: https://registry.npm.taobao.org/@types/body-parser/-/body-parser-1.19.2.tgz}
     dependencies:
       '@types/connect': 3.4.35
-      '@types/node': 18.11.13
+      '@types/node': 18.17.15
 
   /@types/cacheable-request@6.0.3:
     resolution: {integrity: sha512-IQ3EbTzGxIigb1I3qPZc1rWJnH0BmSKv5QYTalEwweFvyBDLSAe24zP0le/hyi7ecGfZVlIVAg4BZqb8WBwKqw==}
@@ -794,14 +794,14 @@ packages:
   /@types/co-body@6.1.0:
     resolution: {integrity: sha512-3e0q2jyDAnx/DSZi0z2H0yoZ2wt5yRDZ+P7ymcMObvq0ufWRT4tsajyO+Q1VwVWiv9PRR4W3YEjEzBjeZlhF+w==, tarball: https://registry.npm.taobao.org/@types/co-body/-/co-body-6.1.0.tgz}
     dependencies:
-      '@types/node': 18.11.13
+      '@types/node': 18.17.15
       '@types/qs': 6.9.7
     dev: false
 
   /@types/connect@3.4.35:
     resolution: {integrity: sha512-cdeYyv4KWoEgpBISTxWvqYsVy444DOqehiF3fM3ne10AmJ62RSyNkUnxMJXHQWRQQX2eR94m5y1IZyDwBjV9FQ==, tarball: https://registry.npm.taobao.org/@types/connect/-/connect-3.4.35.tgz}
     dependencies:
-      '@types/node': 18.11.13
+      '@types/node': 18.17.15
 
   /@types/content-disposition@0.5.5:
     resolution: {integrity: sha512-v6LCdKfK6BwcqMo+wYW05rLS12S0ZO0Fl4w1h4aaZMD7bqT3gVUns6FvLJKGZHQmYn3SX55JWGpziwJRwVgutA==, tarball: https://registry.npm.taobao.org/@types/content-disposition/-/content-disposition-0.5.5.tgz}
@@ -845,7 +845,7 @@ packages:
   /@types/express-serve-static-core@4.17.31:
     resolution: {integrity: sha512-DxMhY+NAsTwMMFHBTtJFNp5qiHKJ7TeqOo23zVEM9alT1Ml27Q3xcTH0xwxn7Q0BbMcVEJOs/7aQtUWupUQN3Q==, tarball: https://registry.npm.taobao.org/@types/express-serve-static-core/-/express-serve-static-core-4.17.31.tgz}
     dependencies:
-      '@types/node': 18.11.13
+      '@types/node': 18.17.15
       '@types/qs': 6.9.7
       '@types/range-parser': 1.2.4
 
@@ -860,13 +860,13 @@ packages:
   /@types/formidable@2.0.5:
     resolution: {integrity: sha512-uvMcdn/KK3maPOaVUAc3HEYbCEhjaGFwww4EsX6IJfWIJ1tzHtDHczuImH3GKdusPnAAmzB07St90uabZeCKPA==, tarball: https://registry.npm.taobao.org/@types/formidable/-/formidable-2.0.5.tgz}
     dependencies:
-      '@types/node': 18.11.13
+      '@types/node': 18.17.15
     dev: false
 
   /@types/fs-extra@9.0.13:
     resolution: {integrity: sha512-nEnwB++1u5lVDM2UI4c1+5R+FYaKfaAzS4OococimjVm3nQw3TuzH5UNsocrcTBbhnerblyHj4A49qXbIiZdpA==, tarball: https://registry.npm.taobao.org/@types/fs-extra/-/fs-extra-9.0.13.tgz}
     dependencies:
-      '@types/node': 18.11.13
+      '@types/node': 18.17.15
     dev: true
 
   /@types/glob@7.2.0:
@@ -874,7 +874,7 @@ packages:
     requiresBuild: true
     dependencies:
       '@types/minimatch': 5.1.2
-      '@types/node': 18.11.13
+      '@types/node': 18.17.15
     dev: true
     optional: true
 
@@ -956,16 +956,11 @@ packages:
     resolution: {integrity: sha512-iiUgKzV9AuaEkZqkOLDIvlQiL6ltuZd9tGcW3gwpnX8JbuiuhFlEGmmFXEXkN50Cvq7Os88IY2v0dkDqXYWVgA==, tarball: https://registry.npm.taobao.org/@types/ms/-/ms-0.7.31.tgz}
     dev: true
 
-  /@types/node@16.18.53:
-    resolution: {integrity: sha512-vVmHeo4tpF8zsknALU90Hh24VueYdu45ZlXzYWFbom61YR4avJqTFDC3QlWzjuTdAv6/3xHaxiO9NrtVZXrkmw==}
-    dev: true
-
   /@types/node@18.11.13:
     resolution: {integrity: sha512-IASpMGVcWpUsx5xBOrxMj7Bl8lqfuTY7FKAnPmu5cHkfQVWF8GulWS1jbRqA934qZL35xh5xN/+Xe/i26Bod4w==, tarball: https://registry.npm.taobao.org/@types/node/-/node-18.11.13.tgz}
 
   /@types/node@18.17.15:
     resolution: {integrity: sha512-2yrWpBk32tvV/JAd3HNHWuZn/VDN1P+72hWirHnvsvTGSqbANi+kSeuQR9yAHnbvaBvHDsoTdXV0Fe+iRtHLKA==}
-    dev: true
 
   /@types/path-browserify@1.0.0:
     resolution: {integrity: sha512-XMCcyhSvxcch8b7rZAtFAaierBYdeHXVvg2iYnxOV0MCQHmPuRRmGZPFDRzPayxcGiiSL1Te9UIO+f3cuj0tfw==}
@@ -996,7 +991,7 @@ packages:
     resolution: {integrity: sha512-z5xyF6uh8CbjAu9760KDKsH2FcDxZ2tFCsA4HIMWE6IkiYMXfVoa+4f9KX+FN0ZLsaMw1WNG2ETLA6N+/YA+cg==, tarball: https://registry.npm.taobao.org/@types/serve-static/-/serve-static-1.15.0.tgz}
     dependencies:
       '@types/mime': 3.0.1
-      '@types/node': 18.11.13
+      '@types/node': 18.17.15
 
   /@types/verror@1.10.6:
     resolution: {integrity: sha512-NNm+gdePAX1VGvPcGZCDKQZKYSiAWigKhKaz5KF94hG6f2s8de9Ow5+7AbXoeKxL8gavZfk4UquSAygOF2duEQ==}
@@ -2208,14 +2203,14 @@ packages:
   /electron-to-chromium@1.4.284:
     resolution: {integrity: sha512-M8WEXFuKXMYMVr45fo8mq0wUrrJHheiKZf6BArTKk9ZBYCKJEOU5H8cdWgDT+qCVZf7Na4lVUaZsA+h6uA9+PA==, tarball: https://registry.npm.taobao.org/electron-to-chromium/-/electron-to-chromium-1.4.284.tgz}
 
-  /electron@23.3.13:
-    resolution: {integrity: sha512-BaXtHEb+KYKLouUXlUVDa/lj9pj4F5kiE0kwFdJV84Y2EU7euIDgPthfKtchhr5MVHmjtavRMIV/zAwEiSQ9rQ==}
+  /electron@24.8.8:
+    resolution: {integrity: sha512-0A2tGwG/0hxnD32Lil9wgSydQ0HCP5AdkgcH+qee3QgaC2jVq55YIbrj/0ZAq4L7yiZvQTzYIrc6kie7OahJKQ==}
     engines: {node: '>= 12.20.55'}
     hasBin: true
     requiresBuild: true
     dependencies:
       '@electron/get': 2.0.2
-      '@types/node': 16.18.53
+      '@types/node': 18.17.15
       extract-zip: 2.0.1
     transitivePeerDependencies:
       - supports-color
@@ -3056,7 +3051,7 @@ packages:
     resolution: {integrity: sha512-7vuh85V5cdDofPyxn58nrPjBktZo0u9x1g8WtjQol+jZDaE+fhN+cIvTj11GndBnMnyfrUOG1sZQxCdjKh+DKg==, tarball: https://registry.npm.taobao.org/jest-worker/-/jest-worker-27.5.1.tgz}
     engines: {node: '>= 10.13.0'}
     dependencies:
-      '@types/node': 18.11.13
+      '@types/node': 18.17.15
       merge-stream: 2.0.0
       supports-color: 8.1.1
     dev: true

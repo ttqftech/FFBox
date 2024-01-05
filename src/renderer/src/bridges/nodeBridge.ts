@@ -215,8 +215,8 @@ export default {
 		window.jsb?.ipcRenderer?.send('startService');
 	},
 
-	setBlurBehindWindow(): void {
-		window.jsb?.ipcRenderer?.send('setBlurBehindWindow');
+	setBlurBehindWindow(on = true): void {
+		window.jsb?.ipcRenderer?.send('setBlurBehindWindow', on);
 	},
 
 	triggerSystemMenu(): void {

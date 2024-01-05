@@ -1,4 +1,5 @@
 ﻿#include <Windows.h>
+#include <dwmapi.h>
 #include <iostream>
 
 //////////////// 类型定义 ////////////////
@@ -58,30 +59,17 @@ struct WINDOWCOMPOSITIONATTRIBDATA
 
 typedef BOOL(WINAPI* pfnSetWindowCompositionAttribute)(HWND, WINDOWCOMPOSITIONATTRIBDATA*);
 
-// typedef int(WINAPI* pfnDwmExtendFrameIntoClientArea)(HWND, RECT*);
-
-// typedef BOOL(WINAPI* pfnSetWindowLong)(HWND, DWORD, DWORD);
-
-// typedef BOOL(WINAPI* pfnGetWindowLong)(HWND, DWORD);
-
-// typedef BOOL(WINAPI* pfnSetLayeredWindowAttributes)(HWND, COLORREF, BYTE, DWORD);
-
 
 //////////////// 函数实现 ////////////////
 
-bool setORrestoreBlur(int hWnd, bool turnON) {
-	std::cout << (turnON ? "set" : "restore") << "Blur: " << hWnd << std::endl;
+bool setORrestoreBlur(int hWnd, int value) {
+	std::cout << (value == 0 ? "restore" : value == 1 ? "set" : "margin") << "Blur: " << hWnd << std::endl;
 	// 如果新建一个 C++ 桌面程序，那么创建窗口时需要使用下面这句使其变成可支持透明通道的窗口
 	// HWND hWnd = CreateWindowEx(WS_EX_NOREDIRECTIONBITMAP, L"Acrylic Window", L"Acrylic Window using Direct Composition", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, hInstance, NULL);
 
 	// 检查 API 可用性
 	HMODULE hUser = LoadLibrary(L"user32.dll");
-	// HMODULE hDwm = LoadLibrary(L"dwmapi.dll");
 	pfnSetWindowCompositionAttribute setWindowCompositionAttribute = (pfnSetWindowCompositionAttribute)GetProcAddress(hUser, "SetWindowCompositionAttribute");
-	// pfnDwmExtendFrameIntoClientArea dwmExtendFrameIntoClientArea = (pfnDwmExtendFrameIntoClientArea)GetProcAddress(hDwm, "DwmExtendFrameIntoClientArea");
-	// pfnSetWindowLong setWindowLong = (pfnSetWindowLong)GetProcAddress(hUser, "SetWindowLongA");
-	// pfnGetWindowLong getWindowLong = (pfnGetWindowLong)GetProcAddress(hUser, "GetWindowLongA");
-	// pfnSetLayeredWindowAttributes setLayeredWindowAttributes = (pfnSetLayeredWindowAttributes)GetProcAddress(hUser, "SetLayeredWindowAttributes");
 	// printf("setWindowCompositionAttribute: %d\n", setWindowCompositionAttribute);
 	if (!setWindowCompositionAttribute) {
 		std::cout << "操作系统不支持 setWindowCompositionAttribute API! " << std::endl;
@@ -89,17 +77,35 @@ bool setORrestoreBlur(int hWnd, bool turnON) {
 	}
 	
 	// 进行处理
-	ACCENT_POLICY accent;
-	accent.AccentState = turnON ? ACCENT_ENABLE_BLURBEHIND : ACCENT_DISABLED;
-	accent.AccentFlags = 2;
-	accent.GradientColor = RGB(127, 127, 127);
-	accent.AnimationId = 0;
-	WINDOWCOMPOSITIONATTRIBDATA data;
-	data.attribute = WCA_ACCENT_POLICY;
-	data.pointerData = &accent;
-	data.sizeofData = sizeof(accent);
+	// ACCENT_POLICY accent;
+	// accent.AccentState = value == 1 ? ACCENT_ENABLE_BLURBEHIND : ACCENT_DISABLED;
+	// accent.AccentFlags = 2;
+	// accent.GradientColor = RGB(127, 127, 127);
+	// accent.AnimationId = 0;
+	// WINDOWCOMPOSITIONATTRIBDATA data;
+	// data.attribute = WCA_ACCENT_POLICY;
+	// data.pointerData = &accent;
+	// data.sizeofData = sizeof(accent);
 	int result;
-	result = setWindowCompositionAttribute((HWND)hWnd, &data);
+	// result = setWindowCompositionAttribute((HWND)hWnd, &data);
+	
+	if (value == 0) {
+		// 设定背景模式为无
+		DWM_SYSTEMBACKDROP_TYPE backdrop_type = DWMSBT_NONE;
+		result = DwmSetWindowAttribute((HWND)hWnd, DWMWA_SYSTEMBACKDROP_TYPE, &backdrop_type, sizeof(backdrop_type));
+	} else if (value == 1) {
+		// 开启主机背景画刷
+		BOOL value = TRUE;
+		result = DwmSetWindowAttribute((HWND)hWnd, DWMWA_USE_HOSTBACKDROPBRUSH, &value, sizeof(value));
+		// 设定背景模式为 mica
+		DWM_SYSTEMBACKDROP_TYPE backdrop_type = DWMSBT_TRANSIENTWINDOW;
+		result = DwmSetWindowAttribute((HWND)hWnd, DWMWA_SYSTEMBACKDROP_TYPE, &backdrop_type, sizeof(backdrop_type));
+	} else if (value == 2) {
+		// 负边距（每次最大化/还原时需要执行）
+		MARGINS margins = { -1 };
+		result = DwmExtendFrameIntoClientArea((HWND)hWnd, &margins);
+	}
+
 	if (result == 1) {
 		std::cout << "结果：成功：1" << std::endl;
 		return true;

@@ -49,7 +49,7 @@ int main() {
 			}
 			opBufferIndex++;
 			if (opBufferIndex == OP_BUFFER_LENGTH) {
-				setORrestoreBlur(atoi(opBuffer), opSymbol != '0');
+				setORrestoreBlur(atoi(opBuffer), opSymbol - 48);
 				resetOpBuffer(opBuffer, &opBufferIndex);
 				status = '0';
 			}

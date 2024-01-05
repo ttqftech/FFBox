@@ -29,7 +29,7 @@
     "@types/path-browserify": "^1.0.0",
     "@types/ws": "^8.5.5",
     "@vitejs/plugin-vue": "^4.0.0",
-    "electron": "^23",
+    "electron": "^24",
     "electron-builder": "^23.6.0",
     "eslint": "^8.29.0",
     "prettier": "^2.8.1",

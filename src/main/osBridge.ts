@@ -69,13 +69,14 @@ function callHelper<T>(func: (helper: ChildProcess) => Promise<T> | T): Promise<
 }
 
 export default {
-	setBlurBehindWindow(mainWindow: BrowserWindow, turnON: boolean = true): Promise<void> {
+	// value 的作用在 C++ 文件中定义。其中 0 代表关闭效果，1 代表开启效果，2 代表设置负边距
+	setBlurBehindWindow(mainWindow: BrowserWindow, value: number): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
 			const hWndBuffer = mainWindow!.getNativeWindowHandle();
 			const hWnd = hWndBuffer[0] + hWndBuffer[1] * 2**8 + hWndBuffer[2] * 2**16 + hWndBuffer[3] * 2**24;
 			callHelper((helper) => {
-				// console.log('helper', helper);
-				helper.stdin!.write(`2${turnON ? '1' : '0'}${hWnd.toString().padStart(8, '0')}`);
+				// console.log('helper write', `2${value}${hWnd.toString().padStart(8, '0')}`);
+				helper.stdin!.write(`2${value}${hWnd.toString().padStart(8, '0')}`);
 			}).then(() => {
 				resolve();
 			}).catch((err) => {

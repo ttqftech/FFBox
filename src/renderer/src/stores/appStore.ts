@@ -664,6 +664,11 @@ export const useAppStore = defineStore('app', {
 			}
 
 			document.body.className = 这.frontendSettings.colorTheme;
+			if (这.frontendSettings.colorTheme === 'themeAcrylic') {
+				nodeBridge.setBlurBehindWindow(true);
+			} else {
+				nodeBridge.setBlurBehindWindow(false);
+			}
 			// document.body.setAttribute('data-color_theme', 这.frontendSettings.colorTheme);
 		},
 		
