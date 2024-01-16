@@ -8,17 +8,19 @@ import nodeBridge from '@renderer/bridges/nodeBridge';
 import { showEnvironmentInfo } from '@renderer/components/misc/EnvironmentInfo'
 import SponsorPanel from './MenuCenter/SponsorPanel.vue';
 import LocalSettings from './MenuCenter/LocalSettings.vue';
+import Terms from './MenuCenter/Terms.vue';
 import IconSidebarSponsor from '@renderer/assets/menuCenter/sponsor.svg?component';
 import IconSidebarSettings from '@renderer/assets/menuCenter/settings.svg?component';
+import IconSidebarTerm from '@renderer/assets/menuCenter/term.svg?component';
 
 const appStore = useAppStore();
 
-const sidebarIcons = [IconSidebarSettings, IconSidebarSponsor];
-const sidebarTexts = ['设置', '支持作者'];
+const sidebarIcons = [IconSidebarSettings, IconSidebarSponsor, IconSidebarTerm];
+const sidebarTexts = ['设置', '支持作者', '使用条款'];
 const sidebarColors = computed(() => 
 	appStore.frontendSettings.colorTheme === 'themeLight'
-		? ['hwb(195 0% 10%)', 'hwb(315 0% 0%)']
-		: ['hwb(195 5% 5%)', 'hwb(315 20% 5%)']
+		? ['hwb(195 0% 10%)', 'hwb(315 0% 0%)', 'hwb(35 10% 10%)']
+		: ['hwb(195 5% 5%)', 'hwb(315 20% 5%)', 'hwb(35 10% 20%)']
 );
 const animationName = ref('animationUp');
 
@@ -370,7 +372,7 @@ onMounted(() => {
 		<div class="lrCenter">
 			<div>
 				<div class="selectors">
-					<button v-for="index in [0, 1]" :key="index" :aria-label="sidebarTexts[index] + '参数'" @click="handleParaButtonClicked(index)">
+					<button v-for="index in [0, 1, 2]" :key="index" :aria-label="sidebarTexts[index]" @click="handleParaButtonClicked(index)">
 						<component :is="sidebarIcons[index]" :style="getButtonColorStyle(index)" />
 						<span :style="getButtonColorStyle(index)">{{ sidebarTexts[index] }}</span>
 					</button>
@@ -381,6 +383,9 @@ onMounted(() => {
 					</Transition>
 					<Transition :name="animationName">
 						<SponsorPanel v-if="selectedPanelIndex === 1" />
+					</Transition>
+					<Transition :name="animationName">
+						<Terms v-if="selectedPanelIndex === 2" />
 					</Transition>
 				</div>
 			</div>
@@ -554,12 +559,13 @@ onMounted(() => {
 					svg {
 						width: 24px;
 						height: 24px;
+						margin: 0 2px 0 4px;
 						vertical-align: middle;
 						filter: var(--paraBoxButtonDropFilterSvg);
 					}
 					span {
 						display: inline-block;
-						// width: 32px;
+						width: 80px;
 						vertical-align: -4.5px;
 						padding-left: 4px;
 						letter-spacing: 2px;

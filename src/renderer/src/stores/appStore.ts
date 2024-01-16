@@ -625,7 +625,6 @@ export const useAppStore = defineStore('app', {
 		// #region 其他
 		async activate(userInput: string, callback: (result: number | false) => any) {
 			const 这 = useAppStore();
-			let cryptoJS = nodeBridge.cryptoJS;
 			if (nodeBridge.env === 'electron') {
 				/**
 				 * 客户端和管理端均使用机器码 + 固定码共 32 位作为 key
@@ -635,8 +634,8 @@ export const useAppStore = defineStore('app', {
 				const machineCode = await (nodeBridge.localStorage.get('userinfo.machineCode') || '') as string;
 				const fixedCode = 'd324c697ebfc42b7';
 				const key = machineCode + fixedCode;
-				const decrypted = cryptoJS.AES.decrypt(userInput, key)
-				const decryptedString = cryptoJS.enc.Utf8.stringify(decrypted);
+				const decrypted = CryptoJS.AES.decrypt(userInput, key)
+				const decryptedString = CryptoJS.enc.Utf8.stringify(decrypted);
 				if (parseInt(decryptedString).toString() === decryptedString) {
 					这.functionLevel = parseInt(decryptedString);
 					这.currentServer.entity.activate(machineCode, userInput);

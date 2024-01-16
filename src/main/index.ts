@@ -1,7 +1,8 @@
 import { app, dialog, BrowserWindow, ipcMain, Menu, shell } from 'electron';
 // import ElectronStore from 'electron-store';
 import { exec } from 'child_process';
-import * as path from 'path';
+import path from 'path';
+import fs from 'fs/promises';
 import { TransferStatus } from '@common/types';
 import ProcessInstance from '@common/processInstance';
 import { convertFFBoxMenuToElectronMenuTemplate, getOs } from './utils';
@@ -114,7 +115,7 @@ class ElectronApp {
 			const url = `http://${process.env['VITE_DEV_SERVER_HOST']}:${process.env['VITE_DEV_SERVER_PORT']}`;
 	
 			mainWindow.loadURL(url);
-			// mainWindow.webContents.openDevTools();
+			mainWindow.webContents.openDevTools();
 		}
 	
 		mainWindow.on('close', (e) => {
@@ -274,6 +275,16 @@ class ElectronApp {
 		ipcMain.on('zoomPage', (event, type: 'in' | 'out' | 'reset') => {
 			const finalZoomLevel = type === 'reset' ? 0 : this.mainWindow.webContents.zoomLevel + (type === 'in' ? 1 : -1);
 			this.mainWindow.webContents.setZoomLevel(finalZoomLevel);
+		});
+
+		ipcMain.handle('readLicense', () => {
+			return new Promise((resolve) => {
+				fs.readFile('./LICENSE', { encoding: 'utf-8' }).then((data) => {
+					resolve(data);
+				}).catch(() => {
+					resolve(undefined);
+				});
+			});
 		});
 
 		// 半透明窗体

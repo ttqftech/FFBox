@@ -1,7 +1,6 @@
 // import _ElectronStore from 'electron-store';
 import { IpcRenderer } from 'electron';
 import { ChildProcess } from 'child_process';
-import CryptoJS from 'crypto-js';
 import { getEnv } from '@common/utils';
 
 // let ElectronStore: typeof _ElectronStore, electronStore: _ElectronStore;
@@ -137,10 +136,6 @@ export default {
 		return window.jsb?.exec;
 	},
 
-	get cryptoJS(): typeof CryptoJS {
-		return CryptoJS;
-	},
-
 	get os(): 'Windows' | 'Linux' | 'MacOS' | 'Unix' | 'Android' | 'iPadOS' | 'iOS' | 'unknown' {
 		// TODO this.isElectron 不可用
 		if (this.isElectron) {
@@ -237,5 +232,9 @@ export default {
 
 	zoomPage(type: 'in' | 'out' | 'reset') {
 		window.jsb?.ipcRenderer?.send('zoomPage', type);
+	},
+
+	readLicense(): Promise<string | undefined> {
+		return window.jsb?.ipcRenderer?.invoke('readLicense');
 	}
 }

@@ -15,7 +15,6 @@ const dataRadixList: RadioListProps['list'] = [
 const colorThemeList: RadioListProps['list'] = [
 	{ value: 'themeLight', caption: '浅色' },
 	{ value: 'themeDark', caption: '深色' },
-	{ value: 'themeAcrylic', caption: '毛玻璃', disabled: true },
 ];
 const progressModeList: RadioListProps['list'] = [
 	{ value: '预测实时值', disabled: true },
