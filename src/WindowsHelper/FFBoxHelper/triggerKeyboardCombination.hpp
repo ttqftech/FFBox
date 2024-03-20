@@ -1,8 +1,8 @@
-#pragma once
+ï»¿#pragma once
 #include <Windows.h>
 #include <iostream>
 
-//////////////// ÀàÐÍ¶¨Òå ////////////////
+//////////////// ç±»åž‹å®šä¹‰ ////////////////
 
 // typedef BOOL(WINAPI* pfnGetWindowRect)(HWND, LPRECT);
 // typedef HMENU(WINAPI* pfnGetSystemMenu)(HWND, BOOL);
@@ -10,7 +10,7 @@
 // typedef BOOL(WINAPI* pfnTrackPopupMenuEx)(HMENU, UINT, int, int, HWND, LPTPMPARAMS);
 // typedef LRESULT(WINAPI* pfnSendMessage)(HWND, UINT, WPARAM, LPARAM);
 
-//////////////// º¯ÊýÊµÏÖ ////////////////
+//////////////// å‡½æ•°å®žçŽ° ////////////////
 
 bool triggerKeyboardCombination(int index) {
 	std::cout << "triggerKeyboardCombination: " << index << std::endl;
@@ -20,9 +20,9 @@ bool triggerKeyboardCombination(int index) {
 	switch (index)
 	{
 	case 0: {
-		// µ¯³ö SystemMenu£¨Alt + Space£©
+		// å¼¹å‡º SystemMenuï¼ˆAlt + Spaceï¼‰
 
-		// // ¼ì²é API ¿ÉÓÃÐÔ
+		// // æ£€æŸ¥ API å¯ç”¨æ€§
 		// HMODULE hUser = LoadLibrary(L"user32.dll");
 		// auto getWindowRect = (pfnGetWindowRect)GetProcAddress(hUser, "GetWindowRect");
 		// auto getSystemMenu = (pfnGetSystemMenu)GetProcAddress(hUser, "GetSystemMenu");
@@ -30,7 +30,7 @@ bool triggerKeyboardCombination(int index) {
 		// auto trackPopupMenuEx = (pfnTrackPopupMenuEx)GetProcAddress(hUser, "TrackPopupMenuEx");
 		// // auto sendMessage = (pfnSendMessage)GetProcAddress(hUser, "SendMessageA");
 
-		// // ½øÐÐ´¦Àí
+		// // è¿›è¡Œå¤„ç†
 		// RECT pos;
 		// getWindowRect((HWND)hWnd, &pos);
 		// HMENU hMenu = getSystemMenu((HWND)hWnd, false);
@@ -40,10 +40,10 @@ bool triggerKeyboardCombination(int index) {
 		// // 	result = sendMessage((HWND)hWnd, 0x112, cmd, 0);
 		// // }
 		// if (cmd == 0) {
-		// 	std::cout << "Ö´ÐÐ´íÎó£º" << GetLastError() << std::endl;
+		// 	std::cout << "æ‰§è¡Œé”™è¯¯ï¼š" << GetLastError() << std::endl;
 		// }
 		// else {
-		// 	std::cout << "Ö´ÐÐ½á¹û£º" << cmd << std::endl;
+		// 	std::cout << "æ‰§è¡Œç»“æžœï¼š" << cmd << std::endl;
 		// }
 
 		INPUT inputs[4] = {};
@@ -68,7 +68,7 @@ bool triggerKeyboardCombination(int index) {
 		break;
 	}
 	case 1: {
-		// µ¯³ö Snap Layout£¨Windows 11£©
+		// å¼¹å‡º Snap Layoutï¼ˆWindows 11ï¼‰
 
 		INPUT inputs[4] = {};
 		ZeroMemory(inputs, sizeof(inputs));
@@ -94,7 +94,7 @@ bool triggerKeyboardCombination(int index) {
 	}
 	if (!success)
 	{
-		std::cout << "½á¹û£ºÊ§°Ü£º" << GetLastError();
+		std::cout << "ç»“æžœï¼šå¤±è´¥ï¼š" << GetLastError();
 	}
 	return true;
 }

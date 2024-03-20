@@ -1,8 +1,10 @@
 import { ChildProcess } from 'child_process';
 import { BrowserWindow } from 'electron';
 import { spawnInvoker } from '@common/spawnInvoker';
+import { getSingleArgvValue } from '@common/utils';
 
 let helper: ChildProcess | undefined = undefined;
+const launchedByHelper = getSingleArgvValue('--lbh') ? true : false;
 
 /**
  * 保证 FFBoxHelper 已启动，否则再次启动
@@ -11,22 +13,13 @@ let helper: ChildProcess | undefined = undefined;
  * 如果没有找到 FFBoxHelper，则 reject
  * 如果 nodeBridge 不可用，也直接 reject
  */
-function callHelper<T>(func: (helper: ChildProcess) => Promise<T> | T): Promise<T> {
+function invokeHelper<T>(func: (helper: ChildProcess) => Promise<T> | T): Promise<T> {
 	return new Promise<T>((resolve, reject) => {
 		/**
 		 * 在 helper 存在的情况下执行相应的传入函数
 		 */
 		function callCorrespondingFunction(helper: ChildProcess) {
-			let ret = func(helper);
-			if (ret instanceof Promise) {
-				ret.then((value) => {
-					resolve(value);
-				}).catch((reason) => {
-					reject(reason);
-				});
-			} else {
-				resolve(ret);
-			}
+			func(helper);
 		}
 
 		// 检查 helper 是否存活
@@ -34,7 +27,7 @@ function callHelper<T>(func: (helper: ChildProcess) => Promise<T> | T): Promise<
 			callCorrespondingFunction(helper);
 		} else {
 			console.warn('正在启动 helper');
-			spawnInvoker('FFBoxHelper.exe', [], {
+			spawnInvoker('FFBoxHelper.exe', ['--standalone'], {
 				detached: false,
 				shell: false,
 				// encoding: 'utf8'
@@ -68,16 +61,23 @@ function callHelper<T>(func: (helper: ChildProcess) => Promise<T> | T): Promise<
 	});
 }
 
+function callHelper<T>(message: string): Promise<T> {
+	return new Promise<T>((resolve, reject) => {
+		if (launchedByHelper) {
+			console.log(message);
+		} else {
+			return invokeHelper((helper) => helper.stdin!.write(message));
+		}
+	});
+}
+
 export default {
 	// value 的作用在 C++ 文件中定义。其中 0 代表关闭效果，1 代表开启效果，2 代表设置负边距
 	setBlurBehindWindow(mainWindow: BrowserWindow, value: number): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
 			const hWndBuffer = mainWindow!.getNativeWindowHandle();
 			const hWnd = hWndBuffer[0] + hWndBuffer[1] * 2**8 + hWndBuffer[2] * 2**16 + hWndBuffer[3] * 2**24;
-			callHelper((helper) => {
-				// console.log('helper write', `2${value}${hWnd.toString().padStart(8, '0')}`);
-				helper.stdin!.write(`2${value}${hWnd.toString().padStart(8, '0')}`);
-			}).then(() => {
+			callHelper(`2${value}${hWnd.toString().padStart(8, '0')}`).then(() => {
 				resolve();
 			}).catch((err) => {
 				reject(err);
@@ -85,13 +85,9 @@ export default {
 		});
 	},
 	triggerSystemMenu(): Promise<void> {
-		return callHelper((helper) => {
-			helper.stdin!.write(`30${'0'.padStart(8, '0')}`);
-		});
+		return callHelper(`30${'0'.padStart(8, '0')}`);
 	},
 	triggerSnapLayout(): Promise<void> {
-		return callHelper((helper) => {
-			helper.stdin!.write(`30${'1'.padStart(8, '0')}`);
-		});
+		return callHelper(`30${'1'.padStart(8, '0')}`);
 	},
 }

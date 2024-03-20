@@ -221,6 +221,10 @@ export default {
 	triggerSnapLayout(): void {
 		window.jsb?.ipcRenderer?.send('triggerSnapLayout');
 	},
+
+	appReady(): void {
+		window.jsb?.ipcRenderer?.send('appReady');
+	},
 	
 	setApplicationMenu(menu: any): void {
 		window.jsb?.ipcRenderer?.send('setApplicationMenu', JSON.stringify(menu));

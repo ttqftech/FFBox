@@ -68,3 +68,5 @@ const jsb = {
 };
 
 contextBridge.exposeInMainWorld('jsb', jsb);
+ipcRenderer.send('rendererReady');
+

@@ -4,10 +4,6 @@ import { useAppStore } from '@renderer/stores/appStore';
 
 const appStore = useAppStore();
 
-const languageList: RadioListProps['list'] = [
-	{ value: 'Mandarin (cmn)', disabled: true },
-	{ value: '粤语 (yue)', disabled: true },
-];
 const dataRadixList: RadioListProps['list'] = [
 	{ value: '1000 进制 (SI)', disabled: true },
 	{ value: '1024 进制 (IEC)', disabled: true },
@@ -31,8 +27,6 @@ const handleSettingChange = (key: 'colorTheme', value: any) => {
 <template>
 	<div>
 		<div class="localSettings">
-			<span>语言</span>
-			<RadioList :list="languageList" value="Mandarin (zho)" />
 			<span>数据量进制和词头</span>
 			<RadioList :list="dataRadixList" value="1000 进制 (SI)" />
 			<span>颜色主题</span>

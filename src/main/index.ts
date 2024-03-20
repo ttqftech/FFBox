@@ -2,23 +2,55 @@ import { app, dialog, BrowserWindow, ipcMain, Menu, shell } from 'electron';
 // import ElectronStore from 'electron-store';
 import { exec } from 'child_process';
 import path from 'path';
+import CryptoJS from 'crypto-js';
 import fs from 'fs/promises';
 import { TransferStatus } from '@common/types';
+import { getSingleArgvValue } from '@common/utils';
 import ProcessInstance from '@common/processInstance';
 import { convertFFBoxMenuToElectronMenuTemplate, getOs } from './utils';
 import osBridge from './osBridge';
 import * as mica from './mica';
-// import { electronApp, optimizer, is } from '@electron-toolkit/utils';
 // import { FFBoxService } from './service/FFBoxService';
+
+import net from 'net';
+const pipefile = "\\\\.\\pipe\\FFBoxPipe";
 
 class ElectronApp {
 	mainWindow: BrowserWindow | null = null;
 	// electronStore: ElectronStore;
 	service: ProcessInstance | null = null;
 	blockWindowClose = true;
+	launchedByHelper = false;
+	pipeConnection: net.Socket;
 
 	constructor() {
+		this.launchedByHelper = getSingleArgvValue('--lbh') ? true : false;
+		this.launchedByHelper = true;
 		this.mountAppEvents();
+	}
+
+	initPipe() {
+		return new Promise((resolve, reject) => {
+			const client = net.createConnection(pipefile, () => {
+				this.pipeConnection = client;
+				client.write('4000000001'); // FFBox electron 主进程启动完成
+				resolve(this.pipeConnection);
+			});
+			client.on('close', (hasError) => {
+				this.launchedByHelper = false;
+				this.pipeConnection = undefined;
+			});
+			client.on('end', () => {
+				console.log('FFBoxHelper 进程管道断开连接，退回独立模式');
+			});
+			client.on('error', (e: any) => {
+				if (e.errno === -4058) {
+					// ENOENT，会触发 close
+					// console.log('FFBoxHelper 进程管道创建失败，退回独立模式');
+					resolve(undefined);
+				}
+			});
+		});
 	}
 
 	mountAppEvents(): void {
@@ -27,10 +59,13 @@ class ElectronApp {
 			app.quit();
 			process.exit(0);
 		}
-		app.whenReady().then(() => {
+		app.whenReady().then(async () => {
 			if (process.platform === 'win32') {
 				app.setAppUserModelId(app.getName());
 			}
+			if (this.launchedByHelper) {
+				await this.initPipe();
+			}	
 			this.createMainWindow();
 			this.mountIpcEvents();
 		});
@@ -99,6 +134,9 @@ class ElectronApp {
 
 		mainWindow.once('ready-to-show', () => {
 			mainWindow!.show();
+			if (this.launchedByHelper) {
+				this.pipeConnection.write('4000000004'); // FFBox 窗口展示完成
+			}
 		});
 
 		// HMR for renderer base on electron-vite cli.
@@ -161,7 +199,11 @@ class ElectronApp {
 		this.service = new ProcessInstance();
 		// 目前做不了进程分离，因为启动的时候会瞬间弹一个黑框，十分不优雅。等后期给选项让用户决定行为再去做：https://github.com/nodejs/node/issues/21825
 		// return this.service.start('FFBoxService.exe', [], { detached: true, stdio: 'ignore', windowsHide: true, shell: false });
-		return this.service.start('FFBoxService.exe');
+		return this.service.start('FFBoxService.exe').then(() => {
+			if (this.launchedByHelper) {
+				this.pipeConnection.write('4000000016'); // FFBox 服务启动成功
+			}	
+		});
 	}
 
 	mountIpcEvents(): void {
@@ -254,6 +296,8 @@ class ElectronApp {
 		// osBridge 系列
 		ipcMain.on('triggerSystemMenu', () => osBridge.triggerSystemMenu());
 		ipcMain.on('triggerSnapLayout', () => osBridge.triggerSnapLayout());
+		ipcMain.on('appReady', () => this.launchedByHelper && this.pipeConnection.write('4000000008')); // FFBox App 应用初始化完毕
+		ipcMain.on('rendererReady', () => this.launchedByHelper && this.pipeConnection.write('4000000002')); // FFBox 渲染进程初始化完毕
 
 		// 应用菜单更新
 		ipcMain.on('setApplicationMenu', (event, menuStr: string) => {
@@ -277,10 +321,16 @@ class ElectronApp {
 			this.mainWindow.webContents.setZoomLevel(finalZoomLevel);
 		});
 
+		// 读取 LICENSE 文件
 		ipcMain.handle('readLicense', () => {
 			return new Promise((resolve) => {
 				fs.readFile('./LICENSE', { encoding: 'utf-8' }).then((data) => {
-					resolve(data);
+					const cipherText = CryptoJS.SHA1(data);
+					if (cipherText.toString() === '4e994ccf17287387cf8bf155ad40f30ad5ca5f38') {
+						resolve(data);
+					} else {
+						resolve(undefined);
+					}
 				}).catch(() => {
 					resolve(undefined);
 				});

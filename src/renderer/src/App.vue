@@ -69,6 +69,10 @@ onMounted(() => {
 			appStore.applyFrontendSettings(false);
 		}
 	})();
+
+	setTimeout(() => {
+		nodeBridge.appReady();
+	}, 0);
 });
 </script>
 

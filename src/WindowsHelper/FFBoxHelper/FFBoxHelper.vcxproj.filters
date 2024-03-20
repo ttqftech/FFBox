@@ -29,5 +29,14 @@
     <ClInclude Include="triggerKeyboardCombination.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="splashScreen.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="stateMachine.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="common.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
