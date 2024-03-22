@@ -31,7 +31,7 @@ watch(
 			[NaN, WorkingStatus.running, WorkingStatus.paused, WorkingStatus.stopped].findIndex((value) => value === appStore.currentServer?.data?.workingStatus)
 		] as any;
 		nodeBridge.setProgressBar(
-			appStore.currentServer?.data?.workingStatus !== WorkingStatus.stopped ? appStore.currentServer.data.progress * 0.99 + 0.01 : 0,
+			appStore.currentServer?.data?.workingStatus !== WorkingStatus.stopped ? appStore.currentServer.data.progress : 0,
 			{ mode },
 		);
 	}
@@ -64,7 +64,7 @@ const handleTabCloseClicked = (serverId: string, event: MouseEvent) => {
 						<div class="progress progress-green" :style="{...serverStyle[server.data.id].colorStyle, opacity: server.data.workingStatus === WorkingStatus.running ? 1 : 0}" />
 						<div class="progress progress-yellow" :style="{...serverStyle[server.data.id].colorStyle, opacity: server.data.workingStatus === WorkingStatus.paused ? 1 : 0}" />
 						<span>{{ serverStyle[server.data.id].text }}</span>
-						<div class="close" v-if="server.entity.ip !== 'localhost'" @click="handleTabCloseClicked(server.data.id, $event)">
+						<div class="close" v-if="server.entity.ip !== 'localhost' && appStore.servers.length > 1" @click="handleTabCloseClicked(server.data.id, $event)">
 							<IconX />
 						</div>
 					</div>

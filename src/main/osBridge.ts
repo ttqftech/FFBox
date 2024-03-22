@@ -1,10 +1,11 @@
 import { ChildProcess } from 'child_process';
+import net from 'net';
 import { BrowserWindow } from 'electron';
 import { spawnInvoker } from '@common/spawnInvoker';
-import { getSingleArgvValue } from '@common/utils';
 
 let helper: ChildProcess | undefined = undefined;
-const launchedByHelper = getSingleArgvValue('--lbh') ? true : false;
+let pipeConnection: net.Socket;
+const pipeUrl = "\\\\.\\pipe\\FFBoxPipe";
 
 /**
  * 保证 FFBoxHelper 已启动，否则再次启动
@@ -63,8 +64,8 @@ function invokeHelper<T>(func: (helper: ChildProcess) => Promise<T> | T): Promis
 
 function callHelper<T>(message: string): Promise<T> {
 	return new Promise<T>((resolve, reject) => {
-		if (launchedByHelper) {
-			console.log(message);
+		if (pipeConnection) {
+			pipeConnection.write(message);
 		} else {
 			return invokeHelper((helper) => helper.stdin!.write(message));
 		}
@@ -72,6 +73,34 @@ function callHelper<T>(message: string): Promise<T> {
 }
 
 export default {
+	initPipe() {
+		return new Promise((resolve, reject) => {
+			const client = net.createConnection(pipeUrl, () => {
+				pipeConnection = client;
+				client.write('4000000001'); // FFBox electron 主进程启动完成
+				resolve(pipeConnection);
+			});
+			client.on('close', (hasError) => {
+				pipeConnection = undefined;
+			});
+			client.on('end', () => {
+				console.log('FFBoxHelper 进程管道断开连接，退回独立模式');
+			});
+			client.on('error', (e: any) => {
+				if (e.errno === -4058) {
+					// ENOENT，会触发 close
+					// console.log('FFBoxHelper 进程管道创建失败，退回独立模式');
+					resolve(undefined);
+				}
+			});
+		});
+	},
+	sendLoadStatus(type: 'main' | 'renderer' | 'show' | 'app' | 'service') {
+		if (pipeConnection) {
+			pipeConnection.write(['4000000001', '4000000002', '4000000004', '4000000008', '4000000016', ][['main', 'renderer', 'show', 'app', 'service'].indexOf(type)]);
+		}
+	},
+
 	// value 的作用在 C++ 文件中定义。其中 0 代表关闭效果，1 代表开启效果，2 代表设置负边距
 	setBlurBehindWindow(mainWindow: BrowserWindow, value: number): Promise<void> {
 		return new Promise<void>((resolve, reject) => {

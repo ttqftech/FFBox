@@ -60,7 +60,10 @@ const jsb = {
             if (typeof level === 'number') {
                 webFrame.setZoomLevel(level);
             }
-        }
+        },
+        get zoomLevel() {
+            return webFrame.getZoomLevel();
+        },
     },
     process,
     spawn: () => {},

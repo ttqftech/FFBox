@@ -198,7 +198,7 @@ export default {
 		window.jsb?.ipcRenderer?.send('flashFrame', value);
 	},
 
-	setProgressBar(progress: number, options?: Electron.ProgressBarOptions | undefined): void {
+	setProgressBar(progress: number, options: Electron.ProgressBarOptions | undefined): void {
 		window.jsb?.ipcRenderer?.send('setProgressBar', progress, options);
 	},
 
@@ -235,7 +235,11 @@ export default {
 	},
 
 	zoomPage(type: 'in' | 'out' | 'reset') {
-		window.jsb?.ipcRenderer?.send('zoomPage', type);
+		if (window.jsb) {
+			const webFrame = window.jsb.webFrame;
+			const finalZoomLevel = type === 'reset' ? 0 : webFrame.zoomLevel + (type === 'in' ? 1 : -1);
+			webFrame.setZoomLevel(finalZoomLevel);
+		}
 	},
 
 	readLicense(): Promise<string | undefined> {

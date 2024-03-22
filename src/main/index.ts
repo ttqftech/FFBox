@@ -5,52 +5,21 @@ import path from 'path';
 import CryptoJS from 'crypto-js';
 import fs from 'fs/promises';
 import { TransferStatus } from '@common/types';
-import { getSingleArgvValue } from '@common/utils';
 import ProcessInstance from '@common/processInstance';
 import { convertFFBoxMenuToElectronMenuTemplate, getOs } from './utils';
 import osBridge from './osBridge';
 import * as mica from './mica';
 // import { FFBoxService } from './service/FFBoxService';
 
-import net from 'net';
-const pipefile = "\\\\.\\pipe\\FFBoxPipe";
 
 class ElectronApp {
 	mainWindow: BrowserWindow | null = null;
 	// electronStore: ElectronStore;
 	service: ProcessInstance | null = null;
 	blockWindowClose = true;
-	launchedByHelper = false;
-	pipeConnection: net.Socket;
 
 	constructor() {
-		this.launchedByHelper = getSingleArgvValue('--lbh') ? true : false;
-		this.launchedByHelper = true;
 		this.mountAppEvents();
-	}
-
-	initPipe() {
-		return new Promise((resolve, reject) => {
-			const client = net.createConnection(pipefile, () => {
-				this.pipeConnection = client;
-				client.write('4000000001'); // FFBox electron 主进程启动完成
-				resolve(this.pipeConnection);
-			});
-			client.on('close', (hasError) => {
-				this.launchedByHelper = false;
-				this.pipeConnection = undefined;
-			});
-			client.on('end', () => {
-				console.log('FFBoxHelper 进程管道断开连接，退回独立模式');
-			});
-			client.on('error', (e: any) => {
-				if (e.errno === -4058) {
-					// ENOENT，会触发 close
-					// console.log('FFBoxHelper 进程管道创建失败，退回独立模式');
-					resolve(undefined);
-				}
-			});
-		});
 	}
 
 	mountAppEvents(): void {
@@ -63,9 +32,7 @@ class ElectronApp {
 			if (process.platform === 'win32') {
 				app.setAppUserModelId(app.getName());
 			}
-			if (this.launchedByHelper) {
-				await this.initPipe();
-			}	
+			await osBridge.initPipe();
 			this.createMainWindow();
 			this.mountIpcEvents();
 		});
@@ -134,9 +101,7 @@ class ElectronApp {
 
 		mainWindow.once('ready-to-show', () => {
 			mainWindow!.show();
-			if (this.launchedByHelper) {
-				this.pipeConnection.write('4000000004'); // FFBox 窗口展示完成
-			}
+			osBridge.sendLoadStatus('show');
 		});
 
 		// HMR for renderer base on electron-vite cli.
@@ -199,11 +164,7 @@ class ElectronApp {
 		this.service = new ProcessInstance();
 		// 目前做不了进程分离，因为启动的时候会瞬间弹一个黑框，十分不优雅。等后期给选项让用户决定行为再去做：https://github.com/nodejs/node/issues/21825
 		// return this.service.start('FFBoxService.exe', [], { detached: true, stdio: 'ignore', windowsHide: true, shell: false });
-		return this.service.start('FFBoxService.exe').then(() => {
-			if (this.launchedByHelper) {
-				this.pipeConnection.write('4000000016'); // FFBox 服务启动成功
-			}	
-		});
+		return this.service.start('FFBoxService.exe').then(() => osBridge.sendLoadStatus('service'));
 	}
 
 	mountIpcEvents(): void {
@@ -267,8 +228,9 @@ class ElectronApp {
 		});
 
 		// 设置任务栏 / dock 进度状态
-		ipcMain.on('setProgressBar', (event, progress: number, options?: Electron.ProgressBarOptions | undefined) => {
-			this.mainWindow!.setProgressBar(progress, options);
+		ipcMain.on('setProgressBar', (event, progress: number, options: Electron.ProgressBarOptions | undefined) => {
+			this.mainWindow!.setProgressBar(progress * 0.99 + 0.01, options);
+			this.mainWindow!.setTitle(`FFBox${['normal', 'paused'].includes(options.mode) ? ` - ${(progress * 100).toFixed(0)}%` : ''}`);
 		});
 
 		// 打开开发者工具
@@ -296,8 +258,8 @@ class ElectronApp {
 		// osBridge 系列
 		ipcMain.on('triggerSystemMenu', () => osBridge.triggerSystemMenu());
 		ipcMain.on('triggerSnapLayout', () => osBridge.triggerSnapLayout());
-		ipcMain.on('appReady', () => this.launchedByHelper && this.pipeConnection.write('4000000008')); // FFBox App 应用初始化完毕
-		ipcMain.on('rendererReady', () => this.launchedByHelper && this.pipeConnection.write('4000000002')); // FFBox 渲染进程初始化完毕
+		ipcMain.on('appReady', () => osBridge.sendLoadStatus('app'));
+		ipcMain.on('rendererReady', () => osBridge.sendLoadStatus('renderer'));
 
 		// 应用菜单更新
 		ipcMain.on('setApplicationMenu', (event, menuStr: string) => {
@@ -315,12 +277,6 @@ class ElectronApp {
 			});
 		});
 		  
-		// 界面放大缩小
-		ipcMain.on('zoomPage', (event, type: 'in' | 'out' | 'reset') => {
-			const finalZoomLevel = type === 'reset' ? 0 : this.mainWindow.webContents.zoomLevel + (type === 'in' ? 1 : -1);
-			this.mainWindow.webContents.setZoomLevel(finalZoomLevel);
-		});
-
 		// 读取 LICENSE 文件
 		ipcMain.handle('readLicense', () => {
 			return new Promise((resolve) => {

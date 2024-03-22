@@ -405,12 +405,6 @@ const nvencPreset: NarrowedMenuItem[] = [
 		type: 'normal',
 		value: 'p4',
 		label: 'p4',
-		tooltip: '',
-	},
-	{
-		type: 'normal',
-		value: 'p4',
-		label: 'p4',
 		tooltip: 'medium (default)',
 	},
 	{

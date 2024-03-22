@@ -188,6 +188,7 @@ export declare interface WebFrame {
      *
      * The factor must be greater than 0.0.
      */
+    openDevTools(): void;
     setZoomFactor(factor: number): void;
     /**
      * Changes the zoom level to the specified level. The original size is 0 and each
@@ -200,6 +201,7 @@ export declare interface WebFrame {
      * per-window.
      */
     setZoomLevel(level: number): void;
+    get zoomLevel(): number;
 }
 
 export { }

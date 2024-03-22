@@ -17,7 +17,15 @@
     {
       "from": "app/backend/index.exe",
       "to": "FFBoxService.exe",
-    }
+    },
+    {
+      "from": "FFBoxHelper.exe",
+      "to": "FFBoxHelper.exe",
+    },
+    {
+      "from": "LICENSE",
+      "to": "LICENSE",
+    },
   ],
   "mac": {
     "artifactName": "${productName}_${version}.${ext}",

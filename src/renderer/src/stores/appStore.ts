@@ -203,7 +203,9 @@ export const useAppStore = defineStore('app', {
 					if (newlyAddedTaskIds.length === fileCount) {
 						Promise.all(newlyAddedTaskIds).then((ids) => {
 							这.selectedTask = new Set(ids);
-							这.applySelectedTask();
+							// addTask 函数已经把当前的 globalParams 传了过去，因此后端在处理完成之后参数设置就与前端一样，无需 applySelectedTask
+							// 在进行到这个步骤的时候，还没有收到 taskUpdate，因此不能 applySelectedTask，否则会导致参数为空
+							// 这.applySelectedTask();
 						})
 					}
 				}, dropDelayCount);
@@ -601,15 +603,19 @@ export const useAppStore = defineStore('app', {
 				// entity.updateTaskList();
 				这.updateNotifications(server);
 			});
-			entity.on('disconnected', () => {
-				console.log(`已断开服务器 ${server.entity.ip} 的连接`);
-				for (const eventName of ['ffmpegVersion', 'workingStatusUpdate', 'tasklistUpdate', 'taskUpdate', 'cmdUpdate', 'progressUpdate', 'taskNotification'] as any[]) {
+			const destroy = () => {
+				for (const eventName of ['connected', 'disconnected', 'error', 'ffmpegVersion', 'workingStatusUpdate', 'tasklistUpdate', 'taskUpdate', 'cmdUpdate', 'progressUpdate', 'taskNotification'] as any[]) {
 					entity.removeAllListeners(eventName);
 				}
+			}
+			entity.on('disconnected', () => {
+				console.log(`已断开服务器 ${server.entity.ip} 的连接`);
+				destroy();
 				这.pushMsg(`已断开服务器 ${server.data.name} 的连接`, NotificationLevel.warning);
 			});
 			entity.on('error', () => {
 				console.log(`服务器 ${server.entity.ip} 连接出错，建议检查网络连接或防火墙`);
+				destroy();
 				这.pushMsg(`服务器 ${server.data.name} 连接出错，建议检查网络连接或防火墙`, NotificationLevel.error);
 			});
 		},
@@ -619,7 +625,7 @@ export const useAppStore = defineStore('app', {
 		reConnectServer(serverId: string) {
 			const 这 = useAppStore();
 			const server = 这.servers.find((server) => server.data.id === serverId) as Server;
-			server.entity.connect();
+			这.initializeServer(serverId, server.entity.ip, server.entity.port);
 		},
 		// #endregion 服务器处理
 		// #region 其他
