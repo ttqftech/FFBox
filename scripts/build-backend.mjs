@@ -1,4 +1,4 @@
-import ChildProcess, { spawn } from 'child_process';
+import ChildProcess, { spawnSync } from 'child_process';
 import path from 'path';
 import util from 'util';
 import { createServer, build } from 'vite';
@@ -9,8 +9,8 @@ const backendConfig = path.resolve('config/vite.backend.ts');
 // const backendConfig = path.join(__dirname, '../config/vite.backend.ts');
 // const backendConfig = require(path.join(__dirname, '../config/vite.backend.ts'));
 
-// const isMacOS = process.platform === 'darwin';
-// const npmExecutablePath = isMacOS ? 'npm' : 'npm.cmd';
+const isMacOS = process.platform === 'darwin';
+const npmExecutablePath = isMacOS ? 'npm' : 'npm.cmd';
 
 // 颜色信息可参考 https://misc.flogisoft.com/bash/tip_colors_and_formatting
 function wrapColor(color, msg) {
@@ -51,10 +51,12 @@ async function buildBackend() {
 	// const buildProcess = spawn(npmExecutablePath, ['run', 'vite:backend'], { stdio: true ? 'inherit' : 'pipe' });
 	// buildProcess.once('exit', process.exit);
 	console.log(wrapColor('light blue', '开始编译后端'));
-	build({
+	await build({
 		configFile: backendConfig,
 		mode: process.env.NODE_ENV === 'development' ? 'development' : 'production',
 	});
+	const buildProcess = spawnSync(npmExecutablePath, ['run', `pkg:backend:${isMacOS ? 'mac' :　'win'}`], { stdio: 'inherit' });
+	// buildProcess.once('exit', process.exit);
 }
 
 await injectProcessEnv();

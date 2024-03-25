@@ -501,15 +501,17 @@ export const useAppStore = defineStore('app', {
 		// #endregion 通知处理
 		// #region 服务器处理
 		/**
-		 * 获取 service 的 notifications 更新到本地
+		 * 获取 service 的版本和属性更新到本地
 		 */
-		updateServerVersion(server: Server) {
-			const 这 = useAppStore();
-			fetch(`http://${server.entity.ip}:${server.entity.port}/version`, {
-				method: 'get',
-			}).then((response) => {
-				response.text().then((text) => {
-					server.data.version = text;
+		updateServerProperties(server: Server) {
+			Promise.all([
+				fetch(`http://${server.entity.ip}:${server.entity.port}/version`, { method: 'get' }),
+				fetch(`http://${server.entity.ip}:${server.entity.port}/properties`, { method: 'get' }),
+			]).then(([versionResponse, propertiesResponse]) => {
+				versionResponse.text().then((text) => server.data.version = text);
+				propertiesResponse.json().then((obj) => {
+					server.data.os = obj.os;
+					server.data.isSandboxed = obj.isSandboxed;
 				});
 			});
 		},
@@ -596,7 +598,7 @@ export const useAppStore = defineStore('app', {
 					handleNotificationUpdate(server, data.notificationId, data.notification);
 				});
 
-				这.updateServerVersion(server);
+				这.updateServerProperties(server);
 				// 这.updateGlobalTask(server);
 				这.updateTask(server, -1);
 				这.updateTaskList(server);

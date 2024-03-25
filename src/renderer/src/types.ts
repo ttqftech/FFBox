@@ -42,6 +42,8 @@ export interface ServerData {
 	notifications: Notification[];
 	ffmpegVersion: string;
 	version?: string;
+	os?: 'Windows' | 'Linux' | 'MacOS' | 'unknown';
+	isSandboxed?: boolean;
 	workingStatus: WorkingStatus;
 	progress: number;	// 由每个任务更新时计算出来
 	overallProgressTimerID: any;

@@ -164,7 +164,7 @@ class ElectronApp {
 		this.service = new ProcessInstance();
 		// 目前做不了进程分离，因为启动的时候会瞬间弹一个黑框，十分不优雅。等后期给选项让用户决定行为再去做：https://github.com/nodejs/node/issues/21825
 		// return this.service.start('FFBoxService.exe', [], { detached: true, stdio: 'ignore', windowsHide: true, shell: false });
-		return this.service.start('FFBoxService.exe').then(() => osBridge.sendLoadStatus('service'));
+		return this.service.start(getOs() === 'Windows' ? 'FFBoxService.exe' : path.join(process.resourcesPath, 'FFBoxService')).then(() => osBridge.sendLoadStatus('service'));
 	}
 
 	mountIpcEvents(): void {

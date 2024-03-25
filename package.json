@@ -12,8 +12,9 @@
     "dev:frontend": "node scripts/dev-frontend.mjs",
     "build (无用)": "node scripts/build",
     "build:frontend": "node scripts/build-frontend.mjs",
-    "build:backend": "node scripts/build-backend.mjs && npm run pkg:backend",
-    "pkg:backend": "pkg --config ./config/pkg.config.json ./app/backend/index.cjs",
+    "build:backend": "node scripts/build-backend.mjs",
+    "pkg:backend:win": "pkg --config ./config/pkg.win.config.json ./app/backend/index.cjs",
+    "pkg:backend:mac": "pkg --config ./config/pkg.mac.config.json ./app/backend/index.cjs",
     "package": "electron-builder",
     "build:everything": "npm run build:frontend && npm run build:backend && npm run package"
   },

@@ -2,6 +2,8 @@ import CryptoJS from 'crypto-js';
 import { EventEmitter } from 'events';
 import os from 'os';
 import fs from 'fs';
+import fsPromise from 'fs/promises';
+import path from 'path';
 import { ServiceTask, TaskStatus, OutputParams, FFBoxServiceEvent, Notification, NotificationLevel, FFmpegProgress, WorkingStatus, FFBoxServiceInterface } from '@common/types';
 import { getFFmpegParaArray, getFFmpegParaArrayOutputPath } from '@common/getFFmpegParaArray';
 import { generator as fGenerator } from '@common/params/formats';
@@ -23,6 +25,7 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 	private latestTaskId = 0;
 	private workingStatus: WorkingStatus = WorkingStatus.stopped;
 	private ffmpegVersion = '';
+	private ffmpegPath = 'ffmpeg';
 	private globalTask: ServiceTask;
 	public notifications: Notification[] = [];
 	private latestNotificationId = 0;
@@ -30,7 +33,7 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 
 	constructor() {
 		super();
-		console.log(getTimeString(new Date()), '正在初始化 FFbox 服务。');
+		console.log(getTimeString(new Date()), '正在初始化 FFBox 服务。');
 		this.globalTask = getInitialServiceTask('');
 		this.tasklist[-1] = this.globalTask;
 		setTimeout(() => {
@@ -59,9 +62,17 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 	 * 检测 ffmpeg 版本，并调用 getFFmpegVersion
 	 * @emits ffmpegVersion
 	 */
-	public initFFmpeg(): void {
-		console.log(getTimeString(new Date()), '检查 FFmpeg 版本。');
-		const ffmpeg = new FFmpeg(1);
+	public async initFFmpeg(): Promise<void> {
+		console.log(getTimeString(new Date()), '检查 FFmpeg 路径和版本。');
+		if (process.platform === 'darwin') {
+			await fsPromise.access(path.join(process.execPath, 'ffmpeg'), fs.constants.R_OK).then((result) => {
+				this.ffmpegPath = path.join(process.execPath, 'ffmpeg');
+			}).catch(() => {});
+			await fsPromise.access('/usr/local/bin/ffmpeg', fs.constants.R_OK).then((result) => {
+				this.ffmpegPath = '/usr/local/bin/ffmpeg';
+			}).catch(() => {});
+		}
+		const ffmpeg = new FFmpeg(this.ffmpegPath, 1);
 		ffmpeg.on('data', ({ content }) => {
 			this.setCmdText(-1, content);
 		});
@@ -121,7 +132,7 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 	 */
 	private getFileMetadata(id: number, task: ServiceTask, filePath: string): void {
 		// FFmpeg 读取媒体信息
-		const ffmpeg = new FFmpeg(2, ['-hide_banner', '-i', filePath, '-f', 'null']);
+		const ffmpeg = new FFmpeg(this.ffmpegPath, 2, ['-hide_banner', '-i', filePath, '-f', 'null']);
 		ffmpeg.on('data', ({ content }) => {
 			this.setCmdText(id, content);
 		});
@@ -250,10 +261,10 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 		const filePath = task.after.input.files[0].filePath!; // 需要上传完成，状态为 TASK_STOPPED 时才能开始任务，因此 filePath 非空
 		let newFFmpeg: FFmpeg;
 		if (task.remoteTask) {
-			newFFmpeg = new FFmpeg(0, getFFmpegParaArray(task.after, false, undefined, undefined, `${os.tmpdir()}/FFBoxDownloadCache/${task.outputFile}`));
+			newFFmpeg = new FFmpeg(this.ffmpegPath, 0, getFFmpegParaArray(task.after, false, undefined, undefined, `${os.tmpdir()}/FFBoxDownloadCache/${task.outputFile}`));
 		} else {
 			task.outputFile = getFFmpegParaArrayOutputPath(task.after);
-			newFFmpeg = new FFmpeg(0, getFFmpegParaArray(task.after, false));
+			newFFmpeg = new FFmpeg(this.ffmpegPath, 0, getFFmpegParaArray(task.after, false));
 		}
 		newFFmpeg.on('finished', () => {
 			console.log(getTimeString(new Date()), `任务完成：${task.fileBaseName}。id：${id}。`);

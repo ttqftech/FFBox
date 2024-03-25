@@ -87,7 +87,7 @@ export default {
 				console.log('FFBoxHelper 进程管道断开连接，退回独立模式');
 			});
 			client.on('error', (e: any) => {
-				if (e.errno === -4058) {
+				if (e.errno === -4058 || e.errno === -2) { // 都是 ENOENT，但是在 Windows 下是 -4058，在 macOS 下是 -2
 					// ENOENT，会触发 close
 					// console.log('FFBoxHelper 进程管道创建失败，退回独立模式');
 					resolve(undefined);

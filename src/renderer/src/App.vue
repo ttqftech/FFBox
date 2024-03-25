@@ -43,6 +43,11 @@ onMounted(() => {
 		handleDownloadProgress(task, params);
 	});
 
+	// 挂载主进程 console 信息回传
+	nodeBridge.ipcRenderer.on("debugMessage", (event, ...message) => {
+		console.log(...message);
+	});
+
 	// 初始化或加载配置
 	appStore.loadPresetList();
 	(async () => {

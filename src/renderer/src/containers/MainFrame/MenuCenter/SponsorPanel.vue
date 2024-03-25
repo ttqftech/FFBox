@@ -210,7 +210,7 @@ onMounted(() => {
 	</div>
 </template>
 
-<style lang="less">
+<style scoped lang="less">
 	.paragram {
 		display: flex;
 		justify-content: center;

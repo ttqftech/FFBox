@@ -3,9 +3,9 @@
 // const selectString  = utils.selectString;
 // const replaceString = utils.replaceString;
 // const scanf = utils.scanf;
-import { spawnInvoker } from '@common/spawnInvoker';
 import { spawn, ChildProcess } from 'child_process';
 import EventEmitter from 'events';
+import { spawnInvoker } from '@common/spawnInvoker';
 import { selectString, replaceString, scanf, TypedEventEmitter } from '@common/utils';
 import osBridge from './osBridge';
 
@@ -47,10 +47,10 @@ export class FFmpeg extends (EventEmitter as new () => TypedEventEmitter<FFmpegI
 	/**
 	 * @param mode 0: 直接执行 ffmpeg　1: 检测 ffmpeg 版本　２：多媒体文件信息读取
 	 */
-	constructor(mode: 0 | 1 | 2, params?: Array<string>) {
+	constructor(path = 'ffmpeg', mode: 0 | 1 | 2 = 0, params?: Array<string>) {
 		super();
 		console.log('启动 ffmpeg：', (params || []).join(', '));
-		spawnInvoker('ffmpeg', params, {
+		spawnInvoker(path, params, {
 			detached: false,
 			// shell: mode == 1 ? true : false,	// 使用命令行以获得“'ffmpeg' 不是内部或外部命令，也不是可运行的程序”这样的提示
 			shell: false,

@@ -1,0 +1,8 @@
+{
+	"scripts": [],
+	"assets": [],
+	"targets": [
+		"node16-macos-arm64"
+	],
+	"outputPath": "app/backend"
+}

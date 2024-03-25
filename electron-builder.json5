@@ -19,6 +19,10 @@
       "to": "FFBoxService.exe",
     },
     {
+      "from": "app/backend/index",
+      "to": "Resources/FFBoxService",
+    },
+    {
       "from": "FFBoxHelper.exe",
       "to": "FFBoxHelper.exe",
     },

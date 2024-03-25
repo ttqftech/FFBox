@@ -10,8 +10,9 @@ import fs from 'fs';
 import os from 'os';
 import { FFBoxServiceEventApi, FFBoxServiceEventParam, FFBoxServiceFunctionApi } from '@common/types';
 import { version } from '@common/constants';
-import { FFBoxService } from './FFBoxService';
 import { getTimeString } from '@common/utils';
+import { getOs } from './utils';
+import { FFBoxService } from './FFBoxService';
 
 // let koaBody = require('koa-body');
 const isDev = true;
@@ -223,6 +224,16 @@ function getRouter(): Router {
 	// 获取 FFBoxService 版本
 	router.get('/version', async function (ctx) {
 		const result = version;
+		ctx.response.status = 200;
+		ctx.response.body = result;
+	});
+
+	// 获取 FFBoxService 各种信息
+	router.get('/properties', async function (ctx) {
+		const result = {
+			os: getOs(),
+			isSandboxed: process.cwd() === '/', // macOS 中，直接双击运行服务（无论是否在 app 内）会得到用户目录，在终端运行会得到终端当前目录，通过 FFBox 调用会得到 '/'
+		};
 		ctx.response.status = 200;
 		ctx.response.body = result;
 	});
