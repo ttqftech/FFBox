@@ -8,6 +8,7 @@ import koaMount from 'koa-mount';
 // import formidable from 'formidable';
 import fs from 'fs';
 import os from 'os';
+import path from 'path';
 import { FFBoxServiceEventApi, FFBoxServiceEventParam, FFBoxServiceFunctionApi } from '@common/types';
 import { version } from '@common/constants';
 import { getTimeString } from '@common/utils';
@@ -69,6 +70,9 @@ const uiBridge = {
 			ctx.response.set('Access-Control-Allow-Origin', '*');
 			ctx.response.set('Access-Control-Allow-Headers', 'Content-Type');
 			ctx.response.set('Access-Control-Allow-Methods', 'GET, POST, PUT');
+			if (ctx.path.startsWith('/download')) {
+				ctx.response.set('Content-Disposition', `attachment; filename="${path.basename(ctx.path)}`);
+			}
 			if (ctx.request.method === 'OPTIONS') {
 				ctx.response.status = 200;
 				// ctx.response.message = '冇找到啊';

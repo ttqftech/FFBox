@@ -263,8 +263,14 @@ export const TaskItem: FunctionalComponent<Props> = (props) => {
 				nodeBridge.openFile(`"${task.outputFile}"`);
 			} else {
 				const url = `http://${bridge.ip}:${bridge.port}/download/${task.outputFile}`;
-				nodeBridge.ipcRenderer?.send('downloadFile', { url, serverName, taskId: props.id });
-				appStore.downloadMap.set(url, { serverId: appStore.currentServer.data.id, taskId: props.id });
+				if (nodeBridge.env === 'electron') {
+					nodeBridge.ipcRenderer?.send('downloadFile', { url, serverName, taskId: props.id });
+					appStore.downloadMap.set(url, { serverId: appStore.currentServer.data.id, taskId: props.id });
+				} else {
+					const elem = document.createElement('a');
+					elem.href = url;
+					elem.click();
+				}
 			}
 			Tooltip.hide();
 		}

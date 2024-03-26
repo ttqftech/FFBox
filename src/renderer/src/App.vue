@@ -20,7 +20,9 @@ onMounted(() => {
 		nodeBridge.startService();
 	}
 	const localServerId = appStore.addServer();
-	appStore.initializeServer(localServerId, 'localhost', 33269);
+	if (nodeBridge.env === 'electron') {
+		appStore.initializeServer(localServerId, 'localhost', 33269);
+	}
 
 	// 挂载退出确认
 	nodeBridge.ipcRenderer?.on("exitConfirm", () => {
@@ -44,7 +46,7 @@ onMounted(() => {
 	});
 
 	// 挂载主进程 console 信息回传
-	nodeBridge.ipcRenderer.on("debugMessage", (event, ...message) => {
+	nodeBridge.ipcRenderer?.on("debugMessage", (event, ...message) => {
 		console.log(...message);
 	});
 

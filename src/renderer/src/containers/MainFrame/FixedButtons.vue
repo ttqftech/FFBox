@@ -27,7 +27,11 @@ const fourthButtonType = computed(() => {
 	if (appStore.showInfoCenter || appStore.showMenuCenter === 2) {
 		return 'back';
 	} else {
-		if (appStore.servers[appStore.servers.length - 1]?.entity.status !== ServiceBridgeStatus.Idle) {
+		// 最后一个窗不是登录窗，或者最后一个窗是本地登录窗的情况下，可以添加服务器
+		if (
+			![ServiceBridgeStatus.Idle, ServiceBridgeStatus.Connecting].includes(appStore.servers[appStore.servers.length - 1]?.entity.status) ||
+			appStore.servers[appStore.servers.length - 1].entity.ip === 'localhost'
+		) {
 			return 'addServer';
 		}
 	}

@@ -16,16 +16,35 @@ const appStore = useAppStore();
  * 生命周期  status    name     行为
  * 初始化    init     未连接    登录窗
  * 连接中  connecting 未连接    登录窗
- * 失败       dis     未连接    登录窗
+ * 失败      init     未连接    登录窗
  * 成功    connected   ip       正常
  * 掉线       dis      ip   正常 + 掉线提示
+ * 重连中 reconnecting ip   正常 + 掉线重连提示
  */
 const ip = ref('127.0.0.1');
 const port = ref('33269');
-const loginBoxVisible = computed(() => appStore.currentServer?.data.name === '未连接');
-const isConnecting = computed(() => appStore.currentServer?.entity.status === ServiceBridgeStatus.Connecting);
-const isDisconnected = computed(() => appStore.currentServer?.entity.status === ServiceBridgeStatus.Disconnected);
-const disconnectBoxVisible = computed(() => !loginBoxVisible.value && (isConnecting.value || isDisconnected.value));
+const loginBoxVisible = computed(() => [ServiceBridgeStatus.Idle, ServiceBridgeStatus.Connecting].includes(appStore.currentServer?.entity.status));
+const isConnecting = computed(() => [ServiceBridgeStatus.Connecting, ServiceBridgeStatus.Reconnecting].includes(appStore.currentServer?.entity.status));
+const isDisconnected = computed(() => [ServiceBridgeStatus.Disconnected, ServiceBridgeStatus.Reconnecting].includes(appStore.currentServer?.entity.status));
+
+watch(() => appStore.currentServer?.entity.ip, (newValue, oldValue) => {
+	if (newValue === 'localhost') {
+		// 切到 entity.ip === 'localhost'（本地服务器）时候，输入框固定为 'localhost'
+		ip.value = 'localhost';
+	} else if (ip.value === 'localhost') {
+		// 切到非本地服务器的时候，输入框分配一个不是 'localhost' 的值
+		ip.value = '127.0.0.1';
+	}
+}, { immediate: true });
+
+const ipInputFixer = (value: string) => {
+	// 非本地服务器标签页不可输入 localhost
+	if ((appStore.currentServer?.entity.ip || appStore.currentServer.entity.ip !== 'localhost') && value === 'localhost') {
+		return '127.0.0.1';
+	} else {
+		return value;
+	}
+};
 
 const handleConnectClicked = () => {
 	if (!ip.value.length || isNaN(Number(port.value))) {
@@ -56,7 +75,7 @@ const handleReconnectClicked = async () => {
 					>
 						<h2>连接服务器</h2>
 						<div class="box">
-							<Inputbox title="IP" :value="ip" @change="ip = $event" />
+							<Inputbox title="IP" :value="ip" :disabled="ip === 'localhost'" :inputFixer="ipInputFixer" @change="ip = $event" />
 							<Inputbox title="端口" :value="port" @change="port = $event" />
 						</div>
 						<div class="buttonBox">
@@ -75,18 +94,18 @@ const handleReconnectClicked = async () => {
 			<!-- 正常区域 -->
 			<ListArea v-if="!loginBoxVisible" />
 			<!-- 掉线区域 -->
-			<div class="disconnectArea" v-if="disconnectBoxVisible" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%;">
+			<div class="disconnectArea" v-if="isDisconnected">
 				<Transition name="bganimate" appear>
-					<div v-if="disconnectBoxVisible" class="disconnectBackground" />
+					<div v-if="isDisconnected" class="disconnectBackground" />
 				</Transition>
 				<Transition name="boxanimate" appear>
 					<div
-						v-if="disconnectBoxVisible"
+						v-if="isDisconnected"
 						class="disconnectBox"
 					>
 						<div class="box">
 							<h2>服务器掉线了……</h2>
-							<div class="svg" v-if="isDisconnected">
+							<div class="svg" v-if="appStore.currentServer?.entity.status === ServiceBridgeStatus.Disconnected">
 								<IconDisconnected style="animation: none;" />
 							</div>
 							<div class="svg" v-if="isConnecting">
@@ -97,7 +116,7 @@ const handleReconnectClicked = async () => {
 							<Button
 								:type="ButtonType.Primary"
 								size="large"
-								:disabled="appStore.currentServer?.entity.status === ServiceBridgeStatus.Connecting"
+								:disabled="isConnecting"
 								@click="handleReconnectClicked"
 							>
 								重试
@@ -156,6 +175,7 @@ const handleReconnectClicked = async () => {
 				}			
 			}
 			.loginArea {
+				height: 100%;
 				.loginBackground {
 					position: absolute;
 					top: 0;
@@ -191,6 +211,11 @@ const handleReconnectClicked = async () => {
 				}
 			}
 			.disconnectArea {
+				position: absolute;
+				left: 0;
+				top: 0;
+				right: 0;
+				bottom: 0;
 				.disconnectBackground {
 					position: absolute;
 					top: 0;

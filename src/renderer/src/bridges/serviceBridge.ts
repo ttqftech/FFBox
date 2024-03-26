@@ -14,6 +14,7 @@ export enum ServiceBridgeStatus {
 	Connecting = 'Connecting',
 	Connected = 'Connected',
 	Disconnected = 'Disconnected',
+	Reconnecting = 'Reconnecting',
 };
 
 export class ServiceBridge extends (EventEmitter as new () => TypedEventEmitter<FFBoxServiceEvent & ServeiceBridgeEvent>) implements FFBoxServiceInterface {
@@ -37,7 +38,13 @@ export class ServiceBridge extends (EventEmitter as new () => TypedEventEmitter<
 			this.port = port;
 		}
 		console.log(`serviceBridge: 正在连接服务器 ws://${this.ip}:${this.port}/`);
-		this.status = ServiceBridgeStatus.Connecting;
+		if (this.status === ServiceBridgeStatus.Idle) {
+			this.status = ServiceBridgeStatus.Connecting;
+		} else if (this.status === ServiceBridgeStatus.Disconnected) {
+			this.status = ServiceBridgeStatus.Reconnecting;
+		} else {
+			return;
+		}
 		let ws = new WebSocket(`ws://${this.ip}:${this.port}/`);
 		this.ws = ws;
 		let 这 = this;
@@ -52,12 +59,24 @@ export class ServiceBridge extends (EventEmitter as new () => TypedEventEmitter<
 			}, 4000);
 		}
 		ws.onclose = function (event) {
-			这.status = ServiceBridgeStatus.Disconnected;
+			// close 事件在 error 事件后触发
+			if (这.status === ServiceBridgeStatus.Connected) {
+				// 掉线
+				这.status = ServiceBridgeStatus.Disconnected;
+			} else {
+				// 未连接成功，由 onerror 处理过，这里不需处理
+			}
 			这.emit('disconnected');
 		}
 		ws.onerror = function (event) {
-			console.log(`serviceBridge: ws://${这.ip}:${这.port}/ 服务器连接失败`, event);
-			这.status = ServiceBridgeStatus.Idle;
+			// console.log(`serviceBridge: ws://${这.ip}:${这.port}/ 服务器连接失败`, event);
+			if (这.status === ServiceBridgeStatus.Connecting) {
+				// 第一次连接就失败
+				这.status = ServiceBridgeStatus.Idle;
+			} else if (这.status === ServiceBridgeStatus.Reconnecting) {
+				// 连接后重连失败
+				这.status = ServiceBridgeStatus.Disconnected;
+			}
 			这.emit('error', event);
 		}
 		ws.onmessage = function (event) {

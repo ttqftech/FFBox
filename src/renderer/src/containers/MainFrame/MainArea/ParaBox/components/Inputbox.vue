@@ -4,6 +4,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 interface Props {
 	title: string;
 	value?: string;
+	disabled?: boolean;
 	long?: boolean;
 	validator?: (value: string) => string;
 	inputFixer?: (value: string) => string;
@@ -19,6 +20,7 @@ const invalidMsg = ref<string>(undefined);
 
 const selectorStyle = computed(() => {
 	const ret: any = {};
+	// 校验有误的情况下背景和边框都变红
 	if (invalidMsg.value) {
 		ret.border = 'var(--errorBorder) 1px solid';
 		ret.boxShadow = '0 0 12px hsla(0, 100%, 60%, 0.3), 0px 4px 8px rgba(0, 0, 0, 0.05)';
@@ -31,6 +33,12 @@ const selectorStyle = computed(() => {
 		if (focused.value) {
 			ret.background = 'var(--ff)';
 		}
+	}
+	// 禁用的情况下整体变透明，并且固定背景颜色
+	if (props.disabled) {
+		ret.opacity = 0.6;
+		ret.color = 'var(--66)'; // 默认，20% 亮度黑色，变灰 40% 亮度黑色
+		ret.background = 'var(--f7)';
 	}
 	return ret;
 });
@@ -71,7 +79,7 @@ onMounted(() => {
 	<div class="inputbox" :style="{ width: long ? 'calc(100% - 28px)' : '210px' }">
 		<div class="inputbox-title">{{ title }}</div>
 		<div class="inputbox-selector" :style="selectorStyle">
-			<input type="text" v-model="inputText" @blur="handleBlur" @focus="handleFocus" @input="handleInput" :placeholder="placeholder">
+			<input type="text" :disabled="props.disabled" v-model="inputText" @blur="handleBlur" @focus="handleFocus" @input="handleInput" :placeholder="placeholder">
 		</div>
 	</div>
 </template>

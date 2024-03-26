@@ -116,7 +116,7 @@ const onDragleave = (event: DragEvent) => {
 	dragging.value = false;
 };
 const onDrop = (event: DragEvent) => {	// 此函数触发四次 taskList update，分别为加入任务、ffmpeg data、ffmpeg metadata、selectedTask update？
-	event.stopPropagation();
+	event.preventDefault();
 	dragging.value = false;
 	appStore.addTasks(event.dataTransfer?.files);
 };

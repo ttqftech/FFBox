@@ -520,9 +520,6 @@ export const useAppStore = defineStore('app', {
 		 */
 		addServer() {
 			const 这 = useAppStore();
-			if (这.servers.length && 这.servers[这.servers.length - 1].entity.status === ServiceBridgeStatus.Idle) {
-				return;
-			}
 			const id = randomString(6);
 			这.servers.push({
 				data: {
