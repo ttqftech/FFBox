@@ -203,13 +203,13 @@ const VBRnvenc = {
 		sliderParamToDetail: (sliderValue) => ({
 			'rc': 'vbr',
 			'cq': 51 - sliderValue,
-			'maxrate': 800000000,
+			'maxrate': 700000000,
 		}),
 		paramNames: ['cq', 'rc', 'maxrate'],
 		defaultDetail: {
 			'rc': 'vbr',
 			'cq': 28,
-			'maxrate': 800000000,
+			'maxrate': 700000000,
 		},
 	},
 } satisfies MenuItem<RateControl>;
@@ -217,18 +217,18 @@ const VBRnvencHQ = {
 	type: 'normal',
 	value: 'VBR_HQ',
 	label: '动态码率 VBR_HQ',
-	tooltip: 'Variable Bit Rate - 可变码率\n指定画质参数，控制比特率范围，可作为 CRF 的备选方案。该项是 NVIDIA 特有选项，在编码时间几乎不变的情况下略微提高质量。',
+	tooltip: 'Variable Bit Rate - 可变码率\n指定画质参数，控制比特率范围，可作为 CRF 的备选方案。该项是老 NVIDIA 特有选项，在编码时间几乎不变的情况下略微提高质量。此选项在 ffmpeg 9.0 已被废弃。',
 	extra: {
 		...VBRnvenc.extra,
 		sliderParamToDetail: (sliderValue) => ({
 			'rc': 'vbr_hq',
 			'cq': 51 - sliderValue,
-			'maxrate': 800000000,
+			'maxrate': 700000000,
 		}),
 		defaultDetail: {
 			'rc': 'vbr_hq',
 			'cq': 28,
-			'maxrate': 800000000,
+			'maxrate': 700000000,
 		},
 	},
 } satisfies MenuItem<RateControl>;
@@ -886,34 +886,34 @@ const [ nv20le ,  gbrp10le ,  gbrp12le ,  gray ,  gray10le ,  p010le ,  p016le ,
 
 // #endregion
 
-export const builtInVcodecs: MenuItem<VCodecDetail>[] = [
+const builtInH26xMpegVcodecs: MenuItem<VCodecDetail>[] = [
 	{
 		type: 'submenu',
-		label: 'AV1',
-		tooltip: 'AV1 - AV1 即 AOMedia Video 1 是一个开放、免专利的影片编码格式，专为通过网络进行流传输而设计。',
+		label: 'H.266 · VVC',
+		tooltip: '一种由 ITU-T 和 MPEG 联合制定的，用于取代 H.265/MPEG-4 HEVC 的新一代视频编码。\n\n- ITU-T 命名：H.266\n- MPEG 命名：VVC (Versatile Video Coding) (MPEG-I Part-3)\n- 发布日期：2020-07-06',
 		subMenu: [
 			{
 				type: 'normal',
-				value: 'libaom-av1',
-				label: '【默认】libaom-av1',
+				value: 'libvvenc',
+				label: '【默认】libvvenc',
 				tooltip: '',
 				extra: {
 					rateControl: [
 						...AUTO_RATECONTROLs,
 						{
-							...CRF63,
+							...QP63,
 							extra: {
-								...CRF63.extra,
+								...QP63.extra,
 								tags: new Map([
 									[0, '63（最低画质）'],
-									[5, '58（低画质）'],	// VMAF 77.28
-									[15, '48（一般画质）'],	// VMAF 86.39
-									[29, '34（良画质）'],	// VMAF 93.25
-									[43, '20（高画质）'],	// VMAF 96.59
+									[25, '38（低画质）'],	// VMAF 75.95
+									[31, '32（一般画质）'],	// VMAF 85.58
+									[37, '26（良画质）'],	// VMAF 93.13
+									[43, '20（高画质）'],	// VMAF 97.35
 									[63, '0（最高画质）'],
 								]),
 								defaultDetail: {
-									'crf': 29,
+									'qp': 26,
 								},
 							},
 						},
@@ -921,106 +921,32 @@ export const builtInVcodecs: MenuItem<VCodecDetail>[] = [
 					],
 					parameters: [
 						{
-							mode: "combo", parameter: "pix_fmt", display: "像素格式",
-							items: [ 自动, yuv420p, yuv422p, yuv444p, gbrp, yuv420p10le, yuv422p10le, yuv444p10le, yuv420p12le, yuv422p12le, yuv444p12le, gbrp10le, gbrp12le, gray, gray10le, gbrp12le ],
+							mode: "slider", parameter: "preset", display: "速度/质量",
+							max: 4,
+							tags: new Map([
+								[0, 'faster'],
+								[1, 'fast'],
+								[2, 'medium'],
+								[3, 'slow'],
+								[4, 'slower'],
+							]),
+							sliderMode: 'string',
+							default: 'faster',
+							valueToParam: (value) => value,
 						},
-						{
-							mode: "slider", parameter: "cpu-used", display: "编码质量",
-								max: 8,
-								tags: new Map([
-									[0, '8（低质量，快）'],
-									[8, '0（高质量，慢）'],
-								]),
-								default: 0,
-								valueToDisplay: { type: 'revertInteger' },
-								adsorption: 'int',
-								valueToParam: (value) => {
-									return 8 - Math.round(+value);
-								},
-						},
-					],
-				}
-			},
-			{
-				type: 'normal',
-				value: 'libsvtav1',
-				label: 'libsvtav1',
-				tooltip: '',
-				extra: {
-					rateControl: [
-						...AUTO_RATECONTROLs,
-						{
-							...CRF63,
-							extra: {
-								...CRF63.extra,
-								tags: new Map([
-									[0, '63（最低画质）'],
-									[3, '60（低画质）'],	// VMAF 75.76
-									[13, '50（一般画质）'],	// VMAF 85.51
-									[27, '36（良画质）'],	// VMAF 92.56
-									[41, '22（高画质）'],	// VMAF 96.44
-									[62, '1（最高画质）'],
-									[63, '0（自动）'],
-								]),
-								defaultDetail: {
-									'crf': 27,
-								},
-							},
-						},
-						{ ...QP63 },
-						{ ...ABR },
-					],
-					parameters: [
 						{
 							mode: "combo", parameter: "pix_fmt", display: "像素格式",
-							items: [ 自动, yuv420p, yuv420p10le ],
-						},
-						{
-							mode: "slider", parameter: "preset", display: "编码质量",
-								max: 13,
-								tags: new Map([
-									[0, '13（低质量，快）'],
-									[13, '0（高质量，慢）'],
-								]),
-								default: 6, // 13 - 7
-								valueToDisplay: { type: 'revertInteger' },
-								adsorption: 'int',
-								valueToParam: (value) => {
-									return 13 - Math.round(+value);
-								},
-						},
+							items: [ 自动, yuv420p10le ],
+						},	
 					],
-				}
-			},
-			{
-				type: 'normal',
-				value: 'av1_qsv',
-				label: 'av1_qsv',
-				tooltip: 'Intel 硬件加速编码器',
-				extra: {
-					rateControl: [
-						...AUTO_RATECONTROLs,
-						{ ...Qav1qsv },	// 255 以上的数值依然有效，但影响甚微
-						{ ...ABR },
-					],
-					parameters: [
-						{
-							mode: "combo", parameter: "pix_fmt", display: "像素格式",
-							items: [ 自动, nv12, p010le, qsv ],
-						},
-						{
-							mode: "slider", parameter: "preset", display: "编码质量",
-							...qsvPresetSlider,
-						},
-					],
-				}
+				},
 			},
 		],
 	},
 	{
 		type: 'submenu',
-		label: 'HEVC (H.265)',
-		tooltip: 'HEVC - HEVC 即高效率视频编码（High Efficiency Video Coding），又称为 H.265 和 MPEG-H 第 2 部分，是一种视频压缩标准，被视为是 ITU-T H.264/MPEG-4 AVC 标准的继任者。',
+		label: 'H.265 · HEVC',
+		tooltip: '一种由 ITU-T 和 MPEG 联合制定的，用于取代 H.264/MPEG-4 AVC 的新一代视频编码。\n其已被广泛应用于各个领域，具有比 H.264/AVC 高约三分之一的压缩效率，硬件编解码器支持完善，视频转码的推荐之选。\n\n- ITU-T 命名：H.265\n- MPEG 命名：HEVC (High Efficiency Video Coding) (MPEG-H Part-2)\n- 发布日期：2013-04-13\n\nffmpeg 内置的编码器实现了 HEVC/H.265 的首个标准版本。截至 2026 年 1 月，HEVC/H.265 具有 11 个版本。',
 		subMenu: [
 			{
 				type: 'normal',
@@ -1085,7 +1011,7 @@ export const builtInVcodecs: MenuItem<VCodecDetail>[] = [
 					],
 					parameters: [
 						{
-							mode: "slider", parameter: "preset", display: "编码质量",
+							mode: "slider", parameter: "preset", display: "速度/质量",
 							...qsvPresetSlider,
 						},
 						{
@@ -1129,7 +1055,7 @@ export const builtInVcodecs: MenuItem<VCodecDetail>[] = [
 					],
 					parameters: [
 						{
-							mode: "combo", parameter: "preset", display: "编码质量",
+							mode: "combo", parameter: "preset", display: "速度/质量",
 							items: [ ...nvencPreset ],
 						},
 						{
@@ -1197,7 +1123,7 @@ export const builtInVcodecs: MenuItem<VCodecDetail>[] = [
 					],
 					parameters: [
 						{
-							mode: "slider", parameter: "preset", display: "编码质量",
+							mode: "slider", parameter: "preset", display: "速度/质量",
 							max: 2,
 							tags: new Map([
 								[0, 'speed'],
@@ -1274,8 +1200,8 @@ export const builtInVcodecs: MenuItem<VCodecDetail>[] = [
 	},
 	{
 		type: 'submenu',
-		label: 'H.264 (AVC)',
-		tooltip: 'H.264 - H.264 又称为 MPEG-4 第 10 部分，高级视频编码（MPEG-4 Part 10, Advanced Video Coding，缩写为 MPEG-4 AVC）是一种面向块，基于运动补偿的视频编码标准。到 2014 年，它已经成为高精度视频录制、压缩和发布的最常用格式之一。',
+		label: 'H.264 · AVC',
+		tooltip: '一种由 ITU-T 和 MPEG 联合制定的视频编码，是迄今为止最常用的视频内容录制、压缩和分发格式。\n现代的播放器几乎全部支持 H.264/AVC，它相比前代具有明显更优的压缩效果。当您需要考虑兼容性时，选择此编码。\n\n- ITU-T 命名：H.264\n- MPEG 命名：AVC (Advanced Video Coding) (MPEG-4 Part-10)\n- 发布日期：2003-05-30\n\nH.264/AVC 截至 2026 年 6 月具有 16 个版本。目前最常见的 H.264 AVC High Profile Level 4.1 来自 2005 年第 3 版。',
 		subMenu: [
 			{
 				type: 'normal',
@@ -1309,7 +1235,7 @@ export const builtInVcodecs: MenuItem<VCodecDetail>[] = [
 					],
 					parameters: [
 						{
-							mode: "slider", parameter: "preset", display: "编码质量",
+							mode: "slider", parameter: "preset", display: "速度/质量",
 							...H264265presetSlider,
 						},
 						{
@@ -1363,7 +1289,7 @@ export const builtInVcodecs: MenuItem<VCodecDetail>[] = [
 					],
 					parameters: [
 						{
-							mode: "slider", parameter: "preset", display: "编码质量",
+							mode: "slider", parameter: "preset", display: "速度/质量",
 							...H264265presetSlider,
 						},
 						{
@@ -1394,7 +1320,7 @@ export const builtInVcodecs: MenuItem<VCodecDetail>[] = [
 					],
 					parameters: [
 						{
-							mode: "slider", parameter: "preset", display: "编码质量",
+							mode: "slider", parameter: "preset", display: "速度/质量",
 							...qsvPresetSlider,
 						},
 						{
@@ -1438,7 +1364,7 @@ export const builtInVcodecs: MenuItem<VCodecDetail>[] = [
 					],
 					parameters: [
 						{
-							mode: "combo", parameter: "preset", display: "编码质量",
+							mode: "combo", parameter: "preset", display: "速度/质量",
 							items: [ ...nvencPreset ],
 						},
 						{
@@ -1506,7 +1432,7 @@ export const builtInVcodecs: MenuItem<VCodecDetail>[] = [
 					],
 					parameters: [
 						{
-							mode: "slider", parameter: "preset", display: "编码质量",
+							mode: "slider", parameter: "preset", display: "速度/质量",
 							max: 2,
 							tags: new Map([
 								[0, 'speed'],
@@ -1586,100 +1512,8 @@ export const builtInVcodecs: MenuItem<VCodecDetail>[] = [
 	},
 	{
 		type: 'submenu',
-		label: 'VP9',
-		tooltip: 'VP9 - VP9 是谷歌公司为了替换老旧的 VP8 影像编码格式并与动态专家图像组（MPEG）主导的高效率视频编码（H.265/HEVC）竞争所开发的免费、开源的影像编码格式。',
-		subMenu: [
-			{
-				type: 'normal',
-				value: 'libvpx-vp9',
-				label: '【默认】libvpx-vp9',
-				tooltip: '',
-				extra: {
-					rateControl: [
-						...AUTO_RATECONTROLs,
-						{
-							...CRF63,
-							extra: {
-								...CRF63.extra,
-								tags: new Map([
-									[0, '63（最低画质）'],
-									[9, '54（低画质）'],	// VMAF 77.41
-									[19, '44（一般画质）'],	// VMAF 87.31
-									[29, '34（良画质）'],	// VMAF 93.22
-									[41, '22（高画质）'],	// VMAF 96.58
-									[63, '0（有损最高画质）'],
-								]),
-								defaultDetail: {
-									'crf': 29,
-								},
-							},
-						},
-						{ ...ABR },
-					],
-					parameters: [
-						{
-							mode: "slider", parameter: "quality", display: "编码质量",
-							max: 2,
-							tags: new Map([
-								[0, 'realtime'],
-								[1, 'good'],
-								[2, 'best'],
-							]),
-							sliderMode: 'string',
-							default: 'good',
-							valueToParam: (value) => value,
-						},
-						{
-							mode: "combo", parameter: "pix_fmt", display: "像素格式",
-							items: [ 自动, yuv420p, yuv422p, yuv440p, yuv444p, yuv420p10le, yuv422p10le, yuv440p10le, yuv444p10le, yuv420p12le, yuv422p12le, yuv440p12le, yuv444p12le, gbrp, gbrp10le, gbrp12le ],
-						},
-					],
-				},
-			},
-		],
-	},
-	{
-		type: 'submenu',
-		label: 'VP8',
-		tooltip: 'VP8 - VP8 是一个由 On2 Technologies 开发并由 Google 发布的开放的影像压缩格式。',
-		subMenu: [
-			{
-				type: 'normal',
-				value: 'libvpx',
-				label: '【默认】libvpx',
-				tooltip: '',
-				extra: {
-					rateControl: [
-						...AUTO_RATECONTROLs,
-						{ ...CRF63 },
-						{ ...ABR },
-					],
-					parameters: [
-						{
-							mode: "slider", parameter: "quality", display: "编码质量",
-							max: 2,
-							tags: new Map([
-								[0, 'realtime'],
-								[1, 'good'],
-								[2, 'best'],
-							]),
-							sliderMode: 'string',
-							default: 'good',
-							valueToParam: (value) => value,
-						},
-						{
-							mode: "combo", parameter: "pix_fmt", display: "像素格式",
-							items: [ 自动, yuv420p, yuva420p ],
-						},
-					],
-				},
-			},
-		],
-	},
-	{
-		type: 'submenu',
-		label: 'MPEG-4 (Part 2)',
-		tooltip: 'MPEG-4 Part 2 - MPEG-4 是一套用于音频、视频信息的压缩编码标准，由国际标准化组织（ISO）和国际电工委员会（IEC）下属的“动态影像专家组”（Moving Picture Experts Group，即 MPEG）制定。该标准的第二部分为视频编解码器。',
+		label: 'MPEG-4 Part 2',
+		tooltip: '一种由动态图像专家组 (MPEG) 委员会开发的，基于 H.263 扩展而来的视频编码标准。\n它是互联网视频从物理介质走向网络传播时代的第一代成功编码。较流行的实现包括 Microsoft MPEG-4、DivX、XviD、Nero Digital、ffmpeg 等。\n\n- 发布日期：1999-12',
 		subMenu: [
 			{
 				type: 'normal',
@@ -1729,6 +1563,44 @@ export const builtInVcodecs: MenuItem<VCodecDetail>[] = [
 			},
 			{
 				type: 'normal',
+				value: 'msmpeg4',
+				label: 'msmpeg4v3',
+				tooltip: '',
+				extra: {
+					rateControl: [
+						...AUTO_RATECONTROLs,
+						{ ...Q100 },
+						{ ...ABR },
+					],
+					parameters: [
+						{
+							mode: "combo", parameter: "pix_fmt", display: "像素格式",
+							items: [ 自动, yuv420p ],
+						},
+					],
+				},
+			},
+			{
+				type: 'normal',
+				value: 'msmpeg4v2',
+				label: 'msmpeg4v2',
+				tooltip: '',
+				extra: {
+					rateControl: [
+						...AUTO_RATECONTROLs,
+						{ ...Q100 },
+						{ ...ABR },
+					],
+					parameters: [
+						{
+							mode: "combo", parameter: "pix_fmt", display: "像素格式",
+							items: [ 自动, yuv420p ],
+						},
+					],
+				},
+			},
+			{
+				type: 'normal',
 				value: 'libxvid',
 				label: 'libxvid',
 				tooltip: '',
@@ -1750,8 +1622,53 @@ export const builtInVcodecs: MenuItem<VCodecDetail>[] = [
 	},
 	{
 		type: 'submenu',
-		label: 'MPEG-2 (Part 2)',
-		tooltip: 'MPEG-2 Part 2 - MPEG-2 是 MPEG 工作组于 1994 年发布的视频和音频压缩国际标准。MPEG-2 通常用来为广播信号提供视频和音频编码，包括卫星电视、有线电视等。MPEG-2 经过少量修改后，也成为 DVD 产品的核心技术。',
+		label: 'H.263',
+		tooltip: '一种由 ITU-T（国际电信联盟电信标准化部门）发布的，用于流媒体和视频通话的视频压缩编码，也常见于早期手机的 3GP 视频中。\nH.263 支持 4 种分辨率：SQCIF、QCIF、CIF、4CIF、16CIF。另有 H.263+ 和 H.263++ 两种新版本。\n\n- H.263 发布日期：1996-03-20\n- H.263p 发布日期：1998 年',
+		subMenu: [
+			{
+				type: 'normal',
+				value: 'h263',
+				label: 'h263',
+				tooltip: '',
+				extra: {
+					rateControl: [
+						...AUTO_RATECONTROLs,
+						{ ...Q100 },
+						{ ...ABR },
+					],
+					parameters: [
+						{
+							mode: "combo", parameter: "pix_fmt", display: "像素格式",
+							items: [ 自动, yuv420p ],
+						},
+					],
+				},
+			},
+			{
+				type: 'normal',
+				value: 'h263p',
+				label: 'h263p',
+				tooltip: '',
+				extra: {
+					rateControl: [
+						...AUTO_RATECONTROLs,
+						{ ...Q100 },
+						{ ...ABR },
+					],
+					parameters: [
+						{
+							mode: "combo", parameter: "pix_fmt", display: "像素格式",
+							items: [ 自动, yuv420p ],
+						},
+					],
+				},
+			},
+		],
+	},
+	{
+		type: 'submenu',
+		label: 'H.262 · MPEG-2 Part 2',
+		tooltip: '一种由 ITU-T 和 MPEG 联合制定的视频编码，是 MPEG-1 Video 的继任者，被广泛应用在无线数字电视广播和 DVD 视频中。\n\n- 发布日期：1995 年',
 		subMenu: [
 			{
 				type: 'normal',
@@ -1785,7 +1702,7 @@ export const builtInVcodecs: MenuItem<VCodecDetail>[] = [
 					],
 					parameters: [
 						{
-							mode: "slider", parameter: "preset", display: "编码质量",
+							mode: "slider", parameter: "preset", display: "速度/质量",
 							...qsvPresetSlider,
 						},
 						{
@@ -1804,7 +1721,7 @@ export const builtInVcodecs: MenuItem<VCodecDetail>[] = [
 	{
 		type: 'submenu',
 		label: 'MPEG-1',
-		tooltip: 'MPEG-1 - MPEG-1 是 MPEG 组织制定的第一个视频和音频有损压缩标准，也是最早推出及应用在市场上的 MPEG 技术。它采用了块方式的运动补偿、离散余弦变换（DCT）、量化等技术，并为 1.2Mbps 传输速率进行了优化，被 Video CD 采用作为核心技术。',
+		tooltip: '一种由动态图像专家组 (MPEG) 委员会开发的，基于 H.261 技术派生而来的视频编码标准。这项视频技术被应用在 VCD 中。\n\n- 发布日期：1991-12-06',
 		subMenu: [
 			{
 				type: 'normal',
@@ -1827,6 +1744,444 @@ export const builtInVcodecs: MenuItem<VCodecDetail>[] = [
 			},
 		],
 	},
+	{
+		type: 'submenu',
+		label: 'H.261',
+		tooltip: '一种由 ITU-T（国际电信联盟电信标准化部门）发布的首个视频压缩编码，用于 ISDN 网络视频通话。\n其前身是 1984 年制定的 H.120，但由于性能太差，它并未得到实际应用。\n\n- 发布日期：1990 年\n\n该标准支持两种视频帧尺寸：CIF 和 QCIF',
+		subMenu: [
+			{
+				type: 'normal',
+				value: 'h261',
+				label: '【默认】h261',
+				tooltip: '',
+				extra: {
+					rateControl: [],
+					parameters: [
+						{
+							mode: "combo", parameter: "pix_fmt", display: "像素格式",
+							items: [ 自动, yuv420p ],
+						},
+					],
+				},
+			},
+		],
+	},
+];
+
+const builtInVpAvVcodecs: MenuItem<VCodecDetail>[] = [
+	{
+		type: 'submenu',
+		label: 'AV1',
+		tooltip: 'AOMedia Video 1 是一种由 AOMedia 制定的开放的、免专利的、为网络流传输而设计的新一代视频编码，基于 VP9 与其他技术结合产生。\nAV1 是为取代需要专利费的 H.265 而生，压缩率一般比 H.265 略高，比 VP9 高约三分之一。得益于免专利费的特征，它较早就已受浏览器等平台支持。目前在硬件编解码器逐渐铺开的情况下逐渐普及。\n\n- 发布日期：2018-03-28\n\n另有使用相同压缩算法的图像文件格式：AVIF。',
+		subMenu: [
+			{
+				type: 'normal',
+				value: 'libsvtav1',
+				label: 'libsvtav1',
+				tooltip: '',
+				extra: {
+					rateControl: [
+						...AUTO_RATECONTROLs,
+						{
+							...CRF63,
+							extra: {
+								...CRF63.extra,
+								tags: new Map([
+									[0, '63（最低画质）'],
+									[3, '60（低画质）'],	// VMAF 75.76
+									[13, '50（一般画质）'],	// VMAF 85.51
+									[27, '36（良画质）'],	// VMAF 92.56
+									[41, '22（高画质）'],	// VMAF 96.44
+									[62, '1（最高画质）'],
+									[63, '0（自动）'],
+								]),
+								defaultDetail: {
+									'crf': 27,
+								},
+							},
+						},
+						{ ...QP63 },
+						{ ...ABR },
+					],
+					parameters: [
+						{
+							mode: "combo", parameter: "pix_fmt", display: "像素格式",
+							items: [ 自动, yuv420p, yuv420p10le ],
+						},
+						{
+							mode: "slider", parameter: "preset", display: "速度/质量",
+								max: 13,
+								tags: new Map([
+									[0, '13（低质量，快）'],
+									[13, '0（高质量，慢）'],
+								]),
+								default: 6, // 13 - 7
+								valueToDisplay: { type: 'revertInteger' },
+								adsorption: 'int',
+								valueToParam: (value) => {
+									return 13 - Math.round(+value);
+								},
+						},
+					],
+				}
+			},
+			{
+				type: 'normal',
+				value: 'libaom-av1',
+				label: '【默认】libaom-av1',
+				tooltip: '',
+				extra: {
+					rateControl: [
+						...AUTO_RATECONTROLs,
+						{
+							...CRF63,
+							extra: {
+								...CRF63.extra,
+								tags: new Map([
+									[0, '63（最低画质）'],
+									[5, '58（低画质）'],	// VMAF 77.28
+									[15, '48（一般画质）'],	// VMAF 86.39
+									[29, '34（良画质）'],	// VMAF 93.25
+									[43, '20（高画质）'],	// VMAF 96.59
+									[63, '0（最高画质）'],
+								]),
+								defaultDetail: {
+									'crf': 29,
+								},
+							},
+						},
+						{ ...ABR },
+					],
+					parameters: [
+						{
+							mode: "combo", parameter: "pix_fmt", display: "像素格式",
+							items: [ 自动, yuv420p, yuv422p, yuv444p, gbrp, yuv420p10le, yuv422p10le, yuv444p10le, yuv420p12le, yuv422p12le, yuv444p12le, gbrp10le, gbrp12le, gray, gray10le, gbrp12le ],
+						},
+						{
+							mode: "slider", parameter: "cpu-used", display: "速度/质量",
+								max: 8,
+								tags: new Map([
+									[0, '8（低质量，快）'],
+									[8, '0（高质量，慢）'],
+								]),
+								default: 0,
+								valueToDisplay: { type: 'revertInteger' },
+								adsorption: 'int',
+								valueToParam: (value) => {
+									return 8 - Math.round(+value);
+								},
+						},
+					],
+				}
+			},
+			{
+				type: 'normal',
+				value: 'av1_qsv',
+				label: 'av1_qsv',
+				tooltip: 'Intel 硬件加速编码器',
+				extra: {
+					rateControl: [
+						...AUTO_RATECONTROLs,
+						{ ...Qav1qsv },	// 255 以上的数值依然有效，但影响甚微
+						{ ...ABR },
+					],
+					parameters: [
+						{
+							mode: "combo", parameter: "pix_fmt", display: "像素格式",
+							items: [ 自动, nv12, p010le, qsv ],
+						},
+						{
+							mode: "slider", parameter: "preset", display: "速度/质量",
+							...qsvPresetSlider,
+						},
+					],
+				}
+			},
+		],
+	},
+	{
+		type: 'submenu',
+		label: 'VP9',
+		tooltip: '一种由谷歌公司开发的免版税的视频编码格式，是 VP8 的继任者。\nVP9 是为与需要专利费的 H.265 竞争而生，因此在浏览器中很早就得到了支持。它的压缩效率介于 H.264 和 H.265 之间（通常更接近 H.264）。\n\n- 发布日期：2013-06-17\n\n通常与 WebM 格式与 Opus 音频搭配。',
+		subMenu: [
+			{
+				type: 'normal',
+				value: 'libvpx-vp9',
+				label: '【默认】libvpx-vp9',
+				tooltip: '',
+				extra: {
+					rateControl: [
+						...AUTO_RATECONTROLs,
+						{
+							...CRF63,
+							extra: {
+								...CRF63.extra,
+								tags: new Map([
+									[0, '63（最低画质）'],
+									[9, '54（低画质）'],	// VMAF 77.41
+									[19, '44（一般画质）'],	// VMAF 87.31
+									[29, '34（良画质）'],	// VMAF 93.22
+									[41, '22（高画质）'],	// VMAF 96.58
+									[63, '0（有损最高画质）'],
+								]),
+								defaultDetail: {
+									'crf': 29,
+								},
+							},
+						},
+						{ ...ABR },
+					],
+					parameters: [
+						{
+							mode: "slider", parameter: "quality", display: "速度/质量",
+							max: 2,
+							tags: new Map([
+								[0, 'realtime'],
+								[1, 'good'],
+								[2, 'best'],
+							]),
+							sliderMode: 'string',
+							default: 'good',
+							valueToParam: (value) => value,
+						},
+						{
+							mode: "slider", parameter: "speed", display: "速度/质量",
+							max: 16,
+							tags: new Map([
+								[0, '16 (最快)'],
+								[15, '1 (默认值)'],
+								[16, '0 (最慢)'],
+							]),
+							sliderMode: 'number',
+							default: 15,
+							valueToParam: (value) => 16 - +value + '',
+							adsorption: 'int',
+							valueToDisplay: { type: 'revertInteger' },
+						},
+						{
+							mode: "combo", parameter: "pix_fmt", display: "像素格式",
+							items: [ 自动, yuv420p, yuv422p, yuv440p, yuv444p, yuv420p10le, yuv422p10le, yuv440p10le, yuv444p10le, yuv420p12le, yuv422p12le, yuv440p12le, yuv444p12le, gbrp, gbrp10le, gbrp12le ],
+						},
+					],
+				},
+			},
+		],
+	},
+	{
+		type: 'submenu',
+		label: 'VP8',
+		tooltip: '一种由谷歌公司开发的免版税的视频编码格式，由 On2 公司的 VP7 格式改进并收购而来。\n其目的是为了与 HTML5 共同取代 Adobe Flash 和 H.264，并取代 GIF。\n\n- 发布日期：2008-09-13\n\n通常与 WebM 格式与 Opus 音频搭配。\n另有使用相同压缩算法的图像文件格式：WebP。',
+		subMenu: [
+			{
+				type: 'normal',
+				value: 'libvpx',
+				label: '【默认】libvpx',
+				tooltip: '',
+				extra: {
+					rateControl: [
+						...AUTO_RATECONTROLs,
+						{ ...CRF63 },
+						{ ...ABR },
+					],
+					parameters: [
+						{
+							mode: "slider", parameter: "quality", display: "速度/质量",
+							max: 2,
+							tags: new Map([
+								[0, 'realtime'],
+								[1, 'good'],
+								[2, 'best'],
+							]),
+							sliderMode: 'string',
+							default: 'good',
+							valueToParam: (value) => value,
+						},
+						{
+							mode: "slider", parameter: "speed", display: "速度/质量",
+							max: 16,
+							tags: new Map([
+								[0, '16 (最快)'],
+								[15, '1 (默认值)'],
+								[16, '0 (最慢)'],
+							]),
+							sliderMode: 'number',
+							default: 15,
+							valueToParam: (value) => 16 - +value + '',
+							adsorption: 'int',
+							valueToDisplay: { type: 'revertInteger' },
+						},
+						{
+							mode: "combo", parameter: "pix_fmt", display: "像素格式",
+							items: [ 自动, yuv420p, yuva420p ],
+						},
+					],
+				},
+			},
+		],
+	},
+	{
+		type: 'submenu',
+		label: 'Theora',
+		tooltip: '一种由 Xiph.Org 基金会开发的视频编码格式，源自 On2 公司的 VP3 格式经过开源后衍生而来。\n其目的是为了达成比 MPEG-4 Part 2 更好的编码效率。\n\n- 发布日期：2004-06-01\n\n通常与 OGG 容器或 Matroska 容器搭配。',
+		subMenu: [
+			{
+				type: 'normal',
+				value: 'libtheora',
+				label: '【默认】libtheora',
+				tooltip: '',
+				extra: {
+					rateControl: [
+						...AUTO_RATECONTROLs,
+						{
+							type: 'normal',
+							value: 'Q',
+							label: '指定质量 Q',
+							tooltip: 'Q - 质量\n指定画质，具体值对应的画质由具体编码器决定。',
+							extra: {
+								min: 0,
+								max: 10,
+								tags: new Map([
+									[0, '0 (最低画质)'],
+									[10, '10 (最高画质)'],
+								]),
+								adsorption: 'int',
+								detailToSliderValue: (detail) => {
+									const q = detail['q'];
+									return Number.isFinite(+q) ? q : undefined;
+								},
+								valueToDisplay: { type: 'integer' },
+								valueToParam: (value) => +value + '',
+								sliderParamToDetail: (sliderValue) => ({
+									'q': sliderValue,
+								}),
+								paramNames: ['q'],
+								defaultDetail: {
+									'q': 5,
+								},
+							},
+						},
+						{ ...ABR },
+					],
+					parameters: [
+						{
+							mode: "combo", parameter: "pix_fmt", display: "像素格式",
+							items: [ 自动, yuv420p, yuv422p, yuv444p ],
+						},
+						{
+							mode: "slider", parameter: "speed_level", display: "速度/质量",
+							max: 4,
+							tags: new Map([
+								[0, '4 (最快)'],
+								[4, '0 (最慢)'],
+							]),
+							sliderMode: 'number',
+							default: 4,
+							valueToParam: (value) => 4 - +value + '',
+							adsorption: 'int',
+							valueToDisplay: { type: 'revertInteger' },
+						},
+					],
+				},
+			},
+		],
+	},
+];
+
+const builtInVcVcodecs: MenuItem<VCodecDetail>[] = [
+	{
+		type: 'submenu',
+		label: 'VC-5 (GoPro Cineform)',
+		tooltip: 'CineForm 中间编解码器最初于 2002 年设计，用于电影或电视应用中使用高清或更高分辨率媒体的压缩数字中间片工作流程。CineForm 媒体最常封装在 AVI 或 MOV 文件类型中。所有压缩媒体类型均使用 FourCC 编码的 “CFHD” 格式。',
+		subMenu: [
+			{
+				type: 'normal',
+				value: 'cfhd',
+				label: '【默认】cfhd',
+				tooltip: '',
+				extra: {
+					rateControl: [],
+					parameters: [
+						{
+							mode: "combo", parameter: "pix_fmt", display: "像素格式",
+							items: [ 自动, yuv422p10le, gbrp12le ],
+						},
+						{
+							mode: "slider", parameter: "quality", display: "画质",
+							max: 12,
+							tags: new Map([
+								[0, 'low'],
+								[1, 'low+'],
+								[2, 'medium'],
+								[3, 'medium+'],
+								[4, 'high'],
+								[5, 'high+'],
+								[6, 'film1'],
+								[7, 'film1+'],
+								[8, 'film1.5'],
+								[9, 'film2'],
+								[10, 'film2+'],
+								[11, 'film3'],
+								[12, 'film3+'],
+							]),
+							sliderMode: 'string',
+							default: 'film3+',
+							valueToParam: (value) => value,
+						}
+					],
+				},
+			},
+		],
+	},
+	{
+		type: 'submenu',
+		label: 'VC-3 (Avid DNxHD)',
+		tooltip: 'Avid DNxHD（“数字非线性可扩展高清”）是由 Avid 开发的一种有损高清视频后期制作编解码器，用于多代合成，可降低存储和带宽需求，它采用了 SMPTE VC-3 标准的初始版本。该标准的最新版本（2026）现已被 Avid DNxHR 编解码器采用，后者完全包含了 Avid DNxHD。DNxHD 数据通常存储在 MXF 容器中，但也可以存储在 QuickTime 容器中。',
+		subMenu: [
+			{
+				type: 'normal',
+				value: 'dnxhd',
+				label: '【默认】dnxhd',
+				tooltip: '',
+				extra: {
+					rateControl: [],
+					parameters: [
+						{
+							mode: "combo", parameter: "pix_fmt", display: "像素格式",
+							items: [ 自动, yuv422p, yuv422p10le, yuv444p10le, gbrp10le ],
+						},
+					],
+				},
+			},
+		],
+	},
+	{
+		type: 'submenu',
+		label: 'VC-2 (Dirac)',
+		tooltip: 'Dirac（以及 Dirac Pro，其子集已标准化为 SMPTE VC-2）是由 BBC 研究与开发部门开发的开放且免版税的 视频压缩格式、规范和软件视频编解码器。Dirac 旨在为超高清电视提供高质量的视频压缩，并与 H.264 等现有格式竞争。',
+		subMenu: [
+			{
+				type: 'normal',
+				value: 'dirac',
+				label: '【默认】dirac',
+				tooltip: '',
+				extra: {
+					rateControl: [
+						...AUTO_RATECONTROLs,
+						{ ...ABR },
+					],
+					parameters: [
+						{
+							mode: "combo", parameter: "pix_fmt", display: "像素格式",
+							items: [ 自动, yuv420p, yuv422p, yuv444p, yuv420p10le, yuv422p10le, yuv444p10le, yuv420p12le, yuv422p12le, yuv444p12le ],
+						},
+					],
+				},
+			},
+		],
+	},
+];
+
+const builtInOtherVcodecs: MenuItem<VCodecDetail>[] = [
 	{
 		type: 'submenu',
 		label: 'MJPEG',
@@ -1952,7 +2307,7 @@ export const builtInVcodecs: MenuItem<VCodecDetail>[] = [
 	{
 		type: 'submenu',
 		label: 'RV20',
-		tooltip: 'RV20 - RealVideo 是由 RealNetworks 于 1997 年所开发的一种专用视频压缩格式。RV20 使用 H.263 编码器。',
+		tooltip: 'RealVideo 2，是一种由 RealNetworks 于 1998 年开发的，基于 H.263 派生的视频编码器。',
 		subMenu: [
 			{
 				type: 'normal',
@@ -1978,7 +2333,7 @@ export const builtInVcodecs: MenuItem<VCodecDetail>[] = [
 	{
 		type: 'submenu',
 		label: 'RV10',
-		tooltip: 'RV10 - RealVideo 是由 RealNetworks 于 1997 年所开发的一种专用视频压缩格式。RV10 使用 H.263 编码器。',
+		tooltip: 'RealVideo 1，是一种由 RealNetworks 于 1997 年开发的，基于 H.263 派生的视频编码器。',
 		subMenu: [
 			{
 				type: 'normal',
@@ -2004,7 +2359,7 @@ export const builtInVcodecs: MenuItem<VCodecDetail>[] = [
 	{
 		type: 'submenu',
 		label: 'Microsoft Video 1',
-		tooltip: 'Microsoft Video 1 - Microsoft Video 1 is a vector quantizer video codec with frame differencing that operates in either a palettized 8-bit color space or a 16-bit RGB color space.',
+		tooltip: 'Microsoft Video 1 是一种早期的有损视频压缩和解压缩算法（编解码器），于 1992 年 11 月随 Microsoft 的 Windows 视频软件 1.0 版本发布。',
 		subMenu: [
 			{
 				type: 'normal',
@@ -2024,6 +2379,8 @@ export const builtInVcodecs: MenuItem<VCodecDetail>[] = [
 		],
 	},
 ];
+
+export const builtInVcodecs = [...builtInH26xMpegVcodecs, { type: 'separator' }, ...builtInVpAvVcodecs, { type: 'separator' }, ...builtInVcVcodecs, { type: 'separator' }, ...builtInOtherVcodecs];
 
 export const allVcodecs: MenuItem<VCodecDetail>[] = [];
 

@@ -126,13 +126,11 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 	 */
 	public async initSettings(): Promise<void> {
 		const settings = await this.settings.refresh();
-		log.info(`设定最大同时运行任务数为 ${settings.maxThreads}`);
+		log.info(`转码设置已读取`);
 
-		// 发生了变更，或者初始化时 ffmpegPath 为空（如果之前已经初始化过，那么 customFFmpegPath 两者之一不为空）
-		if (settings.customFFmpegPath || !this.ffmpegPath) {
-			this.initFFmpeg();
-		}
+		this.initFFmpeg();
 
+		// TODO
 		const lastStatusTasks = await localConfig.get('lastStatus.tasks') as { taskName: string; after: OutputParams; }[];
 		if (settings.preserveUnfinishedTasks) {
 			try {
@@ -168,8 +166,11 @@ export class FFBoxService extends (EventEmitter as new () => TypedEventEmitter<F
 				if (!path.extname(inputPath) && fs.existsSync(inputPath + ext)) {
 					// 无扩展名但加上 .exe 后存在，则视为文件（Windows 的 spawn 会自动补全 .exe）
 					isDir = false;
+				} else if (path.dirname(inputPath) === '.') {
+					// 裸文件名（`ffmpeg`）交给 spawn 解析
+					isDir = false;
 				} else {
-					// 路径不存在时，启发式判断：无扩展名则视为目录
+					// 路径不存在时，但又能解析出 dirname，则通过扩展名判断是否为目录
 					isDir = !path.extname(inputPath);
 				}
 			}

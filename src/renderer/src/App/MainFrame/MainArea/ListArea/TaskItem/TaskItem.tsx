@@ -135,7 +135,7 @@ export const TaskItem = defineComponent((props: Props) => {
 		return formatter(currentRun.value.dashboard_smooth.bitrate);
 	});
 	const graphSpeed = computed(() => {
-		const formatter = (value: number) => value >= 10 ? value.toFixed(0) + '×' : (value >= 1 ? value.toFixed(1) + '×' : value.toFixed(2) + '×');
+		const formatter = (value: number) => value >= 100 ? value.toFixed(0) + '×' : (value >= 10 ? value.toFixed(1) + '×' : value.toFixed(2) + '×');
 		return formatter(currentRun.value.dashboard_smooth.speed);
 	});
 	const graphTime = computed(() => formatUtils.time(currentRun.value.dashboard_smooth.time, 'display'));

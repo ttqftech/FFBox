@@ -144,4 +144,4 @@ flowchart TB
 
 ### Cannot find module '@rolldown/binding-darwin-arm64'
 
-参考 https://github.com/npm/cli/issues/4828，需要使用 22.12+ 版本的 node.js。
+参考 https://github.com/npm/cli/issues/4828 需要使用 22.12+ 版本的 node.js。
