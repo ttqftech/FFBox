@@ -1,9 +1,10 @@
 import EventEmitter from 'events';
 import CryptoJS from 'crypto-js';
 import { TypedEventEmitter } from '@common/utils';
+import { version } from '@common/constants';
 import { FFBoxServiceEvent, FFBoxServiceEventApi, FFBoxServiceInterface, Frame, InputInfo, Notification, OutputParams, Task, TaskStatus, Permission, UserConfig, ServerSettingsData, WorkingStatus } from '@common/types';
 
-export interface ServeiceBridgeEvent {
+export interface ServiceBridgeEvent {
 	connected: () => void;
 	disconnected: () => void;
 	error: (reason: string) => void;
@@ -19,7 +20,7 @@ export enum ServiceBridgeStatus {
 };
 
 // TODO 6.0 版本中，前后端不再是仿 RPC 设计，因此这里的接口并没有 implements FFBoxServiceInterface
-export class ServiceBridge extends (EventEmitter as new () => TypedEventEmitter<FFBoxServiceEvent & ServeiceBridgeEvent>) implements FFBoxServiceInterface {
+export class ServiceBridge extends (EventEmitter as new () => TypedEventEmitter<FFBoxServiceEvent & ServiceBridgeEvent>) implements FFBoxServiceInterface {
 	private ws: WebSocket | null = null;
 	public ip: string | undefined;
 	public port: number | undefined;
@@ -64,6 +65,15 @@ export class ServiceBridge extends (EventEmitter as new () => TypedEventEmitter<
 		}
 	}
 
+	/**
+	 * 带超时的 fetch，避免服务器无响应时连接流程永久卡住
+	 */
+	private fetchWithTimeout(path: string, init?: RequestInit, timeout = 5000): Promise<Response> {
+		const controller = new AbortController();
+		const timer = setTimeout(() => controller.abort(), timeout);
+		return fetch(`http://${this.ip}:${this.port}${path}`, { ...init, signal: controller.signal }).finally(() => clearTimeout(timer));
+	}
+
 	// #endregion
 
 	// #region 连接/断开/WebSocket 监听
@@ -85,21 +95,37 @@ export class ServiceBridge extends (EventEmitter as new () => TypedEventEmitter<
 			// 4.4 版本后的服务器具有登录系统。不支持以前版本的服务器
 			// 5.3 版本大量改用 HTTP request，并且版本接口新增 /api/v1 前缀
 
+			// TODO 0. 检查服务器是否可连接
+
 			// 1. 检查服务器版本
 			console.log(`serviceBridge: 正在检查服务器版本 http://${this.ip}:${this.port}/api/v1/system/version`);
-			const requestOK1 = await fetch(`http://${this.ip}:${this.port}/api/v1/system/version`, { method: 'get' })
-				.then(() => true)
-				.catch(() => false);
-			if (!requestOK1) {
-				this.emit('error', '连接失败：获取服务器版本失败（可能是前端与后端版本不匹配，或网络完全不通所致）');
+			let serverVersion: string | null = null;
+			try {
+				const responseOK1 = await this.fetchWithTimeout('/api/v1/system/version');
+				if (responseOK1.ok) {
+					serverVersion = (await responseOK1.text()).trim();
+				} else {
+					console.warn(`serviceBridge: 版本接口响应异常，HTTP ${responseOK1.status}`);
+				}
+			} catch (err) {
+				console.warn('serviceBridge: 获取后端版本失败', err);
+			}
+			// 只比较主版本号，忽略开发版附加的后缀（如 *、git commit）；次版本不一致仅警告，不阻断连接
+			const serverVersionParts = serverVersion?.match(/\d+\.\d+/)?.[0].split('.');
+			const localVersionParts = version.match(/\d+\.\d+/)?.[0].split('.');
+			if (!serverVersion || !serverVersionParts || serverVersionParts[0] !== localVersionParts?.[0]) {
+				this.emit('error', `连接失败：前后端版本不匹配或端口非FFBoxService服务（前端 ${version}，后端 ${serverVersion ?? '未知异常'}）`);
 				connectResult(false);
 				return;
+			}
+			if (serverVersionParts[1] !== localVersionParts?.[1]) {
+				this.emit('error', `前端与后端版本不一致（前端 ${version}，后端 ${serverVersion}），部分功能可能异常`);
 			}
 
 			// 2. HTTP 登录获取 sessionId
 			console.log(`serviceBridge: 正在登录 http://${this.ip}:${this.port}/api/v1/auth/login`);
 			const [loginSuccess, loginResult] = await new Promise<[boolean, any]>((resolve, reject) => {
-				fetch(`http://${this.ip}:${this.port}/api/v1/auth/login`, {
+				this.fetchWithTimeout('/api/v1/auth/login', {
 					method: 'post',
 					body: JSON.stringify({
 						username: username || '',
@@ -138,9 +164,18 @@ export class ServiceBridge extends (EventEmitter as new () => TypedEventEmitter<
 			const ws = new WebSocket(`ws://${this.ip}:${this.port}/?sessionId=${this.sessionId}`);
 			this.ws = ws;
 			const 这 = this;
+			// ws 握手超时保护：超时仍未打开则按失败结束连接，避免 status 永久停在 Connecting
+			const wsConnectTimeout = setTimeout(() => {
+				if (ws.readyState !== WebSocket.OPEN) {
+					ws.close();
+					这.emit('error', '连接失败：WebSocket 连接超时');
+					connectResult(false);
+				}
+			}, 5000);
 
 			ws.onopen = async function (event) {
 				console.log(`serviceBridge: WebSocket 连接成功`, event);
+				clearTimeout(wsConnectTimeout);
 				这.status = ServiceBridgeStatus.Connected;
 				这.emit('connected');
 				connectResult(true);
@@ -149,6 +184,7 @@ export class ServiceBridge extends (EventEmitter as new () => TypedEventEmitter<
 			ws.onclose = function (event) {
 				// close 事件在 error 事件后触发
 				if (这.status === ServiceBridgeStatus.Connected) {
+					clearTimeout(wsConnectTimeout);
 					// 掉线
 					这.status = ServiceBridgeStatus.Disconnected;
 				} else {
@@ -160,7 +196,9 @@ export class ServiceBridge extends (EventEmitter as new () => TypedEventEmitter<
 			};
 
 			ws.onerror = function (event) {
+				clearTimeout(wsConnectTimeout);
 				这.emit('error', 'WebSocket 连接失败');
+				connectResult(false); // 确保 status 能重置，不再永久卡在 Connecting
 				// return;
 			};
 
