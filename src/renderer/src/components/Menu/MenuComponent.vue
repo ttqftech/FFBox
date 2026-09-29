@@ -124,7 +124,7 @@ const getMenuPosition = (menu: InnerMenu) => {
 	// 	}
 	// }, 0);
 	// document.body.removeChild(span);
-	// 以下方法的速度是上面的七八倍
+	// 使用 14px 字体测量列表最大宽度。以下方法的速度是上面的七八倍
 	const canvas = document.createElement('canvas');
 	canvas.style.position = 'fixed';
 	canvas.style.top = '150px';
@@ -214,7 +214,7 @@ const getMenuAndItemByValue = (value: any) => {
 };
 
 // 计算子菜单的显示位置，并更新 openedSubMenuItemPos
-const calcSubMenuPosition = (menuIndex: number) => {
+const calcSubMenuPosition = async (menuIndex: number) => {
 	// 已计算位置，则直接跳过
 	if (openedSubMenuItemPos.value[menuIndex]) {
 		return;
@@ -230,7 +230,7 @@ const calcSubMenuPosition = (menuIndex: number) => {
 	}
 	if (!openedSubMenuItemPos.value[parentMenu.menuIndex]) {
 		// 父级菜单的父级 MenuItem 未计算位置
-		calcSubMenuPosition(parentMenu.menuIndex);
+		await calcSubMenuPosition(parentMenu.menuIndex);	// 不加 await 会导致最后一个子菜单的位置计算错误，神奇
 	}
 	// 父级菜单的父级 MenuItem 已计算位置，故直接在父级菜单找到 MenuItem，找到 DOM，计算结果
 	const parentIndexInFlattened = parentMenu.menuIndex;
@@ -238,6 +238,10 @@ const calcSubMenuPosition = (menuIndex: number) => {
 	const parentIndexInMenu = parentMenu.menu.findIndex((menuItem) => 'key' in menuItem && menuItem.key === menuIndex);
 	const menuElem = menuElemRefs.value[parentIndexInFlattened] as HTMLDivElement;
 	const menuItemElem = menuElem.children[parentIndexInMenu];
+	menuItemElem.scrollIntoView({
+		behavior: 'instant', block: 'center', inline: 'center'
+	});
+	// 已从父菜单中找到 menuItemElem 所在的位置并滚动到画面内，依此计算 submenu 的显示位置
 	const menuItemElemRect = menuItemElem.getBoundingClientRect();
 	openedSubMenuItemPos.value[menuIndex] = {
 		xMin: menuItemElemRect.x,
@@ -402,6 +406,7 @@ const keydownListener = (e: KeyboardEvent) => {
 	// 检测上下方向，切换菜单项焦点
 	const { menu, indexInFlattened, indexInMenu } = getMenuByItem(menuItem)!;
 	if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+		e.preventDefault();	// 防止多余的滚动
 		// 找到菜单 DOM
 		const menuElem = menuElemRefs.value[indexInFlattened] as HTMLDivElement;
 		// 找下一个/上一个元素，直到可以 focus
@@ -525,6 +530,7 @@ defineExpose({
 				:style="getMenuPosition(menu)"
 				:ref="(el) => menuElemRefs[menu.menuIndex] = el as HTMLDivElement"
 				@mouseup="$event.stopPropagation()"
+				@click.stop
 			>
 				<div
 					v-for="(menuItem, index) in menu.menu"
@@ -602,7 +608,6 @@ defineExpose({
 				// border-bottom: #EEE 1px solid;
 				border-radius: 4px;
 				font-size: 14px;
-				line-height: 40px;
 				// outline: none;
 				.label {
 					position: absolute;

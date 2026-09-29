@@ -12,10 +12,15 @@ const MsgboxComponent: FunctionalComponent<Props> = (props) => {
 	const disable = ref(false);
 	const backgroundMouseDown = ref(false);
 	const dialogRef = ref<HTMLDivElement>();
+	let previousActiveElement: HTMLElement | null = null;
 
 	setTimeout(() => {
+		previousActiveElement = document.activeElement as HTMLElement | null;
 		show.value = true;
 		dialogRef.value!.addEventListener('keydown', handleKeyPress);
+		// 焦点落在 dialog 本身，键盘事件才能冒泡到本组件
+		dialogRef.value!.tabIndex = -1;
+		dialogRef.value!.focus();
 	}, 0);
 
 	const mouseDownTransformStyle = computed(() => (
@@ -63,6 +68,9 @@ const MsgboxComponent: FunctionalComponent<Props> = (props) => {
 				// name={style.bganimate}
 				on-after-leave={() => {
 					document.removeEventListener('keypress', handleKeyPress);
+					if (previousActiveElement && typeof previousActiveElement.focus === 'function') {
+						previousActiveElement.focus();
+					}
 					props.onClose();
 				}}
 				enterActiveClass={css['bganimate-enter-active']}

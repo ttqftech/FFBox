@@ -44,7 +44,7 @@ const Popup = function (options: PopupOptions) {
 	const instance = { id, vnode, DOM };
 	instances.unshift(instance);
 	// console.log('气泡数量', instances.length, container.children.length);
-	if (instances.length >= 30) {
+	if (instances.length > 30) {
 		// 删除过多的气泡避免卡顿
 		const oldest = instances.pop()!;
 		// oldest.vnode.component!.props.show = false;	// 停止计时器

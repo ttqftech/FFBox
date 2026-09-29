@@ -5,7 +5,7 @@
  * 由于 slot 可以是多个组件，所以会多一层 div 进行打包测量高度
  * 注意此组件并不适用于通过动态高度 slot 组件的高度修改 slot 组件的高度，因为这个逻辑回环了。子组件的高度应当是自由撑开的，否则无法测量高度
  */
-import { onMounted, ref, onBeforeUnmount, nextTick, computed, StyleValue } from 'vue'
+import { onMounted, ref, onBeforeUnmount, nextTick, computed, watch, StyleValue } from 'vue'
 
 interface Props {
 	useResizeObserver?: boolean;
@@ -29,19 +29,33 @@ const updateSize = () => {
 	props.onResize?.({ width: width.value, height: height.value });
 };
 
+const observeSlot = (observe: boolean) => {
+	const target = containerRef.value?.firstElementChild;
+	if (!target) return;
+	if (observe) {
+		if (!resizeObserver) {
+			resizeObserver = new ResizeObserver(() => updateSize());
+		}
+		resizeObserver.observe(target);
+	} else if (resizeObserver) {
+		resizeObserver.unobserve(target);
+	}
+};
+
 onMounted(async () => {
 	await nextTick();
 	updateSize();
-	if (props.useResizeObserver && containerRef.value) {
-		resizeObserver = new ResizeObserver(() => updateSize());
-		resizeObserver.observe(containerRef.value.firstElementChild!);
+	if (props.useResizeObserver) {
+		observeSlot(true);
 	}
 });
 
+watch(() => props.useResizeObserver, (val) => {
+	observeSlot(val ?? false);
+});
+
 onBeforeUnmount(() => {
-	if (resizeObserver && containerRef.value) {
-		resizeObserver.unobserve(containerRef.value.firstElementChild!);
-	}
+	observeSlot(false);
 });
 
 const computedStyle = computed(() => (props.style || props.customStyle)?.({ width: width.value, height: height.value }) || {});

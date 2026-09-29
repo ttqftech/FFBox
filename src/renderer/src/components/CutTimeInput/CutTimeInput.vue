@@ -10,7 +10,6 @@ interface Props {
 	onChange?: (value: [string | undefined, string | undefined]) => any;
 	onButtonClick?: () => any;
 	onEnter?: () => any;
-	onDoubleClick?: () => any;  // 作为临时的功能
 };
 
 const props = defineProps<Props>();
@@ -151,9 +150,6 @@ onMounted(() => {
 				font-size: 13px;
 				opacity: 0.25;
 			}
-		}
-		&>button:not(:first-child) {
-			margin: 0;
 		}
 		.opButton {
 			position: relative;

@@ -5,6 +5,10 @@ import IconMenuButton from './menu_button.svg?component';
 import showMenu, { MenuItem } from '@renderer/components/Menu/Menu';
 
 interface Props {
+	// 受控属性：text 是当前值的唯一真值来源（同时驱动输入框显示与菜单的选中高亮）。
+	// 组件自身不写回 text——选中 / 输入后通过 onChange 把值交给父组件，由父组件写回 :text。
+	// 若父组件未在 onChange 中写回，重开菜单时会定位回旧的 text 值
+	// （FFBox-UI 的 Lit 版 ffbox-dropdown-input 为自包含组件，改为内部同步回 text 属性，无需写回）
 	text?: string | number;
 	list: MenuItem[];
 	readonly?: boolean;	// 不允许输入，但允许下拉选择
@@ -62,6 +66,7 @@ const openMenu = () => {
 	menuRef.value = showMenu({
 		menu: props.list,
 		type: 'select',
+		// 以 text 为选中高亮的定位来源——依赖父组件在 onChange 中写回 :text 才能从当前选中项继续（见 Props 注释）
 		selectedValue: props.text,
 		triggerRect: { xMin: selectorRect.x, yMin: selectorRect.y, xMax: selectorRect.x + selectorRect.width, yMax: selectorRect.y + selectorRect.height },
 		onSelect: (event, value, checked) => {

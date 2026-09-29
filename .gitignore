@@ -4,3 +4,7 @@ node_modules
 *.log
 *.tsbuildinfo
 WindowsInstaller/output
+
+AGENTS.md
+.claude
+.workbuddy

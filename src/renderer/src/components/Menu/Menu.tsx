@@ -13,6 +13,7 @@ export interface MenuOptions {
 	selectedValue?: any;
 	container?: HTMLElement;	// 指定外侧容器，如不指定则默认全屏展示
 	triggerRect?: { xMin: number, yMin: number, xMax: number, yMax: number };	// 触发菜单的控件的坐标，用于计算菜单弹出方向和大小
+	triggerElem?: HTMLElement;	// 触发菜单的控件元素；未显式传入 triggerRect 时，自动以 getBoundingClientRect() 计算 triggerRect
 	disableOnClick?: boolean;
 	onSelect?: (event: Event, value: any, checked?: boolean) => void | false;	// action 模式时，不定义此项或返回 false 则触发 menuItem 的 onClick
 	onCancel?: (event: Event) => void | false;	// mask 点击的情况会触发 onCancel，若返回 false 则不关闭菜单
@@ -24,6 +25,10 @@ export interface MenuOptions {
 const showMenu = function (options: MenuOptions) {
 	const type = options.type || 'action';
 	let unmounted = false;
+	if (!options.triggerRect && options.triggerElem) {
+		const rect = options.triggerElem.getBoundingClientRect();
+		options.triggerRect = { xMin: rect.left, yMin: rect.top, xMax: rect.right, yMax: rect.bottom };
+	}
 	const handleClose = () => {
 		// 同一次 render 内第二次调用 handleClose 时，需判断是否已经被卸载
 		if (!unmounted) {
