@@ -160,9 +160,9 @@ const finalMenu = computed(() => {
 			type: 'submenu',
 			label: '视图 (V)',
 			subMenu: [
-				{ type: 'normal', label: '放大', value: '放大', onClick: () => nodeBridge.zoomPage('in'), tooltip: '全局界面放大' },
-				{ type: 'normal', label: '缩小', value: '缩小', onClick: () => nodeBridge.zoomPage('out'), tooltip: '全局界面缩小' },
-				{ type: 'normal', label: '重置缩放', value: '重置缩放', onClick: () => nodeBridge.zoomPage('reset'), tooltip: '全局界面缩放重置' },
+				{ type: 'normal', label: '放大', value: '放大', onClick: () => { nodeBridge.zoomPage('in') }, tooltip: '全局界面放大' },
+				{ type: 'normal', label: '缩小', value: '缩小', onClick: () => { nodeBridge.zoomPage('out') }, tooltip: '全局界面缩小' },
+				{ type: 'normal', label: '重置缩放', value: '重置缩放', onClick: () => { nodeBridge.zoomPage('reset') }, tooltip: '全局界面缩放重置' },
 				{ type: 'separator' },
 				{ type: 'checkbox', label: '通知中心', value: '通知中心', checked: appStore.showInfoCenter, onClick: () => {
 					if (appStore.showInfoCenter) {

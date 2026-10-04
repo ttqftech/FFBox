@@ -174,6 +174,10 @@ const nodeBridge = {
 		}
 	},
 
+	getPathForFile(file: File): string {
+		return window.jsb?.getPathForFile?.(file) ?? '';
+	},
+
 	getLocalFileStats(url: string): Promise<Stats> {
 		return window.jsb?.ipcRenderer.invoke('getLocalFileStats', url);
 	},
@@ -334,8 +338,10 @@ const nodeBridge = {
 	zoomPage(type: 'in' | 'out' | 'reset') {
 		if (window.jsb) {
 			const webFrame = window.jsb.webFrame;
-			const finalZoomLevel = type === 'reset' ? 0 : webFrame.zoomLevel + (type === 'in' ? 1 : -1);
+			console.log('此前缩放等级:', webFrame.getZoomLevel());
+			const finalZoomLevel = type === 'reset' ? 0 : webFrame.getZoomLevel() + (type === 'in' ? 1 : -1);
 			webFrame.setZoomLevel(finalZoomLevel);
+			return finalZoomLevel;
 		}
 	},
 

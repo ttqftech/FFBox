@@ -282,7 +282,11 @@ export const useAppStore = defineStore('app', {
 						newUploadCount++;
 					}
 					const uploadInputName = `[uploading] ${fileBaseName}`;
-					filePaths.push(needUpload ? uploadInputName : (typeof input === 'string' ? input : input.path.replace(/\\/g, '/')));
+					const filePath = typeof input === 'string' ? input : nodeBridge.getPathForFile(input);
+					if (!needUpload && !filePath) {
+						continue;	// 取不到磁盘路径（WebUI 或 JS 构造的 File），无法作为任务输入
+					}
+					filePaths.push(needUpload ? uploadInputName : filePath.replace(/\\/g, '/'));
 					inputMeta.push({ input, fileBaseName, needUpload });
 				}
 				if (filePaths.length === 0) {
@@ -349,7 +353,8 @@ export const useAppStore = defineStore('app', {
 						server.data.uploadFiles.push(file);
 						inputPaths.push(inputName);
 					} else {
-						inputPaths.push(typeof input === 'string' ? input : input.path);
+						const filePath = typeof input === 'string' ? input : nodeBridge.getPathForFile(input);
+						if (filePath) inputPaths.push(filePath);
 					}
 				}
 
@@ -1122,10 +1127,15 @@ export const useAppStore = defineStore('app', {
 		},
 		// #endregion 服务器处理
 		// #region 其他
-		async activateBackend(userInput: string): Promise<number | false> {
-			const result = await this.currentServer?.entity.activate(userInput).catch(() => false);
+		/**
+		 * 激活后端（FFBoxService）
+		 * @param serverId 指定激活哪台服务器；不传则激活当前服务器
+		 */
+		async activateBackend(userInput: string, serverId?: string): Promise<number | false> {
+			const server = serverId ? this.servers.find((server) => server.data.id === serverId) : this.currentServer;
+			const result = await server?.entity.activate(userInput).catch(() => false);
 			if (result && Number.isFinite(+result)) {
-				this.currentServer!.data.functionLevel = +result;
+				server!.data.functionLevel = +result;
 				return +result;
 			}
 			return false;

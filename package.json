@@ -40,7 +40,7 @@
     "@types/ws": "^8.5.5",
     "@vitejs/plugin-vue": "^6.0.5",
     "@vitejs/plugin-vue-jsx": "^3.0.0",
-    "electron": "^31",
+    "electron": "^32",
     "electron-builder": "^23.6.0",
     "eslint": "^8.29.0",
     "less": "^4.1.3",

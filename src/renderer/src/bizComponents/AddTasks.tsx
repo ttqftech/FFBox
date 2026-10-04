@@ -78,7 +78,7 @@ const Comp = defineComponent((props: Props) => {
 		showOpenFilePrompt().then((files) => {
 			let newPaths: string[] = [];
 			for (const file of files || []) {
-				newPaths.push(file.path.replace(/\\/g, '/'));	// 只有 electron 环境有这个按钮，所以可以直接用 path
+				newPaths.push(nodeBridge.getPathForFile(file).replace(/\\/g, '/'));	// 只有 electron 环境有这个按钮，所以一定能取到路径
 			}
 			newPaths = newPaths.filter((line) => line !== '');
 			if (text.value.length && !text.value.endsWith('\n')) {
@@ -127,7 +127,7 @@ const Comp = defineComponent((props: Props) => {
 				Popup({ message: `网页版无法将文件拖入文本框（受安全限制无法取到文件路径）\n${props.useManagedFilePaths ? '当前登录的用户支持上传下载方式使用，请直接将文件拖入任务列表进行上传' : '当前登录的用户支持直接使用服务器的文件系统路径，您可将路径粘贴于此'}😊` });
 			}
 			for (const file of event.dataTransfer?.files || []) {
-				newPaths.push(file.path.replace(/\\/g, '/'));
+				newPaths.push(nodeBridge.getPathForFile(file).replace(/\\/g, '/'));
 			}
 		} else if (event.dataTransfer?.items) {
 			const text = event.dataTransfer?.getData('text/plain');

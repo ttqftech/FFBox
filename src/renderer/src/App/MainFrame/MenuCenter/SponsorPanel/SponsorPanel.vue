@@ -80,7 +80,7 @@ const handleMessage = async (event: MessageEvent) => {
 			break;
 
 		case 'activateBackend':
-			responseData = await appStore.activateBackend(data.code).catch(() => false);
+			responseData = await appStore.activateBackend(data.code, data.serverId).catch(() => false);
 			break;
 
 		case 'popup':
@@ -88,17 +88,7 @@ const handleMessage = async (event: MessageEvent) => {
 			break;
 
 		case 'getState':
-			responseData = {
-				functionLevel: appStore.functionLevel,
-				frontendMachineId: frontendMachineId.value,
-				localServerConnected: appStore.localServer?.entity.status === ServiceBridgeStatus.Connected,
-				localServerFunctionLevel: appStore.localServer?.data.functionLevel,
-				localServerMachineId: appStore.localServer?.data.machineId,
-				env: nodeBridge.env,
-				colorTheme: appStore.frontendSettings.colorTheme,
-				limitationItems: limitations,
-				loader: { kind: 'FFBox', version: '6.0' },
-			};
+			responseData = buildState();
 			break;
 	}
 
@@ -110,28 +100,35 @@ const handleMessage = async (event: MessageEvent) => {
 	}, '*');
 };
 
+function buildState() {
+	return {
+		functionLevel: appStore.functionLevel,
+		frontendMachineId: frontendMachineId.value,
+		servers: appStore.servers.map((server) => ({
+			id: server.data.id,
+			name: server.data.name || server.entity.ip || '',
+			ip: server.entity.ip || '',
+			connected: server.entity.status === ServiceBridgeStatus.Connected,
+			machineId: server.data.machineId,
+			functionLevel: server.data.functionLevel,
+		})),
+		currentServerId: appStore.currentServerId,
+		env: nodeBridge.env,
+		colorTheme: appStore.frontendSettings.colorTheme,
+		limitationItems: limitations,
+		loader: { kind: 'FFBox', version: '6.0' },
+	};
+}
+
 function sendStateToIframe() {
 	iframeRef.value?.contentWindow?.postMessage({
 		type: 'stateUpdate',
-		state: {
-			functionLevel: appStore.functionLevel,
-			frontendMachineId: frontendMachineId.value,
-			localServerConnected: appStore.localServer?.entity.status === ServiceBridgeStatus.Connected,
-			localServerFunctionLevel: appStore.localServer?.data.functionLevel,
-			localServerMachineId: appStore.localServer?.data.machineId,
-			env: nodeBridge.env,
-			colorTheme: appStore.frontendSettings.colorTheme,
-			limitationItems: limitations,
-			loader: { kind: 'FFBox', version: '6.0' },
-		},
+		state: buildState(),
 	}, '*');
 }
 
-watch(() => appStore.functionLevel, sendStateToIframe);
-watch(() => appStore.localServer?.entity.status, sendStateToIframe);
-watch(() => appStore.localServer?.data.functionLevel, sendStateToIframe);
-watch(() => appStore.localServer?.data.machineId, sendStateToIframe);
-watch(() => appStore.frontendSettings.colorTheme, sendStateToIframe);
+// 前端人品值、服务器列表、各服务器的连接状态/人品值/机器码、主题变化时同步给 iframe
+watch(() => JSON.stringify(buildState()), sendStateToIframe);
 
 onMounted(() => {
 	window.addEventListener('message', handleMessage);

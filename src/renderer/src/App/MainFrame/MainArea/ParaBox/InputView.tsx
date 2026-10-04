@@ -9,6 +9,7 @@ import { renderDetailParameters } from './utils';
 import { useAppStore } from '@renderer/stores/appStore';
 import { getLimitation } from '@renderer/logic/limitations';
 import { addUploadTask } from '@renderer/logic/transferManager2';
+import nodeBridge from '@renderer/bridges/nodeBridge';
 import AutoSizeWrapper from '@renderer/components/AutoSizeWrapper/AutoSizeWrapper.vue';
 import WaveGrid from '@renderer/components/WaveGrid/WaveGrid.vue';
 import Popup from '@renderer/components/Popup/Popup';
@@ -238,7 +239,8 @@ const InputView = defineComponent((props: Props) => {
 		if (event.dataTransfer?.files?.length && appStore.currentServer) {
 			if (appStore.currentServer.entity.ip === 'localhost') {
 				for (const file of event.dataTransfer?.files) {
-					file.path && urls.push(file.path);
+					const filePath = nodeBridge.getPathForFile(file);
+					filePath && urls.push(filePath);
 				}
 			} else {
 				const firstTaskId = [...appStore.selectedTask][0];
