@@ -192,8 +192,23 @@ const uiBridge = {
 		});
 
 		const port = +(getSingleArgvValue('--port') || 33269);
+		const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 		server.listen(port, '::');
 		log.info(`HTTP/WebSocket 服务开始监听端口 ${port}。`);
+		server.on('error', async (error: Error) => {
+			const code = (error as NodeJS.ErrnoException).code;
+			if (
+				code === 'EADDRINUSE' ||
+				code === 'EACCES' ||
+				String(error).includes('address already in use')
+			) {
+				log.error('端口已占用，服务无法启动，请关闭占用端口的进程或服务。');
+				// log.error(error);
+				log.error('【进程即将退出】');
+				await sleep(1000);
+				process.exit(1);
+			}
+		});
 
 		// 挂载主 WebSocket 服务器相关事件
 		wss.on('connection', mountWebSocketEvents);
